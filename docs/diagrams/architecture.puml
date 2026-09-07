@@ -1,0 +1,42 @@
+@startuml
+!theme plain
+top to bottom direction
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam ArrowColor #444444
+
+title Codex Development Workflow — Architecture
+
+actor "Maintainer / Developer" as maintainer
+
+package "Distribution repository" {
+  component "Workflow orchestrator\nSKILL.md" as orchestrator
+  component "Installer\nscripts/install-all.sh" as installer
+  component "Skill source map\nreferences/skill-map.md" as skillmap
+  component "Package metadata\nagents/openai.yaml" as metadata
+}
+
+cloud "GitHub skill repositories" as github
+folder "Codex skills directory\n${CODEX_HOME:-$HOME/.codex}/skills" as skillsdir
+node "Codex runtime" as codex
+
+component "Orchestrator skill" as installed_orchestrator
+component "Specialist skills" as specialists
+
+maintainer --> installer : install / update
+maintainer --> skillmap : inspect sources
+installer --> github : shallow clone
+installer --> skillsdir : copy selected folders
+orchestrator ..> installer : packaged together
+metadata ..> orchestrator : display metadata
+skillsdir --> codex : restart / discover
+codex --> installed_orchestrator : load workflow
+installed_orchestrator --> specialists : delegate gated work
+
+note right of installer
+Existing directories are skipped by default.
+--update replaces them before copying.
+end note
+
+@enduml

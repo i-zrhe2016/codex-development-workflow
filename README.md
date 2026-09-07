@@ -4,6 +4,16 @@ A gated Codex development workflow built from the author's GitHub skills:
 
 `Plan -> Ticket -> Implement -> Test -> Review -> Repo State -> Commit/Push`
 
+The repository contains the orchestrator skill, its installer, and the source
+mapping for the specialist skills used by the workflow.
+
+## Architecture
+
+![Codex Development Workflow architecture](docs/diagrams/architecture.svg)
+
+See the [architecture overview](docs/architecture/overview.md) for component
+boundaries and installation/runtime flows.
+
 ## One-command install
 
 ```bash
@@ -30,4 +40,9 @@ Restart Codex after installation.
 - `repo-current-state`
 - `github-push-when-ready`
 
-See `references/skill-map.md` for source repositories and paths.
+## Documentation
+
+- [Architecture overview](docs/architecture/overview.md)
+- [Installation and update guide](docs/deployment/installation.md)
+- [Workflow usage guide](docs/workflow/usage.md)
+- [Skill source map](references/skill-map.md)
