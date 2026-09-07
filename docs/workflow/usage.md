@@ -1,42 +1,47 @@
 # Workflow Usage Guide
 
-For non-trivial repository work, start with `codex-development-workflow` and dispatch specialist skills only when their trigger applies.
+Use `codex-development-workflow` as the entry point for non-trivial repository work. The orchestrator chooses the lightest path that preserves correctness.
 
-High-level lifecycle:
+## Task paths
 
-`Requirement -> Understand -> Minimal design -> Plan -> Implement -> Validate -> Review -> Update state/docs -> Classify outputs -> Redact when needed -> Commit/Push -> Notify`
+- **Tiny:** `Implement -> Relevant tests -> Completion gates`
+- **Normal:** `Minimal plan -> Implement -> Relevant tests -> Completion gates`
+- **Complex:** `Understand -> Minimal design -> Plan/Tickets -> TDD Ticket Loop -> Integration tests -> Completion gates`
 
-The `Review` stage uses the Codex CLI's built-in `codex review` command. Run
-`codex review --uncommitted` for staged, unstaged, and untracked changes; use
-`--base` or `--commit` for a specific comparison. Installation and
-authentication details are in the [installation guide](../deployment/installation.md).
+Tickets are a complexity-control tool, not mandatory ceremony.
 
-## Output classification
+## TDD Ticket Loop
 
-Classify the complete change set before staging or committing it, and again
-before any separate sharing, export, upload, or publication boundary. Include
-source files, documentation, logs, configs, images, screenshots, exports,
-filenames, and metadata in the scope.
+For complex work, select one dependency-ready ticket at a time. Each ticket should expose its goal, scope, function checklist, acceptance criteria, test cases, dependencies, and validation command.
 
-Record the recipient/environment, purpose, required utility, and whether
-controlled reversibility is allowed. The default is non-reversible handling.
+`Ticket -> tests/spec -> RED when meaningful -> minimum implementation -> GREEN -> next ticket`
 
-## Redaction gate
+Use tests, compiler diagnostics, linting, and static analysis as the primary inner feedback loop. Ordinary test failures should be diagnosed and fixed directly.
 
-If classification finds no potentially sensitive surface, record the inspected
-scope and the reason the gate was skipped, then continue to the next workflow
-stage. Otherwise, invoke `data-document-redaction` and follow the detailed
-[redaction workflow](redaction.md).
+Escalate to targeted `codex review` only when a failure is repeated or unexplained, the root cause is unclear, the patch is high-risk, or the failure exposes a design/architecture conflict. Re-plan instead of growing the patch when the ticket assumptions are wrong.
 
-The specialist skill owns format-specific detection, minimum necessary
-transformation, hidden-surface checks, validation, and delivery reporting. The
-orchestrator accepts the boundary transition only when the report is `pass`.
-`needs_review` and `blocked` results stop commit, push, sharing, and
-publication until the concrete gap is resolved.
+After all tickets are GREEN, run integration/regression tests across the complete change set.
 
-Reports must contain only safe evidence: entity types, counts, location
-categories, hashes, tool versions, coverage, utility checks, and residual
-risks. Do not include original values, mappings, credentials, or complete
-matching context.
+## Review policy
 
-For skill repositories and installation locations, see [`../../references/skill-map.md`](../../references/skill-map.md).
+The final review is a completion gate, not a mandatory step inside every ticket iteration.
+
+- `codex review --uncommitted` reviews the working tree.
+- `codex review --base BRANCH` reviews against a base branch.
+- `codex review --commit SHA` reviews a specific commit.
+
+After a blocking review fix, rerun the affected tests. Repeat the final review when the fix materially changes the reviewed behavior.
+
+## Output classification and redaction
+
+Classify the complete final output set before staging or committing and before every separate sharing, export, upload, or publication boundary. Include source, docs, logs, configs, images, screenshots, exports, filenames, and metadata.
+
+Record recipient/environment, purpose, required utility, and whether controlled reversibility is allowed. Default to non-reversible handling.
+
+If no potentially sensitive surface exists, record the inspected scope and skip reason. Otherwise invoke `data-document-redaction` and follow [redaction.md](redaction.md). Only `pass` advances; `needs_review` and `blocked` stop the boundary transition.
+
+## Completion order
+
+`Integration tests -> Repo state/docs if needed -> Output classification -> Redaction if needed -> Final review -> Commit/Push`
+
+For specialist repositories and installation locations, see [`../../references/skill-map.md`](../../references/skill-map.md).
