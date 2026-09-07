@@ -9,7 +9,7 @@ Use this skill as the entry point for non-trivial repository development.
 
 ## Workflow
 
-`Requirement -> Understand -> Minimal design -> Plan/Tickets -> Implement -> Validate -> Review -> Update state/docs -> Redact when needed -> Commit/Push -> Notify`
+`Requirement -> Understand -> Minimal design -> Plan/Tickets -> Implement -> Validate -> Review -> Update state/docs -> Classify outputs -> Redact when needed -> Commit/Push -> Notify`
 
 ## Specialist Skills
 
@@ -21,7 +21,7 @@ Invoke specialist skills only when their trigger applies. Follow each skill's ow
 - `frontend-click-test`: frontend interaction or browser-visible behavior changes.
 - `code-review`: meaningful implementation after relevant tests pass.
 - `repo-current-state`: verified repository behavior, architecture, dependencies, deployment, or important state changed.
-- `data-document-redaction`: before sharing or publishing data, documents, logs, configs, images, exports, or other content that may contain personal information, credentials, or business-sensitive information.
+- `data-document-redaction`: classify the complete change set before staging or any other sharing boundary; invoke it for data, documents, logs, configs, images, exports, or other content that may contain personal information, credentials, or business-sensitive information.
 - `github-push-when-ready`: before commit or push.
 - `bark-finish-notify`: once after implementation and validation, before the final response.
 
@@ -30,6 +30,28 @@ For `data-document-redaction`, the redaction skill owns the complete detection, 
 Read `references/skill-map.md` only when repository sources or install locations are needed.
 
 If a required specialist skill is unavailable locally, report it rather than silently replacing its workflow.
+
+## Redaction gate contract
+
+Apply the gate to the complete artifact set before staging, committing, sharing,
+or publishing it. This includes source files, documentation, logs, configs,
+screenshots, exports, filenames, and metadata.
+
+- Classify the recipient, purpose, required utility, and whether reversibility
+  is allowed. Assume non-reversible handling unless the task explicitly needs
+  controlled traceability.
+- If no potentially sensitive surface is in scope, record the scope and the
+  reason the gate was skipped, then continue.
+- If a potentially sensitive surface is in scope, follow
+  [`docs/workflow/redaction.md`](docs/workflow/redaction.md) and the
+  `data-document-redaction` skill. The specialist owns format-specific
+  detection, transformation, hidden-surface checks, and validation.
+- Continue to commit, push, or share only after a `pass` result and a safe
+  delivery report. A `needs_review` or `blocked` result stops the boundary
+  transition and records the concrete gap.
+- Reports contain types, counts, location categories, hashes, tool versions,
+  coverage, and residual risks only. Never include original values, mappings,
+  credentials, or full matching context.
 
 ## Installation
 

@@ -22,8 +22,10 @@ state "Real-browser click test\n[frontend-click-test]\nChromium" as browser
 state "Code review gate\n[code-review]" as review
 state "Blocking review finding?" as review_gate #FFF4CC
 state "Repo State / Docs\n[repo-current-state]\nreconcile after verification" as repo_state
-state "Sensitive output?\nlogs, configs, docs, data,\nimages, exports" as sensitive_gate #FFF4CC
-state "Redaction gate\n[data-document-redaction]\ndetect, transform, verify, report" as redaction
+state "Classify outputs\nbefore staging or commit\ninclude files, names, metadata" as classify
+state "Potentially sensitive?" as sensitive_gate #FFF4CC
+state "Redaction gate\n[data-document-redaction]\ndetect -> minimum transform\n-> hidden-surface/utility verify\n-> safe report" as redaction
+state "Redaction report pass?" as redaction_gate #FFF4CC
 state "Commit / Push\n[github-push-when-ready]\ncommit one functional unit\nand publish after readiness" as publish
 state "Blocked\nrecord the concrete blocker" as blocked #FDECEC
 
@@ -41,10 +43,13 @@ browser --> review
 review --> review_gate
 review_gate --> repo_state : no / clear
 review_gate --> implement : yes / fix, retest, review again
-repo_state --> sensitive_gate
+repo_state --> classify
+classify --> sensitive_gate
 sensitive_gate --> redaction : yes
-sensitive_gate --> publish : no
-redaction --> publish
+sensitive_gate --> publish : no / record scope and skip reason
+redaction --> redaction_gate
+redaction_gate --> publish : yes / pass
+redaction_gate --> blocked : no / needs_review or blocked
 publish --> [*]
 
 context -[hidden]down-> plan
@@ -55,8 +60,10 @@ tests_gate -[hidden]down-> frontend_gate
 frontend_gate -[hidden]down-> review
 review -[hidden]down-> review_gate
 review_gate -[hidden]down-> repo_state
-repo_state -[hidden]down-> sensitive_gate
+repo_state -[hidden]down-> classify
+classify -[hidden]down-> sensitive_gate
 sensitive_gate -[hidden]down-> redaction
+redaction -[hidden]down-> redaction_gate
 redaction -[hidden]down-> publish
 
 note right of frontend_gate
@@ -66,10 +73,14 @@ can continue directly to review.
 end note
 
 note right of sensitive_gate
-Redaction is conditional and must run
-before sharing or publication when output
-may contain personal, credential, or
-business-sensitive information.
+Classify the complete change set before
+staging or commit. Re-check before any
+separate sharing or publication boundary.
+end note
+
+note right of redaction_gate
+Only pass advances. Needs review or
+blocked stops the boundary transition.
 end note
 
 note left of context

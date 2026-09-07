@@ -21,17 +21,25 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 
 Main path:
 
-`Context -> Plan/Ticket -> Implement -> Test -> Review -> Repo State/Docs -> Sensitive-output gate -> Commit/Push`
+`Context -> Plan/Ticket -> Implement -> Test -> Review -> Repo State/Docs -> Output classification -> Redaction gate -> Commit/Push`
 
 Frontend browser verification is conditional. Test or review failures return to implementation.
 
 ### Sensitive-output gate
 
-After verified state/docs are updated and before sharing or publication, determine whether the output may contain personal information, credentials, or business-sensitive information.
+After verified state/docs are updated and before staging or committing, classify
+the complete output set. Re-check before any separate sharing, export, upload,
+or publication boundary. Include source files, documentation, logs, configs,
+images, screenshots, exports, filenames, and metadata.
 
-If yes, invoke `data-document-redaction`. The specialist skill owns detection, transformation, hidden-surface checks, validation, and reporting; this repository does not duplicate those procedures.
+If no potentially sensitive surface is in scope, record the scope and skip
+reason, then continue to `github-push-when-ready`.
 
-If no sensitive output crosses a sharing or publication boundary, continue directly to `github-push-when-ready`.
+If yes, invoke `data-document-redaction` and follow the [redaction workflow](../workflow/redaction.md).
+The specialist owns detection, transformation, hidden-surface checks,
+validation, and reporting. Only a `pass` report advances to
+`github-push-when-ready`; `needs_review` and `blocked` stop the boundary
+transition.
 
 ## Installation flow
 
