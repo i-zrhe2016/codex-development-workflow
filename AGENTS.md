@@ -57,7 +57,7 @@ If a simpler solution satisfies the requirement safely, do not introduce a more 
 
 Use this as the default lifecycle for non-trivial repository changes:
 
-`Requirement -> Search existing code -> Understand architecture -> Minimal design -> Plan/Tickets -> Documentation/Diagram when useful -> Implement one module/ticket -> Targeted validation -> Review -> Update repository state/docs -> Commit readiness -> Commit/Push -> Completion notification`
+`Requirement -> Search existing code -> Understand architecture -> Minimal design -> Plan/Tickets -> Documentation/Diagram when useful -> Implement one module/ticket -> Targeted validation -> Review -> Update repository state/docs -> Redact when needed -> Commit readiness -> Commit/Push -> Completion notification`
 
 Detailed flow:
 
@@ -73,9 +73,10 @@ Detailed flow:
 10. Run code review after relevant tests pass.
 11. If review causes code changes, rerun affected validation and repeat review when meaningful.
 12. Update repository-state documentation and other affected docs only after behavior is verified.
-13. Check repository status and diff scope before commit or push.
-14. Commit one coherent purpose at a time; do not mix unrelated work.
-15. Send the completion notification once, then provide the final response.
+13. If output may contain sensitive data, invoke `data-document-redaction` before sharing or publication.
+14. Check repository status and diff scope before commit or push.
+15. Commit one coherent purpose at a time; do not mix unrelated work.
+16. Send the completion notification once, then provide the final response.
 
 ### Troubleshooting
 
@@ -98,6 +99,7 @@ Skills are specialist procedures. Invoke them only when their trigger is met; do
 | `frontend-click-test` | Frontend interaction, navigation, forms, buttons, routing, or user-visible browser behavior changed. | Backend-only, infrastructure-only, or documentation-only changes. |
 | `code-review` | Implementation is complete and relevant tests pass; use it before publication for meaningful code changes. | Pure documentation or trivial edits where review would add no value. |
 | `repo-current-state` | Verified repository behavior, architecture, dependencies, deployment, or important project state changed and the repository maintains `docs/Repo_Current_State.md`. | No repository-state facts changed or the target repository does not use that state document. |
+| `data-document-redaction` | Data, documents, logs, configs, images, or exports may contain personal, credential, or business-sensitive information before sharing or publication. | No potentially sensitive content is being shared or published. |
 | `github-push-when-ready` | Before any commit or push. | Never skip when a commit or push is going to happen. |
 | `bark-finish-notify` | After implementation and validation are finished, immediately before the final response. | Do not invoke during intermediate steps; invoke only once per task. |
 
