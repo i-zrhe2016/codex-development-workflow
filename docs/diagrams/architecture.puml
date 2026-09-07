@@ -10,7 +10,7 @@ skinparam state {
   FontColor #1A202C
 }
 
-title Codex Development Workflow — Development Process
+title Codex Development Workflow - Development Process
 
 state "Context\n[context-efficiency]\nunderstand architecture, constraints,\nand existing behavior" as context
 state "Plan / Ticket\n[plan-to-ticket]\ncreate dependency-ordered work\nand acceptance criteria" as plan
@@ -21,7 +21,9 @@ state "Frontend interaction changed?" as frontend_gate #FFF4CC
 state "Real-browser click test\n[frontend-click-test]\nChromium" as browser
 state "Code review gate\n[code-review]" as review
 state "Blocking review finding?" as review_gate #FFF4CC
-state "Repo State\n[repo-current-state]\nreconcile after verification" as repo_state
+state "Repo State / Docs\n[repo-current-state]\nreconcile after verification" as repo_state
+state "Sensitive output?\nlogs, configs, docs, data,\nimages, exports" as sensitive_gate #FFF4CC
+state "Redaction gate\n[data-document-redaction]\ndetect, transform, verify, report" as redaction
 state "Commit / Push\n[github-push-when-ready]\ncommit one functional unit\nand publish after readiness" as publish
 state "Blocked\nrecord the concrete blocker" as blocked #FDECEC
 
@@ -39,7 +41,10 @@ browser --> review
 review --> review_gate
 review_gate --> repo_state : no / clear
 review_gate --> implement : yes / fix, retest, review again
-repo_state --> publish
+repo_state --> sensitive_gate
+sensitive_gate --> redaction : yes
+sensitive_gate --> publish : no
+redaction --> publish
 publish --> [*]
 
 context -[hidden]down-> plan
@@ -50,12 +55,21 @@ tests_gate -[hidden]down-> frontend_gate
 frontend_gate -[hidden]down-> review
 review -[hidden]down-> review_gate
 review_gate -[hidden]down-> repo_state
-repo_state -[hidden]down-> publish
+repo_state -[hidden]down-> sensitive_gate
+sensitive_gate -[hidden]down-> redaction
+redaction -[hidden]down-> publish
 
 note right of frontend_gate
 Browser verification is conditional;
 backend-only and documentation-only changes
 can continue directly to review.
+end note
+
+note right of sensitive_gate
+Redaction is conditional and must run
+before sharing or publication when output
+may contain personal, credential, or
+business-sensitive information.
 end note
 
 note left of context
