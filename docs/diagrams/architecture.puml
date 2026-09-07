@@ -18,7 +18,7 @@ state "Plan / Tickets\n[plan-to-ticket]\nfunction checklist + tests\n+ dependenc
 state "Pick one ready ticket" as ticket
 state "Tests / Spec\nconfirm RED when meaningful" as red
 state "Implement minimum change" as implement
-state "Relevant tests" as tests
+state "Relevant checks\n[test-workflow]" as tests
 state "GREEN?" as green_gate #FFF4CC
 state "Failure clear?" as failure_gate #FFF4CC
 state "Fix code/test" as fix
@@ -26,7 +26,7 @@ state "Targeted review\n[codex review]\nrepeated / unexplained / risky" as targe
 state "Design conflict?" as design_gate #FFF4CC
 state "Re-plan / split ticket" as replan
 state "More tickets?" as more_gate #FFF4CC
-state "Integration / regression tests" as integration
+state "Integration / regression checks\n[test-workflow]" as integration
 state "Repo State / Docs\n[repo-current-state]\nonly if important state changed" as repo_state
 state "Classify outputs" as classify_outputs
 state "Potentially sensitive?" as sensitive_gate #FFF4CC
