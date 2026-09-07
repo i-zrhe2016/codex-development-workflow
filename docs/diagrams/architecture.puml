@@ -12,17 +12,17 @@ skinparam state {
 
 title Codex Development Workflow — Development Process
 
-state "Context\nunderstand architecture, constraints,\nand existing behavior" as context
-state "Plan / Ticket\ncreate dependency-ordered work\nand acceptance criteria" as plan
-state "Implement\nchange one ticket only" as implement
-state "Run relevant\nproject tests" as tests
+state "Context\n[context-efficiency]\nunderstand architecture, constraints,\nand existing behavior" as context
+state "Plan / Ticket\n[plan-to-ticket]\ncreate dependency-ordered work\nand acceptance criteria" as plan
+state "Implement\nCodex / target repository\nchange one ticket only" as implement
+state "Run relevant\nproject tests / relevant test skill" as tests
 state "Tests pass?" as tests_gate #FFF4CC
 state "Frontend interaction changed?" as frontend_gate #FFF4CC
-state "Real-browser click test\nChromium" as browser
-state "Code review gate" as review
+state "Real-browser click test\n[frontend-click-test]\nChromium" as browser
+state "Code review gate\n[code-review]" as review
 state "Blocking review finding?" as review_gate #FFF4CC
-state "Repo State\nreconcile after verification" as repo_state
-state "Commit / Push\ncommit one functional unit\nand publish after readiness" as publish
+state "Repo State\n[repo-current-state]\nreconcile after verification" as repo_state
+state "Commit / Push\n[github-push-when-ready]\ncommit one functional unit\nand publish after readiness" as publish
 state "Blocked\nrecord the concrete blocker" as blocked #FDECEC
 
 [*] --> context
@@ -56,6 +56,11 @@ note right of frontend_gate
 Browser verification is conditional;
 backend-only and documentation-only changes
 can continue directly to review.
+end note
+
+note left of context
+Orchestrated by
+codex-development-workflow
 end note
 
 @enduml

@@ -9,16 +9,16 @@ change.
 
 ## Lifecycle
 
-| Stage | Purpose | Required outcome |
-|---|---|---|
-| Context | Establish the minimum repository context. | Relevant architecture, files, constraints, and existing behavior are understood. |
-| Plan / Ticket | Turn the request into dependency-ordered work. | One current ticket with explicit acceptance criteria. |
-| Implement | Change only the current ticket. | The requested behavior is implemented without unrelated refactoring. |
-| Test | Run the relevant project or specialist tests. | Tests pass, or a concrete blocker is recorded. |
-| Frontend verification | Run the real-browser click test when interaction behavior changed. | The required user path passes in Chromium. |
-| Review | Run the code-review gate. | No unresolved blocking findings remain. |
-| Repo State | Reconcile the repository state documentation. | `docs/Repo_Current_State.md` is current when the target repository uses it. |
-| Commit / Push | Check repository readiness before publication. | The change is ready for a focused commit or push. |
+| Stage | Invoked skill or tool | Purpose | Required outcome |
+|---|---|---|---|
+| Context | `context-efficiency` | Establish the minimum repository context. | Relevant architecture, files, constraints, and existing behavior are understood. |
+| Plan / Ticket | `plan-to-ticket` | Turn the request into dependency-ordered work. | One current ticket with explicit acceptance criteria. |
+| Implement | Codex / target repository | Change only the current ticket. | The requested behavior is implemented without unrelated refactoring. |
+| Test | Project tests or relevant test skill | Run the relevant project or specialist tests. | Tests pass, or a concrete blocker is recorded. |
+| Frontend verification | `frontend-click-test` (conditional) | Run the real-browser click test when interaction behavior changed. | The required user path passes in Chromium. |
+| Review | `code-review` | Run the code-review gate. | No unresolved blocking findings remain. |
+| Repo State | `repo-current-state` | Reconcile the repository state documentation. | `docs/Repo_Current_State.md` is current when the target repository uses it. |
+| Commit / Push | `github-push-when-ready` | Check repository readiness before publication. | The change is ready for a focused commit or push. |
 
 The frontend verification stage is conditional. It is not a substitute for
 project tests, and it is not required for backend-only or documentation-only
