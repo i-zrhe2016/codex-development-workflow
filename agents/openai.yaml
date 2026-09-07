@@ -1,0 +1,3 @@
+interface:
+  display_name: "Codex Development Workflow"
+  short_description: "Orchestrate planning, coding, testing, review, state, and push"
