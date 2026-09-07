@@ -2,7 +2,7 @@
 
 A gated Codex development workflow built from the author's GitHub skills:
 
-`Plan -> Ticket -> Implement -> Test -> Review -> Repo State -> Commit/Push`
+`Plan -> Ticket -> Implement -> Test -> Review -> Repo State -> Redact when needed -> Commit/Push`
 
 The repository contains the orchestrator skill, its installer, and the source
 mapping for the specialist skills used by the workflow.
@@ -12,7 +12,7 @@ mapping for the specialist skills used by the workflow.
 ![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
 See the [architecture overview](docs/architecture/overview.md) for the
-development process, workflow gates, and package boundaries.
+development process, workflow gates, redaction gate, and package boundaries.
 
 ## One-command install
 
@@ -38,6 +38,7 @@ Restart Codex after installation.
 - `frontend-click-test`
 - `code-review`
 - `repo-current-state`
+- `data-document-redaction`
 - `github-push-when-ready`
 
 ## Documentation
