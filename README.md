@@ -1,22 +1,22 @@
 # Codex Development Workflow
 
-A gated Codex development workflow built from GitHub-hosted skills:
+An adaptive, test-driven Codex development workflow built from GitHub-hosted skills.
 
-`Plan -> Ticket -> Implement -> Test -> Review -> Repo State/Docs -> Classify outputs -> Redact when needed -> Commit/Push`
+```text
+Tiny:    Implement -> Test
+Normal:  Plan -> Implement -> Test
+Complex: Plan/Tickets -> TDD Ticket Loop -> Integration Test
 
-The repository contains the orchestrator skill, its installer, and the source
-mapping for the specialist skills used by the workflow.
+All paths -> State/Docs if needed -> Redaction if needed -> Final Review -> Commit/Push
+```
+
+Complex tickets carry a function checklist, acceptance criteria, test cases, dependencies, and validation. Tests are the primary development feedback loop; targeted code review is used when failures are repeated/unexplained or risk is high, followed by one final review before commit/push.
 
 ## Architecture
 
 ![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
-See the [architecture overview](docs/architecture/overview.md) for the
-development process, workflow gates, redaction gate, and package boundaries.
-
-The [redaction workflow](docs/workflow/redaction.md) defines the pre-commit
-classification, validation, report, and blocking rules for artifacts that may
-contain sensitive information.
+See the [architecture overview](docs/architecture/overview.md) for task classification, TDD Ticket Loops, review escalation, redaction, and package boundaries.
 
 ## One-command install
 
@@ -44,17 +44,13 @@ Restart Codex after installation.
 - `data-document-redaction`
 - `github-push-when-ready`
 
-Code review uses the Codex CLI's built-in `codex review` command. No separate
-review skill is required. From the target repository, review the working tree
-with:
+Code review uses the Codex CLI built-in `codex review`; no separate review skill is required.
 
 ```bash
 codex review --uncommitted
 ```
 
 Use `--base BRANCH` or `--commit SHA` when a specific comparison is required.
-See the [Codex CLI documentation](https://developers.openai.com/codex/cli/)
-for installation and authentication details.
 
 ## Documentation
 
