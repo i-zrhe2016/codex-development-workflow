@@ -9,10 +9,10 @@ mapping for the specialist skills used by the workflow.
 
 ## Architecture
 
-![Codex Development Workflow architecture](docs/diagrams/architecture.svg)
+![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
-See the [architecture overview](docs/architecture/overview.md) for component
-boundaries and installation/runtime flows.
+See the [architecture overview](docs/architecture/overview.md) for the
+development process, workflow gates, and package boundaries.
 
 ## One-command install
 

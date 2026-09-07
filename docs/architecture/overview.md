@@ -24,12 +24,18 @@ sources from which the installer obtains the specialist skills.
 | Package metadata | [`agents/openai.yaml`](../../agents/openai.yaml) | Supplies the display name and short description used by the package metadata surface. |
 | Local skill directory | `${CODEX_HOME:-$HOME/.codex}/skills` | Stores the installed orchestrator and specialist skill folders discovered by Codex. |
 
-## Architecture diagram
+## Development process diagram
 
-The editable source is [`architecture.puml`](../diagrams/architecture.puml);
-the rendered version is embedded below and in the root README.
+The primary architecture view is the gated development process rather than the
+installer implementation. The editable source is
+[`architecture.puml`](../diagrams/architecture.puml); the rendered version is
+embedded below and in the root README.
 
-![Codex Development Workflow architecture](../diagrams/architecture.svg)
+![Codex Development Workflow development process](../diagrams/architecture.svg)
+
+The main path is `Context → Plan / Ticket → Implement → Test → Review → Repo
+State → Commit / Push`. Frontend browser verification is conditional, and test
+or review failures loop back to implementation before publication.
 
 ## Installation flow
 

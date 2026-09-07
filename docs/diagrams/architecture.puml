@@ -2,41 +2,60 @@
 !theme plain
 top to bottom direction
 skinparam backgroundColor #FFFFFF
-skinparam componentStyle rectangle
 skinparam defaultFontName Arial
-skinparam ArrowColor #444444
-
-title Codex Development Workflow — Architecture
-
-actor "Maintainer / Developer" as maintainer
-
-package "Distribution repository" {
-  component "Workflow orchestrator\nSKILL.md" as orchestrator
-  component "Installer\nscripts/install-all.sh" as installer
-  component "Skill source map\nreferences/skill-map.md" as skillmap
-  component "Package metadata\nagents/openai.yaml" as metadata
+skinparam ArrowColor #4A5568
+skinparam state {
+  BackgroundColor #F8F9FA
+  BorderColor #4A5568
+  FontColor #1A202C
 }
 
-cloud "GitHub skill repositories" as github
-folder "Codex skills directory\n${CODEX_HOME:-$HOME/.codex}/skills" as skillsdir
-node "Codex runtime" as codex
+title Codex Development Workflow — Development Process
 
-component "Orchestrator skill" as installed_orchestrator
-component "Specialist skills" as specialists
+state "Context\nunderstand architecture, constraints,\nand existing behavior" as context
+state "Plan / Ticket\ncreate dependency-ordered work\nand acceptance criteria" as plan
+state "Implement\nchange one ticket only" as implement
+state "Run relevant\nproject tests" as tests
+state "Tests pass?" as tests_gate #FFF4CC
+state "Frontend interaction changed?" as frontend_gate #FFF4CC
+state "Real-browser click test\nChromium" as browser
+state "Code review gate" as review
+state "Blocking review finding?" as review_gate #FFF4CC
+state "Repo State\nreconcile after verification" as repo_state
+state "Commit / Push\ncommit one functional unit\nand publish after readiness" as publish
+state "Blocked\nrecord the concrete blocker" as blocked #FDECEC
 
-maintainer --> installer : install / update
-maintainer --> skillmap : inspect sources
-installer --> github : shallow clone
-installer --> skillsdir : copy selected folders
-orchestrator ..> installer : packaged together
-metadata ..> orchestrator : display metadata
-skillsdir --> codex : restart / discover
-codex --> installed_orchestrator : load workflow
-installed_orchestrator --> specialists : delegate gated work
+[*] --> context
+context --> plan
+plan --> implement
+implement --> tests
+tests --> tests_gate
+tests_gate --> frontend_gate : yes
+tests_gate --> implement : no / fix and retest
+tests_gate --> blocked : no / blocker remains
+frontend_gate --> browser : yes
+frontend_gate --> review : no
+browser --> review
+review --> review_gate
+review_gate --> repo_state : no / clear
+review_gate --> implement : yes / fix, retest, review again
+repo_state --> publish
+publish --> [*]
 
-note right of installer
-Existing directories are skipped by default.
---update replaces them before copying.
+context -[hidden]down-> plan
+plan -[hidden]down-> implement
+implement -[hidden]down-> tests
+tests -[hidden]down-> tests_gate
+tests_gate -[hidden]down-> frontend_gate
+frontend_gate -[hidden]down-> review
+review -[hidden]down-> review_gate
+review_gate -[hidden]down-> repo_state
+repo_state -[hidden]down-> publish
+
+note right of frontend_gate
+Browser verification is conditional;
+backend-only and documentation-only changes
+can continue directly to review.
 end note
 
 @enduml
