@@ -13,22 +13,20 @@ The installer requires:
 Codex should be restarted after installation so the new skill directories are
 discovered.
 
-## Configure code review
+## Run code review
 
-The `open-code-review` skill is sourced from
-[Alibaba Open Code Review](https://github.com/alibaba/open-code-review) and
-uses its local `ocr` CLI. Install the CLI separately:
+The review gate uses the Codex CLI's built-in `codex review` command. Install
+and authenticate Codex before using it; no separate review skill is required.
+Choose one review target per invocation:
 
 ```bash
-npm install -g @alibaba-group/open-code-review
-ocr config provider
-ocr config model
-ocr llm test
+codex review --uncommitted  # staged, unstaged, and untracked changes
+codex review --base main    # changes relative to a base branch
+codex review --commit SHA   # changes introduced by a commit
 ```
 
-Open Code Review requires Git 2.41 or later and a configured Anthropic or
-OpenAI-compatible model endpoint for the default review mode. The workflow
-installer does not install or store model credentials.
+See the [Codex CLI documentation](https://developers.openai.com/codex/cli/)
+for installation and authentication details.
 
 ## Install the workflow
 

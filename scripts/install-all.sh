@@ -43,7 +43,6 @@ SKILLS=(
   "i-zrhe2016/context-skill|context-efficiency|context-efficiency"
   "i-zrhe2016/plan-to-ticket|.|plan-to-ticket"
   "i-zrhe2016/test-skill|frontend-click-test|frontend-click-test"
-  "alibaba/open-code-review|plugins/open-code-review/skills/open-code-review|open-code-review"
   "i-zrhe2016/Repo_Current_State.md|.|repo-current-state"
   "i-zrhe2016/data-document-redaction|data-document-redaction|data-document-redaction"
   "i-zrhe2016/github-push-skill|github-push-when-ready|github-push-when-ready"

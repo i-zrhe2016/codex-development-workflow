@@ -40,20 +40,21 @@ Restart Codex after installation.
 - `context-efficiency`
 - `plan-to-ticket`
 - `frontend-click-test`
-- `open-code-review`
 - `repo-current-state`
 - `data-document-redaction`
 - `github-push-when-ready`
 
-The `open-code-review` skill is sourced from
-[Alibaba Open Code Review](https://github.com/alibaba/open-code-review). It
-invokes the local `ocr` CLI, which must be installed and configured separately:
+Code review uses the Codex CLI's built-in `codex review` command. No separate
+review skill is required. From the target repository, review the working tree
+with:
 
 ```bash
-npm install -g @alibaba-group/open-code-review
-ocr config provider
-ocr config model
+codex review --uncommitted
 ```
+
+Use `--base BRANCH` or `--commit SHA` when a specific comparison is required.
+See the [Codex CLI documentation](https://developers.openai.com/codex/cli/)
+for installation and authentication details.
 
 ## Documentation
 

@@ -7,12 +7,11 @@ Last verified: 2026-09-07 @ working tree
 
 ## Implemented
 - The repository packages a gated Codex development workflow with mapped specialist skills.
-- The review gate uses Alibaba Open Code Review's `open-code-review` skill from the `alibaba/open-code-review` Codex plugin path.
+- The review gate uses the Codex CLI's built-in `codex review` command.
 - The architecture source and rendered SVG document the current workflow gates.
 
 ## Constraints
-- `open-code-review` requires the local `ocr` CLI, Git 2.41 or later, and a configured Anthropic or OpenAI-compatible model for default review mode.
-- The workflow installer copies the skill but does not install the OCR CLI or store model credentials.
+- Code review requires an installed and authenticated Codex CLI; review targets are selected with one of `--uncommitted`, `--base`, or `--commit`.
 
 ## Architecture Snapshot
 - `SKILL.md` routes the lifecycle to specialist skills; `scripts/install-all.sh` installs the mapped skill folders.

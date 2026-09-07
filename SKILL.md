@@ -19,11 +19,14 @@ Invoke specialist skills only when their trigger applies. Follow each skill's ow
 - `plan-to-ticket`: non-trivial multi-step or dependent work.
 - relevant test skill: changed behavior that has a matching test workflow.
 - `frontend-click-test`: frontend interaction or browser-visible behavior changes.
-- `open-code-review`: meaningful implementation after relevant tests pass.
 - `repo-current-state`: verified repository behavior, architecture, dependencies, deployment, or important state changed.
 - `data-document-redaction`: classify the complete change set before staging or any other sharing boundary; invoke it for data, documents, logs, configs, images, exports, or other content that may contain personal information, credentials, or business-sensitive information.
 - `github-push-when-ready`: before commit or push.
 - `bark-finish-notify`: once after implementation and validation, before the final response.
+
+The review gate uses the Codex CLI's built-in `codex review` command after
+relevant tests pass. Use `codex review --uncommitted` for the working tree, or
+select an explicit `--base` or `--commit` target.
 
 For `data-document-redaction`, the redaction skill owns the complete detection, transformation, hidden-surface checking, validation, and reporting procedure. This workflow only decides when to invoke it.
 
