@@ -1,17 +1,17 @@
 # Workflow Usage Guide
 
-`AGENTS.md` is the source of truth for the development lifecycle, engineering rules, and skill invocation policy.
+For non-trivial repository work, start with `codex-development-workflow` and dispatch specialist skills only when their trigger applies.
 
-This page intentionally does not duplicate those rules.
+High-level lifecycle:
 
-## How to use the workflow
+`Requirement -> Understand -> Minimal design -> Plan -> Implement -> Validate -> Review -> Update state/docs -> Redact when needed -> Commit/Push -> Notify`
 
-For non-trivial repository work, start with `codex-development-workflow`. It reads the repository policy from `AGENTS.md` and dispatches specialist skills only when their documented trigger applies.
+## Redaction gate
 
-The high-level lifecycle is:
+Before content is shared or published, invoke `data-document-redaction` when data, documents, logs, configs, images, screenshots, or exports may contain personal information, credentials, or business-sensitive information.
 
-`Requirement -> Understand -> Minimal design -> Plan -> Implement -> Validate -> Review -> Update state/docs -> Commit/Push -> Notify`
+The redaction skill owns the detailed procedure: detection, minimum necessary transformation, hidden-surface checks, validation, and delivery reporting. This workflow does not duplicate those instructions.
 
-For exact skill triggers, gates, validation scope, Git rules, architecture rules, and completion behavior, see [`../../AGENTS.md`](../../AGENTS.md).
+If no potentially sensitive content crosses a sharing or publication boundary, skip the redaction gate.
 
 For skill repositories and installation locations, see [`../../references/skill-map.md`](../../references/skill-map.md).
