@@ -27,10 +27,10 @@ For each dependency-ready ticket, work on one ticket at a time.
 
 1. Read the ticket goal, scope, function checklist, acceptance criteria, test cases, dependencies, and validation command.
 2. Load only the repository context required for that ticket.
-3. Create or confirm tests from the specified behavior before implementation when practical.
-4. Confirm the new behavior is not already satisfied (`RED`) when a meaningful failing test can be produced.
+3. Invoke `test-workflow` to create or confirm the smallest meaningful tests from the specified behavior.
+4. For complex/high-risk behavior, confirm the new behavior is not already satisfied (`RED`) when a meaningful failing test can be produced.
 5. Implement the minimum necessary change.
-6. Run the smallest relevant test set until the ticket is `GREEN`.
+6. Use `test-workflow` to run the smallest relevant checks until the ticket is `GREEN`.
 7. Diagnose ordinary failures directly. Fix the implementation or test when the cause is clear.
 8. Escalate to targeted code review only when a failure is repeated, unexplained, risky, or indicates a design/architecture conflict.
 9. If the design assumption is wrong, stop expanding the patch and re-plan or split the ticket.
@@ -58,8 +58,7 @@ Invoke a specialist only when its trigger applies. Follow its own `SKILL.md`; do
 
 - `context-efficiency`: large, unfamiliar, or context-heavy repository exploration.
 - `plan-to-ticket`: complex multi-step or dependency-driven work; tickets should expose function checklist, acceptance criteria, test cases, dependencies, and validation.
-- relevant test skill: behavior changes with an applicable automated test workflow.
-- `frontend-click-test`: browser-visible interaction changes requiring real-browser verification.
+- `test-workflow`: general validation for behavior changes. It selects static, focused, integration/regression, and conditional browser/E2E checks; use RED/GREEN for complex or high-risk behavior rather than forcing strict TDD on every trivial change.
 - `repo-current-state`: verified architecture, behavior, dependencies, deployment, or important repository state changed.
 - `data-document-redaction`: content may contain personal information, credentials, secrets, or business-sensitive data before sharing/publishing boundaries.
 - `github-push-when-ready`: before commit or push.
@@ -72,12 +71,12 @@ If a required specialist is unavailable, report it instead of silently replacing
 
 After implementation work is GREEN:
 
-1. Run integration or broader regression tests appropriate to the total change.
+1. Use `test-workflow` to run integration or broader regression tests appropriate to the total change, including browser/E2E only when required by user-visible behavior.
 2. Update repository state/docs only when verified behavior, architecture, dependencies, deployment, or important state changed.
 3. Classify the complete output set before staging, committing, sharing, exporting, uploading, or publishing.
 4. If potentially sensitive surfaces exist, invoke `data-document-redaction`; proceed only on `pass`.
 5. Run the final code review on the final safe diff.
-6. Fix blocking findings and rerun affected tests.
+6. Fix blocking findings and rerun affected tests through `test-workflow`.
 7. Invoke `github-push-when-ready` and commit/push only when all gates are clear.
 
 ## Redaction gate contract
