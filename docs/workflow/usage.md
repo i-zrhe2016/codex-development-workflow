@@ -6,10 +6,10 @@ High-level lifecycle:
 
 `Requirement -> Understand -> Minimal design -> Plan -> Implement -> Validate -> Review -> Update state/docs -> Classify outputs -> Redact when needed -> Commit/Push -> Notify`
 
-The `Review` stage uses the `open-code-review` specialist skill, which invokes
-Alibaba Open Code Review's local `ocr` CLI. Configure the CLI before relying on
-the review gate; installation details are in the
-[installation guide](../deployment/installation.md).
+The `Review` stage uses the Codex CLI's built-in `codex review` command. Run
+`codex review --uncommitted` for staged, unstaged, and untracked changes; use
+`--base` or `--commit` for a specific comparison. Installation and
+authentication details are in the [installation guide](../deployment/installation.md).
 
 ## Output classification
 
