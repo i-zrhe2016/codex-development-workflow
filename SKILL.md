@@ -1,70 +1,103 @@
 ---
 name: codex-development-workflow
-description: "Entry point for the repository-wide Codex development lifecycle. Use for non-trivial feature development, bug fixes, refactors, and repository changes. This skill orchestrates specialist skills and invokes data-document-redaction before sensitive content is shared or published."
+description: "Entry point for repository-wide Codex development. Use for non-trivial feature work, bug fixes, refactors, and repository changes. Classify task complexity, route complex work through plan-to-ticket and test-driven ticket loops, escalate code review when tests are repeatedly or unexpectedly failing, run a final review before commit/push, and invoke redaction before sensitive content crosses a sharing boundary."
 ---
 
 # Codex Development Workflow
 
-Use this skill as the entry point for non-trivial repository development.
+Use this skill as the orchestration layer for repository development. Specialist skills own their detailed procedures; this skill owns routing, gates, and completion order.
 
-## Workflow
+## Core principle
 
-`Requirement -> Understand -> Minimal design -> Plan/Tickets -> Implement -> Validate -> Review -> Update state/docs -> Classify outputs -> Redact when needed -> Commit/Push -> Notify`
+Use the lightest workflow that preserves correctness.
+
+- **Tiny:** implement -> relevant tests -> completion gates.
+- **Normal:** minimal plan -> implement -> relevant tests -> completion gates.
+- **Complex:** understand -> minimal design -> plan/tickets -> TDD ticket loop -> integration tests -> completion gates.
+
+Do not create tickets when ticket management costs more than the complexity it removes.
+
+## Complex-work lifecycle
+
+`Requirement -> Understand -> Minimal design -> Plan/Tickets -> TDD Ticket Loop -> Integration test -> Update state/docs -> Classify outputs -> Redact when needed -> Final review -> Commit/Push`
+
+### TDD Ticket Loop
+
+For each dependency-ready ticket, work on one ticket at a time.
+
+1. Read the ticket goal, scope, function checklist, acceptance criteria, test cases, dependencies, and validation command.
+2. Load only the repository context required for that ticket.
+3. Create or confirm tests from the specified behavior before implementation when practical.
+4. Confirm the new behavior is not already satisfied (`RED`) when a meaningful failing test can be produced.
+5. Implement the minimum necessary change.
+6. Run the smallest relevant test set until the ticket is `GREEN`.
+7. Diagnose ordinary failures directly. Fix the implementation or test when the cause is clear.
+8. Escalate to targeted code review only when a failure is repeated, unexplained, risky, or indicates a design/architecture conflict.
+9. If the design assumption is wrong, stop expanding the patch and re-plan or split the ticket.
+10. Mark the ticket complete only when its acceptance criteria and relevant tests pass, then select the next unblocked ticket.
+
+Tests are the primary inner-loop feedback mechanism. Code review is not a mandatory per-ticket tax.
+
+## Review policy
+
+Use the Codex CLI built-in review command.
+
+- `codex review --uncommitted`: review the working tree.
+- `codex review --base BRANCH`: review against a base branch.
+- `codex review --commit SHA`: review an explicit commit.
+
+Run a **targeted review** during development when tests fail repeatedly or unexpectedly, the root cause is unclear, or the change is high-risk.
+
+Run one **final review** after integration tests, state/docs reconciliation, and any required redaction are complete. Fix blocking findings, rerun affected tests, and repeat the final review only when the fix materially changed the reviewed behavior.
+
+Do not use review as a replacement for tests, compiler diagnostics, linting, or static analysis.
 
 ## Specialist Skills
 
-Invoke specialist skills only when their trigger applies. Follow each skill's own `SKILL.md` for detailed procedures; do not duplicate them here.
+Invoke a specialist only when its trigger applies. Follow its own `SKILL.md`; do not duplicate its procedure here.
 
 - `context-efficiency`: large, unfamiliar, or context-heavy repository exploration.
-- `plan-to-ticket`: non-trivial multi-step or dependent work.
-- relevant test skill: changed behavior that has a matching test workflow.
-- `frontend-click-test`: frontend interaction or browser-visible behavior changes.
-- `repo-current-state`: verified repository behavior, architecture, dependencies, deployment, or important state changed.
-- `data-document-redaction`: classify the complete change set before staging or any other sharing boundary; invoke it for data, documents, logs, configs, images, exports, or other content that may contain personal information, credentials, or business-sensitive information.
+- `plan-to-ticket`: complex multi-step or dependency-driven work; tickets should expose function checklist, acceptance criteria, test cases, dependencies, and validation.
+- relevant test skill: behavior changes with an applicable automated test workflow.
+- `frontend-click-test`: browser-visible interaction changes requiring real-browser verification.
+- `repo-current-state`: verified architecture, behavior, dependencies, deployment, or important repository state changed.
+- `data-document-redaction`: content may contain personal information, credentials, secrets, or business-sensitive data before sharing/publishing boundaries.
 - `github-push-when-ready`: before commit or push.
-- `bark-finish-notify`: once after implementation and validation, before the final response.
-
-The review gate uses the Codex CLI's built-in `codex review` command after
-relevant tests pass. Use `codex review --uncommitted` for the working tree, or
-select an explicit `--base` or `--commit` target.
-
-For `data-document-redaction`, the redaction skill owns the complete detection, transformation, hidden-surface checking, validation, and reporting procedure. This workflow only decides when to invoke it.
 
 Read `references/skill-map.md` only when repository sources or install locations are needed.
 
-If a required specialist skill is unavailable locally, report it rather than silently replacing its workflow.
+If a required specialist is unavailable, report it instead of silently replacing its workflow.
+
+## Completion gates
+
+After implementation work is GREEN:
+
+1. Run integration or broader regression tests appropriate to the total change.
+2. Update repository state/docs only when verified behavior, architecture, dependencies, deployment, or important state changed.
+3. Classify the complete output set before staging, committing, sharing, exporting, uploading, or publishing.
+4. If potentially sensitive surfaces exist, invoke `data-document-redaction`; proceed only on `pass`.
+5. Run the final code review on the final safe diff.
+6. Fix blocking findings and rerun affected tests.
+7. Invoke `github-push-when-ready` and commit/push only when all gates are clear.
 
 ## Redaction gate contract
 
-Apply the gate to the complete artifact set before staging, committing, sharing,
-or publishing it. This includes source files, documentation, logs, configs,
-screenshots, exports, filenames, and metadata.
+Include source files, documentation, logs, configs, screenshots, exports, filenames, and metadata in classification.
 
-- Classify the recipient, purpose, required utility, and whether reversibility
-  is allowed. Assume non-reversible handling unless the task explicitly needs
-  controlled traceability.
-- If no potentially sensitive surface is in scope, record the scope and the
-  reason the gate was skipped, then continue.
-- If a potentially sensitive surface is in scope, follow
-  [`docs/workflow/redaction.md`](docs/workflow/redaction.md) and the
-  `data-document-redaction` skill. The specialist owns format-specific
-  detection, transformation, hidden-surface checks, and validation.
-- Continue to commit, push, or share only after a `pass` result and a safe
-  delivery report. A `needs_review` or `blocked` result stops the boundary
-  transition and records the concrete gap.
-- Reports contain types, counts, location categories, hashes, tool versions,
-  coverage, and residual risks only. Never include original values, mappings,
-  credentials, or full matching context.
+- Record recipient/environment, purpose, required utility, and whether controlled reversibility is allowed.
+- Assume non-reversible handling unless the task explicitly requires controlled traceability.
+- If no potentially sensitive surface is in scope, record the inspected scope and skip reason.
+- If sensitive content may be in scope, follow `docs/workflow/redaction.md` and the `data-document-redaction` skill.
+- `needs_review` or `blocked` stops commit, push, sharing, and publication.
+- Reports contain safe evidence only: types, counts, location categories, hashes, tool versions, coverage, utility checks, and residual risks. Never include original secrets or mappings.
 
 ## Installation
-
-Install the complete workflow skill set with:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash
 ```
 
-Update existing installations with:
+Update existing installations:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash -s -- --update
