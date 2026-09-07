@@ -1,6 +1,6 @@
 # Codex Development Workflow
 
-A gated Codex development workflow built from the author's GitHub skills:
+A gated Codex development workflow built from GitHub-hosted skills:
 
 `Plan -> Ticket -> Implement -> Test -> Review -> Repo State/Docs -> Classify outputs -> Redact when needed -> Commit/Push`
 
@@ -40,10 +40,20 @@ Restart Codex after installation.
 - `context-efficiency`
 - `plan-to-ticket`
 - `frontend-click-test`
-- `code-review`
+- `open-code-review`
 - `repo-current-state`
 - `data-document-redaction`
 - `github-push-when-ready`
+
+The `open-code-review` skill is sourced from
+[Alibaba Open Code Review](https://github.com/alibaba/open-code-review). It
+invokes the local `ocr` CLI, which must be installed and configured separately:
+
+```bash
+npm install -g @alibaba-group/open-code-review
+ocr config provider
+ocr config model
+```
 
 ## Documentation
 

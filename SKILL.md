@@ -19,7 +19,7 @@ Invoke specialist skills only when their trigger applies. Follow each skill's ow
 - `plan-to-ticket`: non-trivial multi-step or dependent work.
 - relevant test skill: changed behavior that has a matching test workflow.
 - `frontend-click-test`: frontend interaction or browser-visible behavior changes.
-- `code-review`: meaningful implementation after relevant tests pass.
+- `open-code-review`: meaningful implementation after relevant tests pass.
 - `repo-current-state`: verified repository behavior, architecture, dependencies, deployment, or important state changed.
 - `data-document-redaction`: classify the complete change set before staging or any other sharing boundary; invoke it for data, documents, logs, configs, images, exports, or other content that may contain personal information, credentials, or business-sensitive information.
 - `github-push-when-ready`: before commit or push.

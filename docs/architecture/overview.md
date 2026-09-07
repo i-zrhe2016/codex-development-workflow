@@ -11,7 +11,7 @@ This repository packages a Codex development-workflow orchestrator and its speci
 | `codex-development-workflow` | Coordinates the end-to-end lifecycle and routes work to specialist skills. |
 | `scripts/install-all.sh` | Installs the orchestrator and mapped specialist skills. |
 | `references/skill-map.md` | Maps each skill to its GitHub source and Codex destination. |
-| Specialist skills | Own planning, testing, review, repository-state, redaction, and publication procedures. |
+| Specialist skills | Own planning, testing, Open Code Review, repository-state, redaction, and publication procedures. |
 
 ## Development process
 
@@ -24,6 +24,9 @@ Main path:
 `Context -> Plan/Ticket -> Implement -> Test -> Review -> Repo State/Docs -> Output classification -> Redaction gate -> Commit/Push`
 
 Frontend browser verification is conditional. Test or review failures return to implementation.
+
+The review gate is implemented by `open-code-review`, sourced from Alibaba's
+Codex plugin skill and backed by the local `ocr` CLI.
 
 ### Sensitive-output gate
 

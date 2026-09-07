@@ -19,7 +19,7 @@ state "Run relevant\nproject tests / relevant test skill" as tests
 state "Tests pass?" as tests_gate #FFF4CC
 state "Frontend interaction changed?" as frontend_gate #FFF4CC
 state "Real-browser click test\n[frontend-click-test]\nChromium" as browser
-state "Code review gate\n[code-review]" as review
+state "Code review gate\n[open-code-review]" as review
 state "Blocking review finding?" as review_gate #FFF4CC
 state "Repo State / Docs\n[repo-current-state]\nreconcile after verification" as repo_state
 state "Classify outputs\nbefore staging or commit\ninclude files, names, metadata" as classify

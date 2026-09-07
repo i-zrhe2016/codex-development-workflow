@@ -6,6 +6,11 @@ High-level lifecycle:
 
 `Requirement -> Understand -> Minimal design -> Plan -> Implement -> Validate -> Review -> Update state/docs -> Classify outputs -> Redact when needed -> Commit/Push -> Notify`
 
+The `Review` stage uses the `open-code-review` specialist skill, which invokes
+Alibaba Open Code Review's local `ocr` CLI. Configure the CLI before relying on
+the review gate; installation details are in the
+[installation guide](../deployment/installation.md).
+
 ## Output classification
 
 Classify the complete change set before staging or committing it, and again
