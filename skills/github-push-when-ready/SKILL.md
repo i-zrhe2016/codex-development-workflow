@@ -1,6 +1,6 @@
 ---
 name: github-push-when-ready
-description: Guard every Git commit, GitHub push, and pull request by assessing repository readiness, enforcing Conventional Commits 1.0.0, keeping one feature per commit, completing GitHub About metadata, and publishing only when safe. Use whenever Codex is about to commit, push, or open a PR, finishes a coherent unit of code work in a GitHub-connected repo, or is asked to ship, publish, or sync changes.
+description: Guard every Git commit, GitHub push, and pull request by assessing repository readiness, enforcing Conventional Commits 1.0.0, keeping one feature per commit, completing GitHub About metadata, publishing only when safe, and cleaning up merged source branches. Use whenever Codex is about to commit, push, or open a PR, finishes a coherent unit of code work in a GitHub-connected repo, or is asked to ship, publish, or sync changes.
 ---
 
 # GitHub Push When Ready
@@ -61,6 +61,14 @@ gh pr create --fill --base <default-branch> --head <feature-branch>
 
 If the current branch is the default branch, stop before opening a PR and ask for or create a feature branch. If PR creation fails after the push, report the pushed branch and the exact PR blocker; do not claim the feature is delivered through a PR.
 
+When merging a PR, use `gh pr merge <number> --merge --delete-branch` after the required checks so GitHub removes the merged source branch. If the PR was already merged without cleanup, first verify `state=MERGED`, the exact base and head branch names, and the merge commit, then delete only that remote head ref:
+
+```bash
+gh api -X DELETE repos/<owner>/<repo>/git/refs/heads/<merged-source-branch>
+```
+
+After remote cleanup, switch to the base branch, fast-forward it, prune remote-tracking refs, and delete the local source branch with `git branch -d <merged-source-branch>`. Never delete the default branch, an unmerged/closed-unmerged source branch, or a branch whose merge target and head were not verified. If local safe deletion cannot prove the branch was merged, keep it and report the blocker.
+
 To enforce commit messages and auto-check/auto-push after every new commit, install the managed `commit-msg` and `post-commit` hooks:
 
 ```bash
@@ -79,7 +87,8 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 6. Treat `push` as eligible only when the working tree is clean, the local branch is ahead of its upstream or has no upstream yet, and About verification succeeds.
 7. Use `push_if_ready.py --execute` with explicit `--pathspec` values for the standard guarded commit-and-push flow. If one file mixes multiple functional units, stage only the intended hunks manually after assessment, then use the equivalent guarded commit and push commands.
 8. After the push succeeds, check for an open PR for the feature branch and create one with `gh pr create` when needed. Record the PR URL or the blocker.
-9. For another functional unit, re-inspect the remaining diff and restart this workflow from the readiness assessment.
+9. When the PR is merged, verify the exact `MERGED` state, base branch, head branch, and merge commit, then delete the remote source branch and the local source branch after switching to the base branch and synchronizing it.
+10. For another functional unit, re-inspect the remaining diff and restart this workflow from the readiness assessment.
 
 ## Push Rules
 
@@ -92,6 +101,7 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 - Prefer `git push -u <remote> <branch>` when the branch has no upstream yet.
 - Prefer clear commit messages tied to the completed task boundary.
 - Prefer one PR per coherent feature, fix, or documentation change; keep related tests and documentation in that PR.
+- Delete a source branch only after its PR is verified as `MERGED`; retain the default branch and any branch with unmerged work.
 - Do not treat a successful commit or push as a successful PR. Report each stage separately.
 
 ## Resources
@@ -121,7 +131,7 @@ Behavior:
 - Enforce the configured repository identity and verified GitHub account before committing or pushing; the post-commit hook uses the same guard.
 - Push with `git push` when upstream exists.
 - Push with `git push -u <remote> <branch>` when upstream is missing.
-- It does not create a pull request. After it succeeds, check for an existing PR and run `gh pr create --fill --base <default-branch> --head <feature-branch>` when needed.
+- It does not create or merge a pull request. After it succeeds, check for an existing PR and run `gh pr create --fill --base <default-branch> --head <feature-branch>` when needed. After a merge, follow the verified remote/local source-branch cleanup procedure above.
 
 ### `scripts/install_post_commit_hook.py`
 

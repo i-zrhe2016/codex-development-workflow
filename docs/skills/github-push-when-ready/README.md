@@ -14,6 +14,7 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - Use a Conventional Commit message with the correct scope and intent.
 - For this repository, configure the local identity `i-zrhe2016 <zrhe2016@gmail.com>` and GitHub account `i-zrhe2016`; other target repositories must configure their own non-root identity.
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
+- After a PR is verified as merged, delete its source branch remotely and locally after switching to and synchronizing the base branch; retain the default branch and unmerged branches.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.
 - Check GitHub repository metadata when the task includes publishing or a pull
