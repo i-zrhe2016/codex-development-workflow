@@ -30,7 +30,7 @@ Use the lightest workflow that preserves correctness.
 
 For non-trivial work:
 
-`Requirement -> Understand -> Plan -> Slice -> Execute/Test -> Integrate -> Review -> State/Docs if needed -> Redact if needed -> Commit/Push -> Notify`
+`Requirement -> Understand -> Plan -> Slice -> Delegate if useful -> Execute/Test -> Integrate -> Review -> State/Docs if needed -> Redact if needed -> Commit/Push -> Notify`
 
 Use `codex-development-workflow` to orchestrate the lifecycle.
 
@@ -38,13 +38,56 @@ For each slice:
 
 `Acceptance Criteria -> Test Strategy -> Minimal Change -> Focused Validation -> Complete`
 
-* Work on one clear functional unit at a time.
+* Work on one clear functional unit per agent at a time; independent Slices may run in parallel only through the delegation gate.
 * Split complex or dependency-driven work into small, independently verifiable slices.
 * Run the smallest validation set that provides sufficient evidence.
 * Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
 * Do not force strict TDD, planning, or ticket overhead onto trivial changes.
 * If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.
 * Do not mix unrelated features, refactors, formatting, or dependency upgrades.
+
+## Multi-Agent Delegation
+
+Use subagents only when delegation materially improves speed, context isolation, or review quality.
+
+The main agent owns:
+
+* requirements;
+* architecture and design decisions;
+* planning and task decomposition;
+* dependency ordering;
+* integration;
+* final judgment.
+
+Delegate work only when the task is bounded and independently executable.
+
+Good delegation targets include:
+
+* repository exploration;
+* independent research;
+* independent test or regression analysis;
+* isolated implementation slices;
+* independent review.
+
+Keep dependent or overlapping work sequential.
+
+Parallel write tasks must have clearly separated scope and should not modify the same files, interfaces, schemas, migrations, or shared configuration.
+
+Each delegated task must define:
+
+* goal;
+* scope and out-of-scope;
+* relevant files or ownership boundary;
+* dependencies;
+* acceptance criteria;
+* validation;
+* expected result summary.
+
+Subagents should return material findings, changes, test results, and unresolved risks rather than raw logs.
+
+The main agent must not duplicate work already delegated to an active subagent.
+
+Prefer a single delegation level. Subagents should not create further subagents unless explicitly required.
 
 ## Skill Routing
 

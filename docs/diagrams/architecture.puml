@@ -10,15 +10,19 @@ skinparam state {
   FontColor #1A202C
 }
 
-title Codex Development Workflow - Single-Agent Staged Process
+title Codex Development Workflow - Main-Agent-Led Staged Process
 
 state "Requirement" as requirement
 state "Classify task\nTiny / Normal / Complex" as classify
 state "Understand\nCurrent Repo" as context
 state "Plan\narchitecture + scope" as plan
 state "Define one Slice\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
+state "Delegation Gate\nIndependent + bounded?\n(optional)" as delegation #FFF4CC
+state "Explorer\n[explorer]\nread-only evidence" as explorer
+state "Worker A / B\n[worker]\nisolated Slice execution + validation" as workers
+state "Worker result summary\nmain agent receives findings • changes • tests • risks" as worker_result
 
-state "Slice Execution Loop" as execute {
+state "Slice Execution / Test Loop\n[main agent]" as execute {
   state "Acceptance criteria" as acceptance
   state "Test strategy + level\nminimal / focused / regression / full" as strategy
   state "Behavior change?" as behavior
@@ -41,6 +45,8 @@ state "Slice Execution Loop" as execute {
 
 state "More slices?" as more #FFF4CC
 state "Integration / regression tests\n[test-workflow]" as integration
+state "Independent reviewer?\n(optional)" as review_delegate #FFF4CC
+state "Reviewer\n[.codex/agents/reviewer.toml]\nread-only findings" as reviewer_agent
 state "Self review\n[codex review]" as review
 state "Blocking problem?" as blocking #FFF4CC
 state "Re-plan / Fix" as replan
@@ -60,11 +66,20 @@ requirement --> classify
 classify --> context
 context --> plan
 plan --> slice
-slice --> execute
+slice --> delegation
+delegation --> execute : no / sequential
+delegation --> explorer : yes / independent
+delegation --> workers
+explorer --> worker_result
+workers --> worker_result
+worker_result --> more
 execute --> more
 more --> slice : yes
 more --> integration : no
-integration --> review
+integration --> review_delegate
+review_delegate --> reviewer_agent : yes / useful
+review_delegate --> review : no / skip
+reviewer_agent --> review
 review --> blocking
 blocking --> replan : problem
 blocking --> state_docs : pass
@@ -90,15 +105,23 @@ Use the smallest verification set that gives enough evidence.
 Stop after the selected level passes unless escalation is justified.
 end note
 
+note right of delegation
+The main agent owns requirements,
+architecture, dependency ordering,
+integration, and final judgment.
+Keep dependent, overlapping, or shared-interface work sequential.
+end note
+
 note right of state_docs
 Repo_Current_State.md is the compact recovery point
 for current focus, verified behavior, failures, and next Slice.
 end note
 
 note left of requirement
-One Codex agent only.
-No multi-agent orchestration,
-sub-agents, or parallel implementation.
+Delegation is optional, not automatic.
+Prefer one delegation level.
+Workers return findings, changes,
+tests, and unresolved risks—not raw logs.
 end note
 
 @enduml

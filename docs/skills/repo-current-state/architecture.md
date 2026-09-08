@@ -3,7 +3,7 @@
 ## Scope
 
 This repository packages the `repo-current-state` specialist inside a larger
-single-agent workflow. Its only runtime-like behavior is the guidance in
+main-agent-led workflow. Its only runtime-like behavior is the guidance in
 [`skills/repo-current-state/SKILL.md`](../../../skills/repo-current-state/SKILL.md):
 an agent reads repository evidence, verifies task-relevant facts, and maintains
 a compact current-state document.
@@ -25,7 +25,7 @@ configuration, or automated test suite in the current repository.
 
 ![Repository documentation flow](diagrams/repository-state.svg)
 
-1. The single maintainer or Codex agent reads the managed `SKILL.md` and the
+1. The maintainer or main Codex agent reads the managed `SKILL.md` and the
    existing state snapshot.
 2. Only evidence relevant to the current task is inspected.
 3. Verified facts are written to the target repository's

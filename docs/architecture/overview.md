@@ -2,15 +2,20 @@
 
 ## Scope
 
-This repository packages a single-agent Codex development-workflow orchestrator
-and its specialist skills. The orchestrator owns stage routing and quality
-gates; specialist procedures remain inside their own `SKILL.md` files.
+This repository packages a main-agent-led Codex development-workflow
+orchestrator with optional bounded delegation and its specialist skills. The
+orchestrator owns stage routing and quality gates; specialist procedures
+remain inside their own `SKILL.md` files.
 
 ## Components
 
 | Component | Responsibility |
 |---|---|
 | `codex-development-workflow` | Classifies work, coordinates Plan/Slice execution, bounded verification, review, and delivery gates. |
+| Delegation Gate | Decides after Slicing whether independent, bounded work should stay with the main agent or go to built-in workers. |
+| `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
+| `.codex/agents/reviewer.toml` | Project-scoped read-only reviewer for optional independent checks of integrated changes. |
+| `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
 | `plan-to-ticket` | Produces small, dependency-ordered Slices with explicit scope and acceptance criteria. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point for the repository. |
@@ -21,8 +26,11 @@ gates; specialist procedures remain inside their own `SKILL.md` files.
 | `references/skill-map.md` | Maps each managed bundle to its local source and Codex destination. |
 | Redaction / publication skills | Guard sensitive outputs and commit/push boundaries. |
 
-No component orchestrates multiple agents, sub-agents, parallel implementations,
-or agent handoffs.
+The main agent centrally owns requirements, architecture, planning, dependency
+ordering, integration, and final judgment. The optional Delegation Gate may
+route independent exploration, testing, isolated implementation, or review to
+bounded workers. Dependent or overlapping work remains sequential, and the
+main agent must not duplicate active delegated work.
 
 ## Development process
 
@@ -33,17 +41,28 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 ### Macro stages
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice -> Execute
-           -> Next Slice? -> Integration -> Self Review -> State / Docs
+Requirement -> Classify -> Understand -> Plan -> Slice -> Delegate if useful
+           -> Execute/Test -> Next Slice? -> Integration -> Review
+           -> State / Docs
            -> Redaction -> Commit / Push
            -> Optional Deploy / Verify / Rollback
 ```
 
 - Tiny work uses a concise plan and one implicit Slice.
-- Normal work plans the relevant area and executes one or more Slices.
-- Complex work uses `plan-to-ticket` for dependency-ordered Slices.
+- Normal work plans the relevant area and executes one or more Slices, using
+  delegation only when the gate finds a safe independent boundary.
+- Complex work uses `plan-to-ticket` for dependency-ordered Slices and then
+  evaluates those boundaries before execution.
 - Each Slice loads only the context needed for its own acceptance criteria.
 - A wrong design assumption returns to Plan or causes a Slice split.
+
+### Delegation gate
+
+The gate is optional and sits between `Plan -> Slice` and `Execute/Test`. The
+main agent delegates only tasks with a clear goal, scope and exclusions,
+ownership boundary, dependencies, acceptance criteria, validation, and
+expected result summary. Parallel write tasks must not share files, interfaces,
+schemas, migrations, or configuration. Prefer a single delegation level.
 
 ### Slice execution
 
@@ -73,14 +92,28 @@ escalation.
 
 ### Review and final gates
 
-After all Slices pass their selected checks, run integration/regression tests
-and perform one self-review of the integrated diff. Blocking findings require
-affected test reruns and, when behavior materially changes, another review.
+After all Slices pass their selected checks, run integration/regression tests.
+When useful, ask the project `reviewer` for an independent read-only check,
+then have the main agent perform the final review and judgment of the
+integrated diff. Blocking findings require affected test reruns and, when
+behavior materially changes, another review.
 
 `Integration tests -> Self review -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
 
 Review uses the Codex CLI built-in `codex review`; it is a final quality gate,
 not a replacement for tests, diagnostics, linting, or static analysis.
+That command does not select the project-scoped custom reviewer. Invoke
+`.codex/agents/reviewer.toml` from an interactive Codex session by explicitly
+asking it to use the `reviewer` subagent, then keep final judgment with the main
+agent.
+
+### Project-scoped Codex configuration
+
+`.codex/config.toml` enables subagents and limits this project to three
+concurrently open spawned-agent threads, excluding the main thread.
+`.codex/agents/reviewer.toml` provides a read-only custom reviewer. The
+installer copies managed skills only; these project-scoped files remain in the
+checkout where Codex runs.
 
 ### Sensitive-output gate
 

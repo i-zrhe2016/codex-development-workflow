@@ -20,11 +20,11 @@ The runtime instructions live in [`SKILL.md`](../../../skills/context-efficiency
 
 ## How it fits the workflow
 
-Use this skill while understanding the repository and executing a slice. It is
+Use this skill while understanding the repository and executing a Slice. It is
 an efficiency aid, not a replacement for planning, acceptance criteria,
-testing, review, or correctness checks. The workflow remains single-agent:
-load the smallest sufficient context, make one scoped change, validate it, and
-record the resulting state.
+testing, review, or correctness checks. The main agent keeps the decision
+context focused; delegated workers load only their bounded task context and
+return concise evidence.
 
 Efficiency must not weaken correctness, security, privacy, or the user's
 explicit request. When evidence is insufficient, expand the context or the
