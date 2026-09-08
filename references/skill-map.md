@@ -4,6 +4,11 @@ This repository is the source of truth for every skill installed by
 `scripts/install-all.sh`. The installer copies these local paths; it does not
 clone specialist repositories at installation time.
 
+Project-scoped runtime configuration lives separately under `.codex/`: custom
+agent files such as `.codex/agents/reviewer.toml` are not Skill metadata and are
+not copied by the installer. Skill interface metadata remains in each managed
+bundle's `agents/openai.yaml`.
+
 | Skill | Managed source in this repository | Documentation | Codex destination |
 |---|---|---|---|
 | `codex-development-workflow` | Root package: `SKILL.md`, `agents/`, selected workflow references | `docs/workflow/`, `docs/architecture/` | `codex-development-workflow` |
@@ -27,4 +32,7 @@ and a validation command. `test-workflow` owns execution of the selected
 bounded evidence. It conditionally performs browser/E2E verification when
 browser-visible behavior changes.
 
-Code review is provided by the Codex CLI's built-in `codex review` command; it is not installed by this script.
+The built-in `codex review` command provides the main-agent diff review; it is
+not installed by this script and does not select the project-scoped
+`.codex/agents/reviewer.toml`. The custom reviewer is loaded by Codex when an
+interactive session explicitly delegates to the `reviewer` agent.

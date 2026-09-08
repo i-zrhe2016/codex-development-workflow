@@ -1,11 +1,12 @@
 # Codex Development Workflow
 
-An adaptive, single-agent staged Codex development workflow with all required
-specialist skills managed in this repository.
+An adaptive, main-agent-led Codex development workflow with optional bounded
+delegation and all required specialist skills managed in this repository.
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice -> Execute
-           -> Next Slice? -> Integration -> Self Review -> State / Docs
+Requirement -> Classify -> Understand -> Plan -> Slice -> Delegate if useful
+           -> Execute/Test -> Next Slice? -> Integration -> Review
+           -> State / Docs
            -> Redaction if needed -> Commit / Push
            -> Optional Deploy / Verify / Rollback
 ```
@@ -19,8 +20,22 @@ configuration, styling, dependency, typo, or exploratory work.
 Verification is bounded by an explicit level (`minimal`, `focused`,
 `regression`, or `full`). The default is focused validation, and a passing
 level stops the test expansion unless evidence or an explicit requirement
-justifies escalation. The workflow uses one Codex agent and does not
-orchestrate multi-agent or parallel implementation.
+justifies escalation. The main agent owns requirements, architecture,
+decomposition, integration, and final judgment; bounded exploration, Slice
+implementation, testing, and review may be delegated when useful.
+
+## Optional project-scoped delegation
+
+The project configuration keeps multi-agent support deliberately small:
+
+- `.codex/config.toml` enables subagents and caps concurrent spawned-agent
+  threads at three, excluding the main thread.
+- `.codex/agents/reviewer.toml` defines a read-only reviewer for independent
+  checks of integrated changes.
+
+The built-in `explorer` and `worker` roles cover read-heavy exploration and
+isolated implementation Slices. The delegation gate remains optional; keep
+dependent, overlapping, or shared-interface work sequential.
 
 ## Architecture
 
@@ -80,11 +95,22 @@ relevant bundle.
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 | `auto-deploy` | [`skills/auto-deploy/`](skills/auto-deploy/) | [Skill documentation](docs/skills/auto-deploy/README.md) |
 
-Review uses the Codex CLI built-in `codex review`; it is a final self-review of
-the integrated diff, not a separate agent workflow.
+Review has two distinct paths: the built-in `codex review` command is the main
+agent's diff review, while the project-scoped `reviewer` is an optional
+independent read-only subagent. The built-in command does not select the custom
+reviewer automatically.
 
 ```bash
 codex review --uncommitted
+```
+
+To invoke the project reviewer, start an interactive Codex session from this
+project root and enter:
+
+```text
+Use the project-scoped `reviewer` subagent to inspect the current integrated
+changes. Wait for its read-only result and return only actionable findings with
+file references.
 ```
 
 Use `--base BRANCH` or `--commit SHA` when a specific comparison is required.

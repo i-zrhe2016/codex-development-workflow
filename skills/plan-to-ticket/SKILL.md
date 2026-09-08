@@ -1,6 +1,6 @@
 ---
 name: plan-to-ticket
-description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into a concise implementation plan and small, dependency-ordered Slices for a single Codex agent. Use for complex or multi-step work that benefits from execution-ready Slices. Each behavior Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance. Output text only and do not implement code.
+description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into a concise implementation plan and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Use for complex or multi-step work that benefits from execution-ready Slices. Each behavior Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance. Output text only and do not implement code.
 ---
 
 # Plan to Ticket
@@ -21,8 +21,10 @@ Do not ticket trivial work that can be implemented and verified in one focused p
 - Keep tickets small, focused, independently understandable, and independently verifiable.
 - Prefer one behavior or capability per ticket, not one file or one coding step per ticket.
 - Keep tests with the behavior they validate; do not create separate "write tests" tickets unless test infrastructure itself is the deliverable.
-- Order Slices by real implementation dependency and single-agent execution order.
-- Do not recommend parallel implementation, sub-agents, or agent handoffs.
+- Order Slices by real implementation dependency and clear ownership boundaries.
+- Do not require delegation. When the parent workflow enables its delegation
+  gate, identify independent Slices that are safe to delegate and keep
+  dependent or overlapping Slices sequential.
 - Avoid unrelated refactors, dependency upgrades, formatting changes, speculative abstractions, or future features.
 - If repository context exists, respect its architecture, conventions, constraints, and current state.
 - If exact commands or implementation details are unknown, describe validation behavior instead of inventing commands.
@@ -36,7 +38,7 @@ Before writing the output, determine internally:
 2. Whether tickets are actually necessary.
 3. The minimum foundations required first.
 4. The smallest independently verifiable behavior slices.
-5. The real dependency and single-agent execution order.
+5. The real dependency order and any safe delegation boundaries.
 6. The scope boundaries that prevent drift.
 7. The observable acceptance criteria for each Slice.
 8. The test cases and validation evidence needed to prove each Slice.
@@ -168,10 +170,10 @@ Do not default every ticket to a full test suite or browser E2E run.
 
 Use explicit ticket IDs.
 
-Dependencies describe the order in which one agent should execute the Slices;
-they are not a handoff or parallel-work plan. Even when two Slices are
-independent, execute and verify one at a time unless the repository's workflow
-explicitly authorizes another mode.
+Dependencies describe the order in which the main agent or a delegated worker
+can execute the Slices. They are not an instruction to delegate: independent
+Slices may be considered by the parent workflow's delegation gate, while
+dependent or overlapping Slices remain sequential.
 
 Example:
 
@@ -189,10 +191,10 @@ T0004 - End-to-end integration
 Dependencies: T0002, T0003
 ```
 
-Do not create artificial dependencies, but keep the execution order explicit
-for the single agent. Shared files, schemas, interfaces, migrations, or
-generated artifacts are reasons to sequence work carefully, not reasons to
-delegate it.
+Do not create artificial dependencies, but keep the execution order explicit.
+Shared files, schemas, interfaces, migrations, or generated artifacts are
+reasons to sequence work carefully and define an ownership boundary before any
+delegation.
 
 ## Re-planning Boundary
 

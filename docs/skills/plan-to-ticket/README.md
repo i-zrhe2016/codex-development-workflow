@@ -1,9 +1,10 @@
 # Plan to Ticket
 
-`plan-to-ticket` is the planning specialist for the single-agent workflow. It
+`plan-to-ticket` is the planning specialist for the main-agent workflow. It
 turns a feature idea, requirement, bug-fix plan, refactor plan, or other
 project change into a concise implementation plan and small,
-dependency-ordered Slices (tickets).
+dependency-ordered Slices (tickets) with clear boundaries for optional
+delegation.
 
 The executable skill source is maintained at
 [`skills/plan-to-ticket/`](../../../skills/plan-to-ticket/). This document and
@@ -23,16 +24,17 @@ The full explanation is in [architecture.md](architecture.md).
 When the skill is selected for a planning request, it:
 
 1. Identifies the desired outcome and the minimum implementation foundations.
-2. Splits the work into focused, dependency-ordered Slices executed one at a
-   time by the single agent.
+2. Splits the work into focused, dependency-ordered Slices that the main agent
+   can execute sequentially or pass through the optional delegation gate.
 3. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
 4. Returns text using the `Plan` and `Tickets` sections defined by the skill
    contract.
 
 The skill is intentionally implementation-neutral. It uses repository context
-when available, but it does not implement code, add dependencies, recommend
-parallel implementation, or invent commands for unknown tooling.
+when available, but it does not implement code, add dependencies, force
+parallel implementation, or invent commands for unknown tooling. The parent
+workflow decides whether any Slice is delegated.
 
 ## Usage
 

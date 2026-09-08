@@ -11,7 +11,7 @@ The installer requires:
 Codex should be restarted after installation so the new skill directories are
 discovered.
 
-## Run code review
+## Run built-in code review
 
 The review gate uses the Codex CLI's built-in `codex review` command. Install
 and authenticate Codex before using it; no separate review skill is required.
@@ -25,6 +25,19 @@ codex review --commit SHA   # changes introduced by a commit
 
 See the [Codex CLI documentation](https://developers.openai.com/codex/cli/)
 for installation and authentication details.
+
+## Run the project-scoped reviewer
+
+The custom `.codex/agents/reviewer.toml` is invoked by an interactive Codex
+session, not by `codex review`. From the project root, start `codex` and enter:
+
+```text
+Use the project-scoped `reviewer` subagent to inspect the current integrated
+changes. Wait for its read-only result and return only actionable findings with
+file references.
+```
+
+The main agent receives the result and retains the final review judgment.
 
 ## Install the workflow
 
@@ -87,6 +100,20 @@ find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 
 The installer prints the number of installed and skipped skills. Restart Codex
 after checking the output.
+
+## Project-scoped subagent configuration
+
+This checkout also contains the optional project-scoped Codex configuration:
+
+- `.codex/config.toml` enables subagents and caps concurrent spawned-agent
+  threads at three, excluding the main thread.
+- `.codex/agents/reviewer.toml` defines a read-only reviewer for independent
+  checks of integrated changes.
+
+The installer copies managed skills only; it does not install or overwrite
+project-scoped `.codex/` files in another repository. Copy or adapt these files
+there only when that project has the same delegation boundaries and review
+needs.
 
 ## Installation behavior and trust boundary
 

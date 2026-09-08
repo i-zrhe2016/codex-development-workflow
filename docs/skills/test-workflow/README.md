@@ -2,7 +2,8 @@
 
 本目录迁移并维护 `test-workflow` specialist 的文档。运行时 skill 源码位于
 [`skills/test-workflow/`](../../../skills/test-workflow/)；它服务于本仓库的
-单 Agent Plan/Slice workflow，不负责拆分 Agent 或并行实现。
+主 Agent / Slice workflow；它负责验证委派或主线程执行的 Slice，但不负责
+决定是否拆分 Agent 或如何并行实现。
 
 核心入口是 `test-workflow`：从需求、Slice 功能清单和验收标准提炼最小高价值
 测试集，优先使用项目已有测试框架，按 `静态检查 -> focused tests ->

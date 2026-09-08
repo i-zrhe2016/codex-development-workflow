@@ -7,16 +7,16 @@ inside each Slice.
 ## Staged workflow
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice -> Execute
-           -> Next Slice? -> Integration tests -> Self review
+Requirement -> Classify -> Understand -> Plan -> Slice -> Delegate if useful
+           -> Execute/Test -> Next Slice? -> Integration tests -> Review
            -> State / Docs -> Redaction if needed -> Commit / Push
            -> Optional Deploy / Verify / Rollback
 ```
 
 - **Tiny:** use a concise plan and one implicit Slice.
 - **Normal:** plan the relevant area and execute one or more focused Slices.
-- **Complex:** use `plan-to-ticket` for dependency-ordered Slices and load only
-  the context required by the current Slice.
+- **Complex:** use `plan-to-ticket` for dependency-ordered Slices, evaluate the
+  delegation gate, and load only the context required by each Slice.
 
 For every Slice, define:
 
@@ -26,9 +26,28 @@ Relevant context/files, Test strategy, Test level, Test cases,
 Validation command
 ```
 
-Implement only one dependency-ready Slice at a time. If an implementation
-assumption is wrong, stop and return to Plan or split the Slice instead of
-growing the patch.
+Only start dependency-ready Slices. The main agent may execute a Slice itself
+or delegate independent Slices with disjoint ownership boundaries. If an
+implementation assumption is wrong, stop and return to Plan or split the
+Slice instead of growing the patch.
+
+## Optional delegation gate
+
+After `Plan -> Slice` and before `Execute/Test`, the main agent asks whether
+delegation materially improves speed, context isolation, or review quality. A
+single-agent execution remains the default.
+
+Delegate only a bounded, independently executable task. Good candidates are
+repository exploration, independent research, test or regression analysis, an
+isolated implementation Slice, and independent review. Keep dependent or
+overlapping work sequential; parallel write tasks must not touch the same
+files, interfaces, schemas, migrations, or shared configuration.
+
+Every delegated task includes its goal, scope and exclusions, ownership
+boundary, dependencies, acceptance criteria, validation, and expected result
+summary. Workers return findings, changes, test results, and unresolved risks,
+not raw logs. Prefer one delegation level and keep integration and final
+judgment with the main agent.
 
 ## Slice execution and verification
 
@@ -54,10 +73,16 @@ commands, result, evidence, and escalation reason.
 
 ## Review and recovery
 
-Review is a single-agent self-review of the integrated result, not a mandatory
-review step inside every Slice. Run integration/regression checks after all
-Slices, then review the final safe diff. A blocking finding requires an affected
-test rerun; repeat review when the fix materially changes behavior.
+Review is owned by the main agent and covers the integrated result, not every
+individual Slice. After integration/regression checks, the main agent may ask
+the read-only `reviewer` for an independent check, then reviews the final safe
+diff and makes the decision. A blocking finding requires an affected test
+rerun; repeat review when the fix materially changes behavior.
+
+`codex review --uncommitted` is the built-in diff-review path; it does not select
+the project-scoped custom reviewer. To use `.codex/agents/reviewer.toml`, ask an
+interactive Codex session from the project root to use the `reviewer` subagent
+and wait for its read-only findings before the main agent makes the decision.
 
 Read `docs/Repo_Current_State.md` at the start of planning and update it after
 meaningful verified work. Use it as a compact recovery point for current focus,

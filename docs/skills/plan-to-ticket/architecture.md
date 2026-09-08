@@ -3,8 +3,9 @@
 ## Scope
 
 This repository packages the `plan-to-ticket` specialist inside a larger
-single-agent workflow. Its job is to convert a change request into a compact
-plan and small engineering Slices. There is no runtime service, persistent
+main-agent workflow. Its job is to convert a change request into a compact
+plan and small engineering Slices with boundaries that can support optional
+delegation. There is no runtime service, persistent
 data store, external API, or deployment process in this package.
 
 ## Logical architecture
@@ -30,7 +31,9 @@ application infrastructure topology.
 2. Codex uses the frontmatter description in `SKILL.md` to determine whether this skill applies.
 3. The planning instructions use the available repository context and identify milestones, dependencies, scope boundaries, and verification.
 4. The output follows the contract in `SKILL.md`: a `Plan` section followed by focused `Tickets`/Slice sections.
-5. The same Codex agent uses the Slices as implementation input and executes them sequentially.
+5. The main agent uses the Slices as implementation input, either executing
+   them sequentially or passing independent, bounded work through the
+   workflow's delegation gate.
 
 ## Design boundaries
 
@@ -38,7 +41,8 @@ application infrastructure topology.
 - The interface metadata is kept separate from behavior so presentation changes do not alter planning semantics.
 - The skill does not prescribe a project framework, dependency, command, API shape, or deployment platform unless repository context establishes it.
 - Slice verification describes observable checks. It does not claim that implementation has already been completed.
-- The skill does not recommend multi-agent handoffs or parallel implementation.
+- The skill does not force multi-agent handoffs or parallel implementation; the
+  parent workflow decides whether an independent Slice is safe to delegate.
 
 ## Slice output contract
 
