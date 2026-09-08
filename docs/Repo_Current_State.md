@@ -3,25 +3,29 @@
 Last verified: 2026-09-08 @ working tree
 
 ## Current Focus
-- TDD-driven adaptive Codex development workflow.
+
+- Single-agent staged Codex workflow with Plan/Slice execution, bounded verification, and repository-managed specialist bundles.
 
 ## Implemented
-- The orchestrator selects tiny, normal, or complex paths instead of forcing tickets on every change.
-- Complex work uses dependency-ready Ticket Loops with function checklists, test cases, RED/GREEN feedback, and minimum-scope implementation.
-- Ordinary test failures are diagnosed directly; targeted `codex review` is reserved for repeated/unexplained failures, high-risk changes, or design conflicts.
-- One final review runs after integration tests, state/docs reconciliation, and any required redaction, before commit/push.
+
+- The workflow classifies work, understands the current repository, plans small Slices, executes one Slice at a time, integrates, self-reviews, and delivers.
+- Normal and complex Slices define scope, exclusions, dependencies, acceptance criteria, relevant context, test strategy, verification level, test cases, and validation commands.
+- Verification levels are `minimal`, `focused`, `regression`, and `full`; focused is the default and passing evidence stops expansion unless escalation is justified.
+- Test-first behavior is conditional on meaningful behavioral risk; non-behavioral changes use direct minimal validation.
+- The installer packages seven local skills from the root skill and `skills/`; specialist repositories are not cloned at install time.
+- `Repo_Current_State.md` is the compact recovery point; the architecture diagram and workflow documentation reflect the same lifecycle.
 
 ## Constraints
+
 - Code review requires an installed and authenticated Codex CLI.
-- Specialist test behavior remains owned by the relevant test skill.
-- Installation follows specialist repositories' default branches rather than pinned commits.
+- Specialist behavior is bundled under `skills/` and installed from this repository's local source.
+- `context-efficiency` remains an optional context-loading aid, not a workflow stage.
+- The workflow does not orchestrate multiple agents, sub-agents, parallel implementations, or agent handoffs.
+- `scripts/install-all.sh` requires a complete checkout and copies local bundles; it does not clone specialist repositories.
 
 ## Architecture Snapshot
-- `SKILL.md` owns task classification, orchestration, Ticket Loop policy, review escalation, and completion gates.
-- `plan-to-ticket` owns ticket generation; relevant test skills own test procedures.
-- `repo-current-state`, `data-document-redaction`, and `github-push-when-ready` remain conditional specialist gates.
-- See `docs/architecture/overview.md` and `docs/diagrams/architecture.puml` for the workflow topology.
 
-## Next
-- Update `plan-to-ticket` so generated tickets consistently expose function checklists and test cases.
-- Update relevant test skills for explicit RED/GREEN behavior where appropriate.
+- `SKILL.md` owns single-agent stage routing, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
+- `plan-to-ticket` owns Slice generation; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
+- `repo-current-state`, `data-document-redaction`, and `github-push-when-ready` remain conditional gates.
+- See `docs/architecture/overview.md` and `docs/diagrams/architecture.puml` for the workflow topology.

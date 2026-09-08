@@ -1,35 +1,50 @@
 # Codex Development Workflow
 
-An adaptive, test-driven Codex development workflow built from GitHub-hosted skills.
+An adaptive, single-agent staged Codex development workflow with all required
+specialist skills managed in this repository.
 
 ```text
-Tiny:    Implement -> Test
-Normal:  Plan -> Implement -> Test
-Complex: Plan/Tickets -> TDD Ticket Loop -> Integration Test
-
-All paths -> State/Docs if needed -> Redaction if needed -> Final Review -> Commit/Push
+Requirement -> Classify -> Understand -> Plan -> Slice -> Execute
+           -> Next Slice? -> Integration -> Self Review -> State / Docs
+           -> Redaction if needed -> Commit / Push
 ```
 
-Complex tickets carry a function checklist, acceptance criteria, test cases, dependencies, and validation. Tests are the primary development feedback loop; targeted code review is used when failures are repeated/unexplained or risk is high, followed by one final review before commit/push.
+The macro workflow controls architecture and scope. Each Slice carries its own
+acceptance criteria, relevant context, test strategy, and validation command.
+TDD is used inside a Slice when the change is behavioral and a meaningful
+failing test provides useful evidence; it is not forced on documentation,
+configuration, styling, dependency, typo, or exploratory work.
+
+Verification is bounded by an explicit level (`minimal`, `focused`,
+`regression`, or `full`). The default is focused validation, and a passing
+level stops the test expansion unless evidence or an explicit requirement
+justifies escalation. The workflow uses one Codex agent and does not
+orchestrate multi-agent or parallel implementation.
 
 ## Architecture
 
 ![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
-See the [architecture overview](docs/architecture/overview.md) for task classification, TDD Ticket Loops, review escalation, redaction, and package boundaries.
+See the [architecture overview](docs/architecture/overview.md) for task
+classification, Slice execution, bounded verification, review escalation,
+recovery state, redaction, and package boundaries.
 
-## One-command install
+## Install from this repository
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash
+git clone https://github.com/i-zrhe2016/codex-development-workflow.git
+cd codex-development-workflow
+bash scripts/install-all.sh
 ```
 
-This installs all workflow skills into `${CODEX_HOME:-$HOME/.codex}/skills`.
+The installer copies the local bundles under `skills/`; it does not clone
+specialist repositories. This installs all workflow skills into
+`${CODEX_HOME:-$HOME/.codex}/skills`.
 
 Update existing installations:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash -s -- --update
+bash scripts/install-all.sh --update
 ```
 
 Restart Codex after installation.
@@ -39,12 +54,13 @@ Restart Codex after installation.
 - `codex-development-workflow`
 - `context-efficiency`
 - `plan-to-ticket`
-- `frontend-click-test`
+- `test-workflow`
 - `repo-current-state`
 - `data-document-redaction`
 - `github-push-when-ready`
 
-Code review uses the Codex CLI built-in `codex review`; no separate review skill is required.
+Review uses the Codex CLI built-in `codex review`; it is a final self-review of
+the integrated diff, not a separate agent workflow.
 
 ```bash
 codex review --uncommitted
@@ -58,4 +74,4 @@ Use `--base BRANCH` or `--commit SHA` when a specific comparison is required.
 - [Installation and update guide](docs/deployment/installation.md)
 - [Workflow usage guide](docs/workflow/usage.md)
 - [Redaction workflow](docs/workflow/redaction.md)
-- [Skill source map](references/skill-map.md)
+- [Managed skill source map](references/skill-map.md)

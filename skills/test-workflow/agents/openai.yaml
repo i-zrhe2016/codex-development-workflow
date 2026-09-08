@@ -1,0 +1,6 @@
+interface:
+  display_name: "Test Workflow"
+  short_description: "Run focused TDD, integration, regression, and browser validation"
+  default_prompt: "Use $test-workflow to derive the smallest useful test plan from the requirement or ticket, run focused checks first, use RED/GREEN when appropriate, and broaden to integration or browser validation only when needed."
+policy:
+  allow_implicit_invocation: true

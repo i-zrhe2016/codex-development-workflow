@@ -10,85 +10,87 @@ skinparam state {
   FontColor #1A202C
 }
 
-title Codex Development Workflow - Adaptive TDD Process
+title Codex Development Workflow - Single-Agent Staged Process
 
-state "Classify task\nTiny / Normal / Complex" as classify_task
-state "Understand + Minimal design\n[context-efficiency when needed]" as context
-state "Plan / Tickets\n[plan-to-ticket]\nfunction checklist + tests\n+ dependencies + validation" as plan
-state "Pick one ready ticket" as ticket
-state "Tests / Spec\nconfirm RED when meaningful" as red
-state "Implement minimum change" as implement
-state "Relevant checks\n[test-workflow]" as tests
-state "GREEN?" as green_gate #FFF4CC
-state "Failure clear?" as failure_gate #FFF4CC
-state "Fix code/test" as fix
-state "Targeted review\n[codex review]\nrepeated / unexplained / risky" as targeted_review
-state "Design conflict?" as design_gate #FFF4CC
-state "Re-plan / split ticket" as replan
-state "More tickets?" as more_gate #FFF4CC
-state "Integration / regression checks\n[test-workflow]" as integration
-state "Repo State / Docs\n[repo-current-state]\nonly if important state changed" as repo_state
+state "Requirement" as requirement
+state "Classify task\nTiny / Normal / Complex" as classify
+state "Understand\nCurrent Repo" as context
+state "Plan\narchitecture + scope" as plan
+state "Define one Slice\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
+
+state "Slice Execution Loop" as execute {
+  state "Acceptance criteria" as acceptance
+  state "Test strategy + level\nminimal / focused / regression / full" as strategy
+  state "Behavior change?" as behavior
+  state "Test first\nwhen meaningful" as test_first
+  state "Minimal change" as implement
+  state "Focused validation\n[test-workflow]" as tests
+  state "Fix / Refactor" as fix
+  state "Slice complete" as complete
+
+  acceptance --> strategy
+  strategy --> behavior
+  behavior --> test_first : yes
+  behavior --> implement : no
+  test_first --> implement
+  implement --> tests
+  tests --> complete : pass / stop
+  tests --> fix : fail
+  fix --> tests
+}
+
+state "More slices?" as more #FFF4CC
+state "Integration / regression tests\n[test-workflow]" as integration
+state "Self review\n[codex review]" as review
+state "Blocking problem?" as blocking #FFF4CC
+state "Re-plan / Fix" as replan
+state "State / Docs\n[repo-current-state]" as state_docs
 state "Classify outputs" as classify_outputs
-state "Potentially sensitive?" as sensitive_gate #FFF4CC
+state "Potentially sensitive?" as sensitive #FFF4CC
 state "Redaction\n[data-document-redaction]" as redaction
 state "Redaction pass?" as redaction_gate #FFF4CC
-state "Final review\n[codex review]\nfinal safe diff" as final_review
-state "Blocking finding?" as final_gate #FFF4CC
 state "Commit / Push\n[github-push-when-ready]" as publish
 state "Blocked" as blocked #FDECEC
 
-[*] --> classify_task
-classify_task --> implement : tiny / normal after minimal plan
-classify_task --> context : complex
+[*] --> requirement
+requirement --> classify
+classify --> context
 context --> plan
-plan --> ticket
-ticket --> red
-red --> implement
-implement --> tests
-tests --> green_gate
-green_gate --> more_gate : yes
-green_gate --> failure_gate : no
-failure_gate --> fix : yes
-fix --> tests
-failure_gate --> targeted_review : no / repeated or unclear
-targeted_review --> design_gate
-design_gate --> replan : yes
-design_gate --> fix : no
-replan --> plan
-more_gate --> ticket : yes
-more_gate --> integration : no
-integration --> repo_state
-repo_state --> classify_outputs
-classify_outputs --> sensitive_gate
-sensitive_gate --> redaction : yes
-sensitive_gate --> final_review : no
+plan --> slice
+slice --> execute
+execute --> more
+more --> slice : yes
+more --> integration : no
+integration --> review
+review --> blocking
+blocking --> replan : problem
+blocking --> state_docs : pass
+replan --> plan : design / scope issue
+replan --> integration : local fix
+state_docs --> classify_outputs
+classify_outputs --> sensitive
+sensitive --> redaction : yes
+sensitive --> publish : no
 redaction --> redaction_gate
-redaction_gate --> final_review : pass
+redaction_gate --> publish : pass
 redaction_gate --> blocked : needs_review / blocked
-final_review --> final_gate
-final_gate --> publish : no
-final_gate --> fix : yes / fix + affected tests
 publish --> [*]
 
-note right of green_gate
-Tests are the normal inner-loop signal.
-A failure does not automatically trigger review.
+note right of execute
+TDD is a conditional test strategy inside a Slice.
+Use the smallest verification set that gives enough evidence.
+Stop after the selected level passes unless escalation is justified.
 end note
 
-note right of targeted_review
-Escalate review only for repeated or
-unexplained failures, unclear root cause,
-high risk, or architecture conflict.
+note right of state_docs
+Repo_Current_State.md is the compact recovery point
+for current focus, verified behavior, failures, and next Slice.
 end note
 
-note right of sensitive_gate
-Classify before staging/commit and before
-any separate sharing or publication boundary.
-end note
-
-note left of classify_task
-Use the lightest workflow
-that preserves correctness.
+note left of requirement
+One Codex agent only.
+No multi-agent orchestration,
+sub-agents, or parallel implementation.
 end note
 
 @enduml
