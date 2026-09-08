@@ -5,8 +5,9 @@
 This repository packages the `plan-to-ticket` specialist inside a larger
 main-agent workflow. Its job is to convert a change request into a compact
 plan and small engineering Slices with boundaries that can support optional
-delegation. There is no runtime service, persistent
-data store, external API, or deployment process in this package.
+delegation, then persist the plan and tickets to GitHub Issues. There is no
+application runtime, custom API client, or local ticket database in this
+package; GitHub Issues are the workflow's external durable store.
 
 ## Logical architecture
 
@@ -21,8 +22,9 @@ application infrastructure topology.
 
 | Asset | Responsibility | Boundary |
 | --- | --- | --- |
-| [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines trigger metadata, planning rules, Slice structure, scope constraints, and verification expectations. | It produces planning text; it does not implement the planned change. |
+| [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines trigger metadata, planning rules, Issue persistence contract, Slice structure, scope constraints, and verification expectations. | It plans and persists Issue records; it does not implement the planned change. |
 | [`skills/plan-to-ticket/agents/openai.yaml`](../../../skills/plan-to-ticket/agents/openai.yaml) | Supplies the display name and short interface description. | It describes the skill in the interface; it does not define planning behavior. |
+| GitHub Issues connector | Creates, finds, and updates the parent plan Issue and one Issue per ticket. | It is the external durable authority; no local Markdown mirror is maintained. |
 | This documentation package | Explains the bundle structure, behavior, output contract, and maintenance expectations. | Documentation does not add executable behavior. |
 
 ## Request flow
@@ -30,8 +32,9 @@ application infrastructure topology.
 1. A requestor provides a feature idea, requirement, bug-fix plan, refactor plan, or similar project change.
 2. Codex uses the frontmatter description in `SKILL.md` to determine whether this skill applies.
 3. The planning instructions use the available repository context and identify milestones, dependencies, scope boundaries, and verification.
-4. The output follows the contract in `SKILL.md`: a `Plan` section followed by focused `Tickets`/Slice sections.
-5. The main agent uses the Slices as implementation input, either executing
+4. The skill resolves the repository's GitHub target, searches stable markers, and creates or updates the parent plan Issue and ticket Issues before implementation branches start.
+5. The successful output follows the contract in `SKILL.md`: a `Plan` section followed by focused `Tickets`/Slice sections containing canonical Issue links.
+6. The main agent uses the Slices as implementation input, either executing
    them sequentially or passing independent, bounded work through the
    workflow's delegation gate.
 
@@ -39,8 +42,9 @@ application infrastructure topology.
 
 - The skill is a single cohesive module because its trigger, planning rules, and output format are tightly coupled.
 - The interface metadata is kept separate from behavior so presentation changes do not alter planning semantics.
-- The skill does not prescribe a project framework, dependency, command, API shape, or deployment platform unless repository context establishes it.
+- The skill does not prescribe a project framework, dependency, command, or deployment platform unless repository context establishes it. It requires the available GitHub Issues connector for persistence but does not implement a custom API client.
 - Slice verification describes observable checks. It does not claim that implementation has already been completed.
+- A required GitHub Issue failure blocks completion; chat output and local Markdown are not persistence fallbacks.
 - The skill does not force multi-agent handoffs or parallel implementation; the
   parent workflow decides whether an independent Slice is safe to delegate.
 

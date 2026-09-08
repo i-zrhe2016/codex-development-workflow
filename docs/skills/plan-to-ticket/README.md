@@ -4,12 +4,13 @@
 turns a feature idea, requirement, bug-fix plan, refactor plan, or other
 project change into a concise implementation plan and small,
 dependency-ordered Slices (tickets) with clear boundaries for optional
-delegation.
+delegation, then persists the plan and tickets to GitHub Issues.
 
 The executable skill source is maintained at
 [`skills/plan-to-ticket/`](../../../skills/plan-to-ticket/). This document and
 its diagrams are the migrated documentation for that local bundle; they do not
-describe an application runtime, API, database, or deployment service.
+describe an application runtime or a custom API/database service. GitHub Issues
+are the external durable store used by the planning workflow.
 
 ## Architecture
 
@@ -28,20 +29,27 @@ When the skill is selected for a planning request, it:
    can execute sequentially or pass through the optional delegation gate.
 3. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
-4. Returns text using the `Plan` and `Tickets` sections defined by the skill
-   contract.
+4. Creates or updates one parent plan Issue and one Issue per ticket before
+   implementation branches start, reusing stable markers to avoid duplicates.
+5. Returns the `Plan` and `Tickets` sections defined by the skill contract,
+   including canonical Issue links and current execution metadata.
 
 The skill is intentionally implementation-neutral. It uses repository context
-when available, but it does not implement code, add dependencies, force
-parallel implementation, or invent commands for unknown tooling. The parent
-workflow decides whether any Slice is delegated.
+and requires the available GitHub Issues connector for persistence, but it does
+not implement code, add dependencies, force parallel implementation, or invent
+commands for unknown tooling. The parent workflow decides whether any Slice is
+delegated. A required GitHub read/write failure blocks completion; the skill
+does not fall back to local Markdown or chat-only storage.
 
 ## Usage
 
 Make the skill available in a Codex skills environment, then provide a change
-request or implementation idea. The frontmatter description in `SKILL.md` is
-used for skill selection. The response should contain only a plan and
-execution-ready Slices/tickets.
+request or implementation idea in a repository with a resolvable GitHub
+remote. The frontmatter description in `SKILL.md` is used for skill selection.
+The skill creates/updates the parent plan Issue and ticket Issues before
+returning a successful plan with execution-ready Slices/tickets. If the
+connector or required permission is unavailable, the result is blocked rather
+than an unpersisted plan.
 
 For repository-aware planning, include the relevant repository in the working
 context. The skill will reuse existing architecture and conventions where they
@@ -71,6 +79,6 @@ are documented and available.
 ## Maintenance
 
 Keep changes scoped to the skill's planning behavior or its supporting
-documentation. When the output contract changes, update
+documentation. When the persistence or output contract changes, update
 `skills/plan-to-ticket/SKILL.md` and this documentation together. Keep
 `agents/openai.yaml` limited to interface metadata rather than behavior.

@@ -4,7 +4,8 @@ An adaptive, main-agent-led Codex development workflow with optional bounded
 delegation and all required specialist skills managed in this repository.
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice -> Delegate if useful
+Requirement -> Classify -> Understand -> Plan -> Slice
+           -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Execute/Test -> Next Slice? -> Integration -> Review
            -> State / Docs
            -> Redaction if needed -> Commit / Push
@@ -75,6 +76,11 @@ Restart Codex after installation.
 - `data-document-redaction`
 - `github-push-when-ready`
 - `auto-deploy`
+
+`plan-to-ticket` persists every generated plan and ticket to GitHub Issues
+before implementation branches start. GitHub Issues are the sole durable
+ticket authority; chat output and `Repo_Current_State.md` provide links and
+recovery context, not a parallel backlog.
 
 ## Skill documentation
 

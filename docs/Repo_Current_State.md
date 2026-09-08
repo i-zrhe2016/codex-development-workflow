@@ -4,7 +4,7 @@ Last verified: 2026-09-08 @ working tree
 
 ## Current Focus
 
-- Main-agent-led staged Codex workflow with optional bounded delegation after Plan/Slice, bounded verification, and repository-managed specialist bundles.
+- [Plan #9](https://github.com/i-zrhe2016/codex-development-workflow/issues/9): make GitHub Issues the mandatory durable authority for plans and tickets; finish T0001/T0002 on the stacked feature branches.
 
 ## Implemented
 
@@ -19,7 +19,12 @@ Last verified: 2026-09-08 @ working tree
 - `auto-deploy` defines a provider-neutral deployment contract with immutable artifacts, bounded health verification, least-privilege credentials, and authorized rollback handling.
 - Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides an optional read-only integrated-change reviewer.
 - Built-in `codex review` and the project-scoped `reviewer` are documented as separate review paths; the latter is explicitly requested from an interactive Codex session.
-- `Repo_Current_State.md` is the compact recovery point; the architecture diagram and workflow documentation reflect the same lifecycle.
+- `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
+
+## In Progress
+
+- [T0001 / Issue #10](https://github.com/i-zrhe2016/codex-development-workflow/issues/10) is in progress on `feature/t0001-github-issues-persistence`; the core `plan-to-ticket` persistence contract is committed as `56d1ed3`, with no PR opened yet.
+- [T0002 / Issue #11](https://github.com/i-zrhe2016/codex-development-workflow/issues/11) is in progress on `feature/t0002-issues-authority-docs`; supporting workflow, state, documentation, and diagram updates are present in the working tree.
 
 ## Constraints
 
@@ -28,12 +33,18 @@ Last verified: 2026-09-08 @ working tree
 - `context-efficiency` remains an optional context-loading aid, not a workflow stage.
 - Delegation is optional; dependent, overlapping, or shared-interface work remains sequential, and integration/final judgment stay with the main agent.
 - `scripts/install-all.sh` requires a complete checkout and copies local bundles; it does not clone specialist repositories.
+- Persisted plans and tickets require a resolvable GitHub repository target and an available, authorized GitHub Issues connector; failed required writes block completion without a Markdown fallback.
 
 ## Architecture Snapshot
 
 - `SKILL.md` owns main-agent stage routing, the optional Delegation Gate, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
-- `plan-to-ticket` owns dependency-ordered Slice generation; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
+- `plan-to-ticket` owns dependency-ordered Slice generation and mandatory GitHub Issue persistence; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
 - `docs/skills/` contains explanatory documentation for every managed specialist skill; operational references and scripts remain beside the runtime bundles under `skills/`.
 - `repo-current-state`, `data-document-redaction`, and `github-push-when-ready` remain conditional gates.
 - `auto-deploy` is a conditional deployment gate and does not own target-project infrastructure or production approvals.
+- The parent workflow and `repo-current-state` use GitHub Issues as the durable ticket authority; this file only points to active and next Issues. See `docs/workflow/usage.md` and `docs/skills/plan-to-ticket/architecture.md`.
 - See `docs/architecture/overview.md` and `docs/diagrams/architecture.puml` for the workflow topology.
+
+## Next
+
+- Open a review PR for [T0001 / Issue #10](https://github.com/i-zrhe2016/codex-development-workflow/issues/10), then review the stacked [T0002 / Issue #11](https://github.com/i-zrhe2016/codex-development-workflow/issues/11) branch before merging and closing the Issues.
