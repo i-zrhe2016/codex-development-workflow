@@ -8,6 +8,12 @@ from pathlib import Path
 
 from github_about import ensure_github_about
 from git_push_utils import AUTO_PUSH_SKIP_ENV, GitError, assess_repo, run_git_or_raise
+from publish_identity import (
+    ensure_git_identity,
+    github_push_environment,
+    load_publish_identity,
+    verify_unpublished_commit_identities,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,6 +60,15 @@ def main() -> int:
         return 0
 
     try:
+        identity = load_publish_identity(repo)
+        ensure_git_identity(repo, identity)
+        verify_unpublished_commit_identities(
+            repo,
+            identity,
+            upstream=str(upstream) if upstream else None,
+            remote=str(remote),
+        )
+
         about = ensure_github_about(repo, str(remote))
         if not about.ok:
             emit(f"auto-push skipped: GitHub About check failed: {about.message}", args.quiet)
@@ -61,10 +76,18 @@ def main() -> int:
         if about.changed:
             emit(f"GitHub About updated: {about.description}", args.quiet)
 
-        if upstream:
-            run_git_or_raise(repo, "push")
-        else:
-            run_git_or_raise(repo, "push", "-u", str(remote), str(branch))
+        with github_push_environment(repo, str(remote), identity) as push_env:
+            if upstream:
+                run_git_or_raise(repo, "push", env=push_env)
+            else:
+                run_git_or_raise(
+                    repo,
+                    "push",
+                    "-u",
+                    str(remote),
+                    str(branch),
+                    env=push_env,
+                )
     except GitError as error:
         print(f"auto-push failed: {error}")
         return 1

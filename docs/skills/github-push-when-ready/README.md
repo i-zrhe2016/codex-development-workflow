@@ -12,6 +12,8 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - Inspect the branch, remote, diff, and repository checks before publishing.
 - Keep one coherent feature or fix per commit.
 - Use a Conventional Commit message with the correct scope and intent.
+- For this repository, configure the local identity `i-zrhe2016 <zrhe2016@gmail.com>` and GitHub account `i-zrhe2016`; other target repositories must configure their own non-root identity.
+- The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.
 - Check GitHub repository metadata when the task includes publishing or a pull
@@ -34,6 +36,7 @@ commits.
 | [`github_about.py`](../../../skills/github-push-when-ready/scripts/github_about.py) | Check or update GitHub About metadata |
 | [`git_push_utils.py`](../../../skills/github-push-when-ready/scripts/git_push_utils.py) | Shared readiness and Git helpers |
 | [`install_post_commit_hook.py`](../../../skills/github-push-when-ready/scripts/install_post_commit_hook.py) | Install guarded commit/push hooks |
+| [`publish_identity.py`](../../../skills/github-push-when-ready/scripts/publish_identity.py) | Enforce repository and GitHub publication identity |
 | [`push_if_ready.py`](../../../skills/github-push-when-ready/scripts/push_if_ready.py) | Push after readiness checks |
 
 For example, a local readiness assessment can be run with:
