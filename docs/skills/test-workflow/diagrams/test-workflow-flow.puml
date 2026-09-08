@@ -1,0 +1,56 @@
+@startuml
+!theme plain
+
+title test-workflow — 通用测试验证梯度
+hide footbox
+
+actor "开发者 / Codex" as author
+participant "需求 / Slice" as requirement
+participant "test-workflow\n测试编排" as workflow
+participant "静态检查\n类型 / Lint / Schema" as static
+participant "Focused tests\n单元 / 组件 / API" as focused
+participant "Integration /\nAffected regression" as integration
+participant "Browser / E2E\n按需启用" as browser
+participant "证据与\nMarkdown 报告" as report
+
+author -> requirement : 提供需求、验收标准、实际改动
+requirement -> workflow : 提炼验收点与测试清单
+
+alt 复杂 / 高风险行为
+  workflow -> focused : RED：确认缺失行为
+  focused --> workflow : 失败原因或已有行为
+else 微小 / 普通变更
+  workflow -> workflow : 选择最小相关检查
+end
+
+workflow -> static : 运行静态检查
+static --> workflow : 通过 / 失败证据
+alt 静态检查失败
+  workflow -> workflow : 分类失败并停止扩大范围
+else 静态检查通过
+  workflow -> focused : 运行 focused tests
+  focused --> workflow : 通过 / 失败证据
+  alt focused tests 失败
+    workflow -> workflow : 分类根因并按需处理
+    workflow -> static : 修复后重跑相关检查
+    static --> workflow : 新证据
+    workflow -> focused : 复测原失败点
+  else focused tests 通过
+    workflow -> integration : 运行受影响的集成 / 回归
+    integration --> workflow : 通过 / 失败证据
+  end
+end
+
+opt 浏览器可见行为或明确要求 E2E
+  workflow -> browser : 从已知状态执行最小用户流程
+  browser --> workflow : 页面状态与失败证据
+end
+
+workflow -> report : 汇总验收覆盖、实际结果与证据
+report --> author : pass / partial / fail / blocked
+
+note over workflow
+  优先最低成本、可靠的测试层
+  不用放宽断言、盲目重试或固定 sleep 制造通过
+end note
+@enduml

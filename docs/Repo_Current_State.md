@@ -13,6 +13,7 @@ Last verified: 2026-09-08 @ working tree
 - Verification levels are `minimal`, `focused`, `regression`, and `full`; focused is the default and passing evidence stops expansion unless escalation is justified.
 - Test-first behavior is conditional on meaningful behavioral risk; non-behavioral changes use direct minimal validation.
 - The installer packages seven local skills from the root skill and `skills/`; specialist repositories are not cloned at install time.
+- Specialist documentation for all six managed specialist skills (`plan-to-ticket`, `test-workflow`, `repo-current-state`, `context-efficiency`, `data-document-redaction`, and `github-push-when-ready`) is grouped under `docs/skills/`; committed diagram sources and renderings are retained where applicable.
 - `Repo_Current_State.md` is the compact recovery point; the architecture diagram and workflow documentation reflect the same lifecycle.
 
 ## Constraints
@@ -27,5 +28,6 @@ Last verified: 2026-09-08 @ working tree
 
 - `SKILL.md` owns single-agent stage routing, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
 - `plan-to-ticket` owns Slice generation; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
+- `docs/skills/` contains explanatory documentation for every managed specialist skill; operational references and scripts remain beside the runtime bundles under `skills/`.
 - `repo-current-state`, `data-document-redaction`, and `github-push-when-ready` remain conditional gates.
 - See `docs/architecture/overview.md` and `docs/diagrams/architecture.puml` for the workflow topology.
