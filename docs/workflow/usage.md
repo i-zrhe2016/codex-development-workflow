@@ -10,6 +10,7 @@ inside each Slice.
 Requirement -> Classify -> Understand -> Plan -> Slice -> Execute
            -> Next Slice? -> Integration tests -> Self review
            -> State / Docs -> Redaction if needed -> Commit / Push
+           -> Optional Deploy / Verify / Rollback
 ```
 
 - **Tiny:** use a concise plan and one implicit Slice.
@@ -80,7 +81,7 @@ reason. Otherwise invoke `data-document-redaction` and follow
 
 ## Completion order
 
-`Integration tests -> Self review -> Repo state/docs if needed -> Output classification -> Redaction if needed -> Commit/Push`
+`Integration tests -> Self review -> Repo state/docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

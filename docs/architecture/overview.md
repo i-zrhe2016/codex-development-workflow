@@ -36,6 +36,7 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 Requirement -> Classify -> Understand -> Plan -> Slice -> Execute
            -> Next Slice? -> Integration -> Self Review -> State / Docs
            -> Redaction -> Commit / Push
+           -> Optional Deploy / Verify / Rollback
 ```
 
 - Tiny work uses a concise plan and one implicit Slice.
@@ -76,7 +77,7 @@ After all Slices pass their selected checks, run integration/regression tests
 and perform one self-review of the integrated diff. Blocking findings require
 affected test reruns and, when behavior materially changes, another review.
 
-`Integration tests -> Self review -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push`
+`Integration tests -> Self review -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
 
 Review uses the Codex CLI built-in `codex review`; it is a final quality gate,
 not a replacement for tests, diagnostics, linting, or static analysis.

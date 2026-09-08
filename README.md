@@ -7,6 +7,7 @@ specialist skills managed in this repository.
 Requirement -> Classify -> Understand -> Plan -> Slice -> Execute
            -> Next Slice? -> Integration -> Self Review -> State / Docs
            -> Redaction if needed -> Commit / Push
+           -> Optional Deploy / Verify / Rollback
 ```
 
 The macro workflow controls architecture and scope. Each Slice carries its own
