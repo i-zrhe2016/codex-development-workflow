@@ -1,6 +1,6 @@
 ---
 name: plan-to-ticket
-description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into a concise implementation plan and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Use for complex or multi-step work that benefits from execution-ready Slices. Each behavior Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance. Output text only and do not implement code.
+description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into a concise implementation plan and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Use for complex or multi-step work that benefits from execution-ready Slices. Persist every generated plan and ticket to GitHub Issues before implementation branches start; each behavior Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
 ---
 
 # Plan to Ticket
@@ -13,11 +13,42 @@ Create tickets only when they reduce implementation complexity more than they ad
 
 Do not ticket trivial work that can be implemented and verified in one focused pass.
 
+When this skill creates a plan or ticket, GitHub Issues are the mandatory
+durable store. Persistence is not an optional output mode. Chat output is only
+a convenience copy containing links to the Issues; it is never the source of
+truth. The core principle still decides whether ticketing is warranted; once
+this skill creates tickets, Issue persistence is required.
+
 ## Rules
 
-- Output text only.
-- Do not implement code.
+- Do not treat text-only output as completion.
+- Do not implement the planned product or repository code.
 - Do not call tools unless repository context is explicitly available and needed.
+- For persisted planning, use the available GitHub Issues connector and the
+  current repository's `owner/name` from its remote. If the repository target,
+  connector, authentication, or write permission is unavailable, stop with a
+  blocked result. Do not fall back to chat-only output, local Markdown plans,
+  `docs/plans/`, `docs/tickets/`, or an unapproved ad-hoc API client.
+- Before creating anything, search for the plan marker and each ticket ID in
+  the target repository. Reuse and update one existing matching Issue; do not
+  create duplicates. If more than one candidate matches, stop and request
+  resolution.
+- Create or update the parent plan Issue and all initial ticket Issues before
+  creating implementation branches. Use the repository's default branch as
+  the base unless the request explicitly establishes another base.
+- Create one GitHub Issue per behavior ticket. Every ticket Issue must retain
+  its goal, scope, dependencies, acceptance criteria, validation, and the
+  execution metadata block defined below.
+- Update the same ticket Issue as work progresses. The allowed status values
+  are `planned`, `in_progress`, `blocked`, `in_review`, and `done`.
+- `planned`, `in_progress`, `blocked`, and `in_review` Issues remain open.
+  Set `done` and close the Issue only after its pull request is verified
+  merged; never mark a ticket done merely because its branch or PR exists.
+- Keep branch, base, dependency, and PR references current in the ticket
+  Issue. Use `PR: null` until a pull request exists, then record its canonical
+  URL or number.
+- Keep `docs/Repo_Current_State.md` as a compact pointer to the active Issue
+  when repository state is updated; do not copy the plan or backlog into it.
 - Keep tickets small, focused, independently understandable, and independently verifiable.
 - Prefer one behavior or capability per ticket, not one file or one coding step per ticket.
 - Keep tests with the behavior they validate; do not create separate "write tests" tickets unless test infrastructure itself is the deliverable.
@@ -29,6 +60,76 @@ Do not ticket trivial work that can be implemented and verified in one focused p
 - If repository context exists, respect its architecture, conventions, constraints, and current state.
 - If exact commands or implementation details are unknown, describe validation behavior instead of inventing commands.
 - Do not prescribe strict RED/GREEN for trivial or mechanically verifiable changes. Let the downstream testing workflow choose the appropriate test mode.
+
+## GitHub Issues persistence contract
+
+Use a parent plan Issue for the overall plan and ticket index, plus one child
+Issue for each ticket. The parent Issue contains the overall milestones and
+links to child Issues; it must not duplicate mutable ticket status or progress
+fields. The child Issue is the authoritative record for that ticket's current
+metadata and acceptance state. Comments may hold append-only progress evidence,
+but they do not replace the structured fields in the Issue body.
+
+Use stable markers so retries and later sessions can find the same records:
+
+```text
+<!-- codex-plan-id: <stable-plan-slug> -->
+<!-- codex-ticket-id: T0001 -->
+```
+
+The parent plan Issue should contain:
+
+- the stable plan marker;
+- the overall goal and milestones;
+- a ticket index linking each ticket ID to its GitHub Issue; and
+- the dependency order and completion rule.
+
+Each ticket Issue should begin with this metadata block, replacing values with
+the actual ticket data:
+
+```yaml
+Status: planned
+Branch: feature/t0001-short-description
+Base: main
+Dependencies: []
+PR: null
+```
+
+The rest of the Issue body uses the ticket structure in this skill, including
+Goal, Dependencies, Scope, Out of scope, Function Checklist, Requirements,
+Non-goals, Acceptance Criteria, Test Cases, Relevant Context / Files, Test
+Strategy, Test Level, and Validation Command. Keep the body current when a
+branch, dependency, acceptance boundary, or PR changes.
+
+Persist in this order:
+
+1. Resolve the target repository and base branch.
+2. Generate the plan and dependency-ordered tickets in memory.
+3. Search for the stable plan/ticket markers and resolve any existing Issues.
+4. Create or update the parent plan Issue.
+5. Create or update every initial ticket Issue sequentially, preserving the
+   required metadata and linking dependencies to Issue numbers or URLs.
+6. Update the parent ticket index with the resulting Issue links.
+7. Only after all required writes succeed, return the plan/ticket links and
+   allow implementation branches to start.
+
+If a write fails after some Issues were created, report the created Issue URLs
+and the failed operation, mark the affected Issue `blocked` when that update is
+still possible, and do not claim the plan is persisted or ready for
+implementation. Never create a local mirror to compensate for a failed write.
+
+During implementation, update the ticket Issue on its own branch at these
+boundaries:
+
+- branch work starts: `Status: in_progress`;
+- a blocking dependency or environment problem appears: `Status: blocked`;
+- a pull request is opened: `Status: in_review` and set `PR`;
+- the pull request is merged: `Status: done`, close the Issue, and retain the
+  merged PR reference.
+
+Do not start a dependency-blocked ticket merely to fill its branch field. A
+dependent ticket becomes ready only when its dependencies are complete or the
+main workflow explicitly re-plans the dependency.
 
 ## Planning Process
 
@@ -211,9 +312,13 @@ Do not pre-split speculative edge cases before evidence shows they need independ
 
 ## Output Format
 
-Always use this structure.
+After the persistence contract succeeds, use this structure. Include the
+canonical parent plan Issue URL and the canonical Issue URL for every ticket;
+these links are the durable handoff for later sessions and agents.
 
 # Plan
+
+Parent Issue: <Canonical GitHub plan Issue URL>
 
 1. <Milestone>
 2. <Milestone>
@@ -222,6 +327,18 @@ Always use this structure.
 # Tickets
 
 ### T0001 - <Short behavior/capability title>
+
+**Issue**
+
+<Canonical GitHub Issue URL>
+
+```yaml
+Status: planned
+Branch: feature/t0001-short-description
+Base: main
+Dependencies: []
+PR: null
+```
 
 **Goal**
 
@@ -301,4 +418,9 @@ Do not require these files to exist. Keep tickets implementation-neutral when re
 
 ## Final Output Constraint
 
-Return only the Plan and Tickets sections. Do not add commentary, explanations, code, or implementation after the tickets.
+On successful persistence, return only the Plan and Tickets sections, with the
+Issue URLs and current metadata included. Do not add commentary, explanations,
+code, or implementation after the tickets. If any required GitHub Issue read or
+write fails, return only a concise blocked report naming the failed operation
+and any Issue URLs already created; do not return a chat-only plan or claim that
+the tickets are ready for implementation.
