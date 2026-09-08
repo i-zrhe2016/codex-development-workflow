@@ -14,6 +14,7 @@ Last verified: 2026-09-08 @ working tree
 - Test-first behavior is conditional on meaningful behavioral risk; non-behavioral changes use direct minimal validation.
 - The installer packages seven local skills from the root skill and `skills/`; specialist repositories are not cloned at install time.
 - Specialist documentation for all six managed specialist skills (`plan-to-ticket`, `test-workflow`, `repo-current-state`, `context-efficiency`, `data-document-redaction`, and `github-push-when-ready`) is grouped under `docs/skills/`; committed diagram sources and renderings are retained where applicable.
+- `github-push-when-ready` enforces a per-repository non-root identity policy; this repository is configured for `i-zrhe2016` and verifies the same GitHub account and push credentials before publishing.
 - `Repo_Current_State.md` is the compact recovery point; the architecture diagram and workflow documentation reflect the same lifecycle.
 
 ## Constraints

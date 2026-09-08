@@ -9,6 +9,21 @@ description: Guard every Git commit, GitHub push, and pull request by assessing 
 
 Inspect the current repository, detect whether a GitHub remote is configured, and classify the repo as ready to commit and push, ready to open a pull request, or not ready. Prefer the bundled scripts for repeatable checks; only publish after the task is complete, validations have passed, and the working tree changes belong to the task at hand. For feature work, the default delivery path is `commit -> push feature branch -> open PR`; a PR does not replace the commit.
 
+## Required Git and GitHub Identity
+
+- Identity is a per-target-repository policy. For this repository, configure and use `i-zrhe2016 <zrhe2016@gmail.com>` with GitHub account `i-zrhe2016`:
+
+  ```bash
+  git config --local codex.identity.name i-zrhe2016
+  git config --local codex.identity.email zrhe2016@gmail.com
+  git config --local codex.github.account i-zrhe2016
+  ```
+
+- When targeting another repository, configure that repository's own non-root identity instead of inheriting this repository's values. Do not change global Git configuration or GitHub credentials unless the user explicitly requests it.
+- Before a commit, the guarded paths set the repository-local `user.name` and `user.email` from the configured policy and verify the effective author and committer identities. They refuse `root`, `root@localhost`, and other mismatched identities.
+- Before a push or pull-request operation, verify the active GitHub CLI account matches `codex.github.account`. The guarded push path also binds HTTPS Git credentials to the verified `gh` token and verifies the configured SSH account when the remote uses SSH; it refuses to publish when the account cannot be verified.
+- The manual `gh pr create` step must use the same verified GitHub account. Git author metadata alone does not determine the GitHub account used for publication.
+
 ## Mandatory Use and Commit Boundaries
 
 - Invoke this skill before every action or script that will create a Git commit, push to GitHub, or open/update a pull request. Do not run a direct `git commit`, `git push`, amend, or equivalent publishing workflow first and assess afterward.
@@ -103,6 +118,7 @@ Behavior:
 - Reject commit messages whose first line does not follow the Conventional Commits 1.0.0 header format.
 - Require `--pathspec` or `--allow-stage-all` before creating a commit.
 - Check the selected GitHub repository About before committing or pushing; if its description is missing, fill it from the README or `--about-description`, then verify it.
+- Enforce the configured repository identity and verified GitHub account before committing or pushing; the post-commit hook uses the same guard.
 - Push with `git push` when upstream exists.
 - Push with `git push -u <remote> <branch>` when upstream is missing.
 - It does not create a pull request. After it succeeds, check for an existing PR and run `gh pr create --fill --base <default-branch> --head <feature-branch>` when needed.
@@ -115,7 +131,14 @@ Use `--force` only when you intentionally want to replace an existing unmanaged 
 
 ### `scripts/auto_push_post_commit.py`
 
-Runs the same readiness assessment after each valid commit, completes/verifies GitHub About metadata, and pushes only when `recommended_action` is `push`. It does not open PRs because a post-commit hook lacks the review title/body and branch intent; use the explicit PR step after the push. This keeps the automatic mode conservative: partial commits, unresolved conflicts, missing GitHub remotes, missing About metadata, and branches that are behind upstream are all skipped instead of being forced through.
+Runs the same readiness assessment after each valid commit, enforces the configured commit and GitHub identities, completes/verifies GitHub About metadata, and pushes only when `recommended_action` is `push`. It does not open PRs because a post-commit hook lacks the review title/body and branch intent; use the explicit PR step after the push. This keeps the automatic mode conservative: partial commits, unresolved conflicts, missing GitHub remotes, missing About metadata, unverified identities, and branches that are behind upstream are all skipped instead of being forced through.
+
+### `scripts/publish_identity.py`
+
+Resolves the target repository's local publication policy, verifies effective
+author/committer identities and unpublished commits, verifies the active
+GitHub CLI account, and supplies account-bound credentials for the guarded
+GitHub push.
 
 Set `CODEX_GITHUB_AUTO_PUSH_SKIP=1` to bypass one hook invocation. `push_if_ready.py` sets this automatically for its own commit step so a scripted `commit_then_push` flow does not double-trigger the push.
 
