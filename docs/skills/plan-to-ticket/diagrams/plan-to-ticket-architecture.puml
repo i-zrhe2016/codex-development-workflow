@@ -1,0 +1,37 @@
+@startuml
+!theme plain
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultFontName Arial
+
+title Plan-to-Ticket Skill - Logical Architecture
+
+actor "Requestor" as requestor
+
+package "Codex orchestration" as orchestration #EAF2F8 {
+  component "Skill matcher" as matcher #D6EAF8
+  component "Planning instructions" as planner #D6EAF8
+  component "Text output" as output #D6EAF8
+}
+
+package "Repository assets" as repository #FDF2E9 {
+  artifact "SKILL.md" as skill #FAD7A0
+  artifact "agents/openai.yaml" as metadata #FAD7A0
+  folder "docs/" as docs #FAD7A0
+}
+
+requestor --> matcher : change request
+matcher --> planner : select
+planner --> output : format
+output --> requestor : Plan + Tickets
+
+skill --> matcher : trigger
+skill --> planner : rules
+metadata --> matcher
+docs ..> requestor : reference
+
+@enduml

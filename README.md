@@ -59,6 +59,24 @@ Restart Codex after installation.
 - `data-document-redaction`
 - `github-push-when-ready`
 
+## Skill documentation
+
+Runtime skill sources live under `skills/` and are installed by
+[`scripts/install-all.sh`](scripts/install-all.sh). Specialist documentation
+is grouped under
+[`docs/skills/`](docs/skills/); operational references remain beside the
+relevant bundle.
+
+| Skill | Runtime source | Documentation |
+|---|---|---|
+| `codex-development-workflow` | [`SKILL.md`](SKILL.md) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `context-efficiency` | [`skills/context-efficiency/`](skills/context-efficiency/) | [Skill documentation](docs/skills/context-efficiency/README.md) |
+| `plan-to-ticket` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
+| `test-workflow` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
+| `repo-current-state` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |
+| `data-document-redaction` | [`skills/data-document-redaction/`](skills/data-document-redaction/) | [Skill documentation](docs/skills/data-document-redaction/README.md) · [References](skills/data-document-redaction/references/) |
+| `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
+
 Review uses the Codex CLI built-in `codex review`; it is a final self-review of
 the integrated diff, not a separate agent workflow.
 

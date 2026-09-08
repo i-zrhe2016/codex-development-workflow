@@ -1,0 +1,52 @@
+# GitHub Push When Ready
+
+`github-push-when-ready` is the delivery gate for commits, pushes, and pull
+requests. It checks that the repository is ready to publish, that the change
+has one clear purpose, that the commit follows Conventional Commits 1.0.0,
+and that no secrets or unrelated changes are being shipped.
+
+The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-ready/SKILL.md).
+
+## Delivery principles
+
+- Inspect the branch, remote, diff, and repository checks before publishing.
+- Keep one coherent feature or fix per commit.
+- Use a Conventional Commit message with the correct scope and intent.
+- Run the smallest verification set that provides sufficient evidence, then
+  escalate when risk or failures require it.
+- Check GitHub repository metadata when the task includes publishing or a pull
+  request.
+- Stop and report blockers instead of bypassing failing checks, missing
+  credentials, or unclear scope.
+
+The gate protects the publication boundary; it does not authorize publishing
+without the user's request or an explicitly scoped workflow. Local `AGENTS.md`,
+credentials, `.env` files, private keys, and other secrets must remain out of
+commits.
+
+## Managed scripts
+
+| Script | Purpose |
+|---|---|
+| [`assess_push_readiness.py`](../../../skills/github-push-when-ready/scripts/assess_push_readiness.py) | Inspect repository readiness |
+| [`auto_push_post_commit.py`](../../../skills/github-push-when-ready/scripts/auto_push_post_commit.py) | Guard an optional post-commit push |
+| [`conventional_commits.py`](../../../skills/github-push-when-ready/scripts/conventional_commits.py) | Validate commit message format |
+| [`github_about.py`](../../../skills/github-push-when-ready/scripts/github_about.py) | Check or update GitHub About metadata |
+| [`git_push_utils.py`](../../../skills/github-push-when-ready/scripts/git_push_utils.py) | Shared readiness and Git helpers |
+| [`install_post_commit_hook.py`](../../../skills/github-push-when-ready/scripts/install_post_commit_hook.py) | Install guarded commit/push hooks |
+| [`push_if_ready.py`](../../../skills/github-push-when-ready/scripts/push_if_ready.py) | Push after readiness checks |
+
+For example, a local readiness assessment can be run with:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 skills/github-push-when-ready/scripts/assess_push_readiness.py --json
+```
+
+Use the exact command and authorization appropriate to the current task before
+running any commit or push action.
+
+## Maintenance
+
+Update this index when delivery policy or managed scripts change. The runtime
+[`SKILL.md`](../../../skills/github-push-when-ready/SKILL.md) remains the
+authoritative operational procedure.

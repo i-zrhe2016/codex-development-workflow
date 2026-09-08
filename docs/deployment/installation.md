@@ -96,4 +96,5 @@ installation. Review changes to
 [`references/skill-map.md`](../../references/skill-map.md) and
 [`scripts/install-all.sh`](../../scripts/install-all.sh) before publishing or
 using a new bundle mapping. Review changes under `skills/` as the source code
-for the specialist skills themselves.
+for the specialist skills themselves. Review migrated explanatory material
+under [`docs/skills/`](../skills/) when changing a skill's documented behavior.
