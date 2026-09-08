@@ -25,6 +25,7 @@ Requirement
     -> Classify outputs
     -> Redact when needed
     -> Commit/Push
+    -> Optional Deploy / Verify / Rollback
 ```
 
 Use the lightest path that preserves correctness:
@@ -144,6 +145,8 @@ do not duplicate its detailed procedure here.
   or any sharing, export, upload, or publication boundary when sensitive
   surfaces may exist.
 - `github-push-when-ready`: before commit or push.
+- `auto-deploy`: when deployment, release automation, rollout verification, or
+  authorized rollback is in scope.
 
 If a required specialist is unavailable locally, report it instead of silently
 replacing its workflow.
@@ -162,6 +165,8 @@ After all slices pass their selected level:
 5. If potentially sensitive surfaces exist, invoke
    `data-document-redaction` and continue only on `pass`.
 6. Invoke `github-push-when-ready` before committing or pushing.
+7. When deployment is requested, invoke `auto-deploy` for target-specific
+   preflight, execution, verification, and rollback handling.
 
 ## Repo state as a recovery point
 

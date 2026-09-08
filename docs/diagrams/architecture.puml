@@ -50,6 +50,9 @@ state "Potentially sensitive?" as sensitive #FFF4CC
 state "Redaction\n[data-document-redaction]" as redaction
 state "Redaction pass?" as redaction_gate #FFF4CC
 state "Commit / Push\n[github-push-when-ready]" as publish
+state "Automatic Deployment\n[auto-deploy]" as deployment
+state "Health /\nSmoke Verification" as deploy_verify
+state "Rollback /\nEscalate" as rollback #FDECEC
 state "Blocked" as blocked #FDECEC
 
 [*] --> requirement
@@ -74,7 +77,12 @@ sensitive --> publish : no
 redaction --> redaction_gate
 redaction_gate --> publish : pass
 redaction_gate --> blocked : needs_review / blocked
-publish --> [*]
+publish --> deployment : requested
+publish --> [*] : no deployment
+deployment --> deploy_verify
+deploy_verify --> [*] : pass
+deploy_verify --> rollback : fail / timeout
+rollback --> [*] : recovered / blocked
 
 note right of execute
 TDD is a conditional test strategy inside a Slice.
