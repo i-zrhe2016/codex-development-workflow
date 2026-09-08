@@ -1,0 +1,3 @@
+interface:
+  display_name: "Repo Current State"
+  short_description: "Keep repository state concise, verified, and current"

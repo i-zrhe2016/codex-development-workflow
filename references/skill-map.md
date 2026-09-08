@@ -1,17 +1,29 @@
 # Skill Map
 
-| Skill | Repository | Repository path | Codex destination |
-|---|---|---|---|
-| `codex-development-workflow` | `i-zrhe2016/codex-development-workflow` | `.` | `codex-development-workflow` |
-| `context-efficiency` | `i-zrhe2016/context-skill` | `context-efficiency` | `context-efficiency` |
-| `plan-to-ticket` | `i-zrhe2016/plan-to-ticket` | `.` | `plan-to-ticket` |
-| `test-workflow` | `i-zrhe2016/test-skill` | `test-workflow` | `test-workflow` |
-| `repo-current-state` | `i-zrhe2016/Repo_Current_State.md` | `.` | `repo-current-state` |
-| `data-document-redaction` | `i-zrhe2016/data-document-redaction` | `data-document-redaction` | `data-document-redaction` |
-| `github-push-when-ready` | `i-zrhe2016/github-push-skill` | `github-push-when-ready` | `github-push-when-ready` |
+This repository is the source of truth for every skill installed by
+`scripts/install-all.sh`. The installer copies these local paths; it does not
+clone specialist repositories at installation time.
 
-The installer treats each row as an independently installable Codex skill folder containing `SKILL.md`.
+| Skill | Managed source in this repository | Codex destination |
+|---|---|---|
+| `codex-development-workflow` | Root package: `SKILL.md`, `agents/`, selected workflow references | `codex-development-workflow` |
+| `context-efficiency` | `skills/context-efficiency/` | `context-efficiency` |
+| `plan-to-ticket` | `skills/plan-to-ticket/` | `plan-to-ticket` |
+| `test-workflow` | `skills/test-workflow/` | `test-workflow` |
+| `repo-current-state` | `skills/repo-current-state/` | `repo-current-state` |
+| `data-document-redaction` | `skills/data-document-redaction/` with its references and scripts | `data-document-redaction` |
+| `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `github-push-when-ready` |
 
-`test-workflow` owns the general testing ladder and conditionally performs browser/E2E verification when browser-visible behavior changes. The older `frontend-click-test` remains in its source repository for compatibility but is no longer installed by this workflow.
+Each managed source is an independently installable Codex skill folder
+containing `SKILL.md`. The root package remains at the repository root for
+backward compatibility; its installer entry copies only the files needed by
+the orchestrator rather than the whole repository.
+
+`plan-to-ticket` owns Slice generation; each Slice should provide boundaries,
+acceptance criteria, relevant context, test strategy, test level, test cases,
+and a validation command. `test-workflow` owns execution of the selected
+`minimal`, `focused`, `regression`, or `full` verification level and reports
+bounded evidence. It conditionally performs browser/E2E verification when
+browser-visible behavior changes.
 
 Code review is provided by the Codex CLI's built-in `codex review` command; it is not installed by this script.

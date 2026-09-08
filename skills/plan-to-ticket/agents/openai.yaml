@@ -1,0 +1,3 @@
+interface:
+  display_name: "Plan to Ticket"
+  short_description: "Turn plans into small implementation-ready tickets"

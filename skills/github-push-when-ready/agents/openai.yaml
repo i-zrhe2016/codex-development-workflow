@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit, Push & PR"
+  short_description: "Guard commits, pushes, and pull requests"
+  default_prompt: "Use $github-push-when-ready to make one focused Conventional Commit, push its feature branch, and open one guarded pull request after the push."

@@ -1,0 +1,6 @@
+interface:
+  display_name: "上下文节省"
+  short_description: "通过精确检索、输出限流和状态压缩降低编码任务的上下文消耗"
+  default_prompt: "使用 $context-efficiency 以节省上下文完成此任务。"
+policy:
+  allow_implicit_invocation: true

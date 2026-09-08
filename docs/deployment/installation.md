@@ -5,10 +5,8 @@
 The installer requires:
 
 - Bash;
-- Git;
-- `mktemp`;
 - `tar`; and
-- network access to GitHub.
+- a complete checkout of this repository.
 
 Codex should be restarted after installation so the new skill directories are
 discovered.
@@ -30,10 +28,13 @@ for installation and authentication details.
 
 ## Install the workflow
 
-The supported one-command installation is:
+The supported installation is run from a checkout so the installer and all
+bundled specialist skills are available together:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash
+git clone https://github.com/i-zrhe2016/codex-development-workflow.git
+cd codex-development-workflow
+bash scripts/install-all.sh
 ```
 
 By default, skills are installed under:
@@ -42,28 +43,26 @@ By default, skills are installed under:
 ${CODEX_HOME:-$HOME/.codex}/skills
 ```
 
-For an auditable installation, download the script first, inspect it, and then
-run it locally:
+For an auditable installation, inspect the checkout and the managed source map
+before running the local installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh -o /tmp/codex-workflow-install.sh
-bash /tmp/codex-workflow-install.sh
+sed -n '1,220p' scripts/install-all.sh
+sed -n '1,160p' references/skill-map.md
+bash scripts/install-all.sh
 ```
-
-The temporary path above is only an example; use a path appropriate for the
-local environment and remove it after review if it is no longer needed.
 
 ## Update an existing installation
 
 Use `--update` to replace already-installed workflow skills:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash -s -- --update
+bash scripts/install-all.sh --update
 ```
 
 Without `--update`, an existing skill directory is reported as `skip` and is
 left unchanged. With `--update`, the existing destination directory is removed
-before the newly cloned content is copied into place. Back up any local edits
+before the local bundled content is copied into place. Back up any local edits
 before using this option.
 
 ## Choose another destination
@@ -91,9 +90,10 @@ after checking the output.
 
 ## Installation behavior and trust boundary
 
-The installer clones the configured GitHub repositories with `--depth 1` and
-copies the requested paths; it does not perform commit pinning, signature
-verification, or dependency installation. Review changes to
+The installer copies only the configured paths from this checkout; it does not
+access GitHub, install dependencies, or execute specialist scripts during
+installation. Review changes to
 [`references/skill-map.md`](../../references/skill-map.md) and
 [`scripts/install-all.sh`](../../scripts/install-all.sh) before publishing or
-using a new source mapping.
+using a new bundle mapping. Review changes under `skills/` as the source code
+for the specialist skills themselves.

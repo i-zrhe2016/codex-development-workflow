@@ -1,105 +1,216 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Use for non-trivial feature work, bug fixes, refactors, and repository changes. Classify task complexity, route complex work through plan-to-ticket and test-driven ticket loops, escalate code review when tests are repeatedly or unexpectedly failing, run a final review before commit/push, and invoke redaction before sensitive content crosses a sharing boundary."
+description: "Entry point for repository-wide Codex development. Use a single-agent staged workflow to classify work, plan small slices, execute with evidence-based testing, integrate, review, and deliver without forcing strict TDD on every change."
 ---
 
 # Codex Development Workflow
 
-Use this skill as the orchestration layer for repository development. Specialist skills own their detailed procedures; this skill owns routing, gates, and completion order.
+Use this skill as the entry point for non-trivial repository development. It
+coordinates one Codex agent through small, verifiable slices; specialist skills
+provide procedures, not additional agents or parallel execution.
 
-## Core principle
+## Core workflow
 
-Use the lightest workflow that preserves correctness.
+```text
+Requirement
+    -> Classify
+    -> Understand current repo
+    -> Plan
+    -> Slice
+    -> Execute slice
+    -> Next slice?
+    -> Integration tests
+    -> Self review
+    -> Update state/docs
+    -> Classify outputs
+    -> Redact when needed
+    -> Commit/Push
+```
 
-- **Tiny:** implement -> relevant tests -> completion gates.
-- **Normal:** minimal plan -> implement -> relevant tests -> completion gates.
-- **Complex:** understand -> minimal design -> plan/tickets -> TDD ticket loop -> integration tests -> completion gates.
+Use the lightest path that preserves correctness:
 
-Do not create tickets when ticket management costs more than the complexity it removes.
+- **Tiny:** classify, make a concise plan, treat the request as one slice, run
+  minimal validation, and perform a lightweight self-review.
+- **Normal:** understand the relevant repository area, make a minimal plan,
+  execute one or more slices, and run focused validation.
+- **Complex:** understand the repository, plan dependency-ordered slices with
+  `plan-to-ticket`, execute each slice with its own acceptance and test
+  strategy, then run integration tests and the final self-review.
 
-## Complex-work lifecycle
+Planning controls architecture and scope. Testing controls implementation
+evidence. Neither replaces the other.
 
-`Requirement -> Understand -> Minimal design -> Plan/Tickets -> TDD Ticket Loop -> Integration test -> Update state/docs -> Classify outputs -> Redact when needed -> Final review -> Commit/Push`
+## Slice contract
 
-### TDD Ticket Loop
+Each normal or complex slice must be independently understandable and contain:
 
-For each dependency-ready ticket, work on one ticket at a time.
+```text
+Goal
+Scope
+Out of scope
+Dependencies
+Acceptance criteria
+Relevant context/files
+Test strategy
+Test level
+Test cases
+Validation command
+```
 
-1. Read the ticket goal, scope, function checklist, acceptance criteria, test cases, dependencies, and validation command.
-2. Load only the repository context required for that ticket.
-3. Invoke `test-workflow` to create or confirm the smallest meaningful tests from the specified behavior.
-4. For complex/high-risk behavior, confirm the new behavior is not already satisfied (`RED`) when a meaningful failing test can be produced.
-5. Implement the minimum necessary change.
-6. Use `test-workflow` to run the smallest relevant checks until the ticket is `GREEN`.
-7. Diagnose ordinary failures directly. Fix the implementation or test when the cause is clear.
-8. Escalate to targeted code review only when a failure is repeated, unexplained, risky, or indicates a design/architecture conflict.
-9. If the design assumption is wrong, stop expanding the patch and re-plan or split the ticket.
-10. Mark the ticket complete only when its acceptance criteria and relevant tests pass, then select the next unblocked ticket.
+Implement one dependency-ready slice at a time. Load only the files,
+documentation, and state needed for that slice. Do not implement future-slice
+features or unrelated refactors. Record the result before selecting the next
+slice.
 
-Tests are the primary inner-loop feedback mechanism. Code review is not a mandatory per-ticket tax.
+## Slice execution loop
+
+For each slice:
+
+1. Read its goal, boundaries, dependencies, acceptance criteria, relevant
+   context, test strategy, test level, test cases, and validation command.
+2. Confirm the smallest useful verification set before editing.
+3. For a behavior change, bug fix, regression, API behavior, core business
+   logic, data processing, or high-risk code, write or adjust a meaningful
+   test first and confirm it fails when possible.
+4. For documentation, configuration, dependency updates, CSS/UI styling,
+   typo fixes, simple refactors, or exploratory work, do not force a RED test;
+   use the smallest relevant validation instead.
+5. Make the minimum implementation change.
+6. Run the selected checks and fix failures directly when the cause is
+   clear.
+7. Refactor only within the slice and only after its acceptance criteria pass.
+8. Mark the slice complete only when its acceptance criteria and selected
+   validation pass, then report changed files, commands, results, risks, and
+   follow-up work.
+9. If a design assumption is wrong, stop expanding the patch and return to
+   Plan or split the slice.
+
+## Test levels and bounded verification
+
+Select one level per slice:
+
+| Level | Use |
+|---|---|
+| `minimal` | Tiny changes, docs, configuration, styling, and simple scripts. |
+| `focused` | Default; tests directly tied to the slice acceptance criteria. |
+| `regression` | Bug fixes, cross-module changes, or a demonstrated regression risk. |
+| `full` | High-risk changes, release gates, or an explicit requirement. |
+
+Run the smallest verification set that provides sufficient evidence. After the
+selected level passes, stop by default. Do not add suites, edge cases, or
+broader checks unless the acceptance criteria, a failure, an affected boundary,
+release requirements, or the user justifies escalation. The report should name
+the level used, commands, result, evidence, and any escalation reason.
 
 ## Review policy
 
-Use the Codex CLI built-in review command.
+Review is a single-agent stage over the integrated result, not a mandatory
+review tax inside every slice.
 
-- `codex review --uncommitted`: review the working tree.
-- `codex review --base BRANCH`: review against a base branch.
-- `codex review --commit SHA`: review an explicit commit.
+- Run integration or broader regression checks after all slices are complete.
+- Perform one final self-review of the safe integrated diff.
+- Use the Codex CLI review command when available:
 
-Run a **targeted review** during development when tests fail repeatedly or unexpectedly, the root cause is unclear, or the change is high-risk.
+  ```bash
+  codex review --uncommitted
+  codex review --base BRANCH
+  codex review --commit SHA
+  ```
 
-Run one **final review** after integration tests, state/docs reconciliation, and any required redaction are complete. Fix blocking findings, rerun affected tests, and repeat the final review only when the fix materially changed the reviewed behavior.
+- If review finds a blocking problem, fix it, rerun affected tests, and repeat
+  the self-review when the fix materially changes the reviewed behavior.
+- Trigger targeted review earlier only for repeated or unexplained failures,
+  unclear root cause, high-risk changes, or an architecture conflict.
+- Review never replaces tests, compiler diagnostics, linting, or static
+  analysis.
 
-Do not use review as a replacement for tests, compiler diagnostics, linting, or static analysis.
+This workflow does not orchestrate multiple agents, sub-agents, parallel
+implementations, or agent handoffs.
 
-## Specialist Skills
+## Specialist skills
 
-Invoke a specialist only when its trigger applies. Follow its own `SKILL.md`; do not duplicate its procedure here.
+Invoke a specialist only when its trigger applies. Follow its own `SKILL.md`;
+do not duplicate its detailed procedure here.
 
-- `context-efficiency`: large, unfamiliar, or context-heavy repository exploration.
-- `plan-to-ticket`: complex multi-step or dependency-driven work; tickets should expose function checklist, acceptance criteria, test cases, dependencies, and validation.
-- `test-workflow`: general validation for behavior changes. It selects static, focused, integration/regression, and conditional browser/E2E checks; use RED/GREEN for complex or high-risk behavior rather than forcing strict TDD on every trivial change.
-- `repo-current-state`: verified architecture, behavior, dependencies, deployment, or important repository state changed.
-- `data-document-redaction`: content may contain personal information, credentials, secrets, or business-sensitive data before sharing/publishing boundaries.
+- `context-efficiency`: large, unfamiliar, or context-heavy repository
+  exploration; it is an optional context-loading aid, not a workflow stage.
+- `plan-to-ticket`: complex, multi-slice, or dependency-driven work; generated
+  slices must satisfy the Slice contract above.
+- `test-workflow`: execute the selected validation level and report bounded
+  evidence.
+- `repo-current-state`: reconcile verified state after a meaningful slice or
+  integrated change.
+- `data-document-redaction`: classify the complete change set before staging
+  or any sharing, export, upload, or publication boundary when sensitive
+  surfaces may exist.
 - `github-push-when-ready`: before commit or push.
 
-Read `references/skill-map.md` only when repository sources or install locations are needed.
-
-If a required specialist is unavailable, report it instead of silently replacing its workflow.
+If a required specialist is unavailable locally, report it instead of silently
+replacing its workflow.
 
 ## Completion gates
 
-After implementation work is GREEN:
+After all slices pass their selected level:
 
-1. Use `test-workflow` to run integration or broader regression tests appropriate to the total change, including browser/E2E only when required by user-visible behavior.
-2. Update repository state/docs only when verified behavior, architecture, dependencies, deployment, or important state changed.
-3. Classify the complete output set before staging, committing, sharing, exporting, uploading, or publishing.
-4. If potentially sensitive surfaces exist, invoke `data-document-redaction`; proceed only on `pass`.
-5. Run the final code review on the final safe diff.
-6. Fix blocking findings and rerun affected tests through `test-workflow`.
-7. Invoke `github-push-when-ready` and commit/push only when all gates are clear.
+1. Run integration or broader regression checks appropriate to the total
+   change, including browser/E2E only for relevant user-visible behavior.
+2. Perform the final self-review on the integrated diff.
+3. Update `docs/Repo_Current_State.md` and other docs only when verified
+   behavior, architecture, dependencies, deployment, or important state
+   changed.
+4. Classify the complete output set.
+5. If potentially sensitive surfaces exist, invoke
+   `data-document-redaction` and continue only on `pass`.
+6. Invoke `github-push-when-ready` before committing or pushing.
+
+## Repo state as a recovery point
+
+Read `docs/Repo_Current_State.md` at the beginning of planning. Keep it as a
+compact, verified recovery point containing the current focus, implemented
+capabilities, in-progress slice, known failures, constraints, architecture
+orientation, and next slice. Do not turn it into a session transcript,
+complete backlog, or test report.
 
 ## Redaction gate contract
 
-Include source files, documentation, logs, configs, screenshots, exports, filenames, and metadata in classification.
+Apply the gate to the complete artifact set before staging, committing,
+sharing, or publishing it. This includes source files, documentation, logs,
+configs, screenshots, exports, filenames, and metadata.
 
-- Record recipient/environment, purpose, required utility, and whether controlled reversibility is allowed.
-- Assume non-reversible handling unless the task explicitly requires controlled traceability.
-- If no potentially sensitive surface is in scope, record the inspected scope and skip reason.
-- If sensitive content may be in scope, follow `docs/workflow/redaction.md` and the `data-document-redaction` skill.
-- `needs_review` or `blocked` stops commit, push, sharing, and publication.
-- Reports contain safe evidence only: types, counts, location categories, hashes, tool versions, coverage, utility checks, and residual risks. Never include original secrets or mappings.
+- Classify the recipient, purpose, required utility, and whether reversibility
+  is allowed. Assume non-reversible handling unless the task explicitly needs
+  controlled traceability.
+- If no potentially sensitive surface is in scope, record the inspected scope
+  and the reason the gate was skipped, then continue.
+- If a potentially sensitive surface is in scope, follow
+  [`docs/workflow/redaction.md`](docs/workflow/redaction.md) and the
+  `data-document-redaction` skill. The specialist owns format-specific
+  detection, transformation, hidden-surface checks, and validation.
+- Continue to commit, push, or share only after a `pass` result and a safe
+  delivery report. A `needs_review` or `blocked` result stops the boundary
+  transition and records the concrete gap.
+- Reports contain types, counts, location categories, hashes, tool versions,
+  coverage, and residual risks only. Never include original values, mappings,
+  credentials, or full matching context.
 
 ## Installation
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash
-```
-
-Update existing installations:
+Install the complete workflow skill set from a full checkout of this
+repository:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/i-zrhe2016/codex-development-workflow/main/scripts/install-all.sh | bash -s -- --update
+git clone https://github.com/i-zrhe2016/codex-development-workflow.git
+cd codex-development-workflow
+bash scripts/install-all.sh
 ```
 
-Codex uses `${CODEX_HOME:-$HOME/.codex}/skills` by default. Restart Codex after installation.
+Update existing installations with:
+
+```bash
+bash scripts/install-all.sh --update
+```
+
+The installer copies the root skill and `skills/` bundles from this checkout;
+it does not clone specialist repositories. Codex uses
+`${CODEX_HOME:-$HOME/.codex}/skills` by default. Restart Codex after
+installation.

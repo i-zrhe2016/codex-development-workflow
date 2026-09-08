@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 DEST_ROOT="${CODEX_HOME:-$HOME/.codex}/skills"
 UPDATE=0
 
 usage() {
   cat <<'USAGE'
-Install the complete i-zrhe2016 Codex development workflow skill set.
+Install the complete Codex development workflow skill set bundled in this
+repository.
 
 Usage:
   install-all.sh [--update] [--dest PATH]
@@ -29,31 +32,55 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-command -v git >/dev/null 2>&1 || { echo "error: git is required" >&2; exit 1; }
-command -v mktemp >/dev/null 2>&1 || { echo "error: mktemp is required" >&2; exit 1; }
 command -v tar >/dev/null 2>&1 || { echo "error: tar is required" >&2; exit 1; }
 
-mkdir -p "$DEST_ROOT"
-TMP_ROOT="$(mktemp -d)"
-trap 'rm -rf "$TMP_ROOT"' EXIT INT TERM
+[ -f "$REPO_ROOT/SKILL.md" ] || {
+  echo "error: repository root not found; run this script from a complete checkout" >&2
+  exit 1
+}
 
-# repo|path|destination-name
+mkdir -p "$DEST_ROOT"
+DEST_ROOT="$(cd -- "$DEST_ROOT" && pwd -P)"
+case "$DEST_ROOT" in
+  "$REPO_ROOT"|"$REPO_ROOT"/*)
+    echo "error: installation destination must not be inside this repository" >&2
+    exit 1
+    ;;
+esac
+
+# source path relative to the repository root|destination-name
+# The root package is kept at the repository root for backward compatibility.
 SKILLS=(
-  "i-zrhe2016/codex-development-workflow|.|codex-development-workflow"
-  "i-zrhe2016/context-skill|context-efficiency|context-efficiency"
-  "i-zrhe2016/plan-to-ticket|.|plan-to-ticket"
-  "i-zrhe2016/test-skill|test-workflow|test-workflow"
-  "i-zrhe2016/Repo_Current_State.md|.|repo-current-state"
-  "i-zrhe2016/data-document-redaction|data-document-redaction|data-document-redaction"
-  "i-zrhe2016/github-push-skill|github-push-when-ready|github-push-when-ready"
+  ".|codex-development-workflow"
+  "skills/context-efficiency|context-efficiency"
+  "skills/plan-to-ticket|plan-to-ticket"
+  "skills/test-workflow|test-workflow"
+  "skills/repo-current-state|repo-current-state"
+  "skills/data-document-redaction|data-document-redaction"
+  "skills/github-push-when-ready|github-push-when-ready"
 )
 
 installed=0
 skipped=0
 
 for spec in "${SKILLS[@]}"; do
-  IFS='|' read -r repo subpath name <<< "$spec"
+  IFS='|' read -r subpath name <<< "$spec"
   dest="$DEST_ROOT/$name"
+
+  if [ "$subpath" = "." ]; then
+    src="$REPO_ROOT"
+  else
+    src="$REPO_ROOT/$subpath"
+  fi
+
+  if [ ! -f "$src/SKILL.md" ]; then
+    echo "error: bundled source $subpath does not contain SKILL.md" >&2
+    exit 1
+  fi
+  if [ ! -f "$src/agents/openai.yaml" ]; then
+    echo "error: bundled source $subpath does not contain agents/openai.yaml" >&2
+    exit 1
+  fi
 
   if [ -e "$dest" ]; then
     if [ "$UPDATE" -eq 1 ]; then
@@ -65,23 +92,19 @@ for spec in "${SKILLS[@]}"; do
     fi
   fi
 
-  clone_dir="$TMP_ROOT/${name}-repo"
-  echo "install: $name <- https://github.com/$repo ($subpath)"
-  git clone --quiet --depth 1 "https://github.com/$repo.git" "$clone_dir"
-
-  if [ "$subpath" = "." ]; then
-    src="$clone_dir"
-  else
-    src="$clone_dir/$subpath"
-  fi
-
-  if [ ! -f "$src/SKILL.md" ]; then
-    echo "error: $repo/$subpath does not contain SKILL.md" >&2
-    exit 1
-  fi
-
+  echo "install: $name <- $subpath"
   mkdir -p "$dest"
-  (cd "$src" && tar --exclude='.git' -cf - .) | (cd "$dest" && tar -xf -)
+  if [ "$subpath" = "." ]; then
+    (
+      cd "$REPO_ROOT"
+      tar -cf - SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+    ) | (cd "$dest" && tar -xf -)
+  else
+    (
+      cd "$src"
+      tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
+    ) | (cd "$dest" && tar -xf -)
+  fi
   installed=$((installed + 1))
 done
 
