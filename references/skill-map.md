@@ -13,6 +13,7 @@ clone specialist repositories at installation time.
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` |
 | `data-document-redaction` | `skills/data-document-redaction/` with its references and scripts | `docs/skills/data-document-redaction/` | `data-document-redaction` |
 | `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` |
+| `auto-deploy` | `skills/auto-deploy/` | `docs/skills/auto-deploy/` | `auto-deploy` |
 
 Each managed source is an independently installable Codex skill folder
 containing `SKILL.md`. The root package remains at the repository root for

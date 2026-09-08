@@ -58,6 +58,7 @@ Restart Codex after installation.
 - `repo-current-state`
 - `data-document-redaction`
 - `github-push-when-ready`
+- `auto-deploy`
 
 ## Skill documentation
 
@@ -76,6 +77,7 @@ relevant bundle.
 | `repo-current-state` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |
 | `data-document-redaction` | [`skills/data-document-redaction/`](skills/data-document-redaction/) | [Skill documentation](docs/skills/data-document-redaction/README.md) · [References](skills/data-document-redaction/references/) |
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
+| `auto-deploy` | [`skills/auto-deploy/`](skills/auto-deploy/) | [Skill documentation](docs/skills/auto-deploy/README.md) |
 
 Review uses the Codex CLI built-in `codex review`; it is a final self-review of
 the integrated diff, not a separate agent workflow.

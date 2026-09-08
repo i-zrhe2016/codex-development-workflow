@@ -15,6 +15,7 @@ gates; specialist procedures remain inside their own `SKILL.md` files.
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point for the repository. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
+| `auto-deploy` | Discovers the deployment contract, gates automatic releases, verifies health, and coordinates safe rollback. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
 | `references/skill-map.md` | Maps each managed bundle to its local source and Codex destination. |

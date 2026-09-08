@@ -1,0 +1,4 @@
+interface:
+  display_name: "Automatic Deployment"
+  short_description: "Plan and execute safe automatic deployments"
+  default_prompt: "Use $auto-deploy to inspect the repository deployment contract, validate the release, deploy through the existing automation, and verify or roll back safely."
