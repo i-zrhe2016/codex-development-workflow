@@ -57,6 +57,7 @@ For each slice:
 | Architecture or flow visualization materially improves understanding   | `plantuml-skill`             |
 | Verified repository state materially changed                           | `repo-current-state`         |
 | Potentially sensitive output crosses a sharing or publication boundary | `data-document-redaction`    |
+| Deployment, release automation, rollout verification, or rollback      | `auto-deploy`                |
 | Commit or push is required                                             | `github-push-when-ready`     |
 | Implementation and required validation are complete                    | `bark-finish-notify`         |
 

@@ -58,6 +58,7 @@ SKILLS=(
   "skills/repo-current-state|repo-current-state"
   "skills/data-document-redaction|data-document-redaction"
   "skills/github-push-when-ready|github-push-when-ready"
+  "skills/auto-deploy|auto-deploy"
 )
 
 installed=0
