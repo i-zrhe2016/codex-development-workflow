@@ -1,10 +1,10 @@
 # Repository Current State
 
-Last verified: 2026-09-09 @ working tree
+Last verified: 2026-09-09 @ 4cfc190
 
 ## Current Focus
 
-- Add per-ticket branch setup and ticket-level review gates to the existing workflow on `feature/ticket-branch-lifecycle`.
+- Per-ticket branch setup and ticket-level review gates are active in the workflow on `main`.
 
 ## Implemented
 
@@ -25,7 +25,7 @@ Last verified: 2026-09-09 @ working tree
 
 ## In Progress
 
-- The branch lifecycle documentation change is validated and ready for review on `feature/ticket-branch-lifecycle`.
+- None.
 
 ## Constraints
 
@@ -48,4 +48,4 @@ Last verified: 2026-09-09 @ working tree
 
 ## Next
 
-- Open a pull request for the branch when review is requested.
+- Start the next authorized ticket from the updated default branch.
