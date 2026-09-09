@@ -4,7 +4,8 @@ An adaptive, main-agent-led Codex development workflow with optional bounded
 delegation and all required specialist skills managed in this repository.
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice
+Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed
+           -> Slice(s) per Ticket
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Create/resume ticket branch
            -> Execute/Test -> Next Slice? -> Integration
@@ -14,7 +15,9 @@ Requirement -> Classify -> Understand -> Plan -> Slice
            -> Optional Deploy / Verify / Rollback
 ```
 
-The macro workflow controls architecture and scope. Each Slice carries its own
+The macro workflow controls architecture and scope. For complex or
+multi-behavior requirements, define behavior Tickets first and then split each
+Ticket into Slices. Each Slice carries its own
 acceptance criteria, relevant context, test strategy, and validation command.
 Each ticket keeps its implementation, tests, and related documentation on one
 branch created from the updated default branch; ticket review happens before

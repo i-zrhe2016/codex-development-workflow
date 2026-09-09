@@ -16,8 +16,10 @@ state "Requirement" as requirement
 state "Classify task\nTiny / Normal / Complex" as classify
 state "Understand\nCurrent Repo" as context
 state "Plan\narchitecture + scope" as plan
-state "Define one Slice\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
-state "Persist plan / tickets\n[plan-to-ticket]\nGitHub Issues authoritative" as persist #EAF2F8
+state "Ticket(s) needed?" as ticketing #FFF4CC
+state "Define behavior Ticket(s)\n[plan-to-ticket]\ngoal • scope • dependencies\nreview boundary" as ticket
+state "Define Slice(s) per Ticket\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
+state "Persist plan / Ticket Issues\n[plan-to-ticket]\nGitHub Issues authoritative" as persist #EAF2F8
 state "Create/resume ticket branch\n[one ticket ↔ one branch]\nIssue: Branch + Base\nStatus: in_progress" as branch
 state "Delegation Gate\nIndependent + bounded?\n(optional)" as delegation #FFF4CC
 state "Explorer\n[explorer]\nread-only evidence" as explorer
@@ -70,8 +72,12 @@ state "Blocked" as blocked #FDECEC
 requirement --> classify
 classify --> context
 context --> plan
-plan --> slice
-slice --> persist
+plan --> ticketing
+ticketing --> ticket : yes / complex or multi-behavior
+ticketing --> slice : no / tiny implicit Slice
+ticket --> slice : each Ticket
+slice --> persist : Ticketed work
+slice --> branch : tiny / no Ticket
 persist --> branch
 branch --> delegation
 delegation --> execute : no / sequential
@@ -118,6 +124,8 @@ note right of delegation
 The main agent owns requirements,
 architecture, dependency ordering,
 integration, and final judgment.
+Split requirements into Tickets
+before defining their Slices.
 Keep dependent, overlapping, or shared-interface work sequential.
 end note
 

@@ -2,9 +2,9 @@
 
 `plan-to-ticket` is the planning specialist for the main-agent workflow. It
 turns a feature idea, requirement, bug-fix plan, refactor plan, or other
-project change into a concise implementation plan and small,
-dependency-ordered Slices (tickets) with clear boundaries for optional
-delegation, then persists the plan and tickets to GitHub Issues.
+project change into a concise implementation plan, behavior Tickets, and
+dependency-ordered Slices within each Ticket, then persists the plan and
+Tickets to GitHub Issues.
 
 The executable skill source is maintained at
 [`skills/plan-to-ticket/`](../../../skills/plan-to-ticket/). This document and
@@ -25,17 +25,20 @@ The full explanation is in [architecture.md](architecture.md).
 When the skill is selected for a planning request, it:
 
 1. Identifies the desired outcome and the minimum implementation foundations.
-2. Splits the work into focused, dependency-ordered Slices that the main agent
-   can execute sequentially or pass through the optional delegation gate.
-3. Defines scope boundaries, acceptance criteria, relevant context, test
+2. Splits complex or multi-behavior requirements into focused, independently
+   reviewable behavior Tickets.
+3. Splits each Ticket into dependency-ordered Slices that the main agent can
+   execute sequentially or pass through the optional delegation gate.
+4. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
-4. Creates or updates one parent plan Issue and one Issue per ticket before
+5. Creates or updates one parent plan Issue and one Issue per Ticket before
    implementation branches start, reusing stable markers to avoid duplicates.
-5. Assigns or resumes one implementation branch and base branch for each
-   ticket, using the updated default branch for new dependency-ready tickets;
-   each ticket Issue and branch remain a one-to-one pair.
-6. Returns the `Plan` and `Tickets` sections defined by the skill contract,
-   including canonical Issue links and current execution metadata.
+6. Assigns or resumes one implementation branch and base branch for each
+   Ticket, using the updated default branch for new dependency-ready Tickets;
+   each Ticket Issue and branch remain a one-to-one pair.
+7. Returns the `Plan` and `Tickets` sections defined by the skill contract,
+   including canonical Issue links, nested Slices, and current execution
+   metadata.
 
 The skill is intentionally implementation-neutral. It uses repository context
 and requires the available GitHub Issues connector for persistence, but it does
@@ -44,15 +47,24 @@ commands for unknown tooling. The parent workflow decides whether any Slice is
 delegated. A required GitHub read/write failure blocks completion; the skill
 does not fall back to local Markdown or chat-only storage.
 
+## Ticket-to-Slice hierarchy
+
+Ticket decomposition comes before Slice decomposition. A Ticket is the
+behavior/capability boundary represented by one GitHub Issue and one branch. A
+Slice is a smaller execution-ready unit inside that Ticket and inherits the
+Ticket's Issue and branch. Keep Ticket dependencies at the branch-readiness
+level and Slice dependencies inside the Ticket. Tiny work may remain one
+implicit Slice without creating a Ticket.
+
 ## Usage
 
 Make the skill available in a Codex skills environment, then provide a change
 request or implementation idea in a repository with a resolvable GitHub
 remote. The frontmatter description in `SKILL.md` is used for skill selection.
-The skill creates/updates the parent plan Issue and ticket Issues before
-returning a successful plan with execution-ready Slices/tickets. If the
-connector or required permission is unavailable, the result is blocked rather
-than an unpersisted plan.
+The skill creates/updates the parent plan Issue and Ticket Issues before
+returning a successful plan with execution-ready Tickets and nested Slices. If
+the connector or required permission is unavailable, the result is blocked
+rather than an unpersisted plan.
 
 For repository-aware planning, include the relevant repository in the working
 context. The skill will reuse existing architecture and conventions where they

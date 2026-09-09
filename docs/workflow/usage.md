@@ -1,13 +1,14 @@
 # Workflow Usage Guide
 
 Use `codex-development-workflow` as the entry point for repository work. It
-keeps architecture and scope at the Plan/Slice level while keeping validation
-inside each Slice.
+keeps architecture and scope at the Plan/Ticket/Slice levels while keeping
+validation inside each Slice.
 
 ## Staged workflow
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice
+Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed
+           -> Slice(s) per Ticket
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Create/resume ticket branch
            -> Execute/Test -> Next Slice? -> Integration tests
@@ -16,10 +17,28 @@ Requirement -> Classify -> Understand -> Plan -> Slice
            -> Optional Deploy / Verify / Rollback
 ```
 
-- **Tiny:** use a concise plan and one implicit Slice.
-- **Normal:** plan the relevant area and execute one or more focused Slices.
-- **Complex:** use `plan-to-ticket` for dependency-ordered Slices, evaluate the
-  delegation gate, and load only the context required by each Slice.
+- **Tiny:** use a concise plan and one implicit Slice without Ticket overhead.
+- **Normal:** create the smallest behavior Ticket when the work needs multiple
+  steps, then split it into one or more focused Slices.
+- **Complex:** use `plan-to-ticket` to split the requirements into
+  dependency-ordered behavior Tickets first, then split each Ticket into its
+  Slices; evaluate the delegation gate and load only the context required by
+  each Slice.
+
+## Ticket-to-Slice hierarchy
+
+When a request is large, crosses multiple behaviors, or has dependencies, use
+this order:
+
+1. Split the requirements into independently reviewable behavior Tickets.
+2. Define each Ticket's scope, dependencies, acceptance boundary, and Issue.
+3. Split each Ticket into dependency-ordered, independently verifiable
+   Slices.
+
+All Slices for one Ticket share that Ticket's implementation branch. Ticket
+dependencies determine branch readiness; Slice dependencies determine the
+execution order within the branch. A tiny request may remain one implicit
+Slice without a Ticket or Issue.
 
 For every Slice, define:
 
@@ -78,9 +97,9 @@ the Issue's `Branch`/`Base` values, and require the PR head/base to match them.
 
 ## Optional delegation gate
 
-After `Plan -> Slice` and before `Execute/Test`, the main agent asks whether
-delegation materially improves speed, context isolation, or review quality. A
-single-agent execution remains the default.
+After `Plan -> Ticket -> Slice` and before `Execute/Test`, the main agent asks
+whether delegation materially improves speed, context isolation, or review
+quality. A single-agent execution remains the default.
 
 Delegate only a bounded, independently executable task. Good candidates are
 repository exploration, independent research, test or regression analysis, or

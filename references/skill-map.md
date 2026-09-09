@@ -25,10 +25,11 @@ containing `SKILL.md`. The root package remains at the repository root for
 backward compatibility; its installer entry copies only the files needed by
 the orchestrator rather than the whole repository.
 
-`plan-to-ticket` owns Slice generation and mandatory persistence of the parent
-plan and ticket Issues; each Slice should provide boundaries, acceptance
-criteria, relevant context, test strategy, test level, test cases, and a
-validation command. `test-workflow` owns execution of the selected
+`plan-to-ticket` owns Ticket-first decomposition, Slice generation, and
+mandatory persistence of the parent plan and Ticket Issues; each Slice should
+provide boundaries, acceptance criteria, relevant context, test strategy, test
+level, test cases, and a validation command. `test-workflow` owns execution of
+the selected
 `minimal`, `focused`, `regression`, or `full` verification level and reports
 bounded evidence. It conditionally performs browser/E2E verification when
 browser-visible behavior changes.

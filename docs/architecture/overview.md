@@ -11,12 +11,12 @@ remain inside their own `SKILL.md` files.
 
 | Component | Responsibility |
 |---|---|
-| `codex-development-workflow` | Classifies work, coordinates Plan/Slice execution, bounded verification, review, and delivery gates. |
-| Delegation Gate | Decides after Slicing whether independent, bounded work should stay with the main agent or go to built-in workers. |
+| `codex-development-workflow` | Classifies work, coordinates Plan/Ticket/Slice execution, bounded verification, review, and delivery gates. |
+| Delegation Gate | Decides after Ticket/Slice decomposition whether independent, bounded work should stay with the main agent or go to built-in workers. |
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
 | `.codex/agents/reviewer.toml` | Project-scoped read-only reviewer for the single PR-stage review. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
-| `plan-to-ticket` | Produces small, dependency-ordered Slices with explicit scope and acceptance criteria, then persists the parent plan and ticket Issues before branch work. |
+| `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the parent plan and ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point for the repository. |
@@ -42,7 +42,8 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 ### Macro stages
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice
+Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed
+           -> Slice(s) per Ticket
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Create/resume ticket branch
            -> Execute/Test -> Next Slice? -> Integration
@@ -51,14 +52,26 @@ Requirement -> Classify -> Understand -> Plan -> Slice
            -> Optional Deploy / Verify / Rollback
 ```
 
-- Tiny work uses a concise plan and one implicit Slice.
-- Normal work plans the relevant area and executes one or more Slices, using
-  delegation only when the gate finds a safe independent boundary.
-- Complex work uses `plan-to-ticket` for dependency-ordered Slices and then
-  persists the plan and tickets to GitHub Issues before evaluating those
-  boundaries and starting execution.
+- Tiny work uses a concise plan and one implicit Slice without Ticket overhead.
+- Normal work creates the smallest behavior Ticket when multiple steps need a
+  shared review boundary, then executes one or more Slices within that Ticket.
+- Complex work uses `plan-to-ticket` to split requirements into behavior
+  Tickets first, then dependency-ordered Slices within each Ticket, and
+  persists the plan and Tickets to GitHub Issues before starting execution.
 - Each Slice loads only the context needed for its own acceptance criteria.
 - A wrong design assumption returns to Plan or causes a Slice split.
+
+### Ticket-to-Slice hierarchy
+
+A Ticket is an independently reviewable behavior or capability boundary. A
+Slice is an execution-ready unit within a Ticket, with its own scope,
+dependencies, acceptance criteria, test strategy, test level, test cases, and
+validation command. For a large or multi-behavior request, establish the
+Ticket boundaries first, then split each Ticket into its dependency-ordered
+Slices. All Slices for one Ticket share its implementation branch; Ticket
+dependencies control branch readiness, while Slice dependencies control work
+order within the branch. Tiny work may remain one implicit Slice without a
+Ticket.
 
 ### Persistent ticket authority
 
@@ -86,8 +99,9 @@ starts, and require the PR head/base to match those fields.
 
 ### Delegation gate
 
-The gate is optional and sits between `Plan -> Slice` and `Execute/Test`. The
-main agent delegates only tasks with a clear goal, scope and exclusions,
+The gate is optional and sits between `Plan -> Ticket -> Slice` and
+`Execute/Test`. The main agent delegates only tasks with a clear goal, scope
+and exclusions,
 ownership boundary, dependencies, acceptance criteria, validation, and
 expected result summary. Parallel write tasks must not share files, interfaces,
 schemas, migrations, or configuration. Review is not delegated at this stage;

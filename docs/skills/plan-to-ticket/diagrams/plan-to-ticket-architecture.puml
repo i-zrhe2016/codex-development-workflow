@@ -15,6 +15,8 @@ actor "Requestor" as requestor
 package "Codex orchestration" as orchestration #EAF2F8 {
   component "Skill matcher" as matcher #D6EAF8
   component "Planning instructions" as planner #D6EAF8
+  component "Ticket decomposition" as ticketing #D6EAF8
+  component "Slice decomposition" as slicing #D6EAF8
   component "Issue persistence\n(required)" as persistence #D6EAF8
   component "Text output\n(links only)" as output #D6EAF8
 }
@@ -29,7 +31,9 @@ package "Repository assets" as repository #FDF2E9 {
 
 requestor --> matcher : request
 matcher --> planner : select
-planner --> persistence : persist
+planner --> ticketing : define behavior boundaries
+ticketing --> slicing : split each Ticket
+slicing --> persistence : persist Ticket plan
 persistence --> issues : CRUD
 issues --> persistence : IDs / URLs
 persistence --> output : links
