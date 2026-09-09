@@ -52,6 +52,24 @@ class PushReadinessTests(unittest.TestCase):
         self.assertEqual(report["recommended_action"], "feature_branch_required")
         self.assertFalse(report["safe_to_push"])
 
+    def test_slash_containing_default_branch_is_preserved(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "update-ref", "refs/remotes/origin/release/main", "HEAD")
+        self.run_git(
+            repo,
+            "symbolic-ref",
+            "refs/remotes/origin/HEAD",
+            "refs/remotes/origin/release/main",
+        )
+        self.run_git(repo, "switch", "-q", "-c", "release/main")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = assess_repo(repo)
+
+        self.assertEqual(report["default_branch"], "release/main")
+        self.assertEqual(report["recommended_action"], "feature_branch_required")
+        self.assertFalse(report["safe_to_push"])
+
     def test_feature_branch_changes_can_reach_commit_then_push(self) -> None:
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "docs/change")
@@ -69,6 +87,30 @@ class PushReadinessTests(unittest.TestCase):
 
         report = assess_repo(repo)
 
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_unknown_default_branch_changes_require_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "develop")
+        self.run_git(repo, "branch", "-D", "main")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = assess_repo(repo)
+
+        self.assertIsNone(report["default_branch"])
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_unknown_default_branch_commit_requires_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "trunk")
+        self.run_git(repo, "branch", "-D", "main")
+        self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): unpublished")
+
+        report = assess_repo(repo)
+
+        self.assertIsNone(report["default_branch"])
         self.assertEqual(report["recommended_action"], "manual_review")
         self.assertFalse(report["safe_to_push"])
 

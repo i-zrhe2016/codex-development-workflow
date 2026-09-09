@@ -92,13 +92,13 @@ To enforce commit messages and auto-check/auto-push after every new commit, inst
 python3 <skill-dir>/scripts/install_post_commit_hook.py --repo .
 ```
 
-After that, invalid commit messages are rejected before a commit is created. Each valid local commit then triggers a fresh readiness check. The post-commit hook pushes only a non-default feature branch when the repo reaches the existing safe `push` state; it never bypasses the required PR and Automatic Review steps. It will not auto-commit leftover changes, and it will skip pushes when the branch is behind upstream, detached, conflicted, on the default branch, or missing a GitHub remote.
+After that, invalid commit messages are rejected before a commit is created. Each valid local commit then triggers a fresh readiness check. The post-commit hook pushes only a non-default feature branch when the repo reaches the existing safe `push` state; it never bypasses the required PR and Automatic Review steps. It will not auto-commit leftover changes, and it will skip pushes when the branch is behind upstream, detached, conflicted, on the default branch, when the default branch cannot be determined, or when a GitHub remote is missing.
 
 ## Workflow
 
 1. Inspect `git status` and the relevant diff, identify the repository's default branch, and create or resume a feature branch before editing.
 2. Run `assess_push_readiness.py` in the target repo before the first commit or push.
-3. Stop immediately if the repo is not a Git repo, has no GitHub remote, is on a detached HEAD, has conflicts, is behind its upstream branch, or is on the default branch with work to publish.
+3. Stop immediately if the repo is not a Git repo, has no GitHub remote, is on a detached HEAD, has conflicts, is behind its upstream branch, is on the default branch with work to publish, or has work to publish while the default branch cannot be determined.
 4. Treat `commit_then_push` as eligible only when the current functional unit is complete, its checks are green, and the selected paths or hunks contain no unrelated work.
 5. Before any push, verify unpublished commit subjects follow Conventional Commits 1.0.0 and check/complete the GitHub repository About description. The guarded scripts do this automatically when executed.
 6. Treat `push` as eligible only when the working tree is clean, the local branch is ahead of its upstream or has no upstream yet, and About verification succeeds.
@@ -111,7 +111,7 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 ## Push Rules
 
 - Refuse to push unresolved conflicts or code that failed validation.
-- Refuse to commit or push work from the repository's default branch; create or resume a feature branch first.
+- Refuse to commit or push work from the repository's default branch; create or resume a feature branch first. If the default branch cannot be determined, require manual review instead of assuming the current branch is safe.
 - Refuse to push if the branch is behind upstream; rebase or pull first.
 - Refuse to push when the GitHub repository About description is empty or could not be verified after an attempted update.
 - Refuse to force-push unless the user explicitly asks for it.

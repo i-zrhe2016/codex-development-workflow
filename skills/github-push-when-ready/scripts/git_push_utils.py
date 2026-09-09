@@ -176,7 +176,10 @@ def resolve_default_branch(
         f"refs/remotes/{remote}/HEAD",
     )
     if symbolic_head.returncode == 0 and symbolic_head.stdout:
-        return symbolic_head.stdout.rsplit("/", 1)[-1]
+        remote_prefix = f"{remote}/"
+        if symbolic_head.stdout.startswith(remote_prefix):
+            return symbolic_head.stdout.removeprefix(remote_prefix)
+        return symbolic_head.stdout
 
     for candidate in ("main", "master"):
         remote_ref = run_git(
@@ -250,6 +253,14 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         if preferred_remote and upstream:
             remote_branch = upstream.split("/", 1)[1]
             commands.append(shlex.join(["git", "pull", "--rebase", preferred_remote, remote_branch]))
+    elif default_branch is None and (
+        has_changes or ahead > 0 or (has_commits and not upstream)
+    ):
+        recommended_action = "manual_review"
+        reasons.append(
+            "Could not determine the repository default branch from local remote metadata; "
+            "preserve the work and confirm the target branch before publishing."
+        )
     elif default_branch and branch == default_branch and has_changes:
         recommended_action = "feature_branch_required"
         reasons.append(
