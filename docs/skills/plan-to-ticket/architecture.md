@@ -4,8 +4,9 @@
 
 This repository packages the `plan-to-ticket` specialist inside a larger
 main-agent workflow. Its job is to convert a change request into a compact
-plan and small engineering Slices with boundaries that can support optional
-delegation, then persist the plan and tickets to GitHub Issues. There is no
+plan, behavior Tickets, and small engineering Slices within each Ticket with
+boundaries that can support optional delegation, then persist the plan and
+Tickets to GitHub Issues. There is no
 application runtime, custom API client, or local ticket database in this
 package; GitHub Issues are the workflow's external durable store.
 
@@ -22,7 +23,7 @@ application infrastructure topology.
 
 | Asset | Responsibility | Boundary |
 | --- | --- | --- |
-| [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines trigger metadata, planning rules, Issue persistence contract, Slice structure, scope constraints, and verification expectations. | It plans and persists Issue records; it does not implement the planned change. |
+| [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines trigger metadata, Ticket-first planning rules, Issue persistence contract, Slice structure, scope constraints, and verification expectations. | It plans and persists Issue records; it does not implement the planned change. |
 | [`skills/plan-to-ticket/agents/openai.yaml`](../../../skills/plan-to-ticket/agents/openai.yaml) | Supplies the display name and short interface description. | It describes the skill in the interface; it does not define planning behavior. |
 | GitHub Issues connector | Creates, finds, and updates the parent plan Issue and one Issue per ticket. | It is the external durable authority; no local Markdown mirror is maintained. |
 | This documentation package | Explains the bundle structure, behavior, output contract, and maintenance expectations. | Documentation does not add executable behavior. |
@@ -31,13 +32,21 @@ application infrastructure topology.
 
 1. A requestor provides a feature idea, requirement, bug-fix plan, refactor plan, or similar project change.
 2. Codex uses the frontmatter description in `SKILL.md` to determine whether this skill applies.
-3. The planning instructions use the available repository context and identify milestones, dependencies, scope boundaries, and verification.
-4. The skill resolves the repository's GitHub target, searches stable markers, and creates or updates the parent plan Issue and ticket Issues before implementation branches start.
-5. The skill assigns or resumes one branch and base branch per ticket, records
+3. The planning instructions use the available repository context to identify
+   milestones, Ticket boundaries, Ticket dependencies, scope boundaries, and
+   verification.
+4. The skill decomposes each Ticket into dependency-ordered execution Slices
+   with their own acceptance and validation contract.
+5. The skill resolves the repository's GitHub target, searches stable markers,
+   and creates or updates the parent plan Issue and Ticket Issues before
+   implementation branches start.
+6. The skill assigns or resumes one branch and base branch per Ticket, records
    those values on the same Issue, and uses the updated default branch for new
-   dependency-ready tickets.
-6. The successful output follows the contract in `SKILL.md`: a `Plan` section followed by focused `Tickets`/Slice sections containing canonical Issue links and branch handoff fields.
-7. The main agent uses the Slices as implementation input, either executing
+   dependency-ready Tickets.
+7. The successful output follows the contract in `SKILL.md`: a `Plan` section
+   followed by Ticket sections containing nested Slices, canonical Issue links,
+   and branch handoff fields.
+8. The main agent uses the Slices as implementation input, either executing
    them sequentially or passing independent, bounded work through the
    workflow's delegation gate.
 
@@ -52,6 +61,13 @@ application infrastructure topology.
   parent workflow decides whether an independent Slice is safe to delegate.
 - Each ticket Issue maps to one implementation branch; internal Slices share
   that branch, and the PR head/base must match its Issue metadata.
+
+## Ticket-to-Slice hierarchy
+
+The parent Ticket is the independently reviewable behavior boundary. Each
+Ticket contains one or more execution-ready Slices. Ticket dependencies decide
+when a Ticket branch may start; Slice dependencies decide execution order
+inside that branch. All Slices for one Ticket share its Issue and branch.
 
 ## Slice output contract
 

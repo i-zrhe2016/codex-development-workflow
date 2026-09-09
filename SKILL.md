@@ -1,14 +1,15 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Use a main-agent staged workflow with optional bounded delegation to classify work, plan small slices, execute with evidence-based testing, integrate, review, and deliver without forcing strict TDD on every change."
+description: "Entry point for repository-wide Codex development. Use a main-agent staged workflow to classify work, define behavior Tickets, decompose their Slices, execute with evidence-based testing, integrate, review, and deliver without forcing strict TDD on every change."
 ---
 
 # Codex Development Workflow
 
 Use this skill as the entry point for non-trivial repository development. The
-main agent owns requirements, architecture, planning, decomposition,
-integration, and final judgment. It may delegate bounded work after Slicing
-when doing so materially improves speed, context isolation, or review quality;
+main agent owns requirements, architecture, planning, Ticket/Slice
+decomposition, integration, and final judgment. It may delegate bounded work
+after Ticket/Slice decomposition when doing so materially improves speed,
+context isolation, or review quality;
 specialist skills provide procedures for the work they own.
 
 ## Core workflow
@@ -18,7 +19,8 @@ Requirement
     -> Classify
     -> Understand current repo
     -> Plan
-    -> Slice
+    -> Ticket(s) if complexity warrants
+    -> Slice(s) per Ticket
     -> Persist plan/tickets to GitHub Issues
     -> Delegate if useful
     -> Create/resume ticket branch
@@ -40,14 +42,34 @@ Requirement
 Use the lightest path that preserves correctness:
 
 - **Tiny:** classify, make a concise plan, treat the request as one slice, run
-  minimal validation, and prepare the change for the single PR-stage review.
+  minimal validation, and prepare the change for the single PR-stage review;
+  do not add ticket overhead.
 - **Normal:** understand the relevant repository area, make a minimal plan,
-  execute one or more slices (delegating only when the gate allows it), and
-  run focused validation.
-- **Complex:** understand the repository, plan dependency-ordered Slices with
-  `plan-to-ticket`, evaluate delegation after Slicing, execute each ticket's
-  Slices with their own acceptance and test strategy, then run broader
-  integration checks when multiple tickets come together before PR review.
+  create the smallest behavior Ticket when the work needs multiple steps,
+  split that Ticket into one or more Slices, execute them (delegating only
+  when the gate allows it), and run focused validation.
+- **Complex:** understand the repository, plan dependency-ordered Tickets and
+  Slices with `plan-to-ticket`, first split the requirements into
+  dependency-ordered behavior Tickets, then split each Ticket into its Slices,
+  evaluate delegation after Ticket/Slice decomposition, execute each Ticket's
+  Slices with their own acceptance and test strategy, and run broader
+  integration checks when multiple Tickets come together before PR review.
+
+## Ticket-to-Slice hierarchy
+
+- A **Ticket** is a behavior or capability boundary that can be reviewed and
+  delivered independently. It owns one Issue, one implementation branch, and
+  its related tests and documentation.
+- A **Slice** is an execution-ready unit inside a Ticket. It carries its own
+  scope, dependencies, acceptance criteria, test strategy, test level, test
+  cases, and validation command.
+- For a large or multi-behavior request, split the requirements into Tickets
+  first, then split each Ticket into dependency-ordered Slices. Do not create
+  Slices before the Ticket boundaries are clear.
+- Keep all Slices for one Ticket on that Ticket's branch. Ticket dependencies
+  control when a branch may start; Slice dependencies control execution order
+  within the branch.
+- A tiny request may remain one implicit Slice without a Ticket or Issue.
 
 Planning controls architecture and scope. Testing controls implementation
 evidence. Neither replaces the other.
@@ -69,11 +91,12 @@ Test cases
 Validation command
 ```
 
-When `plan-to-ticket` is used, the Slice also carries its canonical GitHub
-Issue link and execution metadata, including its implementation branch and
-base branch. The parent plan Issue and all initial ticket Issues must exist
-before implementation branches are created; a failed Issue operation blocks the
-workflow and has no Markdown or chat-only fallback.
+When `plan-to-ticket` is used, each Ticket carries its canonical GitHub Issue
+link and execution metadata; its Slices inherit the Ticket's Issue, branch, and
+base while carrying their own execution contract. The parent plan Issue and all
+initial Ticket Issues must exist before implementation branches are created; a
+failed Issue operation blocks the workflow and has no Markdown or chat-only
+fallback.
 
 Only start dependency-ready Slices. The main agent may execute one Slice
 itself, or the delegation gate may start multiple independent Slices with
@@ -83,8 +106,8 @@ refactors. Record each result before selecting the next Slice.
 
 ## Optional delegation gate
 
-After `Plan -> Slice` and before execution, the main agent evaluates whether
-delegation is useful. Delegation is optional; the default path remains a
+After `Plan -> Ticket -> Slice` and before execution, the main agent evaluates
+whether delegation is useful. Delegation is optional; the default path remains a
 single agent executing the Slice itself.
 
 Use delegation only for a bounded, independently executable task. Suitable
@@ -239,10 +262,11 @@ do not duplicate its detailed procedure here.
 
 - `context-efficiency`: large, unfamiliar, or context-heavy repository
   exploration; it is an optional context-loading aid, not a workflow stage.
-- `plan-to-ticket`: complex, multi-slice, or dependency-driven work; generated
-  Slices must satisfy the Slice contract above, persist the plan and tickets to
-  GitHub Issues before branch work, and expose enough boundaries for the
-  delegation gate to make a safe decision.
+- `plan-to-ticket`: complex, multi-ticket, multi-slice, or dependency-driven
+  work; split requirements into Tickets before generating their Slices.
+  Generated Slices must satisfy the Slice contract above, persist the plan and
+  Tickets to GitHub Issues before branch work, and expose enough boundaries for
+  the delegation gate to make a safe decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
 - `repo-current-state`: reconcile verified state after a meaningful slice or

@@ -16,9 +16,12 @@ state "Requirement" as requirement
 state "Classify task\nTiny / Normal / Complex" as classify
 state "Understand\nCurrent Repo" as context
 state "Plan\narchitecture + scope" as plan
-state "Define one Slice\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
-state "Persist plan / tickets\n[plan-to-ticket]\nGitHub Issues authoritative" as persist #EAF2F8
-state "Create/resume ticket branch\n[one ticket ↔ one branch]\nIssue: Branch + Base\nStatus: in_progress" as branch
+state "Ticket(s) needed?" as ticketing #FFF4CC
+state "Define current behavior Ticket\n[plan-to-ticket]\ngoal • scope • dependencies\nreview boundary" as ticket
+state "Define Slice(s) per Ticket\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
+state "Tiny implicit Slice\n(no Ticket / no Issue)" as tiny_slice
+state "Persist plan / Ticket Issues\n[plan-to-ticket]\nGitHub Issues authoritative" as persist #EAF2F8
+state "Create/resume current Ticket branch\n[one Ticket ↔ one branch]\nIssue: Branch + Base\nStatus: in_progress" as branch
 state "Delegation Gate\nIndependent + bounded?\n(optional)" as delegation #FFF4CC
 state "Explorer\n[explorer]\nread-only evidence" as explorer
 state "Worker A / B\n[worker]\nisolated Slice execution + validation" as workers
@@ -61,6 +64,7 @@ state "Re-test\n[test-workflow]" as retest
 state "Re-test pass?" as retest_gate #FFF4CC
 state "Merge PR\n[github-push-when-ready]" as merge_pr
 state "Close ticket\n[GitHub Issues]" as close_ticket
+state "More Tickets?" as more_tickets #FFF4CC
 state "Automatic Deployment\n[auto-deploy]" as deployment
 state "Health /\nSmoke Verification" as deploy_verify
 state "Rollback /\nEscalate" as rollback #FDECEC
@@ -70,9 +74,14 @@ state "Blocked" as blocked #FDECEC
 requirement --> classify
 classify --> context
 context --> plan
-plan --> slice
-slice --> persist
+plan --> ticketing
+ticketing --> ticket : yes / normal multi-step
+ticketing --> ticket : yes / complex or multi-behavior
+ticketing --> tiny_slice : no / tiny implicit Slice
+ticket --> slice : each Ticket
+slice --> persist : Ticketed work
 persist --> branch
+tiny_slice --> delegation : no Ticket / no branch
 branch --> delegation
 delegation --> execute : no / sequential
 delegation --> explorer : yes / independent
@@ -100,9 +109,13 @@ fix_findings --> retest
 retest --> retest_gate
 retest_gate --> fix_findings : fail
 retest_gate --> merge_pr : pass
-merge_pr --> close_ticket
-close_ticket --> deployment : requested
-close_ticket --> [*] : no deployment
+merge_pr --> close_ticket : Ticketed work
+merge_pr --> deployment : tiny / requested
+merge_pr --> [*] : tiny / no deployment
+close_ticket --> more_tickets
+more_tickets --> ticket : yes / next Ticket
+more_tickets --> deployment : no / all Tickets / requested
+more_tickets --> [*] : no / all Tickets / no deployment
 deployment --> deploy_verify
 deploy_verify --> [*] : pass
 deploy_verify --> rollback : fail / timeout
@@ -118,6 +131,11 @@ note right of delegation
 The main agent owns requirements,
 architecture, dependency ordering,
 integration, and final judgment.
+Split requirements into Tickets before
+defining their Slices; normal multi-step
+work uses the Ticket path too.
+Tiny work may use one implicit Slice
+without an Issue or Ticket branch.
 Keep dependent, overlapping, or shared-interface work sequential.
 end note
 
@@ -130,7 +148,8 @@ end note
 note right of state_docs
 Repo_Current_State.md is the compact recovery point
 for current focus, verified behavior, failures, and next Slice.
-Ticket detail and progress remain in GitHub Issues.
+Ticket detail and progress, when present,
+remain in GitHub Issues.
 end note
 
 note left of requirement

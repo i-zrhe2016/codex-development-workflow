@@ -1,11 +1,12 @@
 ---
 name: plan-to-ticket
-description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into a concise implementation plan and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Use for complex or multi-step work that benefits from execution-ready Slices. Persist every generated plan and ticket to GitHub Issues before implementation branches start; each behavior Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
+description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into a concise implementation plan, behavior Tickets, and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Use for complex or multi-step work that benefits from execution-ready Slices. Persist every generated plan and Ticket to GitHub Issues before implementation branches start; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
 ---
 
 # Plan to Ticket
 
-Convert complex or dependency-driven work into the smallest useful set of execution-ready tickets.
+Convert complex or dependency-driven work into the smallest useful set of
+behavior Tickets, then into execution-ready Slices within each Ticket.
 
 ## Core principle
 
@@ -65,8 +66,12 @@ this skill creates tickets, Issue persistence is required.
   when repository state is updated; do not copy the plan or backlog into it.
 - Keep tickets small, focused, independently understandable, and independently verifiable.
 - Prefer one behavior or capability per ticket, not one file or one coding step per ticket.
+- Do not use Ticket and Slice as synonyms: a Ticket is the Issue/branch-level
+  behavior boundary; a Slice is an execution unit inside that Ticket.
 - Keep tests with the behavior they validate; do not create separate "write tests" tickets unless test infrastructure itself is the deliverable.
-- Order Slices by real implementation dependency and clear ownership boundaries.
+- First establish the Ticket boundaries and ticket-level dependencies, then
+  order each Ticket's Slices by real implementation dependency and clear
+  ownership boundaries.
 - Do not require delegation. When the parent workflow enables its delegation
   gate, identify independent Slices that are safe to delegate and keep
   dependent or overlapping Slices sequential.
@@ -77,12 +82,13 @@ this skill creates tickets, Issue persistence is required.
 
 ## GitHub Issues persistence contract
 
-Use a parent plan Issue for the overall plan and ticket index, plus one child
-Issue for each ticket. The parent Issue contains the overall milestones and
-links to child Issues; it must not duplicate mutable ticket status or progress
-fields. The child Issue is the authoritative record for that ticket's current
-metadata and acceptance state. Comments may hold append-only progress evidence,
-but they do not replace the structured fields in the Issue body.
+Use a parent plan Issue for the overall plan and Ticket index, plus one child
+Issue for each Ticket. The parent Issue contains the overall milestones and
+links to child Issues; it must not duplicate mutable Ticket status or progress
+fields. The child Issue is the authoritative record for that Ticket's current
+metadata, boundaries, nested Slice plan, and acceptance state. Comments may
+hold append-only progress evidence, but they do not replace the structured
+fields in the Issue body.
 
 Use stable markers so retries and later sessions can find the same records:
 
@@ -109,11 +115,13 @@ Dependencies: []
 PR: null
 ```
 
-The rest of the Issue body uses the ticket structure in this skill, including
-Goal, Dependencies, Scope, Out of scope, Function Checklist, Requirements,
-Non-goals, Acceptance Criteria, Test Cases, Relevant Context / Files, Test
-Strategy, Test Level, and Validation Command. Keep the body current when a
-branch, dependency, acceptance boundary, or PR changes.
+The Ticket Issue body uses the Ticket structure in this skill, including Goal,
+Dependencies, Scope, Out of scope, Function Checklist, Requirements,
+Non-goals, and Ticket Acceptance Criteria, followed by one or more nested Slice
+sections. Each Slice section includes its own Goal, Scope, Dependencies,
+Acceptance Criteria, Test Cases, Relevant Context / Files, Test Strategy, Test
+Level, and Validation Command. Keep the body current when a branch,
+dependency, acceptance boundary, or PR changes.
 
 Persist in this order:
 
@@ -153,13 +161,15 @@ only after its pull request is merged.
 Before writing the output, determine internally:
 
 1. The final desired outcome.
-2. Whether tickets are actually necessary.
+2. Whether Ticket decomposition is actually necessary.
 3. The minimum foundations required first.
-4. The smallest independently verifiable behavior slices.
-5. The real dependency order and any safe delegation boundaries.
-6. The scope boundaries that prevent drift.
-7. The observable acceptance criteria for each Slice.
-8. The test cases and validation evidence needed to prove each Slice.
+4. The smallest independently reviewable behavior Tickets.
+5. The dependency order between Tickets.
+6. The smallest independently verifiable Slices within each Ticket.
+7. The dependency order between Slices and any safe delegation boundaries.
+8. The scope boundaries that prevent drift.
+9. The observable acceptance criteria for each Slice.
+10. The test cases and validation evidence needed to prove each Slice.
 
 Do not expose internal reasoning.
 
@@ -205,6 +215,12 @@ T0005 - Write tests
 A useful heuristic:
 
 > If the ticket cannot be reviewed and verified independently, split it. If splitting produces only mechanical steps, merge it back into the behavior ticket.
+
+After the Ticket boundaries are fixed, split each Ticket into one or more
+execution-ready Slices. A Slice may be delegated or run sequentially, but it
+must remain inside its parent Ticket and must not become a separate branch or
+Issue. Do not split a Ticket into Slices before its behavior boundary and
+dependencies are clear.
 
 ## Function Checklist
 
@@ -290,10 +306,12 @@ Do not default every ticket to a full test suite or browser E2E run.
 
 Use explicit ticket IDs.
 
-Dependencies describe the order in which the main agent or a delegated worker
-can execute the Slices. They are not an instruction to delegate: independent
-Slices may be considered by the parent workflow's delegation gate, while
-dependent or overlapping Slices remain sequential.
+Ticket dependencies describe the order in which the main agent can start
+Ticket branches. Slice dependencies describe the order in which the main agent
+or a delegated worker can execute Slices inside a ready Ticket. They are not an
+instruction to delegate: independent Slices may be considered by the parent
+workflow's delegation gate, while dependent or overlapping Slices remain
+sequential.
 
 Example:
 
@@ -332,8 +350,10 @@ Do not pre-split speculative edge cases before evidence shows they need independ
 ## Output Format
 
 After the persistence contract succeeds, use this structure. Include the
-canonical parent plan Issue URL and the canonical Issue URL for every ticket;
-these links are the durable handoff for later sessions and agents.
+canonical parent plan Issue URL and the canonical Issue URL for every Ticket;
+these links are the durable handoff for later sessions and agents. List the
+Slices nested under their parent Ticket; a Slice inherits that Ticket's Issue,
+branch, and base metadata.
 
 # Plan
 
@@ -367,20 +387,20 @@ Dependencies: []
 PR: null
 ```
 
-**Goal**
+**Ticket Goal**
 
 <One concrete outcome.>
 
-**Dependencies**
+**Ticket Dependencies**
 
 - None
 
-**Scope**
+**Ticket Scope**
 
 - <What may be changed>
 - <Relevant components or behavior>
 
-**Out of scope**
+**Ticket Out of scope**
 
 - <Unrelated areas>
 - <Future-ticket functionality>
@@ -399,15 +419,38 @@ PR: null
 
 - <Explicitly excluded work>
 
+**Ticket Acceptance Criteria**
+
+- <Observable result covering the Ticket>
+- <Observable result covering the Ticket>
+
+**Slices**
+
+#### S0001.1 - <Execution-ready Slice title>
+
+**Goal**
+
+<One concrete Slice outcome within T0001.>
+
+**Scope**
+
+- <Files, interfaces, or behavior owned by this Slice>
+
+**Out of scope**
+
+- <Future Slice or unrelated behavior>
+
+**Dependencies**
+
+- <Earlier Slice ID in T0001, or None>
+
 **Acceptance Criteria**
 
-- <Observable result>
-- <Observable result>
+- <Observable result for this Slice>
 
 **Test Cases**
 
 - <Concrete success/failure/boundary case>
-- <Concrete regression/integration case when relevant>
 
 **Relevant Context / Files**
 
@@ -426,9 +469,8 @@ PR: null
 - <Smallest relevant validation command, when known>
 - <Expected evidence when an exact command is not yet known>
 
----
-
-Repeat for T0002, T0003, and later tickets.
+Repeat the `S0001.x` section for each Slice in T0001, then repeat the Ticket
+and nested Slice sections for T0002, T0003, and later Tickets.
 
 ## Existing Repository Context
 

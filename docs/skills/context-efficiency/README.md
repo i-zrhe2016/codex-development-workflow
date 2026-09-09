@@ -31,7 +31,7 @@ explicit request. When evidence is insufficient, expand the context or the
 verification scope deliberately and record why.
 
 See the [workflow usage guide](../../workflow/usage.md) for the surrounding
-Plan/Slice/Execute lifecycle.
+Plan/Ticket/Slice/Execute lifecycle.
 
 ## Maintenance
 

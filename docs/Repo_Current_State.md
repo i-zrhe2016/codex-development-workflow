@@ -4,11 +4,12 @@ Last verified: 2026-09-09 @ working tree
 
 ## Current Focus
 
-- Per-ticket branch setup, ticket–branch linkage, and one PR-stage review gate are active in the workflow on `main`.
+- Ticket-first decomposition is active for large or multi-behavior requests: define behavior Tickets, then split each Ticket into execution Slices.
 
 ## Implemented
 
-- The workflow classifies work, understands the current repository, plans small Slices, optionally delegates independent bounded work, integrates, reviews, and delivers.
+- The workflow classifies work, understands the current repository, plans behavior Tickets and small Slices, optionally delegates independent bounded work, integrates, reviews, and delivers.
+- Complex requirements are split into behavior Tickets before their dependency-ordered Slices; tiny requests may remain one implicit Slice without Ticket overhead.
 - Normal and complex Slices define scope, exclusions, dependencies, acceptance criteria, relevant context, test strategy, verification level, test cases, and validation commands.
 - Verification levels are `minimal`, `focused`, `regression`, and `full`; focused is the default and passing evidence stops expansion unless escalation is justified.
 - Test-first behavior is conditional on meaningful behavioral risk; non-behavioral changes use direct minimal validation.
@@ -39,8 +40,8 @@ Last verified: 2026-09-09 @ working tree
 
 ## Architecture Snapshot
 
-- `SKILL.md` owns main-agent stage routing, the optional Delegation Gate, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
-- `plan-to-ticket` owns dependency-ordered Slice generation and mandatory GitHub Issue persistence; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
+- `SKILL.md` owns main-agent stage routing, Ticket/Slice hierarchy, the optional Delegation Gate, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
+- `plan-to-ticket` owns Ticket-first decomposition, dependency-ordered Slice generation, and mandatory GitHub Issue persistence; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
 - `docs/skills/` contains explanatory documentation for every managed specialist skill; operational references and scripts remain beside the runtime bundles under `skills/`.
 - `repo-current-state`, `data-document-redaction`, and `github-push-when-ready` remain conditional gates.
 - `auto-deploy` is a conditional deployment gate and does not own target-project infrastructure or production approvals.

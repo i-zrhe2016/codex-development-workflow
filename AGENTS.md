@@ -30,7 +30,7 @@ Use the lightest workflow that preserves correctness.
 
 For non-trivial work:
 
-`Requirement -> Understand -> Plan -> Slice -> Delegate if useful -> Execute/Test -> Integrate -> Review -> State/Docs if needed -> Redact if needed -> Commit/Push -> Notify`
+`Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed -> Slice(s) per Ticket -> Delegate if useful -> Execute/Test -> Integrate -> Review -> State/Docs if needed -> Redact if needed -> Commit/Push -> Notify`
 
 Use `codex-development-workflow` to orchestrate the lifecycle.
 
@@ -39,10 +39,11 @@ For each slice:
 `Acceptance Criteria -> Test Strategy -> Minimal Change -> Focused Validation -> Complete`
 
 * Work on one clear functional unit per agent at a time; independent Slices may run in parallel only through the delegation gate.
+* When requirements are numerous, cross multiple behaviors, or have dependencies, split them into behavior Tickets first, then split each Ticket into independently verifiable Slices.
 * Split complex or dependency-driven work into small, independently verifiable slices.
 * Run the smallest validation set that provides sufficient evidence.
 * Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
-* Do not force strict TDD, planning, or ticket overhead onto trivial changes.
+* Do not force strict TDD, planning, or ticket overhead onto trivial changes; a tiny request may remain one implicit Slice.
 * If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.
 * Do not mix unrelated features, refactors, formatting, or dependency upgrades.
 
