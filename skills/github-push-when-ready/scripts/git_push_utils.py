@@ -161,23 +161,26 @@ def build_push_command(remote: str, branch: str, upstream: str | None) -> str:
     return shlex.join(["git", "push", "-u", remote, branch])
 
 
-def resolve_default_branch(repo: Path, remote: str | None) -> str | None:
-    """Resolve the repository default branch from local remote metadata."""
-    if not remote:
+def resolve_default_branch(
+    repo: Path, remote: str | None, push_url: str | None
+) -> str | None:
+    """Resolve the default branch from the actual push target's HEAD metadata."""
+    if not remote or not push_url:
         return None
 
-    symbolic_head = run_git(
+    remote_head = run_git(
         repo,
-        "symbolic-ref",
+        "ls-remote",
+        "--symref",
         "--quiet",
-        "--short",
-        f"refs/remotes/{remote}/HEAD",
+        push_url,
+        "HEAD",
     )
-    if symbolic_head.returncode == 0 and symbolic_head.stdout:
-        remote_prefix = f"{remote}/"
-        if symbolic_head.stdout.startswith(remote_prefix):
-            return symbolic_head.stdout.removeprefix(remote_prefix)
-        return symbolic_head.stdout
+    if remote_head.returncode == 0 and remote_head.stdout:
+        for line in remote_head.stdout.splitlines():
+            match = re.fullmatch(r"ref:\s+refs/heads/(.+)\s+HEAD", line)
+            if match:
+                return match.group(1)
 
     return None
 
@@ -218,7 +221,8 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         if any(is_github_url(url) for url in urls.values())
     }
     preferred_remote = choose_remote(github_remotes, upstream)
-    default_branch = resolve_default_branch(repo, preferred_remote)
+    push_url = github_remotes.get(preferred_remote, {}).get("push") if preferred_remote else None
+    default_branch = resolve_default_branch(repo, preferred_remote, push_url)
     has_commits = run_git(repo, "rev-parse", "--verify", "HEAD").returncode == 0
     has_changes = any(status[key] > 0 for key in ("staged", "unstaged", "untracked", "conflicted"))
 

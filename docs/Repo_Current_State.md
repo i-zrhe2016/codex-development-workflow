@@ -71,7 +71,9 @@ Last verified: 2026-09-09 @ working tree
 - `SKILL.md` owns main-agent stage routing, Ticket/Slice hierarchy, the optional Delegation Gate, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
 - `plan-to-ticket` owns Ticket-first decomposition, dependency-ordered Slice generation, and mandatory GitHub Issue persistence; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
 - `docs/skills/` contains explanatory documentation for every managed specialist skill; operational references and scripts remain beside the runtime bundles under `skills/`.
-- `repo-current-state`, `data-document-redaction`, and `github-push-when-ready` remain conditional gates.
+- `data-document-redaction` and `auto-deploy` remain conditional gates;
+  `github-push-when-ready` governs every publication, PR, merge, and branch
+  cleanup gate, while `repo-current-state` reconciles verified state changes.
 - `auto-deploy` is a conditional deployment gate and does not own target-project infrastructure or production approvals.
 - The parent workflow and `repo-current-state` use GitHub Issues as the durable ticket authority; this file only points to active and next Issues. See `docs/workflow/usage.md` and `docs/skills/plan-to-ticket/architecture.md`.
 - See `docs/architecture/overview.md` and `docs/diagrams/architecture.puml` for the workflow topology.

@@ -29,6 +29,11 @@ class PushReadinessTests(unittest.TestCase):
         temp = tempfile.TemporaryDirectory(prefix="push-readiness-test-")
         self.addCleanup(temp.cleanup)
         repo = Path(temp.name)
+        remote_temp = tempfile.TemporaryDirectory(prefix="push-readiness-remote-")
+        self.addCleanup(remote_temp.cleanup)
+        remote = Path(remote_temp.name)
+        self.run_git(remote, "init", "-q", "--bare")
+        self.run_git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
         self.run_git(repo, "init", "-q", "-b", "main")
         self.run_git(repo, "config", "user.name", "i-zrhe2016")
         self.run_git(repo, "config", "user.email", "test")
@@ -39,8 +44,9 @@ class PushReadinessTests(unittest.TestCase):
             "origin",
             "https://github.com/i-zrhe2016/codex-development-workflow.git",
         )
+        self.run_git(repo, "remote", "set-url", "--push", "origin", str(remote))
         self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): baseline")
-        self.run_git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+        self.run_git(repo, "push", "-q", "-u", "origin", "main")
         self.run_git(
             repo,
             "symbolic-ref",
@@ -61,6 +67,10 @@ class PushReadinessTests(unittest.TestCase):
 
     def test_slash_containing_default_branch_is_preserved(self) -> None:
         repo = self.make_repo()
+        remote = Path(self.run_git(repo, "config", "--get", "remote.origin.pushurl"))
+        self.run_git(repo, "switch", "-q", "-c", "release/main")
+        self.run_git(repo, "push", "-q", "-u", "origin", "release/main")
+        self.run_git(remote, "symbolic-ref", "HEAD", "refs/heads/release/main")
         self.run_git(repo, "update-ref", "refs/remotes/origin/release/main", "HEAD")
         self.run_git(
             repo,
@@ -68,7 +78,6 @@ class PushReadinessTests(unittest.TestCase):
             "refs/remotes/origin/HEAD",
             "refs/remotes/origin/release/main",
         )
-        self.run_git(repo, "switch", "-q", "-c", "release/main")
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
         report = assess_repo(repo)
@@ -101,6 +110,7 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "develop")
         self.run_git(repo, "branch", "-D", "main")
+        self.run_git(repo, "remote", "set-url", "--push", "origin", str(repo / "missing.git"))
         self.run_git(repo, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
         self.run_git(repo, "update-ref", "-d", "refs/remotes/origin/main")
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
@@ -115,6 +125,7 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "trunk")
         self.run_git(repo, "branch", "-D", "main")
+        self.run_git(repo, "remote", "set-url", "--push", "origin", str(repo / "missing.git"))
         self.run_git(repo, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
         self.run_git(repo, "update-ref", "-d", "refs/remotes/origin/main")
         self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): unpublished")
