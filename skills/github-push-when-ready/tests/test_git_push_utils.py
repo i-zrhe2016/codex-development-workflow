@@ -34,7 +34,22 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-c", "work")
         self.run_git(repo, "config", "push.default", "simple")
+        self.run_git(repo, "config", "branch.work.remote", "upstream")
+        self.run_git(repo, "config", "branch.work.merge", "refs/heads/main")
         self.assertEqual(resolve_effective_push_branch(repo, "work", "upstream/main", "origin"), "work")
+
+    def test_custom_fetch_mapping_does_not_hide_default_destination(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        self.run_git(repo, "config", "remote.origin.fetch", "+refs/heads/main:refs/remotes/origin/work")
+        self.run_git(repo, "update-ref", "refs/remotes/origin/work", "HEAD")
+        self.run_git(repo, "config", "branch.work.remote", "origin")
+        self.run_git(repo, "config", "branch.work.merge", "refs/heads/main")
+        self.run_git(repo, "config", "push.default", "upstream")
+        self.run_git(repo, "commit", "--allow-empty", "-m", "fix(test): change")
+        report = self.assess_with_default_branch(repo, "main")
+        self.assertEqual(report["effective_push_branch"], "main")
+        self.assertFalse(report["safe_to_push"])
 
     def run_git(self, repo: Path, *args: str) -> str:
         completed = subprocess.run(

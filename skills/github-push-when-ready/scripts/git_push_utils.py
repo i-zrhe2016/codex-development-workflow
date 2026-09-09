@@ -232,30 +232,24 @@ def resolve_effective_push_branch(
     if mode in {"matching", "nothing"}:
         return None
 
-    upstream_remote = None
-    upstream_branch = None
-    if upstream and "/" in upstream:
-        upstream_remote, upstream_branch = upstream.split("/", 1)
+    remote_config = run_git(repo, "config", "--get", f"branch.{branch}.remote")
+    merge_config = run_git(repo, "config", "--get-all", f"branch.{branch}.merge")
+    upstream_remote = remote_config.stdout if remote_config.returncode == 0 else None
+    merge_ref = merge_config.stdout if merge_config.returncode == 0 else ""
+    if "\n" in merge_ref or (merge_ref and not merge_ref.startswith("refs/heads/")):
+        return None
+    upstream_branch = merge_ref.removeprefix("refs/heads/") or None
     if mode == "upstream" and upstream_remote != push_remote:
         return None
     if mode == "simple" and upstream_remote and upstream_remote != push_remote:
         return branch
 
-    push_ref = run_git(repo, "rev-parse", "--symbolic-full-name", "@{push}")
-    if push_ref.returncode == 0 and push_ref.stdout:
-        prefix = "refs/remotes/"
-        if push_ref.stdout.startswith(prefix):
-            remote_and_branch = push_ref.stdout.removeprefix(prefix)
-            remote_name, separator, target_branch = remote_and_branch.partition("/")
-            if separator and remote_name == push_remote and target_branch:
-                return target_branch
-
     if mode == "current":
         return branch
-    if mode == "upstream" and upstream and "/" in upstream:
+    if mode == "upstream":
         return upstream_branch
     if mode == "simple":
-        if not upstream or "/" not in upstream:
+        if not upstream_branch:
             return branch
         return branch if upstream_branch == branch else None
     return None
