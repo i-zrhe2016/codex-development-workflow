@@ -33,8 +33,9 @@ application infrastructure topology.
 2. Codex uses the frontmatter description in `SKILL.md` to determine whether this skill applies.
 3. The planning instructions use the available repository context and identify milestones, dependencies, scope boundaries, and verification.
 4. The skill resolves the repository's GitHub target, searches stable markers, and creates or updates the parent plan Issue and ticket Issues before implementation branches start.
-5. The skill assigns or resumes one branch and base branch per ticket, using the
-   updated default branch for new dependency-ready tickets.
+5. The skill assigns or resumes one branch and base branch per ticket, records
+   those values on the same Issue, and uses the updated default branch for new
+   dependency-ready tickets.
 6. The successful output follows the contract in `SKILL.md`: a `Plan` section followed by focused `Tickets`/Slice sections containing canonical Issue links and branch handoff fields.
 7. The main agent uses the Slices as implementation input, either executing
    them sequentially or passing independent, bounded work through the
@@ -49,6 +50,8 @@ application infrastructure topology.
 - A required GitHub Issue failure blocks completion; chat output and local Markdown are not persistence fallbacks.
 - The skill does not force multi-agent handoffs or parallel implementation; the
   parent workflow decides whether an independent Slice is safe to delegate.
+- Each ticket Issue maps to one implementation branch; internal Slices share
+  that branch, and the PR head/base must match its Issue metadata.
 
 ## Slice output contract
 

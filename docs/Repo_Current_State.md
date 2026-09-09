@@ -1,10 +1,10 @@
 # Repository Current State
 
-Last verified: 2026-09-09 @ 4cfc190
+Last verified: 2026-09-09 @ working tree
 
 ## Current Focus
 
-- Per-ticket branch setup and ticket-level review gates are active in the workflow on `main`.
+- Per-ticket branch setup and one PR-stage review gate are active in the workflow on `docs/pr-review-gate`.
 
 ## Implemented
 
@@ -17,15 +17,15 @@ Last verified: 2026-09-09 @ 4cfc190
 - `github-push-when-ready` enforces a per-repository non-root identity policy; this repository is configured for `i-zrhe2016` and verifies the same GitHub account and push credentials before publishing.
 - The publication workflow verifies a PR is merged before deleting its source branch remotely and locally; the default branch is retained.
 - `auto-deploy` defines a provider-neutral deployment contract with immutable artifacts, bounded health verification, least-privilege credentials, and authorized rollback handling.
-- Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides an optional read-only integrated-change reviewer.
-- Built-in `codex review` and the project-scoped `reviewer` are documented as separate review paths; the latter is explicitly requested from an interactive Codex session.
+- Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides the single PR-stage read-only reviewer.
+- Built-in `codex review` and the project-scoped `reviewer` are documented as alternative paths for the single PR-stage review; the latter is explicitly requested from an interactive Codex session.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
 - `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
-- The root workflow now creates or resumes one branch per ticket before implementation and requires ticket-level review before merge.
+- The root workflow now creates or resumes one branch per ticket before implementation and requires one review after the PR is opened and before merge.
 
 ## In Progress
 
-- None.
+- Move the only routine review gate to the PR stage on `docs/pr-review-gate`.
 
 ## Constraints
 
@@ -48,4 +48,4 @@ Last verified: 2026-09-09 @ 4cfc190
 
 ## Next
 
-- Start the next authorized ticket from the updated default branch.
+- Complete the PR-stage review-gate documentation change, then publish it when authorized.

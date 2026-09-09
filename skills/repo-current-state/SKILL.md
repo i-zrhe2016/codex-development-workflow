@@ -33,11 +33,14 @@ Do not scan the entire repository just to validate every line. Validate progress
 
 ## When Updating State
 
-Update the file after a ticket or coherent work unit has passed the required tests/review and materially changes repository capabilities, constraints, active work, or known failures.
+Update the file after a ticket or coherent work unit has passed its required
+tests and materially changes repository capabilities, constraints, active work,
+or known failures. PR-stage review occurs after this state update and before
+merge.
 
 Prefer this order:
 
-`Implement -> Test -> Review -> Update Repo_Current_State.md -> Commit/Push`
+`Implement -> Test -> Update Repo_Current_State.md -> Commit/Push -> Open PR -> Review`
 
 Keep the state update in the same coherent commit as the implementation when it documents that change.
 

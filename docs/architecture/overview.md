@@ -14,7 +14,7 @@ remain inside their own `SKILL.md` files.
 | `codex-development-workflow` | Classifies work, coordinates Plan/Slice execution, bounded verification, review, and delivery gates. |
 | Delegation Gate | Decides after Slicing whether independent, bounded work should stay with the main agent or go to built-in workers. |
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
-| `.codex/agents/reviewer.toml` | Project-scoped read-only reviewer for optional independent checks of integrated changes. |
+| `.codex/agents/reviewer.toml` | Project-scoped read-only reviewer for the single PR-stage review. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
 | `plan-to-ticket` | Produces small, dependency-ordered Slices with explicit scope and acceptance criteria, then persists the parent plan and ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
@@ -45,9 +45,9 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 Requirement -> Classify -> Understand -> Plan -> Slice
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Create/resume ticket branch
-           -> Execute/Test -> Next Slice? -> Integration -> Review
-           -> State / Docs
-           -> Redaction -> Commit / Push
+           -> Execute/Test -> Next Slice? -> Integration
+           -> State / Docs -> Redaction -> Commit / Push -> Open PR
+           -> Review -> Fix findings / Re-test -> Merge -> Close ticket
            -> Optional Deploy / Verify / Rollback
 ```
 
@@ -80,7 +80,9 @@ Create or resume it from the updated default branch, keep the ticket's
 implementation, tests, and related documentation together, and wait for
 prerequisite tickets to merge before branching dependent work. Parallel workers
 use separate Git worktrees and branches; they never switch branches in a shared
-working directory.
+working directory. Each ticket Issue is the one-to-one owner of that branch:
+record `Branch` and `Base` before editing, set `Status: in_progress` when work
+starts, and require the PR head/base to match those fields.
 
 ### Delegation gate
 
@@ -88,7 +90,8 @@ The gate is optional and sits between `Plan -> Slice` and `Execute/Test`. The
 main agent delegates only tasks with a clear goal, scope and exclusions,
 ownership boundary, dependencies, acceptance criteria, validation, and
 expected result summary. Parallel write tasks must not share files, interfaces,
-schemas, migrations, or configuration. Prefer a single delegation level.
+schemas, migrations, or configuration. Review is not delegated at this stage;
+the single review occurs after the PR opens. Prefer a single delegation level.
 
 ### Slice execution
 
@@ -119,21 +122,22 @@ escalation.
 ### Review and final gates
 
 For each ticket, after all Slices within that ticket pass their selected checks,
-run the ticket's integration/regression checks and review its complete diff
-before merge. When multiple tickets come together, add broader
-integration/regression checks across them. When useful, ask the project
-`reviewer` for an independent read-only check, then have the main agent make
-the final judgment. Blocking findings require affected test reruns and, when
-behavior materially changes, another review.
+run the ticket's integration/regression checks before committing and pushing.
+Open the PR, then perform one main-agent-owned review before merge using the
+complete PR diff, branch boundary, and available CI results. Choose either the
+built-in `codex review` path or the project `reviewer` as that single review.
+Blocking findings require fixes and affected test reruns before merge; do not
+add a second routine review. When multiple tickets come together, add broader
+integration/regression checks across them before merge.
 
-`Ticket checks -> Ticket diff review -> Broader integration when needed -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
+`Ticket checks -> Broader integration when needed -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Open PR -> Review -> Fix findings/Re-test -> Merge -> Close ticket -> Optional Deploy/Verify/Rollback`
 
-Review uses the Codex CLI built-in `codex review`; it is a final quality gate,
-not a replacement for tests, diagnostics, linting, or static analysis.
-That command does not select the project-scoped custom reviewer. Invoke
-`.codex/agents/reviewer.toml` from an interactive Codex session by explicitly
-asking it to use the `reviewer` subagent, then keep final judgment with the main
-agent.
+Review uses either the Codex CLI built-in `codex review` or the project-scoped
+reviewer as one final quality gate, not both. Review remains separate from
+tests, diagnostics, linting, and static analysis. The built-in command does not
+select the project-scoped custom reviewer; invoke `.codex/agents/reviewer.toml`
+from an interactive Codex session by explicitly asking it to use the `reviewer`
+subagent.
 
 ### Project-scoped Codex configuration
 
@@ -167,7 +171,7 @@ must remain aligned.
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
 - Slices are conditional for work where decomposition reduces complexity; a tiny request may remain one implicit Slice.
-- Tests provide evidence inside a Slice; review is an integrated self-review and risk-based escalation gate.
+- Tests provide evidence inside a Slice; the single review is a PR-stage merge gate after the branch is published.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - Redaction is conditional, not a mandatory transformation of every artifact.
 - The package does not own target-project source code, application data, or deployment infrastructure.

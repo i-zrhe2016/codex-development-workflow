@@ -32,7 +32,8 @@ When the skill is selected for a planning request, it:
 4. Creates or updates one parent plan Issue and one Issue per ticket before
    implementation branches start, reusing stable markers to avoid duplicates.
 5. Assigns or resumes one implementation branch and base branch for each
-   ticket, using the updated default branch for new dependency-ready tickets.
+   ticket, using the updated default branch for new dependency-ready tickets;
+   each ticket Issue and branch remain a one-to-one pair.
 6. Returns the `Plan` and `Tickets` sections defined by the skill contract,
    including canonical Issue links and current execution metadata.
 

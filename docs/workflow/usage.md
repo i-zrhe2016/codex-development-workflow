@@ -10,8 +10,9 @@ inside each Slice.
 Requirement -> Classify -> Understand -> Plan -> Slice
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Create/resume ticket branch
-           -> Execute/Test -> Next Slice? -> Integration tests -> Review
-           -> State / Docs -> Redaction if needed -> Commit / Push
+           -> Execute/Test -> Next Slice? -> Integration tests
+           -> State / Docs -> Redaction if needed -> Commit / Push -> Open PR
+           -> Review -> Fix findings / Re-test -> Merge -> Close ticket
            -> Optional Deploy / Verify / Rollback
 ```
 
@@ -67,10 +68,13 @@ documentation on that branch; internal implementation steps share it.
 Verify the current branch and working tree before editing and preserve
 unrelated or uncommitted work. Parallel ticket workers use separate Git
 worktrees and branches; never switch branches in a working directory shared by
-active workers. Before merging, complete the ticket's acceptance and relevant
-integration checks and review its complete diff. A passing ticket is ready for
-review, not delivered; delivery occurs after merge and the existing publication
-skill's cleanup procedure.
+active workers. Before committing and pushing, complete the ticket's
+acceptance and relevant integration checks. After opening its PR, perform the
+single review of its complete diff before merge. A passing ticket is ready to
+open a PR, not delivered; fix findings and re-test before merging, then close
+the ticket and follow the existing publication skill's cleanup procedure. The
+ticket Issue and implementation branch are a one-to-one pair: record and verify
+the Issue's `Branch`/`Base` values, and require the PR head/base to match them.
 
 ## Optional delegation gate
 
@@ -79,8 +83,8 @@ delegation materially improves speed, context isolation, or review quality. A
 single-agent execution remains the default.
 
 Delegate only a bounded, independently executable task. Good candidates are
-repository exploration, independent research, test or regression analysis, an
-isolated implementation Slice, and independent review. Keep dependent or
+repository exploration, independent research, test or regression analysis, or
+an isolated implementation Slice. Keep dependent or
 overlapping work sequential; parallel write tasks must not touch the same
 files, interfaces, schemas, migrations, or shared configuration.
 
@@ -114,17 +118,20 @@ commands, result, evidence, and escalation reason.
 
 ## Review and recovery
 
-Review is owned by the main agent at the ticket merge boundary, not inside every
-internal Slice. All Slices within the ticket being merged must pass and be
-reviewed before its PR is merged. When multiple tickets come together, add
-broader integration/regression checks across them in addition to each ticket's
-own checks and review. The main agent may ask the read-only `reviewer` for an
-independent check; a blocking finding requires an affected test rerun.
+Review is one main-agent-owned stage after the ticket PR is opened and before
+merge, not an internal Slice or pre-PR stage. All Slices within the ticket must
+pass before the PR is opened. Use the complete PR diff, branch boundary, and
+available CI results; choose either the built-in `codex review` or the
+project-scoped `reviewer` as the single review path. When multiple tickets come
+together, add broader integration/regression checks across them in addition to
+each ticket's own checks. Fix findings and rerun affected tests before merge;
+do not add a second routine review.
 
-`codex review --uncommitted` is the built-in diff-review path; it does not select
-the project-scoped custom reviewer. To use `.codex/agents/reviewer.toml`, ask an
-interactive Codex session from the project root to use the `reviewer` subagent
-and wait for its read-only findings before the main agent makes the decision.
+`codex review --base main` is the built-in PR diff-review path; it does not
+select the project-scoped custom reviewer. To use
+`.codex/agents/reviewer.toml`, ask an interactive Codex session from the
+project root to use the `reviewer` subagent as the single review path and wait
+for its read-only findings before the main agent makes the decision.
 
 Read `docs/Repo_Current_State.md` at the start of planning and update it after
 meaningful verified work. Use it as a compact recovery point for current focus,
@@ -148,7 +155,7 @@ reason. Otherwise invoke `data-document-redaction` and follow
 
 ## Completion order
 
-`Ticket checks -> Ticket diff review -> Broader integration when needed -> Repo state/docs -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
+`Ticket checks -> Broader integration when needed -> Repo state/docs -> Output classification -> Redaction if needed -> Commit/Push -> Open PR -> Review -> Fix findings/Re-test -> Merge -> Close ticket -> Optional Deploy/Verify/Rollback`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).
