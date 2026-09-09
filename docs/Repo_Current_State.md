@@ -1,10 +1,10 @@
 # Repository Current State
 
-Last verified: 2026-09-08 @ working tree
+Last verified: 2026-09-09 @ working tree
 
 ## Current Focus
 
-- [Plan #9](https://github.com/i-zrhe2016/codex-development-workflow/issues/9): make GitHub Issues the mandatory durable authority for plans and tickets; finish T0001/T0002 on the stacked feature branches.
+- [Plan #9](https://github.com/i-zrhe2016/codex-development-workflow/issues/9) is complete and closed after PR #12 merged the Issues-authority workflow changes.
 
 ## Implemented
 
@@ -20,11 +20,11 @@ Last verified: 2026-09-08 @ working tree
 - Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides an optional read-only integrated-change reviewer.
 - Built-in `codex review` and the project-scoped `reviewer` are documented as separate review paths; the latter is explicitly requested from an interactive Codex session.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
+- `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
 
 ## In Progress
 
-- [T0001 / Issue #10](https://github.com/i-zrhe2016/codex-development-workflow/issues/10) is in progress on `feature/t0001-github-issues-persistence`; the core `plan-to-ticket` persistence contract is committed as `56d1ed3`, with no PR opened yet.
-- [T0002 / Issue #11](https://github.com/i-zrhe2016/codex-development-workflow/issues/11) is in progress on `feature/t0002-issues-authority-docs`; supporting workflow, state, documentation, and diagram updates are present in the working tree.
+- None.
 
 ## Constraints
 
@@ -47,4 +47,4 @@ Last verified: 2026-09-08 @ working tree
 
 ## Next
 
-- Open a review PR for [T0001 / Issue #10](https://github.com/i-zrhe2016/codex-development-workflow/issues/10), then review the stacked [T0002 / Issue #11](https://github.com/i-zrhe2016/codex-development-workflow/issues/11) branch before merging and closing the Issues.
+- None.
