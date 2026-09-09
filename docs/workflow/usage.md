@@ -1,29 +1,36 @@
 # Workflow Usage Guide
 
 Use `codex-development-workflow` as the entry point for repository work. It
-keeps architecture and scope at the Plan/Ticket/Slice levels while keeping
-validation inside each Slice.
+keeps planning at the Plan/Ticket/Slice levels, but uses one delivery path for
+every change type.
 
 ## Staged workflow
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed
-           -> Slice(s) per Ticket
-           -> Persist plan/tickets to GitHub Issues -> Delegate if useful
-           -> Create/resume ticket branch
-           -> Execute/Test -> Next Slice? -> Integration tests
-           -> State / Docs -> Redaction if needed -> Commit / Push -> Open PR
-           -> Review -> Fix findings / Re-test -> Merge -> Close ticket
-           -> Optional Deploy / Verify / Rollback
+Requirement
+  -> Understand repo
+  -> Plan
+  -> Slice / Ticket if needed
+  -> Create branch
+  -> Implement
+  -> Test
+  -> Redaction scan if applicable
+  -> Commit
+  -> Push branch
+  -> Create / Update PR
+  -> Automatic Review
+  -> Fix / Test / Redaction / Commit / Push / Review loop when blocked
+  -> Merge PR
+  -> Delete branch
+  -> Update main
+  -> Close Ticket
+  -> Update State / Docs
+  -> Deploy if needed
 ```
 
-- **Tiny:** use a concise plan and one implicit Slice without Ticket overhead.
-- **Normal:** create the smallest behavior Ticket when the work needs multiple
-  steps, then split it into one or more focused Slices.
-- **Complex:** use `plan-to-ticket` to split the requirements into
-  dependency-ordered behavior Tickets first, then split each Ticket into its
-  Slices; evaluate the delegation gate and load only the context required by
-  each Slice.
+The pipeline is identical for Docs, Code, Tests, Config, Refactor, Bugfix,
+Feature, Dependency, and CI/CD changes. Planning depth, test level, and whether
+a Ticket is useful may vary; no category may direct-push around the PR gate.
 
 ## Ticket-to-Slice hierarchy
 
@@ -37,8 +44,8 @@ this order:
 
 All Slices for one Ticket share that Ticket's implementation branch. Ticket
 dependencies determine branch readiness; Slice dependencies determine the
-execution order within the branch. A tiny request may remain one implicit
-Slice without a Ticket or Issue.
+execution order within the branch. A single-behavior request may remain one
+Slice without a Ticket or Issue, but it still requires a feature branch and PR.
 
 For every Slice, define:
 
@@ -78,28 +85,32 @@ PR is opened, and `done`/closed only after the PR is verified merged.
 
 ## Branch per ticket
 
-Before implementation, create or resume one branch per ticket using
-`<type>/<ticket-id>-<short-description>`. Create new ticket branches from the
-updated default branch, and start dependent tickets only after their
-prerequisites are merged. Keep the ticket's implementation, tests, and related
-documentation on that branch; internal implementation steps share it.
+Before implementation, create or resume a feature branch for every change.
+Ticketed work uses one branch per Ticket named
+`<type>/<ticket-id>-<short-description>`; a single Slice without a Ticket uses
+`<type>/<short-description>`. Create branches from the updated default branch,
+and start dependent Ticket branches only after their prerequisites are merged.
+Keep a Ticket's implementation, tests, and related documentation on its branch;
+internal Slices share it.
 
 Verify the current branch and working tree before editing and preserve
 unrelated or uncommitted work. Parallel ticket workers use separate Git
 worktrees and branches; never switch branches in a working directory shared by
-active workers. Before committing and pushing, complete the ticket's
-acceptance and relevant integration checks. After opening its PR, perform the
-single review of its complete diff before merge. A passing ticket is ready to
-open a PR, not delivered; fix findings and re-test before merging, then close
-the ticket and follow the existing publication skill's cleanup procedure. The
-ticket Issue and implementation branch are a one-to-one pair: record and verify
-the Issue's `Branch`/`Base` values, and require the PR head/base to match them.
+active workers. Before committing and pushing, complete the change's
+acceptance and relevant integration checks. After creating or updating its PR,
+start Automatic Review without waiting for user confirmation. A passing change
+is ready for merge, not delivered; fix findings and repeat Test, applicable
+Redaction, Commit, Push, and Automatic Review before merging. For Ticketed
+work, the Ticket Issue and implementation branch are a one-to-one pair: record
+and verify the Issue's `Branch`/`Base` values, and require the PR head/base to
+match them.
 
 ## Optional delegation gate
 
-After `Plan -> Ticket -> Slice` and before `Execute/Test`, the main agent asks
-whether delegation materially improves speed, context isolation, or review
-quality. A single-agent execution remains the default.
+After the feature branch exists and before or during implementation, the main
+agent may use bounded delegation when it materially improves speed, context
+isolation, or review quality. A single-agent execution remains the default.
+Delegation does not create a second delivery path or bypass any PR gate.
 
 Delegate only a bounded, independently executable task. Good candidates are
 repository exploration, independent research, test or regression analysis, or
@@ -137,30 +148,28 @@ commands, result, evidence, and escalation reason.
 
 ## Review and recovery
 
-Review is one main-agent-owned stage after the ticket PR is opened and before
-merge, not an internal Slice or pre-PR stage. All Slices within the ticket must
-pass before the PR is opened. Use the complete PR diff, branch boundary, and
-available CI results; choose either the built-in `codex review` or the
-project-scoped `reviewer` as the single review path. When multiple tickets come
-together, add broader integration/regression checks across them in addition to
-each ticket's own checks. Fix findings and rerun affected tests before merge;
-do not add a second routine review.
+Automatic Review is the built-in `codex review` command. It is mandatory after
+the PR is created or updated and before merge, not an internal Slice or pre-PR
+stage. Use the complete PR diff, branch boundary, and available CI results;
+run `codex review --base <base-branch>` immediately without waiting for user
+confirmation. Blocking findings repeat Fix -> Test -> Redaction if applicable
+-> Commit -> Push -> `codex review` on the updated PR.
 
-`codex review --base main` is the built-in PR diff-review path; it does not
-select the project-scoped custom reviewer. To use
-`.codex/agents/reviewer.toml`, ask an interactive Codex session from the
-project root to use the `reviewer` subagent as the single review path and wait
-for its read-only findings before the main agent makes the decision.
+The project-scoped `.codex/agents/reviewer.toml` is optional supplemental
+read-only analysis. It may be invoked from an interactive Codex session, but it
+never replaces the mandatory `codex review` gate.
 
-Read `docs/Repo_Current_State.md` at the start of planning and update it after
-meaningful verified work. Use it as a compact recovery point for current focus,
+Read `docs/Repo_Current_State.md` at the start of planning. After merge, source
+branch deletion, and default-branch synchronization, update it when verified
+project state changed. Use it as a compact recovery point for current focus,
 implemented behavior, in-progress Slice, known failures, constraints, and the
 next Slice. It is not a session transcript, full backlog, or test report.
 
 ## Output classification and redaction
 
-Classify the complete final output set before staging or committing and before
-every separate sharing, export, upload, or publication boundary. Include
+Classify the complete output set before committing and before every separate
+sharing, export, upload, or publication boundary. Repeat the scan after any
+blocking review fix before the next commit. Include
 source, docs, logs, configs, images, screenshots, exports, filenames, and
 metadata.
 
@@ -174,7 +183,7 @@ reason. Otherwise invoke `data-document-redaction` and follow
 
 ## Completion order
 
-`Ticket checks -> Broader integration when needed -> Repo state/docs -> Output classification -> Redaction if needed -> Commit/Push -> Open PR -> Review -> Fix findings/Re-test -> Merge -> Close ticket -> Optional Deploy/Verify/Rollback`
+`Understand -> Plan -> Slice/Ticket if needed -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

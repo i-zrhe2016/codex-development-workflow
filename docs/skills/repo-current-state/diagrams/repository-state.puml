@@ -7,13 +7,16 @@ title Repository documentation flow
 actor "Maintainer / Agent" as maintainer
 rectangle "SKILL.md\nMaintenance contract" as skill
 rectangle "Repository evidence\nFiles, config, Git state" as evidence
+rectangle "Merged PR + cleaned branch\nSynchronized default branch" as merged
 rectangle "docs/Repo_Current_State.md\nVerified snapshot" as state
 rectangle "README.md + docs/\nEntry point and detail" as docs
 rectangle "agents/openai.yaml\nAgent metadata" as metadata
 
 maintainer --> skill : reads
 maintainer --> metadata : discovers
+maintainer --> merged : after delivery
 skill --> evidence : defines verification scope
+merged --> evidence : provides post-merge truth
 evidence --> state : records current facts
 state --> docs : links to detail
 skill ..> state : governs updates

@@ -1,10 +1,11 @@
 name = "reviewer"
-description = "Independent read-only reviewer for the single PR-stage review."
+description = "Optional supplemental independent read-only reviewer."
 
 sandbox_mode = "read-only"
 
 developer_instructions = """
-Review the open PR diff independently.
+Review the open PR diff independently as a supplemental check. This reviewer
+does not replace the mandatory built-in `codex review` Automatic Review gate.
 
 Focus on:
 - correctness;

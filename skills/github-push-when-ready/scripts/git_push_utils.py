@@ -161,6 +161,35 @@ def build_push_command(remote: str, branch: str, upstream: str | None) -> str:
     return shlex.join(["git", "push", "-u", remote, branch])
 
 
+def resolve_default_branch(
+    repo: Path, remote: str | None, current_branch: str | None = None
+) -> str | None:
+    """Resolve the repository default branch from local remote metadata."""
+    if not remote:
+        return None
+
+    symbolic_head = run_git(
+        repo,
+        "symbolic-ref",
+        "--quiet",
+        "--short",
+        f"refs/remotes/{remote}/HEAD",
+    )
+    if symbolic_head.returncode == 0 and symbolic_head.stdout:
+        return symbolic_head.stdout.rsplit("/", 1)[-1]
+
+    for candidate in ("main", "master"):
+        remote_ref = run_git(
+            repo, "show-ref", "--verify", "--quiet", f"refs/remotes/{remote}/{candidate}"
+        )
+        local_ref = run_git(
+            repo, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}"
+        )
+        if remote_ref.returncode == 0 or local_ref.returncode == 0 or current_branch == candidate:
+            return candidate
+    return None
+
+
 def assess_repo(repo_path: str | Path) -> dict[str, Any]:
     repo = Path(repo_path).resolve()
     top_level = run_git(repo, "rev-parse", "--show-toplevel")
@@ -197,6 +226,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         if any(is_github_url(url) for url in urls.values())
     }
     preferred_remote = choose_remote(github_remotes, upstream)
+    default_branch = resolve_default_branch(repo, preferred_remote, branch)
     has_commits = run_git(repo, "rev-parse", "--verify", "HEAD").returncode == 0
     has_changes = any(status[key] > 0 for key in ("staged", "unstaged", "untracked", "conflicted"))
 
@@ -220,6 +250,21 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         if preferred_remote and upstream:
             remote_branch = upstream.split("/", 1)[1]
             commands.append(shlex.join(["git", "pull", "--rebase", preferred_remote, remote_branch]))
+    elif default_branch and branch == default_branch and has_changes:
+        recommended_action = "feature_branch_required"
+        reasons.append(
+            f"Working tree changes are on the default branch '{default_branch}'; "
+            "create a feature branch before committing or pushing."
+        )
+        commands.append("git switch -c <type>/<short-description>")
+    elif default_branch and branch == default_branch and (
+        ahead > 0 or (has_commits and not upstream)
+    ):
+        recommended_action = "manual_review"
+        reasons.append(
+            f"Default branch '{default_branch}' contains unpublished commit(s); "
+            "preserve the work and move it to a feature branch before publishing."
+        )
     elif has_changes:
         recommended_action = "commit_then_push"
         safe_to_push = True
@@ -255,6 +300,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
             for name, urls in sorted(github_remotes.items())
         ],
         "preferred_remote": preferred_remote,
+        "default_branch": default_branch,
         "branch": branch,
         "detached_head": detached,
         "upstream": upstream,

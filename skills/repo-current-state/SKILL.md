@@ -1,6 +1,6 @@
 ---
 name: repo-current-state
-description: Maintain a concise, repository-native `docs/Repo_Current_State.md` as the verified current-state memory for an AI-assisted software project. Use when starting work that needs current repo context, after a ticket or meaningful change is completed, before commit/push when repository state changed, or when the user asks to create, refresh, reconcile, or validate the repository current-state document. Verify claims against repository evidence, prevent stale-state drift, and keep history, plans, architecture detail, and approvals out of this file.
+description: Maintain a concise, repository-native `docs/Repo_Current_State.md` as the verified current-state memory for an AI-assisted software project. Read it when work starts and refresh it after merge, branch cleanup, and default-branch synchronization when repository state changed. Use when the user asks to create, refresh, reconcile, or validate it. Verify claims against repository evidence, prevent stale-state drift, and keep history, plans, architecture detail, and approvals out of this file.
 ---
 
 # Repo Current State
@@ -33,16 +33,19 @@ Do not scan the entire repository just to validate every line. Validate progress
 
 ## When Updating State
 
-Update the file after a ticket or coherent work unit has passed its required
-tests and materially changes repository capabilities, constraints, active work,
-or known failures. PR-stage review occurs after this state update and before
-merge.
+Update the file after a Ticket or coherent work unit has passed its required
+tests, its PR has merged, the source branch has been cleaned up, and the default
+branch has been synchronized, when the change materially affects repository
+capabilities, constraints, active work, or known failures. State / Docs is a
+post-merge recovery step, not a pre-PR shortcut.
 
 Prefer this order:
 
-`Implement -> Test -> Update Repo_Current_State.md -> Commit/Push -> Open PR -> Review`
+`Implement -> Test -> Redaction -> Commit/Push -> Create/Update PR -> Automatic Review -> Fix loop if needed -> Merge -> Cleanup -> Update Repo_Current_State.md`
 
-Keep the state update in the same coherent commit as the implementation when it documents that change.
+If updating the state file changes tracked content after the merge, make that
+update through a new feature branch and the same mandatory PR gate; never commit
+the post-merge state update directly to the default branch.
 
 Do not update the file for trivial formatting-only edits or changes that do not affect the project state represented here.
 

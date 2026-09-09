@@ -61,6 +61,8 @@ application infrastructure topology.
   parent workflow decides whether an independent Slice is safe to delegate.
 - Each ticket Issue maps to one implementation branch; internal Slices share
   that branch, and the PR head/base must match its Issue metadata.
+- Ticket omission for a single-behavior Slice does not remove the parent
+  workflow's feature-branch, PR, Automatic Review, merge, or cleanup gates.
 
 ## Ticket-to-Slice hierarchy
 

@@ -4,30 +4,58 @@ Last verified: 2026-09-09 @ working tree
 
 ## Current Focus
 
-- Ticket-first decomposition is active for large or multi-behavior requests: define behavior Tickets, then split each Ticket into execution Slices.
+- The unified PR-gated workflow is being applied to every change type; the
+  working tree contains the corresponding process, documentation, diagram, and
+  default-branch guard updates.
 
 ## Implemented
 
-- The workflow classifies work, understands the current repository, plans behavior Tickets and small Slices, optionally delegates independent bounded work, integrates, reviews, and delivers.
+- The workflow now runs Requirement -> Understand repo -> Plan -> Slice/Ticket
+  if needed -> Create feature branch -> Implement -> Test -> applicable
+  Redaction -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix
+  loop when blocked -> Merge -> branch cleanup/default synchronization -> State/
+  Docs -> Deploy if needed.
+- Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
+  changes all use the feature-branch and PR path; no direct default-branch
+  delivery exception remains.
 - Complex requirements are split into behavior Tickets before their dependency-ordered Slices; tiny requests may remain one implicit Slice without Ticket overhead.
+- A ticketless focused Slice still requires the same branch, test, redaction,
+  commit, push, PR, Automatic Review, merge, and cleanup gates.
 - Normal and complex Slices define scope, exclusions, dependencies, acceptance criteria, relevant context, test strategy, verification level, test cases, and validation commands.
 - Verification levels are `minimal`, `focused`, `regression`, and `full`; focused is the default and passing evidence stops expansion unless escalation is justified.
 - Test-first behavior is conditional on meaningful behavioral risk; non-behavioral changes use direct minimal validation.
 - The installer packages eight local skills from the root skill and `skills/`; specialist repositories are not cloned at install time.
 - Specialist documentation for all seven managed specialist skills (`plan-to-ticket`, `test-workflow`, `repo-current-state`, `context-efficiency`, `data-document-redaction`, `github-push-when-ready`, and `auto-deploy`) is grouped under `docs/skills/`; committed diagram sources and renderings are retained where applicable.
 - `github-push-when-ready` enforces a per-repository non-root identity policy; this repository is configured for `i-zrhe2016` and verifies the same GitHub account and push credentials before publishing.
-- The publication workflow verifies a PR is merged before deleting its source branch remotely and locally; the default branch is retained.
+- The publication workflow requires a non-default feature branch, verifies a PR
+  is merged before deleting its source branch remotely and locally, and retains
+  the default branch.
+- The readiness utility blocks local changes or unpublished commits on the
+  resolved default branch and directs the work to a feature branch/manual
+  recovery path.
 - `auto-deploy` defines a provider-neutral deployment contract with immutable artifacts, bounded health verification, least-privilege credentials, and authorized rollback handling.
-- Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides the single PR-stage read-only reviewer.
-- Built-in `codex review` and the project-scoped `reviewer` are documented as alternative paths for the single PR-stage review; the latter is explicitly requested from an interactive Codex session.
+- Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides optional supplemental read-only analysis.
+- Automatic Review is the built-in `codex review` command and starts after PR
+  creation or update without user confirmation; blocking findings repeat Fix ->
+  Test -> applicable Redaction -> Commit -> Push -> `codex review` on the updated
+  PR.
 - Ticket Issues and implementation branches are one-to-one through `Branch`/`Base` metadata, and PR head/base must match those fields.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
 - `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
-- The root workflow now creates or resumes one branch per ticket before implementation and requires one review after the PR is opened and before merge.
+- The root workflow creates or resumes a feature branch before implementation,
+  requires a PR for every change, and merges only after Automatic Review passes.
 
 ## In Progress
 
-- None.
+- The unified PR-gated workflow update is prepared in the working tree; its
+  commit, push, PR, Automatic Review, merge, and cleanup gates remain to be run.
+
+## Known Issues / Failing Checks
+
+- The baseline redaction scan reports three pre-existing email patterns in the
+  publication-identity documentation; no new personal email was added by this
+  change. Treat the findings as an explicit publication review item rather than
+  claiming a clean redaction pass.
 
 ## Constraints
 

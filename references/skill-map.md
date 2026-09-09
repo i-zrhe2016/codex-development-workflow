@@ -28,13 +28,17 @@ the orchestrator rather than the whole repository.
 `plan-to-ticket` owns Ticket-first decomposition, Slice generation, and
 mandatory persistence of the parent plan and Ticket Issues; each Slice should
 provide boundaries, acceptance criteria, relevant context, test strategy, test
-level, test cases, and a validation command. `test-workflow` owns execution of
-the selected
+level, test cases, and a validation command. `test-workflow` owns the Test stage
+for the selected
 `minimal`, `focused`, `regression`, or `full` verification level and reports
 bounded evidence. It conditionally performs browser/E2E verification when
 browser-visible behavior changes.
 
-The built-in `codex review` command provides the main-agent diff review; it is
-not installed by this script and does not select the project-scoped
-`.codex/agents/reviewer.toml`. The custom reviewer is loaded by Codex when an
-interactive session explicitly delegates to the `reviewer` agent.
+`data-document-redaction` owns the applicable redaction scan before commit and
+after blocking review fixes. `github-push-when-ready` owns the feature-branch
+publication path, Commit, Push, Create/Update PR, Merge, and source-branch
+cleanup gates. The built-in `codex review` command is the mandatory Automatic
+Review gate; it is not installed by this script and runs after PR creation or
+update. The project-scoped `.codex/agents/reviewer.toml` is optional
+supplemental analysis loaded by an interactive session and never replaces
+`codex review`.

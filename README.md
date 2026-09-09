@@ -4,38 +4,50 @@ An adaptive, main-agent-led Codex development workflow with optional bounded
 delegation and all required specialist skills managed in this repository.
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed
-           -> Slice(s) per Ticket
-           -> Persist plan/tickets to GitHub Issues -> Delegate if useful
-           -> Create/resume ticket branch
-           -> Execute/Test -> Next Slice? -> Integration
-           -> State / Docs
-           -> Redaction if needed -> Commit / Push -> Open PR
-           -> Review -> Fix findings / Re-test -> Merge -> Close ticket
-           -> Optional Deploy / Verify / Rollback
+Requirement
+  -> Understand repo
+  -> Plan
+  -> Slice / Ticket if needed
+  -> Create branch
+  -> Implement
+  -> Test
+  -> Redaction scan if applicable
+  -> Commit
+  -> Push branch
+  -> Create / Update PR
+  -> Automatic Review
+  -> Fix / Test / Redaction / Commit / Push / Review loop when blocked
+  -> Merge PR
+  -> Delete branch
+  -> Update main
+  -> Close Ticket
+  -> Update State / Docs
+  -> Deploy if needed
 ```
 
-The macro workflow controls architecture and scope. For complex or
-multi-behavior requirements, define behavior Tickets first and then split each
-Ticket into Slices. Each Slice carries its own
-acceptance criteria, relevant context, test strategy, and validation command.
-Each ticket keeps its implementation, tests, and related documentation on one
-branch created from the updated default branch; ticket review happens before
-that ticket is merged, after its PR is opened. Complete ticket checks before
-committing and pushing, then use one PR-stage review, fix findings, re-test, and
-merge before closing the ticket. Each ticket Issue records the exact branch and
-base branch; the PR head and base must match those Issue fields.
-TDD is used inside a Slice when the change is behavioral and a meaningful
-failing test provides useful evidence; it is not forced on documentation,
-configuration, styling, dependency, typo, or exploratory work.
+The macro workflow controls architecture and scope. If requirements span
+multiple behaviors, define behavior Tickets first and then split each Ticket
+into Slices. A single-behavior request may use one Slice without a Ticket, but
+every change still uses a feature branch and the same PR gate. Each Slice
+carries its own acceptance criteria, relevant context, test strategy, and
+validation command.
+Ticketed work keeps its implementation, tests, and related documentation on one
+branch created from the updated default branch; the Ticket Issue records the
+exact branch and base branch. Ticket dependencies remain separate from Slice
+dependencies, and the PR head and base must match the Ticket metadata.
+Test level may vary with risk, but delivery does not: Docs, Code, Tests,
+Config, Refactor, Bugfix, Feature, Dependency, and CI/CD changes all require a
+branch, commit, push, PR, automatic review, and merge. Blocking review findings
+start a loop of fix, test, redaction when applicable, commit, push, and automatic
+review again; the agent does not stop for confirmation.
 
 Verification is bounded by an explicit level (`minimal`, `focused`,
 `regression`, or `full`). The default is focused validation, and a passing
 level stops the test expansion unless evidence or an explicit requirement
 justifies escalation. The main agent owns requirements, architecture,
 decomposition, integration, and final judgment; bounded exploration, Slice
-implementation, and testing may be delegated when useful. The single review
-occurs after the PR is opened.
+implementation, and testing may be delegated when useful. Automatic Review
+starts after the PR is opened or updated, without waiting for user confirmation.
 
 ## Optional project-scoped delegation
 
@@ -43,8 +55,8 @@ The project configuration keeps multi-agent support deliberately small:
 
 - `.codex/config.toml` enables subagents and caps concurrent spawned-agent
   threads at three, excluding the main thread.
-- `.codex/agents/reviewer.toml` defines a read-only reviewer for the single
-  PR-stage review.
+- `.codex/agents/reviewer.toml` defines an optional supplemental read-only
+  reviewer; Automatic Review is always the built-in `codex review` command.
 
 The built-in `explorer` and `worker` roles cover read-heavy exploration and
 isolated implementation Slices. The delegation gate remains optional; keep
@@ -54,9 +66,9 @@ dependent, overlapping, or shared-interface work sequential.
 
 ![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
-See the [architecture overview](docs/architecture/overview.md) for task
-classification, Slice execution, bounded verification, review escalation,
-recovery state, redaction, and package boundaries.
+See the [architecture overview](docs/architecture/overview.md) for the unified
+branch/PR lifecycle, Ticket/Slice decomposition, bounded verification, automatic
+review loop, recovery state, redaction, and package boundaries.
 
 ## Install from this repository
 
@@ -89,10 +101,11 @@ Restart Codex after installation.
 - `github-push-when-ready`
 - `auto-deploy`
 
-`plan-to-ticket` persists every generated plan and ticket to GitHub Issues
+`plan-to-ticket` persists every generated plan and Ticket to GitHub Issues
 before implementation branches start. GitHub Issues are the sole durable
-ticket authority; chat output and `Repo_Current_State.md` provide links and
-recovery context, not a parallel backlog.
+Ticket authority; chat output and `Repo_Current_State.md` provide links and
+recovery context, not a parallel backlog. A Ticket is optional for a single
+behavior Slice, but the branch/PR gate is not optional.
 
 ## Skill documentation
 
@@ -113,22 +126,23 @@ relevant bundle.
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 | `auto-deploy` | [`skills/auto-deploy/`](skills/auto-deploy/) | [Skill documentation](docs/skills/auto-deploy/README.md) |
 
-The single review stage happens after the PR is opened and before it is merged.
-Choose one path: the built-in `codex review` command or the project-scoped
-`reviewer` for an independent read-only check. They are alternatives, not
-sequential review gates.
+Automatic Review is the built-in `codex review` command. Run it after the PR is
+created or updated and before merge, without waiting for user confirmation. If
+findings block merge, fix them and repeat the Test -> Redaction (if applicable)
+-> Commit -> Push -> Automatic Review loop. The project-scoped `reviewer` is
+optional supplemental analysis and never replaces `codex review`.
 
 ```bash
 codex review --base main
 ```
 
-To use the project reviewer as the single PR-stage review, start an interactive
-Codex session from this project root and enter:
+To run the optional supplemental project reviewer, start an interactive Codex
+session from this project root and enter:
 
 ```text
 Use the project-scoped `reviewer` subagent to inspect the current PR diff and
-branch boundary. Wait for its read-only result and return only actionable
-findings with file references.
+branch boundary. Return only actionable supplemental findings with file
+references.
 ```
 
 Use `--base BRANCH` or `--commit SHA` when a specific comparison is required.

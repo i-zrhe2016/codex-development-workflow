@@ -11,21 +11,22 @@ remain inside their own `SKILL.md` files.
 
 | Component | Responsibility |
 |---|---|
-| `codex-development-workflow` | Classifies work, coordinates Plan/Ticket/Slice execution, bounded verification, review, and delivery gates. |
-| Delegation Gate | Decides after Ticket/Slice decomposition whether independent, bounded work should stay with the main agent or go to built-in workers. |
+| `codex-development-workflow` | Coordinates the single Requirement-to-PR-to-Merge lifecycle, Plan/Ticket/Slice decomposition, bounded verification, and delivery gates. |
+| Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
-| `.codex/agents/reviewer.toml` | Project-scoped read-only reviewer for the single PR-stage review. |
+| `.codex/agents/reviewer.toml` | Optional project-scoped supplemental read-only reviewer; it cannot replace `codex review`. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
 | `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the parent plan and ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
-| `repo-current-state` | Maintains the compact, verified recovery point for the repository. |
+| `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
 | `auto-deploy` | Discovers the deployment contract, gates automatic releases, verifies health, and coordinates safe rollback. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
 | `references/skill-map.md` | Maps each managed bundle to its local source and Codex destination. |
-| Redaction / publication skills | Guard sensitive outputs and commit/push boundaries. |
+| `data-document-redaction` | Scans the complete artifact set before commit and again after blocking review fixes when applicable. |
+| `github-push-when-ready` | Guards feature-branch creation/publication, Commit, Push, PR, Merge, and source-branch cleanup. |
 
 The main agent centrally owns requirements, architecture, planning, dependency
 ordering, integration, and final judgment. The optional Delegation Gate may
@@ -42,24 +43,37 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 ### Macro stages
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed
-           -> Slice(s) per Ticket
-           -> Persist plan/tickets to GitHub Issues -> Delegate if useful
-           -> Create/resume ticket branch
-           -> Execute/Test -> Next Slice? -> Integration
-           -> State / Docs -> Redaction -> Commit / Push -> Open PR
-           -> Review -> Fix findings / Re-test -> Merge -> Close ticket
-           -> Optional Deploy / Verify / Rollback
+Requirement
+  -> Understand repo
+  -> Plan
+  -> Slice / Ticket if needed
+  -> Create branch
+  -> Implement
+  -> Test
+  -> Redaction scan if applicable
+  -> Commit
+  -> Push branch
+  -> Create / Update PR
+  -> Automatic Review
+  -> Fix / Test / Redaction / Commit / Push / Review loop when blocked
+  -> Merge PR
+  -> Delete branch
+  -> Update main
+  -> Close Ticket
+  -> Update State / Docs
+  -> Deploy if needed
 ```
 
-- Tiny work uses a concise plan and one implicit Slice without Ticket overhead.
-- Normal work creates the smallest behavior Ticket when multiple steps need a
-  shared review boundary, then executes one or more Slices within that Ticket.
-- Complex work uses `plan-to-ticket` to split requirements into behavior
-  Tickets first, then dependency-ordered Slices within each Ticket, and
-  persists the plan and Tickets to GitHub Issues before starting execution.
-- Each Slice loads only the context needed for its own acceptance criteria.
-- A wrong design assumption returns to Plan or causes a Slice split.
+All change types—Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
+Dependency, and CI/CD—use the same feature-branch and PR lifecycle. Planning
+depth, test level, and whether a Ticket is needed may vary, but no category may
+direct-push around the PR gate. If a Ticket is used, split its Slices only after
+the Ticket boundary is clear; a single-behavior change may use one Slice without
+a Ticket and still follows the complete delivery path.
+
+If `plan-to-ticket` is used, it persists the plan and Ticket Issues before the
+branch is created. Each Slice loads only the context needed for its acceptance
+criteria. A wrong design assumption returns to Plan or causes a Slice split.
 
 ### Ticket-to-Slice hierarchy
 
@@ -88,24 +102,25 @@ not a backlog or second ticket database.
 
 ### Ticket branches
 
-Each ticket owns one branch named `<type>/<ticket-id>-<short-description>`.
-Create or resume it from the updated default branch, keep the ticket's
-implementation, tests, and related documentation together, and wait for
-prerequisite tickets to merge before branching dependent work. Parallel workers
-use separate Git worktrees and branches; they never switch branches in a shared
-working directory. Each ticket Issue is the one-to-one owner of that branch:
-record `Branch` and `Base` before editing, set `Status: in_progress` when work
-starts, and require the PR head/base to match those fields.
+Every change owns a feature branch created or resumed before editing. Ticketed
+work uses one branch named `<type>/<ticket-id>-<short-description>`; a single
+Slice without a Ticket uses `<type>/<short-description>`. Create branches from
+the updated default branch and wait for prerequisite Tickets to merge before
+branching dependent work. Parallel workers use separate Git worktrees and
+branches; they never switch branches in a shared working directory. Each Ticket
+Issue is the one-to-one owner of its branch: record `Branch` and `Base` before
+editing, set `Status: in_progress` when work starts, and require the PR head/base
+to match those fields.
 
 ### Delegation gate
 
-The gate is optional and sits between `Plan -> Ticket -> Slice` and
-`Execute/Test`. The main agent delegates only tasks with a clear goal, scope
-and exclusions,
-ownership boundary, dependencies, acceptance criteria, validation, and
-expected result summary. Parallel write tasks must not share files, interfaces,
-schemas, migrations, or configuration. Review is not delegated at this stage;
-the single review occurs after the PR opens. Prefer a single delegation level.
+Delegation is optional and may occur after branch creation during
+implementation. The main agent delegates only tasks with a clear goal, scope
+and exclusions, ownership boundary, dependencies, acceptance criteria,
+validation, and expected result summary. Parallel write tasks must not share
+files, interfaces, schemas, migrations, or configuration. Delegation never
+bypasses Test, Redaction when applicable, Commit, Push, PR, Automatic Review, or
+Merge. Prefer a single delegation level.
 
 ### Slice execution
 
@@ -133,39 +148,39 @@ After the selected level passes, stop unless the acceptance criteria, failure
 evidence, affected boundaries, release requirements, or the user justify an
 escalation.
 
-### Review and final gates
+### Automatic Review and final gates
 
-For each ticket, after all Slices within that ticket pass their selected checks,
-run the ticket's integration/regression checks before committing and pushing.
-Open the PR, then perform one main-agent-owned review before merge using the
-complete PR diff, branch boundary, and available CI results. Choose either the
-built-in `codex review` path or the project `reviewer` as that single review.
-Blocking findings require fixes and affected test reruns before merge; do not
-add a second routine review. When multiple tickets come together, add broader
-integration/regression checks across them before merge.
+Every change must be committed and pushed to a feature branch, then have a PR
+created or updated before Automatic Review starts. Automatic Review is exactly
+the built-in `codex review` command; run it immediately without waiting for user
+confirmation, using the complete PR diff, branch boundary, and available CI
+results. Blocking findings require Fix -> Test -> Redaction if applicable ->
+Commit -> Push -> `codex review` again on the updated PR. Merge only after the
+review passes. When multiple Tickets are delivered together, add broader
+integration/regression checks across them in addition to each Ticket's checks.
 
-`Ticket checks -> Broader integration when needed -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Open PR -> Review -> Fix findings/Re-test -> Merge -> Close ticket -> Optional Deploy/Verify/Rollback`
+`Understand -> Plan -> Slice/Ticket if needed -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
 
-Review uses either the Codex CLI built-in `codex review` or the project-scoped
-reviewer as one final quality gate, not both. Review remains separate from
-tests, diagnostics, linting, and static analysis. The built-in command does not
-select the project-scoped custom reviewer; invoke `.codex/agents/reviewer.toml`
-from an interactive Codex session by explicitly asking it to use the `reviewer`
-subagent.
+Automatic Review remains separate from tests, diagnostics, linting, and static
+analysis. The project-scoped `.codex/agents/reviewer.toml` is optional
+supplemental review and cannot replace the built-in `codex review` gate; invoke
+it only as an additional read-only check from an interactive Codex session.
 
 ### Project-scoped Codex configuration
 
 `.codex/config.toml` enables subagents and limits this project to three
 concurrently open spawned-agent threads, excluding the main thread.
-`.codex/agents/reviewer.toml` provides a read-only custom reviewer. The
+`.codex/agents/reviewer.toml` provides an optional supplemental read-only
+reviewer. The
 installer copies managed skills only; these project-scoped files remain in the
 checkout where Codex runs.
 
 ### Sensitive-output gate
 
-Classify the complete output set before staging/commit and before every sharing,
-export, upload, or publication boundary. Include source files, documentation,
-logs, configs, images, screenshots, exports, filenames, and metadata.
+Classify the complete output set before commit and before every sharing, export,
+upload, or publication boundary. Repeat the scan after any blocking review fix
+before the next commit. Include source files, documentation, logs, configs,
+images, screenshots, exports, filenames, and metadata.
 
 If no potentially sensitive surface is in scope, record the inspected scope and
 skip reason. Otherwise invoke `data-document-redaction`. Only a `pass` report
@@ -184,9 +199,10 @@ must remain aligned.
 ## Boundaries
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
-- Slices are conditional for work where decomposition reduces complexity; a tiny request may remain one implicit Slice.
-- Tests provide evidence inside a Slice; the single review is a PR-stage merge gate after the branch is published.
+- Slices and Tickets are planning tools; a single-behavior request may remain one implicit Slice, but every change still uses a feature branch and PR.
+- Tests provide evidence inside a Slice; Automatic Review is a mandatory PR-stage merge gate after the branch is published.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - Redaction is conditional, not a mandatory transformation of every artifact.
+- State / Docs are updated after merge, source-branch deletion, and default-branch synchronization.
 - The package does not own target-project source code, application data, or deployment infrastructure.
 - Specialist skills are vendored under `skills/` and updated through this repository's normal review and version-control process.

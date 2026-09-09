@@ -30,7 +30,7 @@ Use the lightest workflow that preserves correctness.
 
 For non-trivial work:
 
-`Requirement -> Classify -> Understand -> Plan -> Ticket(s) if needed -> Slice(s) per Ticket -> Delegate if useful -> Execute/Test -> Integrate -> Review -> State/Docs if needed -> Redact if needed -> Commit/Push -> Notify`
+`Requirement -> Understand repo -> Plan -> Slice / Ticket if needed -> Create branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update PR -> Automatic Review -> Fix / Test / Redaction / Commit / Push / Review loop -> Merge PR -> Delete branch -> Update main -> Close Ticket -> Update State/Docs -> Deploy if needed`
 
 Use `codex-development-workflow` to orchestrate the lifecycle.
 
@@ -40,10 +40,12 @@ For each slice:
 
 * Work on one clear functional unit per agent at a time; independent Slices may run in parallel only through the delegation gate.
 * When requirements are numerous, cross multiple behaviors, or have dependencies, split them into behavior Tickets first, then split each Ticket into independently verifiable Slices.
+* Every change type uses the same feature-branch and PR gate: docs, code, tests, configuration, refactors, bug fixes, features, dependencies, and CI/CD changes must not bypass the PR.
 * Split complex or dependency-driven work into small, independently verifiable slices.
 * Run the smallest validation set that provides sufficient evidence.
 * Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
-* Do not force strict TDD, planning, or ticket overhead onto trivial changes; a tiny request may remain one implicit Slice.
+* Do not force strict TDD or decomposition overhead onto trivial changes; a tiny request may remain one implicit Slice, but it still requires a branch and PR.
+* After the PR is created, run the automatic review without waiting for user confirmation. Blocking findings repeat the fix, test, redaction, commit, push, and review steps.
 * If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.
 * Do not mix unrelated features, refactors, formatting, or dependency upgrades.
 
@@ -102,7 +104,7 @@ Prefer a single delegation level. Subagents should not create further subagents 
 | Verified repository state materially changed                           | `repo-current-state`         |
 | Potentially sensitive output crosses a sharing or publication boundary | `data-document-redaction`    |
 | Deployment, release automation, rollout verification, or rollback      | `auto-deploy`                |
-| Commit or push is required                                             | `github-push-when-ready`     |
+| Branch publication, Commit, Push, PR, Merge, or branch cleanup is required | `github-push-when-ready`     |
 | Implementation and required validation are complete                    | `bark-finish-notify`         |
 
 ## Skill Rules

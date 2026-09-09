@@ -12,7 +12,10 @@ behavior Tickets, then into execution-ready Slices within each Ticket.
 
 Create tickets only when they reduce implementation complexity more than they add workflow overhead.
 
-Do not ticket trivial work that can be implemented and verified in one focused pass.
+Do not ticket a single-behavior Slice that can be implemented and verified in
+one focused pass. Ticket omission changes planning overhead only; the parent
+workflow still requires a feature branch, tests, applicable redaction, commit,
+push, PR, Automatic Review, and merge.
 
 When this skill creates a plan or ticket, GitHub Issues are the mandatory
 durable store. Persistence is not an optional output mode. Chat output is only
@@ -149,12 +152,13 @@ boundaries:
 - the pull request is merged: `Status: done`, close the Issue, and retain the
   merged PR reference.
 
-Do not start a dependency-blocked ticket merely to fill its branch field. A
-dependent ticket becomes ready only when its dependencies are merged into the
+Do not start a dependency-blocked Ticket merely to fill its branch field. A
+dependent Ticket becomes ready only when its dependencies are merged into the
 updated default branch or the main workflow explicitly re-plans the
-dependency. A passing ticket is ready to open a pull request. Perform the
-single review after the PR is opened and before merge; the ticket is delivered
-only after its pull request is merged.
+dependency. A passing Ticket is ready to open or update a pull request. The
+parent workflow starts Automatic Review immediately after the PR is created or
+updated, fixes blocking findings through the Test/Redaction/Commit/Push loop,
+and delivers the Ticket only after its pull request is merged.
 
 ## Planning Process
 
