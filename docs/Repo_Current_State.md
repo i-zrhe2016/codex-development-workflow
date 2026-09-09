@@ -4,7 +4,7 @@ Last verified: 2026-09-09 @ working tree
 
 ## Current Focus
 
-- Per-ticket branch setup and one PR-stage review gate are active in the workflow on `docs/pr-review-gate`.
+- Per-ticket branch setup, ticket–branch linkage, and one PR-stage review gate are active in the workflow on `main`.
 
 ## Implemented
 
@@ -19,13 +19,14 @@ Last verified: 2026-09-09 @ working tree
 - `auto-deploy` defines a provider-neutral deployment contract with immutable artifacts, bounded health verification, least-privilege credentials, and authorized rollback handling.
 - Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides the single PR-stage read-only reviewer.
 - Built-in `codex review` and the project-scoped `reviewer` are documented as alternative paths for the single PR-stage review; the latter is explicitly requested from an interactive Codex session.
+- Ticket Issues and implementation branches are one-to-one through `Branch`/`Base` metadata, and PR head/base must match those fields.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
 - `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
 - The root workflow now creates or resumes one branch per ticket before implementation and requires one review after the PR is opened and before merge.
 
 ## In Progress
 
-- Move the only routine review gate to the PR stage on `docs/pr-review-gate`.
+- None.
 
 ## Constraints
 
@@ -48,4 +49,4 @@ Last verified: 2026-09-09 @ working tree
 
 ## Next
 
-- Complete the PR-stage review-gate documentation change, then publish it when authorized.
+- Start the next authorized ticket from the updated default branch.
