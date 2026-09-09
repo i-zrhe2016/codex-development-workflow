@@ -7,9 +7,10 @@ delegation and all required specialist skills managed in this repository.
 Requirement -> Classify -> Understand -> Plan -> Slice
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Create/resume ticket branch
-           -> Execute/Test -> Next Slice? -> Integration -> Review
+           -> Execute/Test -> Next Slice? -> Integration
            -> State / Docs
-           -> Redaction if needed -> Commit / Push
+           -> Redaction if needed -> Commit / Push -> Open PR
+           -> Review -> Fix findings / Re-test -> Merge -> Close ticket
            -> Optional Deploy / Verify / Rollback
 ```
 
@@ -17,7 +18,10 @@ The macro workflow controls architecture and scope. Each Slice carries its own
 acceptance criteria, relevant context, test strategy, and validation command.
 Each ticket keeps its implementation, tests, and related documentation on one
 branch created from the updated default branch; ticket review happens before
-that ticket is merged.
+that ticket is merged, after its PR is opened. Complete ticket checks before
+committing and pushing, then use one PR-stage review, fix findings, re-test, and
+merge before closing the ticket. Each ticket Issue records the exact branch and
+base branch; the PR head and base must match those Issue fields.
 TDD is used inside a Slice when the change is behavioral and a meaningful
 failing test provides useful evidence; it is not forced on documentation,
 configuration, styling, dependency, typo, or exploratory work.
@@ -35,8 +39,8 @@ The project configuration keeps multi-agent support deliberately small:
 
 - `.codex/config.toml` enables subagents and caps concurrent spawned-agent
   threads at three, excluding the main thread.
-- `.codex/agents/reviewer.toml` defines a read-only reviewer for independent
-  checks of integrated changes.
+- `.codex/agents/reviewer.toml` defines a read-only reviewer for the single
+  PR-stage review.
 
 The built-in `explorer` and `worker` roles cover read-heavy exploration and
 isolated implementation Slices. The delegation gate remains optional; keep
@@ -105,22 +109,22 @@ relevant bundle.
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 | `auto-deploy` | [`skills/auto-deploy/`](skills/auto-deploy/) | [Skill documentation](docs/skills/auto-deploy/README.md) |
 
-Review has two distinct paths: the built-in `codex review` command is the main
-agent's diff review, while the project-scoped `reviewer` is an optional
-independent read-only subagent. The built-in command does not select the custom
-reviewer automatically.
+The single review stage happens after the PR is opened and before it is merged.
+Choose one path: the built-in `codex review` command or the project-scoped
+`reviewer` for an independent read-only check. They are alternatives, not
+sequential review gates.
 
 ```bash
-codex review --uncommitted
+codex review --base main
 ```
 
-To invoke the project reviewer, start an interactive Codex session from this
-project root and enter:
+To use the project reviewer as the single PR-stage review, start an interactive
+Codex session from this project root and enter:
 
 ```text
-Use the project-scoped `reviewer` subagent to inspect the current integrated
-changes. Wait for its read-only result and return only actionable findings with
-file references.
+Use the project-scoped `reviewer` subagent to inspect the current PR diff and
+branch boundary. Wait for its read-only result and return only actionable
+findings with file references.
 ```
 
 Use `--base BRANCH` or `--commit SHA` when a specific comparison is required.

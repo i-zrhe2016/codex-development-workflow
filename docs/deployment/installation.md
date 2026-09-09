@@ -18,7 +18,6 @@ and authenticate Codex before using it; no separate review skill is required.
 Choose one review target per invocation:
 
 ```bash
-codex review --uncommitted  # staged, unstaged, and untracked changes
 codex review --base main    # changes relative to a base branch
 codex review --commit SHA   # changes introduced by a commit
 ```
@@ -32,9 +31,9 @@ The custom `.codex/agents/reviewer.toml` is invoked by an interactive Codex
 session, not by `codex review`. From the project root, start `codex` and enter:
 
 ```text
-Use the project-scoped `reviewer` subagent to inspect the current integrated
-changes. Wait for its read-only result and return only actionable findings with
-file references.
+Use the project-scoped `reviewer` subagent to inspect the current PR diff and
+branch boundary. Wait for its read-only result and return only actionable
+findings with file references.
 ```
 
 The main agent receives the result and retains the final review judgment.
@@ -108,7 +107,7 @@ This checkout also contains the optional project-scoped Codex configuration:
 - `.codex/config.toml` enables subagents and caps concurrent spawned-agent
   threads at three, excluding the main thread.
 - `.codex/agents/reviewer.toml` defines a read-only reviewer for independent
-  checks of integrated changes.
+  single PR-stage review.
 
 The installer copies managed skills only; it does not install or overwrite
 project-scoped `.codex/` files in another repository. Copy or adapt these files

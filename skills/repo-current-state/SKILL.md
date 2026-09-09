@@ -37,7 +37,7 @@ Update the file after a ticket or coherent work unit has passed the required tes
 
 Prefer this order:
 
-`Implement -> Test -> Review -> Update Repo_Current_State.md -> Commit/Push`
+`Implement -> Test -> Update Repo_Current_State.md -> Commit/Push -> Open PR -> Review`
 
 Keep the state update in the same coherent commit as the implementation when it documents that change.
 

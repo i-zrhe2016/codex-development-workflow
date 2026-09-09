@@ -25,25 +25,29 @@ Requirement
     -> Execute slice(s)
     -> Next slice?
     -> Integration tests
-    -> Self review
     -> Update state/docs
     -> Classify outputs
     -> Redact when needed
     -> Commit/Push
+    -> Open PR
+    -> Review
+    -> Fix findings / Re-test
+    -> Merge
+    -> Close ticket
     -> Optional Deploy / Verify / Rollback
 ```
 
 Use the lightest path that preserves correctness:
 
 - **Tiny:** classify, make a concise plan, treat the request as one slice, run
-  minimal validation, and perform a lightweight self-review.
+  minimal validation, and prepare the change for the single PR-stage review.
 - **Normal:** understand the relevant repository area, make a minimal plan,
   execute one or more slices (delegating only when the gate allows it), and
   run focused validation.
 - **Complex:** understand the repository, plan dependency-ordered Slices with
   `plan-to-ticket`, evaluate delegation after Slicing, execute each ticket's
-  Slices with its own acceptance, test strategy, and merge-boundary review,
-  then run broader integration checks when multiple tickets come together.
+  Slices with their own acceptance and test strategy, then run broader
+  integration checks when multiple tickets come together before PR review.
 
 Planning controls architecture and scope. Testing controls implementation
 evidence. Neither replaces the other.
@@ -122,11 +126,21 @@ subagents unless explicitly required.
   Preserve unrelated or uncommitted work.
 - Parallel ticket workers must use separate Git worktrees and branches.
   Never switch branches in a working directory shared by active workers.
-- Before merging each ticket, complete its acceptance checks,
-  relevant integration checks, and review of the ticket diff.
-  Reuse the existing testing, redaction, and publication skills.
+- Before committing and pushing a ticket, complete its acceptance checks and
+  relevant integration checks. After its PR is opened, perform the single
+  ticket review before merge. Reuse the existing testing, redaction, and
+  publication skills.
+- Treat each ticket Issue and implementation branch as a one-to-one pair.
+  Before the first edit, record the exact `Branch` and `Base` values on the
+  Issue and set `Status: in_progress`; when resuming, verify the branch still
+  matches the Issue.
+- Keep all internal Slices for one ticket on that branch. Do not share one
+  implementation branch across tickets or create a branch per Slice.
+- The ticket PR's head and base must match the Issue's `Branch` and `Base`.
+  When the PR opens, record its `PR` and set `Status: in_review`; after the
+  verified merge, set `Status: done` and close the Issue.
 - Track implementation readiness separately from merge status.
-  A passing ticket is ready for review; it is delivered after merging.
+  A passing ticket is ready to open a PR; it is delivered after merging.
 - After an authorized merge, follow the existing branch cleanup
   procedure and update the default branch before starting dependent work.
 - If a ticket needs to be abandoned, preserve its work and re-plan.
@@ -175,22 +189,23 @@ the level used, commands, result, evidence, and any escalation reason.
 
 ## Review policy
 
-Review is a main-agent-owned stage at the ticket merge boundary, not a
-mandatory review tax inside every internal Slice. A ticket may contain multiple
-Slices, but all Slices within the ticket being merged must pass their selected
-checks and be reviewed before that ticket's PR is merged. After ticket-level
-integration, the main agent may delegate an independent read-only check to the
-project `reviewer` when that materially improves review quality; the main agent
-evaluates the findings and retains final judgment.
+Review is one main-agent-owned stage after the ticket PR is opened and before
+it is merged. It is not performed inside a Slice, during integration, or before
+commit/push. A ticket may contain multiple Slices, but all Slices within the
+ticket must pass their selected checks before its PR is opened. Use the complete
+PR diff, branch boundary, and available CI results as the review context.
+Choose one review path—the built-in `codex review` command or the project
+`reviewer`—rather than running both as routine gates.
 
-- Before merging each ticket, run its acceptance checks and relevant
-  ticket-level integration or regression checks.
-- Review the complete diff for the ticket being merged, including every Slice
-  within that ticket; do not defer this review until a later combined review.
+- Before committing and pushing each ticket, run its acceptance checks and
+  relevant ticket-level integration or regression checks.
+- Commit/push the feature branch and open its PR before the single review.
+- Review the complete PR diff for the ticket, including every Slice within
+  that ticket, after the PR is opened and before merge.
+- Fix review findings and rerun the affected checks before merging. Do not add
+  a second routine review after the fixes.
 - When multiple tickets come together, add broader integration or regression
-  checks across those tickets in addition to each ticket's own checks and
-  review.
-- Perform the final self-review at the ticket merge boundary.
+  checks across those tickets in addition to each ticket's own checks.
 - Use the Codex CLI review command when available:
 
   ```bash
@@ -199,20 +214,18 @@ evaluates the findings and retains final judgment.
   codex review --commit SHA
   ```
 
-  These commands use Codex's built-in diff-review path; they do not select the
-  project-scoped `.codex/agents/reviewer.toml`. To use that custom reviewer,
-  start an interactive Codex session from the project root and ask:
+  These commands are one review path and do not select the project-scoped
+  `.codex/agents/reviewer.toml`. To use that custom reviewer as the single
+  review path, start an interactive Codex session from the project root and ask:
 
   ```text
-  Use the project-scoped `reviewer` subagent to inspect the current integrated
-  changes. Wait for its read-only result and return only actionable findings
-  with file references.
+  Use the project-scoped `reviewer` subagent to inspect the current PR diff and
+  branch boundary. Wait for its read-only result and return only actionable
+  findings with file references.
   ```
 
-- If review finds a blocking problem, fix it, rerun affected tests, and repeat
-  the self-review when the fix materially changes the reviewed behavior.
-- Trigger targeted review earlier only for repeated or unexplained failures,
-  unclear root cause, high-risk changes, or an architecture conflict.
+- If review finds a blocking problem, fix it, rerun affected tests, and update
+  the PR before merge. If the finding changes scope or design, return to Plan.
 - Review never replaces tests, compiler diagnostics, linting, or static
   analysis.
 
@@ -250,19 +263,21 @@ For each ticket, after all Slices within that ticket pass their selected level:
 
 1. Run integration or regression checks appropriate to that ticket, including
    browser/E2E only for relevant user-visible behavior.
-2. Review the complete ticket diff and, if useful, run the project `reviewer`
-   as an independent read-only check; return its findings to the main agent.
-3. Perform the final self-review and judgment for the ticket before merging.
-4. If multiple tickets are being delivered together, run broader integration or
+2. If multiple tickets are being delivered together, run broader integration or
    regression checks across the combined change as well.
-5. Update `docs/Repo_Current_State.md` and other docs only when verified
+3. Update `docs/Repo_Current_State.md` and other docs only when verified
    behavior, architecture, dependencies, deployment, or important state
    changed.
-6. Classify the complete output set.
-7. If potentially sensitive surfaces exist, invoke
+4. Classify the complete output set.
+5. If potentially sensitive surfaces exist, invoke
    `data-document-redaction` and continue only on `pass`.
-8. Invoke `github-push-when-ready` before committing or pushing.
-9. When deployment is requested, invoke `auto-deploy` for target-specific
+6. Invoke `github-push-when-ready` before committing, pushing, or opening the
+   PR.
+7. Commit/push the ticket branch and open its PR.
+8. Perform the single PR-stage review, fix findings, and rerun affected checks.
+9. Merge the PR only after the review and re-test pass, then update and close
+   the linked ticket Issue.
+10. When deployment is requested, invoke `auto-deploy` for target-specific
    preflight, execution, verification, and rollback handling.
 
 When a ticket is produced by `plan-to-ticket`, update its status and branch/PR

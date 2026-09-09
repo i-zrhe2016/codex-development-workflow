@@ -39,6 +39,12 @@ this skill creates tickets, Issue persistence is required.
 - Assign every ticket an implementation branch and base branch before branch
   work starts. Use `<type>/<ticket-id>-<short-description>` and keep the same
   branch for the ticket's implementation, tests, and related documentation.
+- Treat each ticket Issue and implementation branch as a one-to-one pair. Write
+  the exact `Branch` and `Base` metadata to the Issue before the first edit,
+  set `Status: in_progress` when branch work starts, and verify those values
+  when resuming a branch.
+- Keep all internal Slices for one ticket on its branch. Do not share a branch
+  across tickets or create separate branches for individual Slices.
 - Create or resume each ticket branch from the updated default branch. Do not
   start a dependent ticket until its prerequisite ticket is merged; then use
   the updated default branch as its base.
@@ -52,7 +58,9 @@ this skill creates tickets, Issue persistence is required.
   merged; never mark a ticket done merely because its branch or PR exists.
 - Keep branch, base, dependency, and PR references current in the ticket
   Issue. Use `PR: null` until a pull request exists, then record its canonical
-  URL or number.
+  URL or number. The PR head/base must match the Issue's `Branch`/`Base`; set
+  `Status: in_review` when it opens and set `Status: done`/close the Issue only
+  after the verified merge.
 - Keep `docs/Repo_Current_State.md` as a compact pointer to the active Issue
   when repository state is updated; do not copy the plan or backlog into it.
 - Keep tickets small, focused, independently understandable, and independently verifiable.
@@ -136,8 +144,9 @@ boundaries:
 Do not start a dependency-blocked ticket merely to fill its branch field. A
 dependent ticket becomes ready only when its dependencies are merged into the
 updated default branch or the main workflow explicitly re-plans the
-dependency. A passing ticket is ready for review; it is delivered only after
-its pull request is merged.
+dependency. A passing ticket is ready to open a pull request. Perform the
+single review after the PR is opened and before merge; the ticket is delivered
+only after its pull request is merged.
 
 ## Planning Process
 
@@ -156,7 +165,9 @@ Do not expose internal reasoning.
 
 ## Ticket Sizing
 
-A good ticket is a unit a coding agent can implement, test, and review without needing to re-plan midway.
+A good ticket is a unit a coding agent can implement and test before opening a
+pull request, then review at the PR merge boundary without needing to re-plan
+midway.
 
 Split a ticket when:
 

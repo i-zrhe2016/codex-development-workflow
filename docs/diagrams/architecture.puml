@@ -18,6 +18,7 @@ state "Understand\nCurrent Repo" as context
 state "Plan\narchitecture + scope" as plan
 state "Define one Slice\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
 state "Persist plan / tickets\n[plan-to-ticket]\nGitHub Issues authoritative" as persist #EAF2F8
+state "Create/resume ticket branch\n[one ticket ↔ one branch]\nIssue: Branch + Base\nStatus: in_progress" as branch
 state "Delegation Gate\nIndependent + bounded?\n(optional)" as delegation #FFF4CC
 state "Explorer\n[explorer]\nread-only evidence" as explorer
 state "Worker A / B\n[worker]\nisolated Slice execution + validation" as workers
@@ -46,17 +47,20 @@ state "Slice Execution / Test Loop\n[main agent]" as execute {
 
 state "More slices?" as more #FFF4CC
 state "Integration / regression tests\n[test-workflow]" as integration
-state "Independent reviewer?\n(optional)" as review_delegate #FFF4CC
-state "Reviewer\n[.codex/agents/reviewer.toml]\nread-only findings" as reviewer_agent
-state "Self review\n[codex review]" as review
-state "Blocking problem?" as blocking #FFF4CC
-state "Re-plan / Fix" as replan
 state "State / Docs\n[repo-current-state]" as state_docs
 state "Classify outputs" as classify_outputs
 state "Potentially sensitive?" as sensitive #FFF4CC
 state "Redaction\n[data-document-redaction]" as redaction
 state "Redaction pass?" as redaction_gate #FFF4CC
 state "Commit / Push\n[github-push-when-ready]" as publish
+state "Open PR\n[github-push-when-ready]" as open_pr
+state "Review\n[one PR-stage gate]" as review
+state "Blocking finding?" as blocking #FFF4CC
+state "Fix findings" as fix_findings
+state "Re-test\n[test-workflow]" as retest
+state "Re-test pass?" as retest_gate #FFF4CC
+state "Merge PR\n[github-push-when-ready]" as merge_pr
+state "Close ticket\n[GitHub Issues]" as close_ticket
 state "Automatic Deployment\n[auto-deploy]" as deployment
 state "Health /\nSmoke Verification" as deploy_verify
 state "Rollback /\nEscalate" as rollback #FDECEC
@@ -68,7 +72,8 @@ classify --> context
 context --> plan
 plan --> slice
 slice --> persist
-persist --> delegation
+persist --> branch
+branch --> delegation
 delegation --> execute : no / sequential
 delegation --> explorer : yes / independent
 delegation --> workers
@@ -78,15 +83,7 @@ worker_result --> more
 execute --> more
 more --> slice : yes
 more --> integration : no
-integration --> review_delegate
-review_delegate --> reviewer_agent : yes / useful
-review_delegate --> review : no / skip
-reviewer_agent --> review
-review --> blocking
-blocking --> replan : problem
-blocking --> state_docs : pass
-replan --> plan : design / scope issue
-replan --> integration : local fix
+integration --> state_docs
 state_docs --> classify_outputs
 classify_outputs --> sensitive
 sensitive --> redaction : yes
@@ -94,8 +91,18 @@ sensitive --> publish : no
 redaction --> redaction_gate
 redaction_gate --> publish : pass
 redaction_gate --> blocked : needs_review / blocked
-publish --> deployment : requested
-publish --> [*] : no deployment
+publish --> open_pr
+open_pr --> review
+review --> blocking
+blocking --> fix_findings : finding
+blocking --> merge_pr : pass
+fix_findings --> retest
+retest --> retest_gate
+retest_gate --> fix_findings : fail
+retest_gate --> merge_pr : pass
+merge_pr --> close_ticket
+close_ticket --> deployment : requested
+close_ticket --> [*] : no deployment
 deployment --> deploy_verify
 deploy_verify --> [*] : pass
 deploy_verify --> rollback : fail / timeout
@@ -112,6 +119,12 @@ The main agent owns requirements,
 architecture, dependency ordering,
 integration, and final judgment.
 Keep dependent, overlapping, or shared-interface work sequential.
+end note
+
+note right of review
+Open the PR before this single review gate.
+Use the final PR diff, branch boundary, and CI results.
+Fix findings and re-test before merge; do not add a second routine review.
 end note
 
 note right of state_docs

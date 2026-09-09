@@ -1,5 +1,5 @@
 name = "reviewer"
-description = "Independent read-only reviewer for integrated repository changes."
+description = "Independent read-only reviewer for the single PR-stage review."
 
 sandbox_mode = "read-only"
 
