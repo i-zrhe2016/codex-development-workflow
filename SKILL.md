@@ -19,6 +19,7 @@ Requirement
     -> Understand current repo
     -> Plan
     -> Slice
+    -> Persist plan/tickets to GitHub Issues
     -> Delegate if useful
     -> Execute slice(s)
     -> Next slice?
@@ -62,6 +63,11 @@ Test level
 Test cases
 Validation command
 ```
+
+When `plan-to-ticket` is used, the Slice also carries its canonical GitHub
+Issue link and execution metadata. The parent plan Issue and all initial ticket
+Issues must exist before implementation branches are created; a failed Issue
+operation blocks the workflow and has no Markdown or chat-only fallback.
 
 Only start dependency-ready Slices. The main agent may execute one Slice
 itself, or the delegation gate may start multiple independent Slices with
@@ -189,8 +195,9 @@ do not duplicate its detailed procedure here.
 - `context-efficiency`: large, unfamiliar, or context-heavy repository
   exploration; it is an optional context-loading aid, not a workflow stage.
 - `plan-to-ticket`: complex, multi-slice, or dependency-driven work; generated
-  slices must satisfy the Slice contract above and expose enough boundaries for
-  the delegation gate to make a safe decision.
+  Slices must satisfy the Slice contract above, persist the plan and tickets to
+  GitHub Issues before branch work, and expose enough boundaries for the
+  delegation gate to make a safe decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
 - `repo-current-state`: reconcile verified state after a meaningful slice or
@@ -224,13 +231,18 @@ After all slices pass their selected level:
 8. When deployment is requested, invoke `auto-deploy` for target-specific
    preflight, execution, verification, and rollback handling.
 
+When a ticket is produced by `plan-to-ticket`, update its status and branch/PR
+metadata at the workflow boundaries defined by that skill. Keep tickets open
+through `in_review`; set `done` and close them only after the linked PR is
+verified merged.
+
 ## Repo state as a recovery point
 
 Read `docs/Repo_Current_State.md` at the beginning of planning. Keep it as a
 compact, verified recovery point containing the current focus, implemented
 capabilities, in-progress slice, known failures, constraints, architecture
-orientation, and next slice. Do not turn it into a session transcript,
-complete backlog, or test report.
+orientation, and next Slice. Link to the active GitHub Issue for ticket detail;
+do not turn it into a session transcript, complete backlog, or test report.
 
 ## Redaction gate contract
 

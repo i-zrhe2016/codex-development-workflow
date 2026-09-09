@@ -16,7 +16,8 @@ Treat the repository as the system of record and this file as a compact index in
 - Rewrite obsolete state instead of accumulating historical entries.
 - Keep the file small enough to read at the beginning of an agent session.
 - Record uncertainty explicitly. Never fill gaps with guesses.
-- Keep implementation history in Git/changelog, architecture rationale in ADRs or architecture docs, and future work in tickets/issues.
+- Keep implementation history in Git/changelog, architecture rationale in ADRs or architecture docs, and future work in GitHub Issues.
+- When `plan-to-ticket` is used, GitHub Issues are the sole durable authority for the plan and tickets. This file may link to the active Issue, but must not duplicate its backlog, metadata, or progress record.
 
 ## When Reading State
 
@@ -84,7 +85,7 @@ Last verified: <YYYY-MM-DD> @ <commit-or-working-tree>
 - See `<path>` for detailed architecture when applicable.
 
 ## Next
-- <immediate next ticket/work item, if known>
+- <link to the immediate next GitHub Issue/work item, if known>
 ```
 
 Omit empty bullets. Use `None` only when the absence itself is useful information.
@@ -168,7 +169,7 @@ Route those concerns elsewhere:
 - history -> Git / `CHANGELOG.md`
 - architecture -> `docs/ARCHITECTURE.md`
 - rationale -> ADRs / decision docs
-- future work -> GitHub Issues / tickets
+- future work -> GitHub Issues (not a parallel Markdown ticket backlog)
 - test evidence -> CI/test reports
 - approvals -> the appropriate external authority or protected workflow
 

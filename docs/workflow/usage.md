@@ -7,7 +7,8 @@ inside each Slice.
 ## Staged workflow
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice -> Delegate if useful
+Requirement -> Classify -> Understand -> Plan -> Slice
+           -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Execute/Test -> Next Slice? -> Integration tests -> Review
            -> State / Docs -> Redaction if needed -> Commit / Push
            -> Optional Deploy / Verify / Rollback
@@ -30,6 +31,29 @@ Only start dependency-ready Slices. The main agent may execute a Slice itself
 or delegate independent Slices with disjoint ownership boundaries. If an
 implementation assumption is wrong, stop and return to Plan or split the
 Slice instead of growing the patch.
+
+## Persistent plan and ticket handoff
+
+When `plan-to-ticket` creates a plan or ticket, GitHub Issues are the mandatory
+durable source of truth. Create or update one parent plan Issue and one Issue
+per ticket before implementation branches start. Each ticket Issue retains:
+
+- `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
+- `Branch`, `Base`, `Dependencies`, and `PR` metadata;
+- the goal, scope, acceptance criteria, and validation contract.
+
+The plan Issue contains the overall plan and links to the ticket Issues. Chat
+output contains convenience links only. `docs/Repo_Current_State.md` may link
+to the active Issue but must not become a duplicate plan or backlog.
+
+Search for stable plan/ticket markers before creating Issues so retries reuse
+existing records. If the GitHub connector, repository target, authentication,
+or required write fails, mark the operation blocked and stop; do not fall back
+to local Markdown or an unpersisted chat response.
+
+Update each Issue as work progresses: `in_progress` when branch work starts,
+`blocked` for a blocking dependency or environment problem, `in_review` when a
+PR is opened, and `done`/closed only after the PR is verified merged.
 
 ## Optional delegation gate
 

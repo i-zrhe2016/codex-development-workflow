@@ -16,7 +16,8 @@ remain inside their own `SKILL.md` files.
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
 | `.codex/agents/reviewer.toml` | Project-scoped read-only reviewer for optional independent checks of integrated changes. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
-| `plan-to-ticket` | Produces small, dependency-ordered Slices with explicit scope and acceptance criteria. |
+| `plan-to-ticket` | Produces small, dependency-ordered Slices with explicit scope and acceptance criteria, then persists the parent plan and ticket Issues before branch work. |
+| GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point for the repository. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
@@ -41,7 +42,8 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 ### Macro stages
 
 ```text
-Requirement -> Classify -> Understand -> Plan -> Slice -> Delegate if useful
+Requirement -> Classify -> Understand -> Plan -> Slice
+           -> Persist plan/tickets to GitHub Issues -> Delegate if useful
            -> Execute/Test -> Next Slice? -> Integration -> Review
            -> State / Docs
            -> Redaction -> Commit / Push
@@ -52,9 +54,23 @@ Requirement -> Classify -> Understand -> Plan -> Slice -> Delegate if useful
 - Normal work plans the relevant area and executes one or more Slices, using
   delegation only when the gate finds a safe independent boundary.
 - Complex work uses `plan-to-ticket` for dependency-ordered Slices and then
-  evaluates those boundaries before execution.
+  persists the plan and tickets to GitHub Issues before evaluating those
+  boundaries and starting execution.
 - Each Slice loads only the context needed for its own acceptance criteria.
 - A wrong design assumption returns to Plan or causes a Slice split.
+
+### Persistent ticket authority
+
+GitHub Issues are the sole durable authority for plans and tickets created by
+`plan-to-ticket`. A parent plan Issue holds the overall plan and links to one
+Issue per behavior ticket. Each ticket Issue retains its goal, scope,
+dependencies, acceptance criteria, validation, and `Status`, `Branch`, `Base`,
+and `PR` metadata. The workflow blocks when required Issue reads or writes
+fail; it does not create a local Markdown mirror or treat chat output as
+completion.
+
+`Repo_Current_State.md` remains a compact recovery pointer to the active Issue,
+not a backlog or second ticket database.
 
 ### Delegation gate
 

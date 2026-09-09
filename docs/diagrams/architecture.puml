@@ -17,6 +17,7 @@ state "Classify task\nTiny / Normal / Complex" as classify
 state "Understand\nCurrent Repo" as context
 state "Plan\narchitecture + scope" as plan
 state "Define one Slice\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
+state "Persist plan / tickets\n[plan-to-ticket]\nGitHub Issues authoritative" as persist #EAF2F8
 state "Delegation Gate\nIndependent + bounded?\n(optional)" as delegation #FFF4CC
 state "Explorer\n[explorer]\nread-only evidence" as explorer
 state "Worker A / B\n[worker]\nisolated Slice execution + validation" as workers
@@ -66,7 +67,8 @@ requirement --> classify
 classify --> context
 context --> plan
 plan --> slice
-slice --> delegation
+slice --> persist
+persist --> delegation
 delegation --> execute : no / sequential
 delegation --> explorer : yes / independent
 delegation --> workers
@@ -115,6 +117,7 @@ end note
 note right of state_docs
 Repo_Current_State.md is the compact recovery point
 for current focus, verified behavior, failures, and next Slice.
+Ticket detail and progress remain in GitHub Issues.
 end note
 
 note left of requirement

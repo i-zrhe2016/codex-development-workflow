@@ -136,7 +136,7 @@ Browser tests complement unit/integration checks; they do not replace them.
 - Do not use browser automation to validate behavior that a deterministic unit/API test can prove more cheaply.
 - Do not chase coverage percentage as the goal. Prefer meaningful contract coverage.
 - Do not generate tests after reading implementation merely to mirror the code. Derive expected behavior from requirements and existing public contracts.
-- Keep test state outside fragile conversational memory when the task spans many tickets; use repository test files or ticket artifacts as the durable source of truth.
+- Keep test state outside fragile conversational memory when the task spans many tickets; use repository test files and the authoritative GitHub Issue as the durable source of truth.
 
 ## Completion
 
