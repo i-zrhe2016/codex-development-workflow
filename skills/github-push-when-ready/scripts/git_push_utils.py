@@ -197,6 +197,16 @@ def resolve_push_remote(
     return choose_remote(github_remotes, upstream)
 
 
+def load_effective_push_urls(repo: Path, remote: str | None) -> list[str]:
+    """Return every push URL after Git's push-url and rewrite rules are applied."""
+    if not remote:
+        return []
+    result = run_git(repo, "remote", "get-url", "--all", "--push", remote)
+    if result.returncode != 0:
+        return []
+    return [line for line in result.stdout.splitlines() if line]
+
+
 def resolve_effective_push_branch(
     repo: Path,
     branch: str | None,
@@ -211,6 +221,24 @@ def resolve_effective_push_branch(
     if configured_refspec.returncode == 0 and configured_refspec.stdout:
         return None
 
+    mirror = run_git(repo, "config", "--get", f"remote.{push_remote}.mirror")
+    if mirror.returncode == 0 and mirror.stdout.lower() == "true":
+        return None
+
+    push_default = run_git(repo, "config", "--get", "push.default")
+    mode = push_default.stdout.lower() if push_default.returncode == 0 and push_default.stdout else "simple"
+    if mode in {"matching", "nothing"}:
+        return None
+
+    upstream_remote = None
+    upstream_branch = None
+    if upstream and "/" in upstream:
+        upstream_remote, upstream_branch = upstream.split("/", 1)
+    if mode == "upstream" and upstream_remote != push_remote:
+        return None
+    if mode == "simple" and upstream_remote and upstream_remote != push_remote:
+        return None
+
     push_ref = run_git(repo, "rev-parse", "--symbolic-full-name", "@{push}")
     if push_ref.returncode == 0 and push_ref.stdout:
         prefix = "refs/remotes/"
@@ -220,16 +248,13 @@ def resolve_effective_push_branch(
             if separator and remote_name == push_remote and target_branch:
                 return target_branch
 
-    push_default = run_git(repo, "config", "--get", "push.default")
-    mode = push_default.stdout if push_default.returncode == 0 and push_default.stdout else "simple"
     if mode == "current":
         return branch
     if mode == "upstream" and upstream and "/" in upstream:
-        return upstream.split("/", 1)[1]
+        return upstream_branch
     if mode == "simple":
         if not upstream or "/" not in upstream:
             return branch
-        upstream_branch = upstream.split("/", 1)[1]
         return branch if upstream_branch == branch else None
     return None
 
@@ -326,8 +351,13 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
     }
     push_remote = resolve_push_remote(repo, github_remotes, branch, upstream)
     preferred_remote = push_remote if push_remote in github_remotes else None
-    push_url = github_remotes.get(preferred_remote, {}).get("push") if preferred_remote else None
-    default_branch = resolve_default_branch(push_url)
+    push_urls = load_effective_push_urls(repo, push_remote)
+    default_branches = [resolve_default_branch(url) for url in push_urls]
+    default_branch = (
+        default_branches[0]
+        if default_branches and all(branch_name == default_branches[0] for branch_name in default_branches)
+        else None
+    )
     effective_push_branch = resolve_effective_push_branch(repo, branch, upstream, push_remote)
     has_commits = run_git(repo, "rev-parse", "--verify", "HEAD").returncode == 0
     has_changes = any(status[key] > 0 for key in ("staged", "unstaged", "untracked", "conflicted"))

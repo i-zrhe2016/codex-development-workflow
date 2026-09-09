@@ -129,6 +129,50 @@ class PushReadinessTests(unittest.TestCase):
         self.assertEqual(report["recommended_action"], "commit_then_push")
         self.assertTrue(report["safe_to_push"])
 
+    def test_all_push_targets_must_have_verified_default_branches(self) -> None:
+        repo = self.make_repo()
+        self.run_git(
+            repo,
+            "remote",
+            "set-url",
+            "--push",
+            "origin",
+            "https://github.com/example/first.git",
+        )
+        self.run_git(
+            repo,
+            "remote",
+            "set-url",
+            "--add",
+            "--push",
+            "origin",
+            "https://github.com/example/second.git",
+        )
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        with patch(
+            "git_push_utils.resolve_default_branch",
+            side_effect=["main", None],
+        ):
+            report = assess_repo(repo)
+
+        self.assertIsNone(report["default_branch"])
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_matching_push_mode_requires_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        self.run_git(repo, "config", "push.default", "matching")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertIsNone(report["effective_push_branch"])
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
     def test_malformed_github_url_fails_closed(self) -> None:
         self.assertIsNone(resolve_default_branch("https://[github.com/example/project"))
 
