@@ -221,7 +221,9 @@ def resolve_effective_push_branch(
     if configured_refspec.returncode == 0 and configured_refspec.stdout:
         return None
 
-    mirror = run_git(repo, "config", "--get", f"remote.{push_remote}.mirror")
+    mirror = run_git(repo, "config", "--bool", "--get", f"remote.{push_remote}.mirror")
+    if mirror.returncode not in (0, 1):
+        return None
     if mirror.returncode == 0 and mirror.stdout.lower() == "true":
         return None
 
@@ -237,7 +239,7 @@ def resolve_effective_push_branch(
     if mode == "upstream" and upstream_remote != push_remote:
         return None
     if mode == "simple" and upstream_remote and upstream_remote != push_remote:
-        return None
+        return branch
 
     push_ref = run_git(repo, "rev-parse", "--symbolic-full-name", "@{push}")
     if push_ref.returncode == 0 and push_ref.stdout:

@@ -13,10 +13,29 @@ from unittest.mock import patch
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from git_push_utils import assess_repo, resolve_default_branch  # noqa: E402
+from git_push_utils import assess_repo, resolve_default_branch, resolve_effective_push_branch  # noqa: E402
 
 
 class PushReadinessTests(unittest.TestCase):
+    def test_mirror_boolean_spellings_are_blocked(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        self.run_git(repo, "config", "push.default", "current")
+        for value in ("true", "yes", "on", "1", "invalid"):
+            with self.subTest(value=value):
+                self.run_git(repo, "config", "remote.origin.mirror", value)
+                self.assertIsNone(resolve_effective_push_branch(repo, "work", None, "origin"))
+        for value in ("false", "no", "off", "0"):
+            with self.subTest(value=value):
+                self.run_git(repo, "config", "remote.origin.mirror", value)
+                self.assertEqual(resolve_effective_push_branch(repo, "work", None, "origin"), "work")
+
+    def test_triangular_simple_uses_feature_name(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        self.run_git(repo, "config", "push.default", "simple")
+        self.assertEqual(resolve_effective_push_branch(repo, "work", "upstream/main", "origin"), "work")
+
     def run_git(self, repo: Path, *args: str) -> str:
         completed = subprocess.run(
             ["git", "-C", str(repo), *args],
