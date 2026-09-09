@@ -161,9 +161,7 @@ def build_push_command(remote: str, branch: str, upstream: str | None) -> str:
     return shlex.join(["git", "push", "-u", remote, branch])
 
 
-def resolve_default_branch(
-    repo: Path, remote: str | None, current_branch: str | None = None
-) -> str | None:
+def resolve_default_branch(repo: Path, remote: str | None) -> str | None:
     """Resolve the repository default branch from local remote metadata."""
     if not remote:
         return None
@@ -181,15 +179,6 @@ def resolve_default_branch(
             return symbolic_head.stdout.removeprefix(remote_prefix)
         return symbolic_head.stdout
 
-    for candidate in ("main", "master"):
-        remote_ref = run_git(
-            repo, "show-ref", "--verify", "--quiet", f"refs/remotes/{remote}/{candidate}"
-        )
-        local_ref = run_git(
-            repo, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}"
-        )
-        if remote_ref.returncode == 0 or local_ref.returncode == 0 or current_branch == candidate:
-            return candidate
     return None
 
 
@@ -229,7 +218,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         if any(is_github_url(url) for url in urls.values())
     }
     preferred_remote = choose_remote(github_remotes, upstream)
-    default_branch = resolve_default_branch(repo, preferred_remote, branch)
+    default_branch = resolve_default_branch(repo, preferred_remote)
     has_commits = run_git(repo, "rev-parse", "--verify", "HEAD").returncode == 0
     has_changes = any(status[key] > 0 for key in ("staged", "unstaged", "untracked", "conflicted"))
 

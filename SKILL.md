@@ -234,17 +234,18 @@ waiting for user confirmation.
   Commit, Push, and Automatic Review on the updated PR.
 - When multiple Tickets come together, add broader integration or regression
   checks across them in addition to each Ticket's own checks.
-- Use the Codex CLI review command when available:
+- For the PR-stage gate, use the Codex CLI review command against the actual
+  base branch:
 
   ```bash
-  codex review --uncommitted
-  codex review --base BRANCH
-  codex review --commit SHA
+  codex review --base <actual-base-branch>
   ```
 
-  These commands are the mandatory Automatic Review path: use the built-in
-  `codex review` command after every PR creation or update. They do not select
-  the optional supplemental `.codex/agents/reviewer.toml`.
+  This complete-range command is the mandatory Automatic Review path after
+  every PR creation or update. `codex review --uncommitted` is only for a
+  narrow pre-commit working-tree check, and `codex review --commit SHA` is only
+  for a single-commit check; neither replaces the complete PR review. These
+  commands do not select the optional supplemental `.codex/agents/reviewer.toml`.
 
   The project-scoped reviewer may be run separately for additional read-only
   findings, but it never replaces `codex review`:

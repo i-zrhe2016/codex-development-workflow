@@ -40,6 +40,13 @@ class PushReadinessTests(unittest.TestCase):
             "https://github.com/i-zrhe2016/codex-development-workflow.git",
         )
         self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): baseline")
+        self.run_git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+        self.run_git(
+            repo,
+            "symbolic-ref",
+            "refs/remotes/origin/HEAD",
+            "refs/remotes/origin/main",
+        )
         return repo
 
     def test_default_branch_changes_require_feature_branch(self) -> None:
@@ -94,6 +101,8 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "develop")
         self.run_git(repo, "branch", "-D", "main")
+        self.run_git(repo, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
+        self.run_git(repo, "update-ref", "-d", "refs/remotes/origin/main")
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
         report = assess_repo(repo)
@@ -106,6 +115,8 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "trunk")
         self.run_git(repo, "branch", "-D", "main")
+        self.run_git(repo, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
+        self.run_git(repo, "update-ref", "-d", "refs/remotes/origin/main")
         self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): unpublished")
 
         report = assess_repo(repo)

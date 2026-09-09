@@ -18,9 +18,12 @@ and authenticate Codex before using it; no separate review skill is required.
 For each PR creation or update, invoke this Automatic Review command immediately:
 
 ```bash
-codex review --base main    # changes relative to a base branch
-codex review --commit SHA   # changes introduced by a commit
+codex review --base <actual-base-branch>  # complete PR range
 ```
+
+The narrower `codex review --uncommitted` and `codex review --commit SHA`
+forms are local supplemental checks only; neither replaces the complete PR
+review.
 
 See the [Codex CLI documentation](https://developers.openai.com/codex/cli/)
 for installation and authentication details.
@@ -108,8 +111,8 @@ This checkout also contains the optional project-scoped Codex configuration:
 
 - `.codex/config.toml` enables subagents and caps concurrent spawned-agent
   threads at three, excluding the main thread.
-- `.codex/agents/reviewer.toml` defines a read-only reviewer for independent
-  automatic PR-stage review path.
+- `.codex/agents/reviewer.toml` defines an optional supplemental read-only
+  reviewer; it never replaces the built-in `codex review` gate.
 
 The installer copies managed skills only; it does not install or overwrite
 project-scoped `.codex/` files in another repository. Copy or adapt these files
