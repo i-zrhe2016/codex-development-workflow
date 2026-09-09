@@ -7,9 +7,8 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import urlparse
 
-from git_push_utils import load_remote_urls
+from git_push_utils import github_repo_slug, load_remote_urls
 
 
 MAX_DESCRIPTION_LENGTH = 350
@@ -21,25 +20,6 @@ class AboutResult:
     changed: bool
     description: str | None
     message: str
-
-
-def github_repo_slug(remote_url: str) -> str | None:
-    """Return owner/repository for a supported GitHub remote URL."""
-    if remote_url.startswith("git@github.com:"):
-        path = remote_url.removeprefix("git@github.com:")
-    else:
-        parsed = urlparse(remote_url)
-        if parsed.hostname != "github.com":
-            return None
-        path = parsed.path
-
-    path = path.strip("/")
-    if path.endswith(".git"):
-        path = path[:-4]
-    parts = path.split("/")
-    if len(parts) != 2 or not all(parts):
-        return None
-    return "/".join(parts)
 
 
 def normalize_description(value: str | None) -> str:

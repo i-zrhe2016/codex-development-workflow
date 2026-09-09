@@ -6,10 +6,12 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.parse import urlparse
 
 CONFLICT_CODES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 AUTO_PUSH_SKIP_ENV = "CODEX_GITHUB_AUTO_PUSH_SKIP"
@@ -54,6 +56,25 @@ def is_github_url(url: str) -> bool:
     return bool(
         re.search(r"(^git@github\.com:|^ssh://git@github\.com/|github\.com[:/])", url)
     )
+
+
+def github_repo_slug(remote_url: str) -> str | None:
+    """Return owner/repository for a supported GitHub remote URL."""
+    if remote_url.startswith("git@github.com:"):
+        path = remote_url.removeprefix("git@github.com:")
+    else:
+        parsed = urlparse(remote_url)
+        if parsed.hostname != "github.com":
+            return None
+        path = parsed.path
+
+    path = path.strip("/")
+    if path.endswith(".git"):
+        path = path[:-4]
+    parts = path.split("/")
+    if len(parts) != 2 or not all(parts):
+        return None
+    return "/".join(parts)
 
 
 def parse_remote_urls(raw: str) -> dict[str, dict[str, str]]:
@@ -161,26 +182,37 @@ def build_push_command(remote: str, branch: str, upstream: str | None) -> str:
     return shlex.join(["git", "push", "-u", remote, branch])
 
 
-def resolve_default_branch(
-    repo: Path, remote: str | None, push_url: str | None
-) -> str | None:
-    """Resolve the default branch from the actual push target's HEAD metadata."""
-    if not remote or not push_url:
+def resolve_default_branch(push_url: str | None) -> str | None:
+    """Resolve the default branch from the actual GitHub push target."""
+    if not push_url:
         return None
 
-    remote_head = run_git(
-        repo,
-        "ls-remote",
-        "--symref",
-        "--quiet",
-        push_url,
-        "HEAD",
-    )
-    if remote_head.returncode == 0 and remote_head.stdout:
-        for line in remote_head.stdout.splitlines():
-            match = re.fullmatch(r"ref:\s+refs/heads/(.+)\s+HEAD", line)
-            if match:
-                return match.group(1)
+    slug = github_repo_slug(push_url)
+    gh = shutil.which("gh")
+    if not slug or not gh:
+        return None
+
+    environment = {
+        **os.environ,
+        "GH_PROMPT_DISABLED": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+    }
+    try:
+        result = subprocess.run(
+            [gh, "api", f"repos/{slug}", "--hostname", "github.com", "--jq", ".default_branch"],
+            check=False,
+            capture_output=True,
+            env=environment,
+            text=True,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        return None
+
+    if result.returncode == 0:
+        default_branch = result.stdout.strip()
+        if default_branch and "\n" not in default_branch:
+            return default_branch
 
     return None
 
@@ -222,7 +254,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
     }
     preferred_remote = choose_remote(github_remotes, upstream)
     push_url = github_remotes.get(preferred_remote, {}).get("push") if preferred_remote else None
-    default_branch = resolve_default_branch(repo, preferred_remote, push_url)
+    default_branch = resolve_default_branch(push_url)
     has_commits = run_git(repo, "rev-parse", "--verify", "HEAD").returncode == 0
     has_changes = any(status[key] > 0 for key in ("staged", "unstaged", "untracked", "conflicted"))
 

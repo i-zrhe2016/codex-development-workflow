@@ -7,12 +7,13 @@ import tempfile
 import unittest
 from pathlib import Path
 import sys
+from unittest.mock import patch
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from git_push_utils import assess_repo  # noqa: E402
+from git_push_utils import assess_repo, resolve_default_branch  # noqa: E402
 
 
 class PushReadinessTests(unittest.TestCase):
@@ -29,11 +30,6 @@ class PushReadinessTests(unittest.TestCase):
         temp = tempfile.TemporaryDirectory(prefix="push-readiness-test-")
         self.addCleanup(temp.cleanup)
         repo = Path(temp.name)
-        remote_temp = tempfile.TemporaryDirectory(prefix="push-readiness-remote-")
-        self.addCleanup(remote_temp.cleanup)
-        remote = Path(remote_temp.name)
-        self.run_git(remote, "init", "-q", "--bare")
-        self.run_git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
         self.run_git(repo, "init", "-q", "-b", "main")
         self.run_git(repo, "config", "user.name", "i-zrhe2016")
         self.run_git(repo, "config", "user.email", "test")
@@ -44,22 +40,58 @@ class PushReadinessTests(unittest.TestCase):
             "origin",
             "https://github.com/i-zrhe2016/codex-development-workflow.git",
         )
-        self.run_git(repo, "remote", "set-url", "--push", "origin", str(remote))
         self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): baseline")
-        self.run_git(repo, "push", "-q", "-u", "origin", "main")
-        self.run_git(
-            repo,
-            "symbolic-ref",
-            "refs/remotes/origin/HEAD",
-            "refs/remotes/origin/main",
-        )
         return repo
+
+    def assess_with_default_branch(self, repo: Path, default_branch: str | None) -> dict[str, object]:
+        with patch("git_push_utils.resolve_default_branch", return_value=default_branch):
+            return assess_repo(repo)
+
+    def test_default_branch_is_read_from_push_target_api(self) -> None:
+        with patch("git_push_utils.shutil.which", return_value="/usr/bin/gh"), patch(
+            "git_push_utils.subprocess.run"
+        ) as run:
+            run.return_value = subprocess.CompletedProcess(
+                ["gh"], 0, "release/main\n", ""
+            )
+
+            result = resolve_default_branch(
+                "https://github.com/example/project.git",
+            )
+
+        self.assertEqual(result, "release/main")
+        command = run.call_args.args[0]
+        self.assertEqual(
+            command,
+            [
+                "/usr/bin/gh",
+                "api",
+                "repos/example/project",
+                "--hostname",
+                "github.com",
+                "--jq",
+                ".default_branch",
+            ],
+        )
+        self.assertEqual(run.call_args.kwargs["timeout"], 10)
+        self.assertEqual(run.call_args.kwargs["env"]["GH_PROMPT_DISABLED"], "1")
+
+    def test_default_branch_probe_timeout_fails_closed(self) -> None:
+        with patch("git_push_utils.shutil.which", return_value="/usr/bin/gh"), patch(
+            "git_push_utils.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(["gh"], timeout=10),
+        ):
+            result = resolve_default_branch(
+                "https://github.com/example/project.git"
+            )
+
+        self.assertIsNone(result)
 
     def test_default_branch_changes_require_feature_branch(self) -> None:
         repo = self.make_repo()
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
-        report = assess_repo(repo)
+        report = self.assess_with_default_branch(repo, "main")
 
         self.assertEqual(report["default_branch"], "main")
         self.assertEqual(report["recommended_action"], "feature_branch_required")
@@ -67,20 +99,10 @@ class PushReadinessTests(unittest.TestCase):
 
     def test_slash_containing_default_branch_is_preserved(self) -> None:
         repo = self.make_repo()
-        remote = Path(self.run_git(repo, "config", "--get", "remote.origin.pushurl"))
         self.run_git(repo, "switch", "-q", "-c", "release/main")
-        self.run_git(repo, "push", "-q", "-u", "origin", "release/main")
-        self.run_git(remote, "symbolic-ref", "HEAD", "refs/heads/release/main")
-        self.run_git(repo, "update-ref", "refs/remotes/origin/release/main", "HEAD")
-        self.run_git(
-            repo,
-            "symbolic-ref",
-            "refs/remotes/origin/HEAD",
-            "refs/remotes/origin/release/main",
-        )
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
-        report = assess_repo(repo)
+        report = self.assess_with_default_branch(repo, "release/main")
 
         self.assertEqual(report["default_branch"], "release/main")
         self.assertEqual(report["recommended_action"], "feature_branch_required")
@@ -91,7 +113,7 @@ class PushReadinessTests(unittest.TestCase):
         self.run_git(repo, "switch", "-q", "-c", "docs/change")
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
-        report = assess_repo(repo)
+        report = self.assess_with_default_branch(repo, "main")
 
         self.assertEqual(report["default_branch"], "main")
         self.assertEqual(report["recommended_action"], "commit_then_push")
@@ -101,7 +123,7 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): unpublished")
 
-        report = assess_repo(repo)
+        report = self.assess_with_default_branch(repo, "main")
 
         self.assertEqual(report["recommended_action"], "manual_review")
         self.assertFalse(report["safe_to_push"])
@@ -110,12 +132,9 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "develop")
         self.run_git(repo, "branch", "-D", "main")
-        self.run_git(repo, "remote", "set-url", "--push", "origin", str(repo / "missing.git"))
-        self.run_git(repo, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
-        self.run_git(repo, "update-ref", "-d", "refs/remotes/origin/main")
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
-        report = assess_repo(repo)
+        report = self.assess_with_default_branch(repo, None)
 
         self.assertIsNone(report["default_branch"])
         self.assertEqual(report["recommended_action"], "manual_review")
@@ -125,12 +144,9 @@ class PushReadinessTests(unittest.TestCase):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "trunk")
         self.run_git(repo, "branch", "-D", "main")
-        self.run_git(repo, "remote", "set-url", "--push", "origin", str(repo / "missing.git"))
-        self.run_git(repo, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
-        self.run_git(repo, "update-ref", "-d", "refs/remotes/origin/main")
         self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): unpublished")
 
-        report = assess_repo(repo)
+        report = self.assess_with_default_branch(repo, None)
 
         self.assertIsNone(report["default_branch"])
         self.assertEqual(report["recommended_action"], "manual_review")
