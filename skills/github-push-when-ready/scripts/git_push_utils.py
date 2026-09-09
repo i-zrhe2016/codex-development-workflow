@@ -209,7 +209,7 @@ def resolve_default_branch(push_url: str | None) -> str | None:
                 "--hostname",
                 "github.com",
                 "--jq",
-                ".default_branch // empty",
+                "{default_branch: .default_branch}",
             ],
             check=False,
             capture_output=True,
@@ -221,8 +221,14 @@ def resolve_default_branch(push_url: str | None) -> str | None:
         return None
 
     if result.returncode == 0:
-        default_branch = result.stdout.strip()
-        if default_branch and "\n" not in default_branch:
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(payload, dict):
+            return None
+        default_branch = payload.get("default_branch")
+        if isinstance(default_branch, str) and default_branch and "\n" not in default_branch:
             return default_branch
 
     return None
@@ -311,6 +317,14 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         reasons.append(
             f"Default branch '{default_branch}' contains unpublished commit(s); "
             "preserve the work and move it to a feature branch before publishing."
+        )
+    elif default_branch and upstream and "/" in upstream and (
+        upstream.split("/", 1)[1] == default_branch and (has_changes or ahead > 0)
+    ):
+        recommended_action = "manual_review"
+        reasons.append(
+            f"Upstream '{upstream}' targets the default branch '{default_branch}'; "
+            "preserve the work and publish through a feature branch and PR."
         )
     elif has_changes:
         recommended_action = "commit_then_push"

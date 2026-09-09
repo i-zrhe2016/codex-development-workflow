@@ -52,7 +52,7 @@ class PushReadinessTests(unittest.TestCase):
             "git_push_utils.subprocess.run"
         ) as run:
             run.return_value = subprocess.CompletedProcess(
-                ["gh"], 0, "release/main\n", ""
+                ["gh"], 0, '{"default_branch":"release/main"}\n', ""
             )
 
             result = resolve_default_branch(
@@ -70,7 +70,7 @@ class PushReadinessTests(unittest.TestCase):
                 "--hostname",
                 "github.com",
                 "--jq",
-                ".default_branch // empty",
+                "{default_branch: .default_branch}",
             ],
         )
         self.assertEqual(run.call_args.kwargs["timeout"], 10)
@@ -91,11 +91,25 @@ class PushReadinessTests(unittest.TestCase):
         with patch("git_push_utils.shutil.which", return_value="/usr/bin/gh"), patch(
             "git_push_utils.subprocess.run"
         ) as run:
-            run.return_value = subprocess.CompletedProcess(["gh"], 0, "", "")
+            run.return_value = subprocess.CompletedProcess(
+                ["gh"], 0, '{"default_branch":null}\n', ""
+            )
 
             result = resolve_default_branch("https://github.com/example/project.git")
 
         self.assertIsNone(result)
+
+    def test_branch_tracking_default_upstream_requires_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        self.run_git(repo, "branch", "--set-upstream-to=origin/main", "work")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
 
     def test_malformed_github_url_fails_closed(self) -> None:
         self.assertIsNone(resolve_default_branch("https://[github.com/example/project"))
