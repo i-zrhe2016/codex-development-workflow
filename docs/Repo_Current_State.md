@@ -4,9 +4,8 @@ Last verified: 2026-09-09 @ working tree
 
 ## Current Focus
 
-- The unified PR-gated workflow is being applied to every change type; the
-  working tree contains the corresponding process, documentation, diagram, and
-  default-branch guard updates.
+- PR #16 contains the unified PR-gated workflow and default-branch guards;
+  recoverable review execution and bounded incremental review are being validated.
 
 ## Implemented
 
@@ -39,6 +38,9 @@ Last verified: 2026-09-09 @ working tree
   creation or update without user confirmation; blocking findings repeat Fix ->
   Test -> applicable Redaction -> Commit -> Push -> `codex review` on the updated
   PR.
+- The review runner streams and persists local logs, prevents duplicate runs,
+  and separates execution completion from the main agent's recorded assessment.
+  Initial review is full-range; bounded fixes can use the last assessed head.
 - Ticket Issues and implementation branches are one-to-one through `Branch`/`Base` metadata, and PR head/base must match those fields.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
 - `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
@@ -47,8 +49,9 @@ Last verified: 2026-09-09 @ working tree
 
 ## In Progress
 
-- The unified PR-gated workflow update is prepared in the working tree; its
-  commit, push, PR, Automatic Review, merge, and cleanup gates remain to be run.
+- [PR #16](https://github.com/i-zrhe2016/codex-development-workflow/pull/16)
+  is open on `chore/unified-pr-gate`; the review-runner update requires publication,
+  completed Codex review, merge, and cleanup. Focused validation: 25 tests pass.
 
 ## Known Issues / Failing Checks
 

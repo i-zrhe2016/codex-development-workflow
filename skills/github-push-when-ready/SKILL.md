@@ -78,6 +78,14 @@ applicable, commit and push the updated branch, then run `codex review` again.
 If PR creation/update fails after the push, report the branch and exact
 blocker; do not claim the feature is delivered.
 
+The first review is full-range. Subsequent bounded fixes may be reviewed against
+the last assessed head, including all new commits and verification of prior
+findings. Base/history changes, interface/security boundary changes, cross-module
+behavior, or uncertain impact require full review. Batch each round's findings
+before testing and pushing. Use [review execution](references/review-execution.md)
+for the persistent runner, result reuse, and progress diagnosis. This scope policy
+also applies to the review steps and command examples below.
+
 When merging a PR, use `gh pr merge <number> --merge --delete-branch` after the required checks so GitHub removes the merged source branch. If the PR was already merged without cleanup, first verify `state=MERGED`, the exact base and head branch names, and the merge commit, then delete only that remote head ref:
 
 ```bash

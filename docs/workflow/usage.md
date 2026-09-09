@@ -155,6 +155,13 @@ run `codex review --base <base-branch>` immediately without waiting for user
 confirmation. Blocking findings repeat Fix -> Test -> Redaction if applicable
 -> Commit -> Push -> `codex review` on the updated PR.
 
+The first review covers the full PR. Batch each round's fixes, then review all
+new commits against the last assessed head when their impact is bounded; verify
+the original findings are resolved. Base/history changes, interface or security
+boundary changes, cross-module behavior, and uncertain impact require full review.
+Use the [recoverable review runner](../../skills/github-push-when-ready/references/review-execution.md)
+to stream and retain logs, reuse matching results, and avoid duplicate processes.
+
 The project-scoped `.codex/agents/reviewer.toml` is optional supplemental
 read-only analysis. It may be invoked from an interactive Codex session, but it
 never replaces the mandatory `codex review` gate.

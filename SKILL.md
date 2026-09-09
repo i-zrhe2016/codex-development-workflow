@@ -241,10 +241,17 @@ waiting for user confirmation.
   codex review --base <actual-base-branch>
   ```
 
-  This complete-range command is the mandatory Automatic Review path after
-  every PR creation or update. `codex review --uncommitted` is only for a
+  Use the complete range for the first review. After a completed, assessed
+  review, bounded fixes may use `codex review --base <reviewed-head-sha>`;
+  include all intervening commits and verify the original findings are resolved.
+  Base changes, rewritten history, interface/security boundary changes,
+  cross-module behavior changes, or uncertain impact require a full review.
+  Batch one round's findings into one fix/test/push cycle. Preserve review
+  logs and conclusions; use the runner documented in
+  `skills/github-push-when-ready/references/review-execution.md`.
+  `codex review --uncommitted` is only for a
   narrow pre-commit working-tree check, and `codex review --commit SHA` is only
-  for a single-commit check; neither replaces the complete PR review. These
+  for a single-commit check; neither replaces initial complete PR coverage. These
   commands do not select the optional supplemental `.codex/agents/reviewer.toml`.
 
   The project-scoped reviewer may be run separately for additional read-only
