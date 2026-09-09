@@ -70,7 +70,7 @@ class PushReadinessTests(unittest.TestCase):
                 "--hostname",
                 "github.com",
                 "--jq",
-                ".default_branch",
+                ".default_branch // empty",
             ],
         )
         self.assertEqual(run.call_args.kwargs["timeout"], 10)
@@ -86,6 +86,19 @@ class PushReadinessTests(unittest.TestCase):
             )
 
         self.assertIsNone(result)
+
+    def test_null_default_branch_output_is_unknown(self) -> None:
+        with patch("git_push_utils.shutil.which", return_value="/usr/bin/gh"), patch(
+            "git_push_utils.subprocess.run"
+        ) as run:
+            run.return_value = subprocess.CompletedProcess(["gh"], 0, "", "")
+
+            result = resolve_default_branch("https://github.com/example/project.git")
+
+        self.assertIsNone(result)
+
+    def test_malformed_github_url_fails_closed(self) -> None:
+        self.assertIsNone(resolve_default_branch("https://[github.com/example/project"))
 
     def test_default_branch_changes_require_feature_branch(self) -> None:
         repo = self.make_repo()

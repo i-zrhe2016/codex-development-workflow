@@ -63,7 +63,10 @@ def github_repo_slug(remote_url: str) -> str | None:
     if remote_url.startswith("git@github.com:"):
         path = remote_url.removeprefix("git@github.com:")
     else:
-        parsed = urlparse(remote_url)
+        try:
+            parsed = urlparse(remote_url)
+        except ValueError:
+            return None
         if parsed.hostname != "github.com":
             return None
         path = parsed.path
@@ -199,7 +202,15 @@ def resolve_default_branch(push_url: str | None) -> str | None:
     }
     try:
         result = subprocess.run(
-            [gh, "api", f"repos/{slug}", "--hostname", "github.com", "--jq", ".default_branch"],
+            [
+                gh,
+                "api",
+                f"repos/{slug}",
+                "--hostname",
+                "github.com",
+                "--jq",
+                ".default_branch // empty",
+            ],
             check=False,
             capture_output=True,
             env=environment,
@@ -283,7 +294,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
     ):
         recommended_action = "manual_review"
         reasons.append(
-            "Could not determine the repository default branch from local remote metadata; "
+            "Could not determine the repository default branch from the actual GitHub push target; "
             "preserve the work and confirm the target branch before publishing."
         )
     elif default_branch and branch == default_branch and has_changes:
