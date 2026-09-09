@@ -18,6 +18,7 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - For this repository, configure the local identity `i-zrhe2016 <zrhe2016@gmail.com>` and GitHub account `i-zrhe2016`; other target repositories must configure their own non-root identity.
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
 - If the default branch cannot be determined from the actual GitHub push target, guarded publication fails closed and requires manual review.
+- The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a feature branch while still tracking an upstream default branch.
 - After a PR is verified as merged, delete its source branch remotely and locally after switching to and synchronizing the base branch; retain the default branch and unmerged branches.
 - Create or update the PR after the branch is pushed, then run the built-in
   `codex review` as Automatic Review without waiting for user confirmation.

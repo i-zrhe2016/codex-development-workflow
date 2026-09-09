@@ -179,6 +179,61 @@ def choose_remote(github_remotes: dict[str, dict[str, str]], upstream: str | Non
     return None
 
 
+def resolve_push_remote(
+    repo: Path,
+    github_remotes: dict[str, dict[str, str]],
+    branch: str | None,
+    upstream: str | None,
+) -> str | None:
+    """Resolve the remote selected by plain ``git push``."""
+    config_keys = []
+    if branch:
+        config_keys.append(f"branch.{branch}.pushRemote")
+    config_keys.append("remote.pushDefault")
+    for key in config_keys:
+        configured = run_git(repo, "config", "--get", key)
+        if configured.returncode == 0 and configured.stdout:
+            return configured.stdout
+    return choose_remote(github_remotes, upstream)
+
+
+def resolve_effective_push_branch(
+    repo: Path,
+    branch: str | None,
+    upstream: str | None,
+    push_remote: str | None,
+) -> str | None:
+    """Resolve the branch targeted by plain ``git push`` when it is unambiguous."""
+    if not branch or not push_remote:
+        return None
+
+    configured_refspec = run_git(repo, "config", "--get-all", f"remote.{push_remote}.push")
+    if configured_refspec.returncode == 0 and configured_refspec.stdout:
+        return None
+
+    push_ref = run_git(repo, "rev-parse", "--symbolic-full-name", "@{push}")
+    if push_ref.returncode == 0 and push_ref.stdout:
+        prefix = "refs/remotes/"
+        if push_ref.stdout.startswith(prefix):
+            remote_and_branch = push_ref.stdout.removeprefix(prefix)
+            remote_name, separator, target_branch = remote_and_branch.partition("/")
+            if separator and remote_name == push_remote and target_branch:
+                return target_branch
+
+    push_default = run_git(repo, "config", "--get", "push.default")
+    mode = push_default.stdout if push_default.returncode == 0 and push_default.stdout else "simple"
+    if mode == "current":
+        return branch
+    if mode == "upstream" and upstream and "/" in upstream:
+        return upstream.split("/", 1)[1]
+    if mode == "simple":
+        if not upstream or "/" not in upstream:
+            return branch
+        upstream_branch = upstream.split("/", 1)[1]
+        return branch if upstream_branch == branch else None
+    return None
+
+
 def build_push_command(remote: str, branch: str, upstream: str | None) -> str:
     if upstream:
         return "git push"
@@ -269,9 +324,11 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         for name, urls in remotes.items()
         if any(is_github_url(url) for url in urls.values())
     }
-    preferred_remote = choose_remote(github_remotes, upstream)
+    push_remote = resolve_push_remote(repo, github_remotes, branch, upstream)
+    preferred_remote = push_remote if push_remote in github_remotes else None
     push_url = github_remotes.get(preferred_remote, {}).get("push") if preferred_remote else None
     default_branch = resolve_default_branch(push_url)
+    effective_push_branch = resolve_effective_push_branch(repo, branch, upstream, push_remote)
     has_commits = run_git(repo, "rev-parse", "--verify", "HEAD").returncode == 0
     has_changes = any(status[key] > 0 for key in ("staged", "unstaged", "untracked", "conflicted"))
 
@@ -292,9 +349,10 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
     elif behind > 0:
         recommended_action = "sync_first"
         reasons.append(f"Branch is behind upstream by {behind} commit(s).")
-        if preferred_remote and upstream:
+        if upstream:
+            tracking_remote = upstream.split("/", 1)[0]
             remote_branch = upstream.split("/", 1)[1]
-            commands.append(shlex.join(["git", "pull", "--rebase", preferred_remote, remote_branch]))
+            commands.append(shlex.join(["git", "pull", "--rebase", tracking_remote, remote_branch]))
     elif default_branch is None and (
         has_changes or ahead > 0 or (has_commits and not upstream)
     ):
@@ -318,12 +376,20 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
             f"Default branch '{default_branch}' contains unpublished commit(s); "
             "preserve the work and move it to a feature branch before publishing."
         )
-    elif default_branch and upstream and "/" in upstream and (
-        upstream.split("/", 1)[1] == default_branch and (has_changes or ahead > 0)
+    elif default_branch and effective_push_branch is None and (
+        has_changes or ahead > 0 or (has_commits and not upstream)
     ):
         recommended_action = "manual_review"
         reasons.append(
-            f"Upstream '{upstream}' targets the default branch '{default_branch}'; "
+            "Could not determine the effective branch targeted by plain 'git push'; "
+            "confirm the push refspec before publishing."
+        )
+    elif default_branch and effective_push_branch == default_branch and (
+        has_changes or ahead > 0 or (has_commits and not upstream)
+    ):
+        recommended_action = "manual_review"
+        reasons.append(
+            f"Plain 'git push' targets the default branch '{default_branch}'; "
             "preserve the work and publish through a feature branch and PR."
         )
     elif has_changes:
@@ -361,6 +427,8 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
             for name, urls in sorted(github_remotes.items())
         ],
         "preferred_remote": preferred_remote,
+        "push_remote": push_remote,
+        "effective_push_branch": effective_push_branch,
         "default_branch": default_branch,
         "branch": branch,
         "detached_head": detached,

@@ -112,6 +112,7 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 
 - Refuse to push unresolved conflicts or code that failed validation.
 - Refuse to commit or push work from the repository's default branch; create or resume a feature branch first. If the default branch cannot be determined, require manual review instead of assuming the current branch is safe.
+- Resolve the effective push remote and refspec, including `branch.<name>.pushRemote`, `remote.pushDefault`, and `push.default`; block publication when that target is the default branch or cannot be determined. A pull-tracking upstream may intentionally point to a different repository.
 - Refuse to push if the branch is behind upstream; rebase or pull first.
 - Refuse to push when the GitHub repository About description is empty or could not be verified after an attempted update.
 - Refuse to force-push unless the user explicitly asks for it.

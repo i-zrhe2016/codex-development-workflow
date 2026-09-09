@@ -31,8 +31,8 @@ Last verified: 2026-09-09 @ working tree
   is merged before deleting its source branch remotely and locally, and retains
   the default branch.
 - The readiness utility blocks local changes or unpublished commits on the
-  resolved default branch and directs the work to a feature branch/manual
-  recovery path.
+  resolved default branch or an effective push target that resolves to it, and
+  directs unknown targets to a manual recovery path.
 - `auto-deploy` defines a provider-neutral deployment contract with immutable artifacts, bounded health verification, least-privilege credentials, and authorized rollback handling.
 - Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides optional supplemental read-only analysis.
 - Automatic Review is the built-in `codex review` command and starts after PR

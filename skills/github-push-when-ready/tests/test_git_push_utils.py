@@ -104,12 +104,30 @@ class PushReadinessTests(unittest.TestCase):
         self.run_git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
         self.run_git(repo, "switch", "-q", "-c", "work")
         self.run_git(repo, "branch", "--set-upstream-to=origin/main", "work")
+        self.run_git(repo, "config", "push.default", "upstream")
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
         report = self.assess_with_default_branch(repo, "main")
 
         self.assertEqual(report["recommended_action"], "manual_review")
         self.assertFalse(report["safe_to_push"])
+
+    def test_pull_upstream_with_separate_push_remote_can_publish_feature_branch(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "remote", "add", "upstream", "https://github.com/example/upstream.git")
+        self.run_git(repo, "update-ref", "refs/remotes/upstream/main", "HEAD")
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        self.run_git(repo, "branch", "--set-upstream-to=upstream/main", "work")
+        self.run_git(repo, "config", "branch.work.pushRemote", "origin")
+        self.run_git(repo, "config", "push.default", "current")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertEqual(report["preferred_remote"], "origin")
+        self.assertEqual(report["effective_push_branch"], "work")
+        self.assertEqual(report["recommended_action"], "commit_then_push")
+        self.assertTrue(report["safe_to_push"])
 
     def test_malformed_github_url_fails_closed(self) -> None:
         self.assertIsNone(resolve_default_branch("https://[github.com/example/project"))
