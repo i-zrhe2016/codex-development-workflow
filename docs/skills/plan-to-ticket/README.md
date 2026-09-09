@@ -31,7 +31,9 @@ When the skill is selected for a planning request, it:
    strategy, bounded test level, test cases, and validation for each Slice.
 4. Creates or updates one parent plan Issue and one Issue per ticket before
    implementation branches start, reusing stable markers to avoid duplicates.
-5. Returns the `Plan` and `Tickets` sections defined by the skill contract,
+5. Assigns or resumes one implementation branch and base branch for each
+   ticket, using the updated default branch for new dependency-ready tickets.
+6. Returns the `Plan` and `Tickets` sections defined by the skill contract,
    including canonical Issue links and current execution metadata.
 
 The skill is intentionally implementation-neutral. It uses repository context
@@ -54,6 +56,16 @@ than an unpersisted plan.
 For repository-aware planning, include the relevant repository in the working
 context. The skill will reuse existing architecture and conventions where they
 are documented and available.
+
+Every ticket output includes the branch handoff:
+
+**Branch**
+
+- feature/t0001-short-description
+
+**Base branch**
+
+- main
 
 ## Repository layout
 

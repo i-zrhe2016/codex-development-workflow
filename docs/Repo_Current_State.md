@@ -4,7 +4,7 @@ Last verified: 2026-09-09 @ working tree
 
 ## Current Focus
 
-- [Plan #9](https://github.com/i-zrhe2016/codex-development-workflow/issues/9) is complete and closed after PR #12 merged the Issues-authority workflow changes.
+- Add per-ticket branch setup and ticket-level review gates to the existing workflow on `feature/ticket-branch-lifecycle`.
 
 ## Implemented
 
@@ -21,10 +21,11 @@ Last verified: 2026-09-09 @ working tree
 - Built-in `codex review` and the project-scoped `reviewer` are documented as separate review paths; the latter is explicitly requested from an interactive Codex session.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
 - `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
+- The root workflow now creates or resumes one branch per ticket before implementation and requires ticket-level review before merge.
 
 ## In Progress
 
-- None.
+- The branch lifecycle documentation change is validated and ready for review on `feature/ticket-branch-lifecycle`.
 
 ## Constraints
 
@@ -47,4 +48,4 @@ Last verified: 2026-09-09 @ working tree
 
 ## Next
 
-- None.
+- Open a pull request for the branch when review is requested.

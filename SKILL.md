@@ -21,6 +21,7 @@ Requirement
     -> Slice
     -> Persist plan/tickets to GitHub Issues
     -> Delegate if useful
+    -> Create/resume ticket branch
     -> Execute slice(s)
     -> Next slice?
     -> Integration tests
@@ -39,10 +40,10 @@ Use the lightest path that preserves correctness:
 - **Normal:** understand the relevant repository area, make a minimal plan,
   execute one or more slices (delegating only when the gate allows it), and
   run focused validation.
-- **Complex:** understand the repository, plan dependency-ordered slices with
-  `plan-to-ticket`, evaluate delegation after Slicing, execute each slice with
-  its own acceptance and test strategy, then run integration tests and the
-  final self-review.
+- **Complex:** understand the repository, plan dependency-ordered Slices with
+  `plan-to-ticket`, evaluate delegation after Slicing, execute each ticket's
+  Slices with its own acceptance, test strategy, and merge-boundary review,
+  then run broader integration checks when multiple tickets come together.
 
 Planning controls architecture and scope. Testing controls implementation
 evidence. Neither replaces the other.
@@ -65,9 +66,10 @@ Validation command
 ```
 
 When `plan-to-ticket` is used, the Slice also carries its canonical GitHub
-Issue link and execution metadata. The parent plan Issue and all initial ticket
-Issues must exist before implementation branches are created; a failed Issue
-operation blocks the workflow and has no Markdown or chat-only fallback.
+Issue link and execution metadata, including its implementation branch and
+base branch. The parent plan Issue and all initial ticket Issues must exist
+before implementation branches are created; a failed Issue operation blocks the
+workflow and has no Markdown or chat-only fallback.
 
 Only start dependency-ready Slices. The main agent may execute one Slice
 itself, or the delegation gate may start multiple independent Slices with
@@ -107,6 +109,28 @@ The main agent must not duplicate work delegated to an active subagent. Workers
 return material findings, changes, test results, and unresolved risks rather
 than raw logs. Prefer one delegation level; subagents do not create further
 subagents unless explicitly required.
+
+## Branch per ticket
+
+- Before implementation, create or resume one branch per ticket:
+  `<type>/<ticket-id>-<short-description>`.
+- Create new ticket branches from the updated default branch.
+  Start dependent tickets after their prerequisite tickets are merged.
+- Keep the ticket's implementation, tests, and related documentation
+  on the same branch. Internal implementation steps share that branch.
+- Before editing, verify the current branch and working tree.
+  Preserve unrelated or uncommitted work.
+- Parallel ticket workers must use separate Git worktrees and branches.
+  Never switch branches in a working directory shared by active workers.
+- Before merging each ticket, complete its acceptance checks,
+  relevant integration checks, and review of the ticket diff.
+  Reuse the existing testing, redaction, and publication skills.
+- Track implementation readiness separately from merge status.
+  A passing ticket is ready for review; it is delivered after merging.
+- After an authorized merge, follow the existing branch cleanup
+  procedure and update the default branch before starting dependent work.
+- If a ticket needs to be abandoned, preserve its work and re-plan.
+  Do not automatically delete unmerged branches or reset user changes.
 
 ## Slice execution loop
 
@@ -151,14 +175,22 @@ the level used, commands, result, evidence, and any escalation reason.
 
 ## Review policy
 
-Review is a main-agent-owned stage over the integrated result, not a mandatory
-review tax inside every Slice. After integration, the main agent may delegate
-an independent read-only check to the project `reviewer` when that materially
-improves review quality; the main agent evaluates the findings and retains
-final judgment.
+Review is a main-agent-owned stage at the ticket merge boundary, not a
+mandatory review tax inside every internal Slice. A ticket may contain multiple
+Slices, but all Slices within the ticket being merged must pass their selected
+checks and be reviewed before that ticket's PR is merged. After ticket-level
+integration, the main agent may delegate an independent read-only check to the
+project `reviewer` when that materially improves review quality; the main agent
+evaluates the findings and retains final judgment.
 
-- Run integration or broader regression checks after all slices are complete.
-- Perform one final self-review of the safe integrated diff.
+- Before merging each ticket, run its acceptance checks and relevant
+  ticket-level integration or regression checks.
+- Review the complete diff for the ticket being merged, including every Slice
+  within that ticket; do not defer this review until a later combined review.
+- When multiple tickets come together, add broader integration or regression
+  checks across those tickets in addition to each ticket's own checks and
+  review.
+- Perform the final self-review at the ticket merge boundary.
 - Use the Codex CLI review command when available:
 
   ```bash
@@ -214,21 +246,23 @@ replacing its workflow.
 
 ## Completion gates
 
-After all slices pass their selected level:
+For each ticket, after all Slices within that ticket pass their selected level:
 
-1. Run integration or broader regression checks appropriate to the total
-   change, including browser/E2E only for relevant user-visible behavior.
-2. If useful, run the project `reviewer` as an independent read-only check and
-   return its findings to the main agent.
-3. Perform the final self-review and judgment on the integrated diff.
-4. Update `docs/Repo_Current_State.md` and other docs only when verified
+1. Run integration or regression checks appropriate to that ticket, including
+   browser/E2E only for relevant user-visible behavior.
+2. Review the complete ticket diff and, if useful, run the project `reviewer`
+   as an independent read-only check; return its findings to the main agent.
+3. Perform the final self-review and judgment for the ticket before merging.
+4. If multiple tickets are being delivered together, run broader integration or
+   regression checks across the combined change as well.
+5. Update `docs/Repo_Current_State.md` and other docs only when verified
    behavior, architecture, dependencies, deployment, or important state
    changed.
-5. Classify the complete output set.
-6. If potentially sensitive surfaces exist, invoke
+6. Classify the complete output set.
+7. If potentially sensitive surfaces exist, invoke
    `data-document-redaction` and continue only on `pass`.
-7. Invoke `github-push-when-ready` before committing or pushing.
-8. When deployment is requested, invoke `auto-deploy` for target-specific
+8. Invoke `github-push-when-ready` before committing or pushing.
+9. When deployment is requested, invoke `auto-deploy` for target-specific
    preflight, execution, verification, and rollback handling.
 
 When a ticket is produced by `plan-to-ticket`, update its status and branch/PR

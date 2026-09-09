@@ -44,6 +44,7 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 ```text
 Requirement -> Classify -> Understand -> Plan -> Slice
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
+           -> Create/resume ticket branch
            -> Execute/Test -> Next Slice? -> Integration -> Review
            -> State / Docs
            -> Redaction -> Commit / Push
@@ -71,6 +72,15 @@ completion.
 
 `Repo_Current_State.md` remains a compact recovery pointer to the active Issue,
 not a backlog or second ticket database.
+
+### Ticket branches
+
+Each ticket owns one branch named `<type>/<ticket-id>-<short-description>`.
+Create or resume it from the updated default branch, keep the ticket's
+implementation, tests, and related documentation together, and wait for
+prerequisite tickets to merge before branching dependent work. Parallel workers
+use separate Git worktrees and branches; they never switch branches in a shared
+working directory.
 
 ### Delegation gate
 
@@ -108,13 +118,15 @@ escalation.
 
 ### Review and final gates
 
-After all Slices pass their selected checks, run integration/regression tests.
-When useful, ask the project `reviewer` for an independent read-only check,
-then have the main agent perform the final review and judgment of the
-integrated diff. Blocking findings require affected test reruns and, when
+For each ticket, after all Slices within that ticket pass their selected checks,
+run the ticket's integration/regression checks and review its complete diff
+before merge. When multiple tickets come together, add broader
+integration/regression checks across them. When useful, ask the project
+`reviewer` for an independent read-only check, then have the main agent make
+the final judgment. Blocking findings require affected test reruns and, when
 behavior materially changes, another review.
 
-`Integration tests -> Self review -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
+`Ticket checks -> Ticket diff review -> Broader integration when needed -> Repo State/Docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
 
 Review uses the Codex CLI built-in `codex review`; it is a final quality gate,
 not a replacement for tests, diagnostics, linting, or static analysis.

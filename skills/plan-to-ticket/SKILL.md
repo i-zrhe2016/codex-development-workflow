@@ -36,6 +36,12 @@ this skill creates tickets, Issue persistence is required.
 - Create or update the parent plan Issue and all initial ticket Issues before
   creating implementation branches. Use the repository's default branch as
   the base unless the request explicitly establishes another base.
+- Assign every ticket an implementation branch and base branch before branch
+  work starts. Use `<type>/<ticket-id>-<short-description>` and keep the same
+  branch for the ticket's implementation, tests, and related documentation.
+- Create or resume each ticket branch from the updated default branch. Do not
+  start a dependent ticket until its prerequisite ticket is merged; then use
+  the updated default branch as its base.
 - Create one GitHub Issue per behavior ticket. Every ticket Issue must retain
   its goal, scope, dependencies, acceptance criteria, validation, and the
   execution metadata block defined below.
@@ -128,8 +134,10 @@ boundaries:
   merged PR reference.
 
 Do not start a dependency-blocked ticket merely to fill its branch field. A
-dependent ticket becomes ready only when its dependencies are complete or the
-main workflow explicitly re-plans the dependency.
+dependent ticket becomes ready only when its dependencies are merged into the
+updated default branch or the main workflow explicitly re-plans the
+dependency. A passing ticket is ready for review; it is delivered only after
+its pull request is merged.
 
 ## Planning Process
 
@@ -331,6 +339,14 @@ Parent Issue: <Canonical GitHub plan Issue URL>
 **Issue**
 
 <Canonical GitHub Issue URL>
+
+**Branch**
+
+- feature/t0001-short-description
+
+**Base branch**
+
+- main
 
 ```yaml
 Status: planned

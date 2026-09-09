@@ -9,6 +9,7 @@ inside each Slice.
 ```text
 Requirement -> Classify -> Understand -> Plan -> Slice
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
+           -> Create/resume ticket branch
            -> Execute/Test -> Next Slice? -> Integration tests -> Review
            -> State / Docs -> Redaction if needed -> Commit / Push
            -> Optional Deploy / Verify / Rollback
@@ -55,6 +56,22 @@ Update each Issue as work progresses: `in_progress` when branch work starts,
 `blocked` for a blocking dependency or environment problem, `in_review` when a
 PR is opened, and `done`/closed only after the PR is verified merged.
 
+## Branch per ticket
+
+Before implementation, create or resume one branch per ticket using
+`<type>/<ticket-id>-<short-description>`. Create new ticket branches from the
+updated default branch, and start dependent tickets only after their
+prerequisites are merged. Keep the ticket's implementation, tests, and related
+documentation on that branch; internal implementation steps share it.
+
+Verify the current branch and working tree before editing and preserve
+unrelated or uncommitted work. Parallel ticket workers use separate Git
+worktrees and branches; never switch branches in a working directory shared by
+active workers. Before merging, complete the ticket's acceptance and relevant
+integration checks and review its complete diff. A passing ticket is ready for
+review, not delivered; delivery occurs after merge and the existing publication
+skill's cleanup procedure.
+
 ## Optional delegation gate
 
 After `Plan -> Slice` and before `Execute/Test`, the main agent asks whether
@@ -97,11 +114,12 @@ commands, result, evidence, and escalation reason.
 
 ## Review and recovery
 
-Review is owned by the main agent and covers the integrated result, not every
-individual Slice. After integration/regression checks, the main agent may ask
-the read-only `reviewer` for an independent check, then reviews the final safe
-diff and makes the decision. A blocking finding requires an affected test
-rerun; repeat review when the fix materially changes behavior.
+Review is owned by the main agent at the ticket merge boundary, not inside every
+internal Slice. All Slices within the ticket being merged must pass and be
+reviewed before its PR is merged. When multiple tickets come together, add
+broader integration/regression checks across them in addition to each ticket's
+own checks and review. The main agent may ask the read-only `reviewer` for an
+independent check; a blocking finding requires an affected test rerun.
 
 `codex review --uncommitted` is the built-in diff-review path; it does not select
 the project-scoped custom reviewer. To use `.codex/agents/reviewer.toml`, ask an
@@ -130,7 +148,7 @@ reason. Otherwise invoke `data-document-redaction` and follow
 
 ## Completion order
 
-`Integration tests -> Self review -> Repo state/docs if needed -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
+`Ticket checks -> Ticket diff review -> Broader integration when needed -> Repo state/docs -> Output classification -> Redaction if needed -> Commit/Push -> Optional Deploy/Verify/Rollback`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).
