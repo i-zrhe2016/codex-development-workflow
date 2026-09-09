@@ -90,7 +90,8 @@ The gate is optional and sits between `Plan -> Slice` and `Execute/Test`. The
 main agent delegates only tasks with a clear goal, scope and exclusions,
 ownership boundary, dependencies, acceptance criteria, validation, and
 expected result summary. Parallel write tasks must not share files, interfaces,
-schemas, migrations, or configuration. Prefer a single delegation level.
+schemas, migrations, or configuration. Review is not delegated at this stage;
+the single review occurs after the PR opens. Prefer a single delegation level.
 
 ### Slice execution
 

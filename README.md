@@ -31,7 +31,8 @@ Verification is bounded by an explicit level (`minimal`, `focused`,
 level stops the test expansion unless evidence or an explicit requirement
 justifies escalation. The main agent owns requirements, architecture,
 decomposition, integration, and final judgment; bounded exploration, Slice
-implementation, testing, and review may be delegated when useful.
+implementation, and testing may be delegated when useful. The single review
+occurs after the PR is opened.
 
 ## Optional project-scoped delegation
 

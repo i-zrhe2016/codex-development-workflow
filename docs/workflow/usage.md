@@ -83,8 +83,8 @@ delegation materially improves speed, context isolation, or review quality. A
 single-agent execution remains the default.
 
 Delegate only a bounded, independently executable task. Good candidates are
-repository exploration, independent research, test or regression analysis, an
-isolated implementation Slice, and independent review. Keep dependent or
+repository exploration, independent research, test or regression analysis, or
+an isolated implementation Slice. Keep dependent or
 overlapping work sequential; parallel write tasks must not touch the same
 files, interfaces, schemas, migrations, or shared configuration.
 

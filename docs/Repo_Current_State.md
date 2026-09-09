@@ -18,7 +18,7 @@ Last verified: 2026-09-09 @ working tree
 - The publication workflow verifies a PR is merged before deleting its source branch remotely and locally; the default branch is retained.
 - `auto-deploy` defines a provider-neutral deployment contract with immutable artifacts, bounded health verification, least-privilege credentials, and authorized rollback handling.
 - Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides the single PR-stage read-only reviewer.
-- Built-in `codex review` and the project-scoped `reviewer` are documented as separate review paths; the latter is explicitly requested from an interactive Codex session.
+- Built-in `codex review` and the project-scoped `reviewer` are documented as alternative paths for the single PR-stage review; the latter is explicitly requested from an interactive Codex session.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
 - `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
 - The root workflow now creates or resumes one branch per ticket before implementation and requires one review after the PR is opened and before merge.

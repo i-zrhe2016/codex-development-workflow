@@ -4,7 +4,7 @@ description = "Independent read-only reviewer for the single PR-stage review."
 sandbox_mode = "read-only"
 
 developer_instructions = """
-Review the completed change independently.
+Review the open PR diff independently.
 
 Focus on:
 - correctness;

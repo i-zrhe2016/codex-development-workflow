@@ -89,8 +89,8 @@ single agent executing the Slice itself.
 
 Use delegation only for a bounded, independently executable task. Suitable
 targets include repository exploration, independent research, test or
-regression analysis, an isolated implementation Slice, or an independent
-review. Prefer the built-in `explorer` for read-heavy investigation and
+regression analysis, or an isolated implementation Slice. Prefer the built-in
+`explorer` for read-heavy investigation and
 `worker` for an isolated implementation Slice. Keep dependent or overlapping
 work sequential.
 
