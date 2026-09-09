@@ -227,6 +227,10 @@ def resolve_effective_push_branch(
     if mirror.returncode == 0 and mirror.stdout.lower() == "true":
         return None
 
+    # Both publishers explicitly name the branch for the first push.
+    if not upstream:
+        return branch
+
     push_default = run_git(repo, "config", "--get", "push.default")
     mode = push_default.stdout.lower() if push_default.returncode == 0 and push_default.stdout else "simple"
     if mode in {"matching", "nothing"}:

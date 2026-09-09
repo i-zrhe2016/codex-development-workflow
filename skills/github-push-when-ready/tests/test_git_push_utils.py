@@ -38,6 +38,14 @@ class PushReadinessTests(unittest.TestCase):
         self.run_git(repo, "config", "branch.work.merge", "refs/heads/main")
         self.assertEqual(resolve_effective_push_branch(repo, "work", "upstream/main", "origin"), "work")
 
+    def test_first_push_explicit_branch_ignores_push_default(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        for mode in ("upstream", "nothing", "matching", "simple", "current"):
+            with self.subTest(mode=mode):
+                self.run_git(repo, "config", "push.default", mode)
+                self.assertEqual(resolve_effective_push_branch(repo, "work", None, "origin"), "work")
+
     def test_custom_fetch_mapping_does_not_hide_default_destination(self):
         repo = self.make_repo()
         self.run_git(repo, "switch", "-c", "work")
@@ -198,6 +206,8 @@ class PushReadinessTests(unittest.TestCase):
     def test_matching_push_mode_requires_manual_review(self) -> None:
         repo = self.make_repo()
         self.run_git(repo, "switch", "-q", "-c", "work")
+        self.run_git(repo, "update-ref", "refs/remotes/origin/work", "HEAD")
+        self.run_git(repo, "branch", "--set-upstream-to=origin/work", "work")
         self.run_git(repo, "config", "push.default", "matching")
         (repo / "change.md").write_text("pending change\n", encoding="utf-8")
 
