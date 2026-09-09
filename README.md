@@ -6,6 +6,7 @@ delegation and all required specialist skills managed in this repository.
 ```text
 Requirement -> Classify -> Understand -> Plan -> Slice
            -> Persist plan/tickets to GitHub Issues -> Delegate if useful
+           -> Create/resume ticket branch
            -> Execute/Test -> Next Slice? -> Integration -> Review
            -> State / Docs
            -> Redaction if needed -> Commit / Push
@@ -14,6 +15,9 @@ Requirement -> Classify -> Understand -> Plan -> Slice
 
 The macro workflow controls architecture and scope. Each Slice carries its own
 acceptance criteria, relevant context, test strategy, and validation command.
+Each ticket keeps its implementation, tests, and related documentation on one
+branch created from the updated default branch; ticket review happens before
+that ticket is merged.
 TDD is used inside a Slice when the change is behavioral and a meaningful
 failing test provides useful evidence; it is not forced on documentation,
 configuration, styling, dependency, typo, or exploratory work.
