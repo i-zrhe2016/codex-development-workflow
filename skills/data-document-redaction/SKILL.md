@@ -1,71 +1,78 @@
 ---
 name: data-document-redaction
-description: "处理数据集和文档中的个人信息、凭据与商业机密：识别敏感内容，按用途选择删除、掩码、伪名化、泛化或合成数据，并在同一流程内验证可见、隐藏和元数据表面。适用于 CSV、JSON、SQL、表格、PDF、Word、PowerPoint、图片、扫描件和日志；不用于恢复或绕过脱敏或普通校对。"
+description: "Scan and sanitize files staged for a Git/GitHub commit or pull request. Use before commit, push, or PR publication when changed files may contain credentials, tokens, private/internal IP addresses, personal identifiers, or other sensitive values. Inspect only the staged commit set by default, block publication on findings, apply the smallest safe replacement, and re-scan until clean. Not for general document anonymization, PDF/Office/OCR processing, or repository-wide privacy audits."
 ---
 
-# 数据与文档脱敏
+# Git Commit Redaction
 
-为需要共享、测试、分析或发布的数据/文档生成一个“可用且不泄漏”的副本。先判断发布风险和所需可用性，再选择最小变换；不要把“看起来被遮住”当成“已经删除”。
+Prevent sensitive values in the current Git change from reaching GitHub.
 
-## 明确用途
+## Scope
 
-本 skill 用于一次完成“范围确认 → 敏感内容检测 → 最小变换 → 格式与效用验证 → 交付报告”的流程。验证是同一流程中的必要步骤，不另行安排额外复审轮次。
+- Scan the exact files staged for the next commit.
+- Do not scan the whole repository unless explicitly requested.
+- Do not inspect Git history unless explicitly requested.
+- Do not handle PDF, Office, OCR, image metadata, or general-purpose document anonymization.
+- Never print matched secret or personal values in logs, reports, or chat.
 
-完成后必须输出不含原值、映射表或秘密的交付报告；报告只对声明的用途、接收者和检查范围负责，不代表绝对匿名化或法律/合规认证。
+## Gate
 
-## 先确认目标
+Run this gate after the intended files are staged and before the commit is created:
 
-至少确定以下信息；缺失时采用更保守的假设并在报告中写明：
+```bash
+python3 <skill-dir>/scripts/scan_staged.py
+```
 
-- 接收者和环境：公开、外部机构、公司内部、开发/测试、还是仅本地审阅。
-- 用途和必须保留的能力：统计分布、跨表关联、格式校验、版式、可搜索性、还是只需展示。
-- 是否允许可逆：默认不可逆；若必须回溯，明确称为“伪名化/令牌化”，并把映射表与输出隔离。
-- 组织政策、合同或法律要求；本 skill 不替代隐私、法律或合规审查。
+Interpret the result:
 
-## 不可妥协的边界
+- `pass`: continue to commit.
+- `findings`: stop publication, inspect only the reported files/lines, sanitize the values, stage the fixes, and run the scan again.
+- `needs_review`: stop publication because a staged file could not be safely inspected, such as a binary, oversized, or non-UTF-8 file.
+- `noop`: no staged files; no redaction action is required.
 
-- 原始文件只读处理，输出到新路径；除非用户明确授权，不覆盖、删除或上传原件。
-- 本地优先。不得把未脱敏内容发送到在线 OCR、在线 PDF 编辑器、第三方 API 或外部连接器，除非用户明确授权并确认数据边界。
-- 不在终端、日志、报告或对话中打印原始姓名、证件号、凭据、令牌、完整地址或匹配上下文；扫描器只输出类型、位置和计数。
-- `hash`、加密、带密钥的确定性替换都可能可逆或可链接，不能直接宣称“匿名化”。映射存在时，保留最小权限、单独存储并设置生命周期。
-- 低置信度 OCR、未知二进制、加密文件、数字签名、嵌入对象或无法验证的隐藏层：停止并标记为 `needs_review`，不要假装已完成。
+Do not bypass `findings` or `needs_review` merely because tests pass.
 
-## 标准工作流
+## What to detect
 
-1. **建立范围**：记录输入路径、文件类型、目标受众、用途、允许保留的效用和风险等级。不要为了“先看看”而把整份原文载入上下文。
-2. **盘点表面**：识别直接标识符、准标识符、敏感属性、秘密/凭据、自由文本，以及文件名、元数据、注释、修订、隐藏层、OCR、附件和链接。
-3. **先检测后变换**：用格式感知解析器、正则/校验规则、词典或 NER 扫描；同一值在正文、表格、图片、XML、压缩包和日志中的副本都要找。
-4. **选择最小充分操作**：按 [transformation-matrix.md](references/transformation-matrix.md) 选择删除、抑制、掩码、伪名化/令牌化、泛化、聚合、扰动或合成数据。公开发布优先删除、泛化、聚合或合成数据。
-5. **保持必要结构**：只有在用途确实需要时才保留关联关系、行数、分布或版式。跨表同一主体必须使用同一替换；外键、唯一约束、公式和分页在副本中重新校验。
-6. **处理文档隐藏面**：按 [document-surfaces.md](references/document-surfaces.md) 检查可见内容、不可见文本、OCR、评论/修订、表单、附件、嵌入文件、链接、元数据和文件名。PDF 必须使用真正的 redaction/apply 流程，不得只画黑框。
-7. **最终验证**：在同一次流程内使用合适的独立读取路径（例如另一 PDF 阅读器/解析器、文本抽取、搜索、渲染截图、元数据检查）验证“敏感值不存在”及“业务效用仍满足”。对 PDF 至少做选择、搜索、复制、文本抽取、元数据、书签、注释、表单、附件和 OCR 检查。
-8. **交付报告**：按 [output-report.md](references/output-report.md) 输出变换清单、检测计数、结构校验、验证结果、残余风险、假设和未覆盖面；永远不输出原值、映射表或秘密。
+Treat these as sensitive when they appear in staged files:
 
-## 按场景路由
+- passwords, API keys, access tokens, bearer tokens, JWTs, private keys;
+- cloud/provider credentials and GitHub/OpenAI-style tokens;
+- credentials embedded in URLs or config assignments;
+- non-example IPv4 addresses when repository policy treats infrastructure addresses as sensitive;
+- real email addresses, phone numbers, national IDs, SSN-like identifiers, and payment-card-like numbers.
 
-| 场景 | 默认策略 | 必须保留/检查 |
-|---|---|---|
-| 公开或外部发布 | 删除直接标识符；泛化/聚合准标识符；必要时合成数据 | 重新识别风险、稀有组合、小群体、元数据和文件名 |
-| 内部分析 | 掩码、泛化、聚合或不可逆替换 | 最小字段、访问范围、输出是否可与外部数据连接 |
-| 开发/测试/性能复现 | 优先按 schema 生成合成数据；否则对生产副本做关系感知掩码 | 外键/唯一键、分布与异常值、日志/备份/快照不得带原值 |
-| 需要跨文件追踪的排障 | 随机令牌化或受控伪名化 | 映射表隔离、密钥生命周期、同一实体的一致性 |
-| 视觉文档对外发送 | 真正的内容删除 + 隐藏信息清理；高敏感时栅格化/扁平化 | 另一解析器打开、全文搜索、OCR 层、附件和修订 |
+The bundled scanner intentionally ignores common documentation placeholders such as `example.com`, RFC documentation IP ranges, `127.0.0.1`, `0.0.0.0`, and obvious redacted/dummy secret values.
 
-## 工具与验证
+## Sanitize minimally
 
-- 优先使用现有本地工具和库；可用时运行 `python scripts/scan_sensitive.py <路径>` 做不泄漏原值的基线扫描。
-- PDF 输出可用 `python scripts/verify_pdf.py <文件> --term-file <禁止词文件>` 检查文本层、元数据、注释、链接、表单和附件；缺少依赖时应明确失败，而不是跳过验证。
-- 对 Office 文件先检查 ZIP/XML 组成，再用应用级解析器重开；对图片先处理 EXIF/XMP/IPTC 和缩略图，再处理 OCR/像素。
-- 记录工具版本、规则版本、输入/输出 SHA-256 和验证时间；报告中只保留必要的路径与计数。
+Choose the smallest change that removes the sensitive value without changing unrelated behavior:
 
-## 失败条件
+| Finding | Preferred fix |
+| --- | --- |
+| Password / token / API key / private key | Remove the value and load it from environment, secret storage, or runtime configuration. |
+| Credential in URL | Remove the credential from the URL and inject it separately at runtime. |
+| Internal/private IP in docs/examples | Replace with an RFC documentation IP or a neutral placeholder. |
+| Email / phone / personal ID in docs/tests | Replace with an obvious example or synthetic value. |
+| Sensitive value required for a test fixture | Replace with deterministic synthetic data that preserves the tested format only. |
 
-出现以下任一情况时，不给出“已安全”的结论：检测规则覆盖不全、仍能搜索/复制敏感词、外键或版式损坏、存在未检查的附件/隐藏工作表/修订/OCR 层、输出仍含秘密模式、或无法说明第三方处理边界。将交付标记为 `needs_review`，列出阻塞项和下一步。
+Do not partially mask a real credential and leave it committed. Do not invent replacement secrets.
 
-## 参考资料
+If a finding is intentional and truly safe, prefer replacing it with a recognized example value rather than adding a broad ignore rule.
 
-- 变换选择与字段规则：[transformation-matrix.md](references/transformation-matrix.md)
-- 各格式隐藏面与复核清单：[document-surfaces.md](references/document-surfaces.md)
-- Reddit 社区经验摘要与来源：[reddit-practices.md](references/reddit-practices.md)
-- 术语、风险与工具的一手资料：[authoritative-sources.md](references/authoritative-sources.md)
-- 可审计的报告字段：[output-report.md](references/output-report.md)
+## Re-scan after changes
+
+After sanitizing:
+
+1. stage the corrected files;
+2. rerun `scan_staged.py`;
+3. continue only on `pass`;
+4. report only finding types, file paths, and line numbers, never original values.
+
+A later review fix that changes staged content must pass this gate again before the next commit.
+
+## Boundaries
+
+- This gate protects the next Git commit; it is not proof that the repository or history contains no secrets.
+- If a secret was already committed or pushed, stop and treat it as credential exposure: revoke/rotate it first, then handle history separately if required.
+- Do not weaken repository tests, permissions, or publication controls to make the scan pass.
