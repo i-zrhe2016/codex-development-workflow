@@ -9,9 +9,18 @@ The runtime instructions live in [`SKILL.md`](../../../skills/context-efficiency
 
 ## What it provides
 
+- Mandatory RTK execution for task shell commands: supported summaries for
+  navigation, `rtk proxy` for exact output, unsupported commands, and existing
+  test/review/publication gates. Bootstrap checks and installation are the only
+  shell exception; missing RTK must be resolved or reported as blocked.
+- The [RTK operating reference](../../../skills/context-efficiency/references/rtk.md)
+  defines command selection, log/exit-code preservation, and dependency checks.
+  The skill installer copies these instructions; it does not install the RTK
+  binary or enable global command-rewriting hooks.
+
 - Extract the current goal, scope, acceptance criteria, constraints, and known
   state before reading broadly.
-- Search first with targeted tools such as `rg` and `rg --files`; read only the
+- Search first with targeted tools such as `rtk proxy rg` and `rtk proxy rg --files`; read only the
   files and sections relevant to the current slice.
 - Bound command output and validation scope so a long session does not turn
   into an unbounded repository scan.
