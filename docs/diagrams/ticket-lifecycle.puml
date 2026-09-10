@@ -1,0 +1,53 @@
+@startuml
+!theme plain
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam ArrowColor #475569
+title Ticket Loop - Planning, Dependencies and Delivery
+
+state "Define behavior Tickets\nThen define ordered Slices inside each Ticket\nAcceptance / scope / dependencies / validation" as plan
+state "Resolve repository + base + Issue access\nSearch stable plan/Ticket markers" as lookup
+state "Reuse unique matches or create Issues\nParent plan -> all initial Tickets -> parent index\nPersist Status / Branch / Base / Dependencies / PR" as persist
+state "Planning blocked\nReport ambiguity or failed persistence\nKeep created Issue links; no local ticket mirror" as plan_blocked #FFF4CC
+state "Select unfinished Ticket\nRead authoritative Issue + dependency evidence" as select
+state "Dependency gate\nPrerequisite PRs merged?" as dependency
+state "Dependency wait [blocked; Issue open]\nRecord prerequisite + reason\nNo implementation branch work yet" as wait_dep #FFF4CC
+state "Sync actual base; create/resume Ticket branch\nVerify Branch/Base metadata\nStatus: in_progress" as branch
+state "Execute Ticket Slices\nSee ticket-slice-loop.svg\nAll Slices share this Ticket's branch" as slices
+state "Publish / review / fix / merge\nSee ticket-review-loop.svg\nIssue remains open until verified merge" as deliver
+state "Verified merged\nClean exact source branch; sync base\nStatus: done; close Ticket; keep PR reference" as done #DCFCE7
+state "Reconcile State/Docs if changed\nTracked follow-up edits use a new branch + PR" as state_docs
+state "Plan complete\nAll Ticket PRs merged; no open blockers" as complete #DCFCE7
+
+[*] --> plan
+plan --> lookup
+lookup --> persist : no ambiguity; access works
+lookup --> plan_blocked : access failure / duplicate matches
+persist --> plan_blocked : any required write fails
+plan_blocked --> lookup : cause resolved; re-read first
+persist --> select : all required writes verified
+select --> dependency : Ticket remains
+select --> complete : all Tickets delivered
+dependency --> wait_dep : not yet merged
+wait_dep --> dependency : dependency event / scheduled recheck
+dependency --> branch : prerequisites merged
+branch --> slices
+slices --> deliver : Ticket acceptance + integration checks pass
+slices --> plan : design/scope assumption invalid\nupdate same Issues; preserve valid work
+deliver --> done : reviewed head + required checks + merge verified
+done --> state_docs
+state_docs --> select : next Ticket; use updated base
+complete --> [*]
+
+note right of persist
+Parent Issue: milestones + Ticket links.
+Ticket Issue: behavior + nested Slice plan + current state.
+One Ticket = one Issue = one implementation branch / PR.
+Slices do not create separate branches or ticket Issues.
+end note
+note right of wait_dep
+Unchanged state is not a reason for a tight retry loop.
+Work on a different ready Ticket only when authorized
+and ownership boundaries permit; keep dependencies intact.
+end note
+@enduml

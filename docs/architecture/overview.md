@@ -87,6 +87,30 @@ criteria. A wrong design assumption returns to Plan or causes a Slice split.
 
 ### Ticket-to-Slice hierarchy
 
+The detailed Ticket lifecycle is split into three linked views so each return
+edge has a clear scope and exit condition:
+
+![Ticket planning and dependency loop](../diagrams/ticket-lifecycle.svg)
+
+Source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml).
+
+![Slice implementation and validation loop](../diagrams/ticket-slice-loop.svg)
+
+Source: [`ticket-slice-loop.puml`](../diagrams/ticket-slice-loop.puml).
+
+![Ticket PR fix and review loop](../diagrams/ticket-review-loop.svg)
+
+Source: [`ticket-review-loop.puml`](../diagrams/ticket-review-loop.puml).
+
+Dependency waits resume only after fresh evidence; a failed Slice returns to
+diagnosis and affected validation, while a design conflict returns to planning.
+PR findings are fixed in one batch on the same branch and republished before
+review. Recovery returns to the recorded failed stage, never a later gate.
+Only a verified merge permits `done` and Issue closure. The outer loop then
+selects the next Ticket against the synchronized base. `planned`, `in_progress`,
+`blocked`, and `in_review` remain open states; `Status` is Ticket Issue metadata,
+not a claim that GitHub provides these workflow states automatically.
+
 A Ticket is an independently reviewable behavior or capability boundary. A
 Slice is an execution-ready unit within a Ticket, with its own scope,
 dependencies, acceptance criteria, test strategy, test level, test cases, and

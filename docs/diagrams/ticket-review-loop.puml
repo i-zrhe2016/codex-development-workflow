@@ -1,0 +1,53 @@
+@startuml
+!theme plain
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam ArrowColor #475569
+title Ticket PR Loop - Fixes, Rechecks and Merge Conditions
+
+state "Ticket validated\nFeature branch; selected checks passed" as ready
+state "Applicable redaction + publication readiness\nIdentity / scope / actual push target\nConventional Commit -> push branch" as publish
+state "Create/update existing PR\nVerify PR head/base match Ticket Branch/Base\nStatus: in_review; persist canonical PR link" as pr
+state "Select review scope\nFirst full PR; bounded fixes may be incremental\nBase/history/boundary changes or uncertainty -> full" as scope
+state "Execute/reuse codex review via runner\nFull logs + base/head identity + execution status\nSee review-execution.svg for exact recovery behavior" as review
+state "Main agent assesses complete conclusion\nVerify previous findings + latest test evidence" as assess
+state "Batch confirmed blocking findings\nFix -> affected tests -> applicable redaction\nKeep same Ticket branch and PR" as fix
+state "Blocked / incomplete\nRecord cause + logs + resume stage; Issue stays open\nNever treat timeout, exit 0 or missing output as pass" as blocked #FFF4CC
+state "Merge gate\nRecorded review pass + required checks passed\nPR head still equals reviewed head" as gate
+state "Merge PR; verify MERGED and exact refs\nThen cleanup / sync / close Ticket\nReturn to outer Ticket loop" as merged #DCFCE7
+state "Re-plan\nUpdate same Ticket / Slice contracts\nReturn to Slice loop before publishing" as replan
+
+[*] --> ready
+ready --> publish
+publish --> pr : commit + push succeed
+publish --> blocked : failed validation/redaction/readiness/push
+pr --> blocked : API failure / metadata mismatch
+pr --> scope : PR published; start automatically
+scope --> review
+review --> assess : complete conclusion for current head
+review --> blocked : interrupted / tool or environment failure
+blocked --> publish : publication cause resolved; recheck readiness
+blocked --> pr : PR/metadata cause resolved; query before create
+blocked --> review : review cause resolved; inspect saved run first
+assess --> fix : confirmed blockers
+fix --> fix : affected tests fail; diagnose and correct\nno blind retry
+fix --> publish : affected tests pass; publish batch once
+fix --> replan : design/scope assumption changes
+replan --> ready : Slice loop and Ticket acceptance pass again
+assess --> blocked : incomplete or unverifiable conclusion
+assess --> gate : no remaining blockers
+gate --> scope : head/base changed; choose valid coverage again
+gate --> fix : required check exposes in-scope defect
+gate --> blocked : external check/merge failure
+blocked --> gate : external merge/check cause resolved\nreverify reviewed head and checks
+gate --> merged : all merge conditions pass
+merged --> [*]
+
+note right of blocked
+Arrows resume only the recorded failed stage;
+they are not interchangeable shortcuts.
+Environment/dependency blockers set Status: blocked.
+Restore in_review when the existing PR is ready for review.
+No Issue is closed merely because code was pushed.
+end note
+@enduml

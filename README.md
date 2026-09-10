@@ -67,6 +67,7 @@ dependent, overlapping, or shared-interface work sequential.
 ![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
 Detailed views: [component responsibilities](docs/diagrams/components.svg),
+[Ticket lifecycle and nested loops](docs/architecture/overview.md#ticket-to-slice-hierarchy),
 [review execution and recovery](docs/diagrams/review-execution.svg), and the
 [architecture guide](docs/architecture/overview.md).
 
