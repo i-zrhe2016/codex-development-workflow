@@ -1,0 +1,59 @@
+@startuml
+!theme plain
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam ArrowColor #475569
+title Codex Review - Scope, Execution, Assessment and Recovery
+
+start
+:PR published; worktree clean\nRefresh actual PR base; resolve base/head SHAs;
+:Acquire worktree review lock\nRead local saved state;
+if (Active runner or possible orphan child?) then (yes)
+  :Report existing state/log\nInspect exact process; do not duplicate;
+  stop
+else (no)
+endif
+if (Same base/head execution completed\nand no --force-full?) then (yes)
+  :Reuse saved execution + log\nRead existing assessment or assess pending result;
+else (no)
+  if (--incremental explicitly selected\nPrevious review assessed pass/blocking\nSame base; previous head is ancestor\nDifferent current head; no --force-full?) then (yes)
+    :Review base = previous assessed head\nAll intervening commits are included;
+    note right
+      Main agent must establish bounded fix impact.
+      Interfaces / security boundaries / cross-module
+      behavior / uncertainty require full coverage.
+      Previous findings are verified separately.
+    end note
+  else (no)
+    :Review base = actual PR base\nFull PR coverage;
+  endif
+  :Archive previous record\nSave running state + scope + head + log path;
+  :Invoke built-in codex review --base <resolved SHA>\nStream output to terminal and local log;
+  note right
+    Every 5 min: elapsed + output-idle notice.
+    After 15 min: inspect progress / error evidence.
+    Silence alone is not proof of failure.
+    No blind retry or automatic timeout pass.
+  end note
+  if (Exit zero AND same head AND clean worktree?) then (yes)
+    :Execution completed\nAssessment remains pending;
+  else (no)
+    :Record incomplete / interrupted\nRetain log and failure evidence;
+    :Resolve environment/error; retry explicitly\nCurrent runner falls back to full review\nwhen latest saved run is unassessed;
+    stop
+  endif
+endif
+:Main agent reads complete conclusion\nChecks original findings + affected test evidence;
+if (Complete conclusion with no blockers?) then (yes)
+  :Record pass + evidence note\nVerify PR head and required checks before merge;
+  stop
+else (no)
+  if (Confirmed blocking findings?) then (yes)
+    :Record blocking + evidence note\nBatch fixes -> affected tests -> applicable redaction\nCommit -> push -> select next review scope;
+    stop
+  else (missing conclusion)
+    :Do not record pass\nDiagnose and rerun with --force-full if needed;
+    stop
+  endif
+endif
+@enduml

@@ -36,6 +36,16 @@ main agent must not duplicate active delegated work.
 
 ## Development process
 
+### Component responsibilities and records
+
+![Component responsibilities and durable records](../diagrams/components.svg)
+
+Editable source: [`components.puml`](../diagrams/components.puml). Skills are
+main-agent procedures, not independently running services. Solid arrows show
+invocation or record ownership; the main agent retains integration and gate decisions.
+
+### End-to-end lifecycle
+
 ![Codex Development Workflow development process](../diagrams/architecture.svg)
 
 Editable source: [`architecture.puml`](../diagrams/architecture.puml).
@@ -150,11 +160,22 @@ escalation.
 
 ### Automatic Review and final gates
 
+![Codex review execution and recovery](../diagrams/review-execution.svg)
+
+Editable source: [`review-execution.puml`](../diagrams/review-execution.puml).
+The runner persists execution separately from the main agent's assessment.
+Completed results with matching base/head can be reused. The first review is
+full; explicitly selected bounded fixes can use the last assessed head. Base
+changes, rewritten history, interface/security boundary changes, cross-module
+behavior or uncertain impact require full review. An interrupted latest run
+currently causes a full-review fallback on retry rather than reusing an older
+assessment. See the [execution contract](../../skills/github-push-when-ready/references/review-execution.md).
+
 Every change must be committed and pushed to a feature branch, then have a PR
 created or updated before Automatic Review starts. Automatic Review is exactly
 the built-in `codex review` command; run it immediately without waiting for user
-confirmation, using the complete PR diff, branch boundary, and available CI
-results. Blocking findings require Fix -> Test -> Redaction if applicable ->
+confirmation, using the selected review range, branch boundary, and available CI
+results. Batch blocking findings before Fix -> Test -> Redaction if applicable ->
 Commit -> Push -> `codex review` again on the updated PR. Merge only after the
 review passes. When multiple Tickets are delivered together, add broader
 integration/regression checks across them in addition to each Ticket's checks.

@@ -1,0 +1,58 @@
+@startuml
+!theme plain
+top to bottom direction
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam wrapWidth 210
+skinparam ArrowColor #475569
+title Codex Development Workflow - Responsibilities and Durable Records
+
+actor "User\nRequirement + constraints" as user
+package "Main-agent ownership" #EFF6FF {
+  component "codex-development-workflow\nRouting / design / dependency order\nIntegration / final judgment" as main
+  component "Optional bounded delegation\nExplore / implement / test / supplement review\nIsolated ownership; main agent integrates" as delegates
+}
+package "Specialist procedures (invoked when applicable)" #F0FDF4 {
+  component "context-efficiency\nLoad relevant context" as context
+  component "plan-to-ticket\nRequirement -> behavior Tickets\nEach Ticket -> ordered Slices" as plan
+  component "test-workflow\nAcceptance -> selected checks\nEvidence + failures" as tests
+  component "data-document-redaction\nClassify sharing surfaces\nScan / transform / verify" as redact
+}
+package "Delivery and recovery" #FFF7ED {
+  component "github-push-when-ready\nReadiness / identity / actual push targets\nCommit / push / PR / merge / cleanup" as publish
+  component "run_review.py\nLock / scope / streaming / saved execution\nMain agent records pass or blocking" as runner
+  component "repo-current-state\nVerified post-merge snapshot\nTracked edits use a follow-up PR" as state
+  component "auto-deploy (conditional)\nExisting deployment contract\nHealth verification / rollback" as deploy
+}
+package "Tools and durable evidence" #F8FAFC {
+  database "GitHub Issues\nParent plan + Ticket records\nStatus / Branch / Base / PR\nAuthoritative when Ticketed" as issues
+  database "Git + GitHub PR\nFeature commits / checks / merged status\nDefault branch protected by workflow" as github
+  component "Built-in Codex CLI\ncodex review --base <ref>\nMandatory Automatic Review" as cli
+  database "Local Git metadata\ncodex-review/\nState / run history / logs\nNever committed" as logs
+  artifact "docs/Repo_Current_State.md\nCompact recovery index\nNot a ticket database" as snapshot
+  node "Target project's existing CI/CD\nNot provisioned by this package" as cicd
+}
+
+user --> main
+main --> delegates : bounded tasks
+main --> context : understand
+main --> plan : decompose if needed
+main --> tests : validate / integrate
+main --> redact : sharing boundary
+main --> publish : deliver
+main --> state : reconcile after merge
+main --> deploy : when requested
+plan --> issues : persist before branch work
+publish --> github : branch / PR lifecycle
+publish --> runner : after PR publication
+runner --> cli : execute review
+runner --> logs : stream + preserve evidence
+state --> snapshot : verified update
+deploy --> cicd : rollout / verify / rollback
+legend bottom
+Skills guide the main agent; they are not autonomous background services.
+The main agent consumes evidence and decides whether workflow gates pass.
+Optional reviewer analysis supplements, but never replaces, built-in Codex review.
+endlegend
+@enduml
