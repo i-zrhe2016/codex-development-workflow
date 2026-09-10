@@ -18,7 +18,7 @@ RTK 是本 Skill 的必用 shell 执行入口，不是可选优化，也不替�
 - RTK 摘要只用于导航；完整差异、安全判断、验收和用户要求的逐字输出必须查原始证据。
 - 已执行的有副作用命令不得因摘要不足而重复执行；先读取已保存日志、查询状态。
 - shell 管道或条件组合需要时用 `rtk proxy bash -o pipefail -c '...'` 包装整体，保持正确引用及原始失败状态；不要把摘要输出交给依赖原格式的解析器。
-- 不把 `codex review` 再包进通用摘要器；使用 `rtk proxy python3 <skill-dir>/scripts/run_review.py --base <actual-base>`，由既有 runner 保存审查证据。
+- 不把 `codex review` 再包进通用摘要器；使用 `rtk proxy python3 <github-push-when-ready-dir>/scripts/run_review.py --base <actual-base>`，由发布 Skill 的既有 runner 保存审查证据。
 - 压缩不是脱敏。RTK 的命令统计和恢复记录可能包含敏感参数或输出；不得把 token、凭据放进命令参数，也不把本地 RTK 数据或日志提交到仓库。
 - 不自行运行 `rtk init -g`、改写全局 hooks 或关闭测试；只有任务明确需要这些配置时才处理。
 
@@ -31,4 +31,3 @@ RTK 是本 Skill 的必用 shell 执行入口，不是可选优化，也不替�
 `rtk gain` 仅在评估效果时读取，不必每轮调用。其统计是命令输出压缩估算，不代表总上下文或账单等比例降低。
 
 来源：[RTK 官方仓库及命令说明](https://github.com/rtk-ai/rtk)。本次集成在 Linux 上验证版本 0.48.0；其他版本以本机帮助与验证结果为准。
-
