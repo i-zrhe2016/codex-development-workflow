@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-10 @ cbd427f
+Last verified: 2026-09-10 @ f3a90d6
 
 ## Current Focus
 
@@ -60,7 +60,10 @@ Last verified: 2026-09-10 @ cbd427f
 
 - Code review requires an installed and authenticated Codex CLI.
 - Specialist behavior is bundled under `skills/` and installed from this repository's local source.
-- `context-efficiency` remains an optional context-loading aid, not a workflow stage.
+- `context-efficiency` is a context-loading aid, not a workflow stage. When used,
+  task shell commands require RTK; exact evidence and existing gates use `rtk proxy`.
+  Only dependency bootstrap/repair bypasses RTK. The skill installer does not
+  install the RTK binary or enable global hooks.
 - Delegation is optional; dependent, overlapping, or shared-interface work remains sequential, and integration/final judgment stay with the main agent.
 - `scripts/install-all.sh` requires a complete checkout and copies local bundles; it does not clone specialist repositories.
 - Persisted plans and tickets require a resolvable GitHub repository target and an available, authorized GitHub Issues connector; failed required writes block completion without a Markdown fallback.
