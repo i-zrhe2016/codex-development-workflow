@@ -26,6 +26,8 @@ Requirement
   -> Close Ticket
   -> Update State / Docs
   -> Deploy if needed
+  -> Evaluate workflow
+  -> Reusable improvement? -> one bounded follow-up change or finish
 ```
 
 The pipeline is identical for Docs, Code, Tests, Config, Refactor, Bugfix,
@@ -172,6 +174,46 @@ project state changed. Use it as a compact recovery point for current focus,
 implemented behavior, in-progress Slice, known failures, constraints, and the
 next Slice. It is not a session transcript, full backlog, or test report.
 
+## Post-delivery workflow evaluation
+
+Run one lightweight retrospective after delivery and after any requested
+deployment result is known. It evaluates the workflow rather than re-reviewing
+the code, so it is not a merge gate.
+
+Look only for evidence from the completed work:
+
+- avoidable rework, failed assumptions, or repeated review findings;
+- planning, context loading, or delegation that was too heavy or too weak;
+- tests or redaction that were disproportionate to risk;
+- repeated manual work that should be automated;
+- unclear, duplicated, or missing workflow instructions.
+
+Record a compact result:
+
+```text
+Keep: what worked and should remain
+Improve: one highest-value reusable improvement, or none
+Evidence: concrete event from this delivery
+Action: none | follow-up change | report for later
+```
+
+Apply self-improvement only when the lesson is reusable and evidence-backed.
+Prefer simplifying or removing redundant steps before adding new process. Never
+weaken branch/PR, Automatic Review, redaction, security, permission, or release
+gates for convenience.
+
+A low-risk improvement that stays within the existing workflow intent may start
+automatically as one separate follow-up repository change. It must begin from
+the updated default branch and repeat the normal branch, validation, redaction,
+PR, Automatic Review, and merge lifecycle. Policy, permission, security,
+release behavior, and broad project-scope changes are reported instead of
+self-applied.
+
+Only one automatic follow-up improvement may be created per delivered user
+request. Its own evaluation cannot recursively create another automatic
+improvement. If there is no meaningful evidence-backed improvement, finish
+without inventing work or backlog entries.
+
 ## Output classification and redaction
 
 Classify the complete output set before committing and before every separate
@@ -190,7 +232,7 @@ reason. Otherwise invoke `data-document-redaction` and follow
 
 ## Completion order
 
-`Understand -> Plan -> Slice/Ticket if needed -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
+`Understand -> Plan -> Slice/Ticket if needed -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed -> Evaluate workflow -> optional one bounded follow-up improvement`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).
