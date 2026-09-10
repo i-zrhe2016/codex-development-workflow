@@ -28,9 +28,12 @@ configuration, or automated test suite in the current repository.
 1. The maintainer or main Codex agent reads the managed `SKILL.md` and the
    existing state snapshot.
 2. Only evidence relevant to the current task is inspected.
-3. Verified facts are written to the target repository's
-   `docs/Repo_Current_State.md`.
-4. Detailed architecture and entrypoint links remain in the appropriate
+3. After the change PR is merged, its source branch is deleted, and the default
+   branch is synchronized, verified facts are written to the target repository's
+   `docs/Repo_Current_State.md` when the snapshot changed.
+4. If that write changes tracked content, it uses a feature branch and the
+   same PR gate rather than a direct default-branch commit.
+5. Detailed architecture and entrypoint links remain in the appropriate
    documentation files.
 
 ## Boundaries and invariants

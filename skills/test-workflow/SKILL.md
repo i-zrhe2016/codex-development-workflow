@@ -5,7 +5,10 @@ description: "General repository testing workflow for Codex. Use when validating
 
 # Test Workflow
 
-Validate behavior with the lightest reliable test strategy. Prefer deterministic automated feedback over repeated agent inspection.
+Validate behavior with the lightest reliable test strategy. This skill owns the
+Test stage for every change and for each blocking Automatic Review fix; it does
+not choose a direct-push path. Prefer deterministic automated feedback over
+repeated agent inspection.
 
 ## Core rules
 
@@ -35,7 +38,9 @@ justifies broader validation.
 
 ## Choose the testing mode
 
-Use task risk and complexity instead of forcing strict TDD everywhere.
+Use task risk and complexity to choose the test strategy, not to choose a
+different delivery path. Every change still continues through the common branch,
+redaction when applicable, commit, push, PR, Automatic Review, and merge gates.
 
 - **Tiny change:** run the closest existing checks after implementation. Add a regression test only when the change fixes behavior that could reasonably recur.
 - **Normal behavior change:** define or update focused tests around the changed contract, implement, then run focused tests and relevant regression checks.
@@ -77,7 +82,7 @@ Stop at the first useful failure and diagnose it before spending resources on hi
 
 ## RED -> GREEN loop
 
-For complex or risky tickets:
+For complex or risky Tickets/Slices:
 
 1. Translate acceptance criteria into focused test cases.
 2. Write or identify the smallest meaningful test that should fail for the missing behavior.
@@ -140,7 +145,7 @@ Browser tests complement unit/integration checks; they do not replace them.
 
 ## Completion
 
-A ticket is test-complete when:
+A Ticket or ticketless Slice is test-complete when:
 
 - each acceptance criterion has concrete test or validation evidence;
 - the selected checks for the chosen level are GREEN;
@@ -148,7 +153,10 @@ A ticket is test-complete when:
 - failures are either resolved or explicitly classified as blocked/out of scope;
 - no test was weakened solely to make the suite pass.
 
-For a multi-ticket feature, keep inner-loop checks focused per ticket, then run the appropriate integration/regression suite after all dependency-related tickets are GREEN.
+For a multi-Ticket feature, keep inner-loop checks focused per Ticket, then run
+the appropriate integration/regression suite after all dependency-related
+Tickets are GREEN. When Automatic Review returns blocking findings, rerun the
+affected Test checks before the next redaction, commit, push, and review pass.
 
 ## Report
 

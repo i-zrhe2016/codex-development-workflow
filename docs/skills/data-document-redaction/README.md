@@ -1,7 +1,7 @@
 # Data and Document Redaction
 
 `data-document-redaction` is the safety gate for sensitive content crossing a
-sharing, commit, export, upload, or publication boundary. It covers personal
+commit, sharing, export, upload, or publication boundary. It covers personal
 information, credentials, private keys, business-confidential material, and
 other data that should not be exposed in the resulting artifact.
 
@@ -20,6 +20,10 @@ The runtime instructions live in [`SKILL.md`](../../../skills/data-document-reda
    alternate representations where the format supports them.
 6. Report what was checked and any remaining limitations without reproducing
    the sensitive value.
+
+In the unified PR lifecycle, run this scan before the initial commit when
+applicable and repeat it after any blocking Automatic Review fix before the
+next commit. It does not create a direct-push exception for any change type.
 
 Do not overwrite the original when a recoverable output is practical. Do not
 attempt to recover or bypass redaction, and do not treat this documentation as

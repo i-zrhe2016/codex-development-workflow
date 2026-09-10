@@ -7,10 +7,11 @@ detection or transformation rules.
 
 ## When the gate runs
 
-Classify the complete artifact set before staging or committing it, and before
-any artifact crosses a separate sharing, export, upload, or publication
-boundary. Git history is durable, so do not rely on cleaning up a secret or
-personal value after it has been committed.
+Classify the complete artifact set before committing it, and before any
+artifact crosses a separate sharing, export, upload, or publication boundary.
+After a blocking Automatic Review fix, repeat the scan before the next commit.
+Git history is durable, so do not rely on cleaning up a secret or personal
+value after it has been committed.
 
 The scope includes source files, documentation, logs, configs, datasets,
 screenshots, images, exports, filenames, and metadata. If an input data file
@@ -49,7 +50,7 @@ copy.
 | Result | Required action |
 |---|---|
 | No sensitive surface in the declared scope | Record the scope and skip reason; continue. |
-| `pass` | Continue to the commit, push, share, or publication gate. |
+| `pass` | Continue to the commit, push, share, or publication gate; after a review fix, continue to the next commit. |
 | `needs_review` | Stop the boundary transition; resolve or explicitly review the listed gap. |
 | `blocked` | Stop and record the concrete blocker; do not publish the artifact. |
 

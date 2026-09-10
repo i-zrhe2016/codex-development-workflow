@@ -54,7 +54,8 @@ behavior/capability boundary represented by one GitHub Issue and one branch. A
 Slice is a smaller execution-ready unit inside that Ticket and inherits the
 Ticket's Issue and branch. Keep Ticket dependencies at the branch-readiness
 level and Slice dependencies inside the Ticket. Tiny work may remain one
-implicit Slice without creating a Ticket.
+implicit Slice without creating a Ticket, but the parent workflow still creates
+a feature branch and sends the change through the mandatory PR gate.
 
 ## Usage
 
@@ -79,6 +80,11 @@ Every ticket output includes the branch handoff:
 **Base branch**
 
 - main
+
+Ticket planning is complete before implementation begins. The parent workflow
+then runs the same Test -> applicable Redaction -> Commit -> Push -> Create /
+Update PR -> Automatic Review -> Merge lifecycle for Ticketed and ticketless
+Slices alike.
 
 ## Repository layout
 

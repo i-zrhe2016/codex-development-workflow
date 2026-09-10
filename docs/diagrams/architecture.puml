@@ -10,153 +10,88 @@ skinparam state {
   FontColor #1A202C
 }
 
-title Codex Development Workflow - Main-Agent-Led Staged Process
+title Codex Development Workflow - Unified PR-Gated Lifecycle
 
 state "Requirement" as requirement
-state "Classify task\nTiny / Normal / Complex" as classify
-state "Understand\nCurrent Repo" as context
-state "Plan\narchitecture + scope" as plan
-state "Ticket(s) needed?" as ticketing #FFF4CC
-state "Define current behavior Ticket\n[plan-to-ticket]\ngoal • scope • dependencies\nreview boundary" as ticket
-state "Define Slice(s) per Ticket\n[plan-to-ticket]\ngoal • scope • dependencies\nacceptance • validation" as slice
-state "Tiny implicit Slice\n(no Ticket / no Issue)" as tiny_slice
-state "Persist plan / Ticket Issues\n[plan-to-ticket]\nGitHub Issues authoritative" as persist #EAF2F8
-state "Create/resume current Ticket branch\n[one Ticket ↔ one branch]\nIssue: Branch + Base\nStatus: in_progress" as branch
-state "Delegation Gate\nIndependent + bounded?\n(optional)" as delegation #FFF4CC
-state "Explorer\n[explorer]\nread-only evidence" as explorer
-state "Worker A / B\n[worker]\nisolated Slice execution + validation" as workers
-state "Worker result summary\nmain agent receives findings • changes • tests • risks" as worker_result
-
-state "Slice Execution / Test Loop\n[main agent]" as execute {
-  state "Acceptance criteria" as acceptance
-  state "Test strategy + level\nminimal / focused / regression / full" as strategy
-  state "Behavior change?" as behavior
-  state "Test first\nwhen meaningful" as test_first
-  state "Minimal change" as implement
-  state "Focused validation\n[test-workflow]" as tests
-  state "Fix / Refactor" as fix
-  state "Slice complete" as complete
-
-  acceptance --> strategy
-  strategy --> behavior
-  behavior --> test_first : yes
-  behavior --> implement : no
-  test_first --> implement
-  implement --> tests
-  tests --> complete : pass / stop
-  tests --> fix : fail
-  fix --> tests
-}
-
-state "More slices?" as more #FFF4CC
-state "Integration / regression tests\n[test-workflow]" as integration
-state "State / Docs\n[repo-current-state]" as state_docs
-state "Classify outputs" as classify_outputs
-state "Potentially sensitive?" as sensitive #FFF4CC
-state "Redaction\n[data-document-redaction]" as redaction
-state "Redaction pass?" as redaction_gate #FFF4CC
-state "Commit / Push\n[github-push-when-ready]" as publish
-state "Open PR\n[github-push-when-ready]" as open_pr
-state "Review\n[one PR-stage gate]" as review
-state "Blocking finding?" as blocking #FFF4CC
-state "Fix findings" as fix_findings
-state "Re-test\n[test-workflow]" as retest
-state "Re-test pass?" as retest_gate #FFF4CC
-state "Merge PR\n[github-push-when-ready]" as merge_pr
-state "Close ticket\n[GitHub Issues]" as close_ticket
-state "More Tickets?" as more_tickets #FFF4CC
-state "Automatic Deployment\n[auto-deploy]" as deployment
-state "Health /\nSmoke Verification" as deploy_verify
-state "Rollback /\nEscalate" as rollback #FDECEC
-state "Blocked" as blocked #FDECEC
+state "Understand repo" as understand
+state "Plan" as plan
+state "Slice / Ticket if needed\n[plan-to-ticket when Ticketed]\nTicket first for multiple behaviors;\nSlices inside each Ticket" as decompose
+state "Create feature branch\n(all change types)" as branch
+state "Implement\n(main agent; optional bounded delegation)" as implement
+state "Test\n[test-workflow]" as test
+state "Redaction scan\nif applicable\n[data-document-redaction]" as redact
+state "Commit\n[github-push-when-ready]" as commit
+state "Push branch\n[github-push-when-ready]" as push
+state "Create / Update PR\n[github-push-when-ready]" as pr
+state "Automatic Review\n[codex review]" as review
+state "Blocking findings?" as blocking #FFF4CC
+state "Fix findings" as fix
+state "Test again\n[test-workflow]" as test_again
+state "Redaction scan again\nif applicable" as redact_again
+state "Commit fix" as commit_fix
+state "Push branch" as push_fix
+state "Merge PR\n[github-push-when-ready]" as merge
+state "Delete source branch" as delete_branch
+state "Update main" as update_main
+state "Close Ticket\nif applicable" as close_ticket
+state "Update State / Docs\n[repo-current-state]" as state_docs
+state "Deploy if needed\n[auto-deploy]" as deploy
+state "Verify / Rollback" as verify #EAF2F8
 
 [*] --> requirement
-requirement --> classify
-classify --> context
-context --> plan
-plan --> ticketing
-ticketing --> ticket : yes / normal multi-step
-ticketing --> ticket : yes / complex or multi-behavior
-ticketing --> tiny_slice : no / tiny implicit Slice
-ticket --> slice : each Ticket
-slice --> persist : Ticketed work
-persist --> branch
-tiny_slice --> delegation : no Ticket / no branch
-branch --> delegation
-delegation --> execute : no / sequential
-delegation --> explorer : yes / independent
-delegation --> workers
-explorer --> worker_result
-workers --> worker_result
-worker_result --> more
-execute --> more
-more --> slice : yes
-more --> integration : no
-integration --> state_docs
-state_docs --> classify_outputs
-classify_outputs --> sensitive
-sensitive --> redaction : yes
-sensitive --> publish : no
-redaction --> redaction_gate
-redaction_gate --> publish : pass
-redaction_gate --> blocked : needs_review / blocked
-publish --> open_pr
-open_pr --> review
+requirement --> understand
+understand --> plan
+plan --> decompose
+decompose --> branch
+branch --> implement
+implement --> test
+test --> redact
+redact --> commit
+commit --> push
+push --> pr
+pr --> review
 review --> blocking
-blocking --> fix_findings : finding
-blocking --> merge_pr : pass
-fix_findings --> retest
-retest --> retest_gate
-retest_gate --> fix_findings : fail
-retest_gate --> merge_pr : pass
-merge_pr --> close_ticket : Ticketed work
-merge_pr --> deployment : tiny / requested
-merge_pr --> [*] : tiny / no deployment
-close_ticket --> more_tickets
-more_tickets --> ticket : yes / next Ticket
-more_tickets --> deployment : no / all Tickets / requested
-more_tickets --> [*] : no / all Tickets / no deployment
-deployment --> deploy_verify
-deploy_verify --> [*] : pass
-deploy_verify --> rollback : fail / timeout
-rollback --> [*] : recovered / blocked
+blocking --> fix : yes
+blocking --> merge : no / pass
+fix --> test_again
+test_again --> redact_again
+redact_again --> commit_fix
+commit_fix --> push_fix
+push_fix --> review : PR updated / review again
+merge --> delete_branch
+delete_branch --> update_main
+update_main --> close_ticket
+close_ticket --> state_docs
+state_docs --> deploy : requested
+state_docs --> [*] : not requested
+deploy --> verify
+verify --> [*] : pass
+verify --> [*] : fail / rollback or escalate
 
-note right of execute
-TDD is a conditional test strategy inside a Slice.
-Use the smallest verification set that gives enough evidence.
-Stop after the selected level passes unless escalation is justified.
-end note
-
-note right of delegation
-The main agent owns requirements,
-architecture, dependency ordering,
-integration, and final judgment.
-Split requirements into Tickets before
-defining their Slices; normal multi-step
-work uses the Ticket path too.
-Tiny work may use one implicit Slice
-without an Issue or Ticket branch.
-Keep dependent, overlapping, or shared-interface work sequential.
+note right of decompose
+Use one Slice without a Ticket when one behavior
+can be planned, implemented, tested, and reviewed
+as one unit. This never removes the branch or PR gate.
 end note
 
 note right of review
-Open the PR before this single review gate.
-Use the final PR diff, branch boundary, and CI results.
-Fix findings and re-test before merge; do not add a second routine review.
+Start Automatic Review immediately after the PR
+is created or updated; do not wait for confirmation.
+Blocking findings repeat Fix -> Test -> Redaction
+when applicable -> Commit -> Push -> Review.
 end note
 
 note right of state_docs
-Repo_Current_State.md is the compact recovery point
-for current focus, verified behavior, failures, and next Slice.
-Ticket detail and progress, when present,
-remain in GitHub Issues.
+Update the recovery snapshot only after merge,
+source-branch deletion, and default-branch sync.
+If tracked State / Docs change, use the same
+feature-branch and PR gate for that follow-up change.
 end note
 
 note left of requirement
-Delegation is optional, not automatic.
-Prefer one delegation level.
-Workers return findings, changes,
-tests, and unresolved risks—not raw logs.
+Docs, Code, Tests, Config, Refactor, Bugfix,
+Feature, Dependency, and CI/CD changes all use
+this lifecycle. No direct default-branch delivery.
 end note
 
 @enduml
