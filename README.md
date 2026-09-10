@@ -1,7 +1,8 @@
 # Codex Development Workflow
 
 An adaptive, main-agent-led Codex development workflow with optional bounded
-delegation and all required specialist skills managed in this repository.
+delegation, post-delivery process evaluation, bounded self-improvement, and all
+required specialist skills managed in this repository.
 
 ```text
 Requirement
@@ -23,6 +24,8 @@ Requirement
   -> Close Ticket
   -> Update State / Docs
   -> Deploy if needed
+  -> Evaluate workflow
+  -> Reusable improvement? -> one bounded follow-up change or finish
 ```
 
 The macro workflow controls architecture and scope. If requirements span
@@ -41,12 +44,22 @@ branch, commit, push, PR, automatic review, and merge. Blocking review findings
 start a loop of fix, test, redaction when applicable, commit, push, and automatic
 review again; the agent does not stop for confirmation.
 
+After delivery, the main agent performs one lightweight workflow evaluation.
+It looks for reusable evidence such as avoidable rework, weak assumptions,
+unnecessary context loading, disproportionate validation, repeated manual work,
+or unclear workflow instructions. It records one highest-value improvement at
+most. A safe, low-risk improvement may start automatically as one separate
+follow-up change through the same branch/PR/review lifecycle; broad policy,
+security, permission, release, or scope changes are reported instead of
+self-applied. The follow-up cannot recursively create another automatic
+self-improvement change.
+
 Verification is bounded by an explicit level (`minimal`, `focused`,
 `regression`, or `full`). The default is focused validation, and a passing
 level stops the test expansion unless evidence or an explicit requirement
 justifies escalation. The main agent owns requirements, architecture,
-decomposition, integration, and final judgment; bounded exploration, Slice
-implementation, and testing may be delegated when useful. Automatic Review
+decomposition, integration, evaluation, and final judgment; bounded exploration,
+Slice implementation, and testing may be delegated when useful. Automatic Review
 starts after the PR is opened or updated, without waiting for user confirmation.
 
 ## Optional project-scoped delegation
@@ -73,7 +86,8 @@ Detailed views: [component responsibilities](docs/diagrams/components.svg),
 
 See the [architecture overview](docs/architecture/overview.md) for the unified
 branch/PR lifecycle, Ticket/Slice decomposition, bounded verification, automatic
-review loop, recovery state, redaction, and package boundaries.
+review loop, recovery state, redaction, post-delivery evaluation, bounded
+self-improvement, and package boundaries.
 
 ## Install from this repository
 

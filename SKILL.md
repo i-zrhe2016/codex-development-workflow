@@ -1,16 +1,16 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Route every change through a feature branch, tests, applicable redaction, commit, push, PR, automatic review, merge, cleanup, and state update, with Ticket/Slice planning when needed."
+description: "Entry point for repository-wide Codex development. Route every change through a feature branch, tests, applicable redaction, commit, push, PR, automatic review, merge, cleanup, state update, and post-delivery process evaluation, with bounded self-improvement and Ticket/Slice planning when needed."
 ---
 
 # Codex Development Workflow
 
 Use this skill as the entry point for repository development. The main agent
 owns requirements, architecture, planning, Ticket/Slice decomposition,
-integration, delivery gates, and final judgment. Every change follows the same
-feature-branch and PR lifecycle; only planning depth, test level, and whether a
-Ticket is needed may vary. Specialist skills provide procedures for the work
-they own.
+integration, delivery gates, process evaluation, and final judgment. Every
+change follows the same feature-branch and PR lifecycle; only planning depth,
+test level, and whether a Ticket is needed may vary. Specialist skills provide
+procedures for the work they own.
 
 ## Core workflow
 
@@ -32,6 +32,10 @@ Requirement
        -> no: Merge PR -> Delete branch -> Update main -> Close Ticket
     -> Update State / Docs
     -> Deploy if needed
+    -> Evaluate workflow
+    -> Reusable improvement?
+       -> yes: Start one follow-up improvement through this same workflow
+       -> no: Finish
 ```
 
 ## One delivery path for every change
@@ -49,6 +53,8 @@ updates, and CI/CD changes all use the same path:
    Redaction, Commit, Push, and Automatic Review.
 7. Merge only after review passes, delete the source branch, update the base
    branch, close the Ticket when one exists, and then update State / Docs.
+8. After delivery and any requested deployment, evaluate the workflow and start
+   at most one bounded follow-up improvement when the evidence is reusable.
 
 The delivery path never has a direct-push exception for documentation, small
 fixes, configuration, or other change categories. A single behavior may use
@@ -272,6 +278,55 @@ waiting for user confirmation.
 This workflow supports optional bounded delegation. It does not require
 multiple agents, parallel implementations, or agent handoffs for every task.
 
+## Post-delivery evaluation and bounded self-improvement
+
+Run one lightweight process evaluation after the change is delivered and after
+any requested deployment result is known. This is not a merge gate and must not
+delay an otherwise complete delivery.
+
+Evaluate only evidence from the completed work:
+
+- avoidable rework, failed assumptions, and repeated review findings;
+- planning, context loading, or delegation that was too heavy or too weak;
+- tests or redaction that were disproportionate to the actual risk;
+- repeated manual steps that are good automation candidates;
+- workflow instructions that were unclear, duplicated, or missing.
+
+Keep the result compact:
+
+```text
+Keep: what worked and should remain
+Improve: one highest-value reusable improvement, or none
+Evidence: concrete event from this delivery
+Action: none | follow-up change | report for later
+```
+
+Self-improvement is bounded by these rules:
+
+1. Improve the workflow only when the lesson is reusable across future work and
+   supported by concrete evidence. Task-specific preference is not enough.
+2. Prefer simplifying, merging, or removing redundant steps before adding a new
+   stage, agent, skill, document, or persistent record.
+3. Never weaken branch/PR, Automatic Review, redaction, security, permission,
+   or release gates merely to reduce friction.
+4. A concrete, low-risk improvement that stays within the current workflow's
+   intent may start automatically as one new follow-up change. Changes to
+   policy, permissions, security posture, release behavior, or broad project
+   scope are reported instead of self-applied.
+5. A follow-up improvement is a normal repository change: start from the
+   updated default branch and repeat Plan -> Branch -> Test -> applicable
+   Redaction -> Commit -> Push -> PR -> Automatic Review -> Merge. Never edit
+   the completed branch, installed skill, or default branch as a side effect of
+   evaluation.
+6. Start at most one automatic follow-up improvement per delivered user
+   request. The follow-up may be evaluated, but its evaluation must not
+   automatically create another improvement change.
+7. If no meaningful improvement is supported by evidence, finish without
+   inventing work or creating backlog noise.
+
+The purpose of the loop is to make future executions simpler and more reliable,
+not to maximize process, documentation, or agent activity.
+
 ## Specialist skills
 
 Invoke a specialist only when its trigger applies. Follow its own `SKILL.md`;
@@ -319,6 +374,9 @@ For every change, regardless of its file type or size:
    and default-branch update when verified project state changed.
 9. When deployment is requested, invoke `auto-deploy` for target-specific
    preflight, execution, verification, and rollback handling.
+10. Run the post-delivery workflow evaluation. If one bounded, evidence-backed
+    reusable improvement qualifies for automatic self-improvement, start it as
+    a separate follow-up change through the same branch/PR lifecycle.
 
 When a ticket is produced by `plan-to-ticket`, update its status and branch/PR
 metadata at the workflow boundaries defined by that skill. Keep tickets open
