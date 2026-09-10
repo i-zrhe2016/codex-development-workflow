@@ -1,11 +1,10 @@
 # Repository Current State
 
-Last verified: 2026-09-09 @ working tree
+Last verified: 2026-09-10 @ cbd427f
 
 ## Current Focus
 
-- PR #16 contains the unified PR-gated workflow and default-branch guards;
-  recoverable review execution and bounded incremental review are being validated.
+- Unified PR delivery and recoverable Codex review are implemented and verified.
 
 ## Implemented
 
@@ -49,16 +48,13 @@ Last verified: 2026-09-09 @ working tree
 
 ## In Progress
 
-- [PR #16](https://github.com/i-zrhe2016/codex-development-workflow/pull/16)
-  is open on `chore/unified-pr-gate`; the review-runner update requires publication,
-  completed Codex review, merge, and cleanup. Focused validation: 25 tests pass.
+- No implementation work remains in progress.
 
 ## Known Issues / Failing Checks
 
-- The baseline redaction scan reports three pre-existing email patterns in the
-  publication-identity documentation; no new personal email was added by this
-  change. Treat the findings as an explicit publication review item rather than
-  claiming a clean redaction pass.
+- Targeted redaction scans report existing identity email examples and SSH URL
+  literals. These require classification when publishing; the scan is not a
+  clean repository-wide redaction result.
 
 ## Constraints
 
