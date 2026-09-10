@@ -66,6 +66,10 @@ dependent, overlapping, or shared-interface work sequential.
 
 ![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
+Detailed views: [component responsibilities](docs/diagrams/components.svg),
+[review execution and recovery](docs/diagrams/review-execution.svg), and the
+[architecture guide](docs/architecture/overview.md).
+
 See the [architecture overview](docs/architecture/overview.md) for the unified
 branch/PR lifecycle, Ticket/Slice decomposition, bounded verification, automatic
 review loop, recovery state, redaction, and package boundaries.

@@ -13,26 +13,26 @@ skinparam state {
 title Codex Development Workflow - Unified PR-Gated Lifecycle
 
 state "Requirement" as requirement
-state "Understand repo" as understand
-state "Plan" as plan
+state "Understand repo\nRead current state + architecture + relevant code\n[context-efficiency when context-heavy]" as understand
+state "Plan\nScope / exclusions / acceptance / dependencies" as plan
 state "Slice / Ticket if needed\n[plan-to-ticket when Ticketed]\nTicket first for multiple behaviors;\nSlices inside each Ticket" as decompose
 state "Create feature branch\n(all change types)" as branch
 state "Implement\n(main agent; optional bounded delegation)" as implement
-state "Test\n[test-workflow]" as test
+state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression / full" as test
 state "Redaction scan\nif applicable\n[data-document-redaction]" as redact
-state "Commit\n[github-push-when-ready]" as commit
+state "Publication readiness + Commit\n[github-push-when-ready]\nIdentity / clean boundaries / Conventional Commits" as commit
 state "Push branch\n[github-push-when-ready]" as push
 state "Create / Update PR\n[github-push-when-ready]" as pr
-state "Automatic Review\n[codex review]" as review
+state "Automatic Review\nrun_review.py -> codex review\nFull first; bounded incremental fixes\nPersist logs + explicit assessment" as review
 state "Blocking findings?" as blocking #FFF4CC
-state "Fix findings" as fix
+state "Batch confirmed findings\nFix affected behavior" as fix
 state "Test again\n[test-workflow]" as test_again
 state "Redaction scan again\nif applicable" as redact_again
 state "Commit fix" as commit_fix
 state "Push branch" as push_fix
-state "Merge PR\n[github-push-when-ready]" as merge
+state "Merge PR\nRequired checks + reviewed head verified\n[github-push-when-ready]" as merge
 state "Delete source branch" as delete_branch
-state "Update main" as update_main
+state "Synchronize actual PR base\nFast-forward + prune" as update_main
 state "Close Ticket\nif applicable" as close_ticket
 state "Update State / Docs\n[repo-current-state]" as state_docs
 state "Deploy if needed\n[auto-deploy]" as deploy
@@ -69,6 +69,9 @@ verify --> [*] : pass
 verify --> [*] : fail / rollback or escalate
 
 note right of decompose
+Persist parent plan + Ticket Issues before branching.
+One Ticket owns one branch and PR; its Slices share it.
+Dependent Tickets start after prerequisites merge.
 Use one Slice without a Ticket when one behavior
 can be planned, implemented, tested, and reviewed
 as one unit. This never removes the branch or PR gate.
@@ -79,6 +82,25 @@ Start Automatic Review immediately after the PR
 is created or updated; do not wait for confirmation.
 Blocking findings repeat Fix -> Test -> Redaction
 when applicable -> Commit -> Push -> Review.
+Interrupted / missing conclusion != pass.
+See review-execution.svg for scope and recovery.
+end note
+
+note right of implement
+Main agent owns integration and final judgment.
+Delegate only independent, bounded work.
+No overlapping files or shared interfaces in parallel.
+Wrong design assumption -> re-plan.
+Failed validation -> fix and rerun affected checks.
+More Slices -> repeat implementation and validation.
+Publication waits for the whole unit's acceptance.
+Unresolved failures stop delivery.
+end note
+
+note right of push
+Verify actual push URL(s) and destination branch.
+Unknown targets and default-branch publication block.
+All file types require a PR; never direct-push main.
 end note
 
 note right of state_docs
