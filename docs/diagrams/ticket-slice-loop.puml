@@ -1,0 +1,50 @@
+@startuml
+!theme plain
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam ArrowColor #475569
+title Slice Loop - Implement, Validate, Diagnose and Re-plan
+
+state "Select next dependency-ready Slice\nRead Ticket Issue + branch + relevant evidence" as select
+state "Define Slice contract\nGoal / exclusions / ownership / dependencies\nAcceptance / concrete cases / validation command\nLevel: minimal / focused / regression / full" as contract
+state "Minimal implementation\nTest-first when useful; bounded delegation optional\nKeep all Slices on the Ticket branch" as implement
+state "Run selected focused checks\nCapture real exit status + failure evidence" as test
+state "Classify failure\nDo not weaken assertions or retry blindly" as diagnose #FFF4CC
+state "Fix implementation or test defect\nOnly evidence-backed, in-scope changes" as fix
+state "Environment / dependency blocked\nIssue open; Status: blocked\nRecord cause + exact resume point" as blocked #FFF4CC
+state "Re-plan Ticket / Slice\nUpdate boundaries, dependencies and acceptance\nPreserve completed valid work; stop widening patch" as replan
+state "Slice validated\nRecord concise evidence in authoritative Ticket\nTicket is not done yet" as slice_done #DCFCE7
+state "Ticket acceptance + integration checks\nEscalate test level only for evidenced risk" as integrate
+state "Ticket ready for publication\nContinue to PR review loop" as ready #DCFCE7
+
+[*] --> select
+select --> contract : next Slice
+contract --> implement
+implement --> test
+test --> slice_done : acceptance satisfied
+test --> diagnose : failure / missing evidence
+diagnose --> fix : implementation or test defect
+fix --> test : rerun affected checks
+diagnose --> blocked : external cause
+blocked --> select : cause resolved; revalidate context\nStatus: in_progress
+diagnose --> replan : requirement/design conflict\nor out-of-scope correction needed
+implement --> replan : incorrect design assumption exposed
+replan --> select : updated plan persisted; dependencies ready
+slice_done --> select : more Slices
+slice_done --> integrate : all Slices validated
+integrate --> ready : Ticket acceptance passes
+integrate --> diagnose : integration regression / gap\nidentify affected Slice
+ready --> [*]
+
+note right of select
+Slice execution and Ticket delivery are different loops.
+Do not commit unrelated changes or start dependent Slices early.
+Optional parallel work requires disjoint ownership;
+main agent integrates and makes the final judgment.
+end note
+note right of test
+Task shell commands use RTK.
+Tests / raw evidence use rtk proxy.
+Passing focused checks do not trigger a full suite by default.
+end note
+@enduml
