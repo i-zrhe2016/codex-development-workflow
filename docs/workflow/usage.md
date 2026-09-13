@@ -220,19 +220,18 @@ without inventing work or backlog entries.
 
 ## Output classification and redaction
 
-Classify the complete output set before committing and before every separate
-sharing, export, upload, or publication boundary. Repeat the scan after any
-blocking review fix before the next commit. Include
-source, docs, logs, configs, images, screenshots, exports, filenames, and
-metadata.
+Stage the intended change, then invoke `data-document-redaction` and follow
+[redaction.md](redaction.md) before creating the commit. Repeat the scan after
+any blocking review fix that changes staged content, before the next commit.
 
-Record recipient/environment, purpose, required utility, and whether controlled
-reversibility is allowed. Default to non-reversible handling.
+The scan returns `pass`, `findings`, `needs_review`, or `noop`. Only `pass` and
+`noop` continue; record the inspected scope and skip only when the staged
+change carries no sensitive surface. `findings` and `needs_review` stop the
+boundary transition until the reported gap is resolved.
 
-If no potentially sensitive surface exists, record the inspected scope and skip
-reason. Otherwise invoke `data-document-redaction` and follow
-[redaction.md](redaction.md). Only `pass` advances; `needs_review` and
-`blocked` stop the boundary transition.
+The gate covers the staged commit set only. Document, PDF, Office, OCR,
+repository-wide, and non-Git export sanitization are out of scope and need
+project-specific tooling and review.
 
 ## Completion order
 

@@ -25,7 +25,7 @@ remain inside their own `SKILL.md` files.
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
 | `references/skill-map.md` | Maps each managed bundle to its local source and Codex destination. |
-| `data-document-redaction` | Scans the complete artifact set before commit and again after blocking review fixes when applicable. |
+| `data-document-redaction` | Scans the files staged for the next commit before publication and repeats the scan after blocking review fixes that change staged content. |
 | `github-push-when-ready` | Guards feature-branch creation/publication, Commit, Push, PR, Merge, and source-branch cleanup. |
 
 The main agent centrally owns requirements, architecture, planning, dependency
@@ -220,16 +220,17 @@ reviewer. The
 installer copies managed skills only; these project-scoped files remain in the
 checkout where Codex runs.
 
-### Sensitive-output gate
+### Staged-output redaction gate
 
-Classify the complete output set before commit and before every sharing, export,
-upload, or publication boundary. Repeat the scan after any blocking review fix
-before the next commit. Include source files, documentation, logs, configs,
-images, screenshots, exports, filenames, and metadata.
+Run the gate on the files staged for the next commit and repeat it after any
+blocking review fix that changes staged content. The scan reports `pass`,
+`findings`, `needs_review`, or `noop`; only `pass` and `noop` continue, and a
+recorded skip is allowed only when the staged change carries no sensitive
+surface.
 
-If no potentially sensitive surface is in scope, record the inspected scope and
-skip reason. Otherwise invoke `data-document-redaction`. Only a `pass` report
-advances; `needs_review` and `blocked` stop the boundary transition.
+The packaged specialist covers the staged commit set only. Document, PDF,
+Office, OCR, repository-wide, and non-Git export sanitization are out of scope
+and need project-specific tooling and review.
 
 ## Installation flow
 
@@ -247,7 +248,7 @@ must remain aligned.
 - Every requirement has a Ticket; a single-behavior request is one Ticket with one implicit Slice, and every change still uses a feature branch and PR.
 - Tests provide evidence inside a Slice; Automatic Review is a mandatory PR-stage merge gate after the branch is published.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
-- Redaction is conditional, not a mandatory transformation of every artifact.
+- Redaction is conditional and scoped to the staged commit set; it is not a mandatory transformation of every artifact.
 - State / Docs are updated after merge, source-branch deletion, and default-branch synchronization.
 - The package does not own target-project source code, application data, or deployment infrastructure.
 - Specialist skills are vendored under `skills/` and updated through this repository's normal review and version-control process.

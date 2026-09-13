@@ -47,7 +47,8 @@ updates, and CI/CD changes all use the same path:
 1. Record the GitHub Issue Ticket, then create or resume its feature branch
    before editing.
 2. Implement the planned change and run the selected tests.
-3. Run the redaction scan when the artifact set may contain sensitive content.
+3. Stage the intended files and run the redaction scan; continue on `pass`, or
+   on a recorded skip when the staged change carries no sensitive surface.
 4. Commit and push the branch, then create or update its PR.
 5. Start Automatic Review immediately after the PR is created or updated; do
    not wait for user confirmation.
@@ -352,9 +353,9 @@ do not duplicate its detailed procedure here.
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
   and default-branch synchronization.
-- `data-document-redaction`: classify the complete change set before staging
-  or any sharing, export, upload, or publication boundary when sensitive
-  surfaces may exist.
+- `data-document-redaction`: scan the files staged for the next commit before
+  publishing, and again after a blocking review fix that changes staged
+  content.
 - `github-push-when-ready`: before branch publication, commit, push, PR,
   merge, or branch cleanup.
 - `auto-deploy`: when deployment, release automation, rollout verification, or
@@ -370,9 +371,8 @@ For every change, regardless of its file type or size:
 1. Record the GitHub Issue Ticket, then create or resume its feature branch
    before editing.
 2. Implement the change and run its selected tests.
-3. Classify the complete output set and run `data-document-redaction` when
-   potentially sensitive surfaces are in scope; continue only on `pass` or a
-   recorded no-sensitive-surface skip.
+3. Stage the intended change and run `data-document-redaction`; continue only
+   on `pass`, `noop`, or a recorded no-sensitive-surface skip.
 4. Invoke `github-push-when-ready`, commit, push the branch, and create or
    update the PR.
 5. Start Automatic Review immediately after the PR is created or updated.
@@ -406,26 +406,21 @@ complete backlog, or test report.
 
 ## Redaction gate contract
 
-Apply the gate to the complete artifact set before committing or publishing it,
-and repeat it after any blocking review fix before the next commit. This
-includes source files, documentation, logs, configs, screenshots, exports,
-filenames, and metadata.
+Run the gate on the files staged for the next commit, and repeat it after any
+blocking review fix that changes staged content before the next commit.
 
-- Classify the recipient, purpose, required utility, and whether reversibility
-  is allowed. Assume non-reversible handling unless the task explicitly needs
-  controlled traceability.
-- If no potentially sensitive surface is in scope, record the inspected scope
-  and the reason the gate was skipped, then continue.
-- If a potentially sensitive surface is in scope, follow
-  [`docs/workflow/redaction.md`](docs/workflow/redaction.md) and the
-  `data-document-redaction` skill. The specialist owns format-specific
-  detection, transformation, hidden-surface checks, and validation.
-- Continue to commit, push, or share only after a `pass` result and a safe
-  delivery report. A `needs_review` or `blocked` result stops the boundary
-  transition and records the concrete gap.
-- Reports contain types, counts, location categories, hashes, tool versions,
-  coverage, and residual risks only. Never include original values, mappings,
-  credentials, or full matching context.
+- Stage the intended change, then run the `data-document-redaction` scanner and
+  follow [`docs/workflow/redaction.md`](docs/workflow/redaction.md).
+- Continue on `pass` or `noop`; record the inspected scope and skip only when
+  the staged change carries no sensitive surface.
+- `findings` and `needs_review` stop the boundary transition. Sanitize only the
+  reported files, stage the corrections, and re-scan until `pass`.
+- The specialist reports finding types, file paths, and line numbers only.
+  Never include original values, mappings, credentials, or full matching
+  context.
+- The scan protects the next commit; it is not proof that the repository or its
+  history is free of secrets. Document, PDF, Office, OCR, and non-Git export
+  sanitization are out of scope for this package.
 
 ## Installation
 
