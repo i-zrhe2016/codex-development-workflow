@@ -44,7 +44,8 @@ Requirement
 Docs, code, tests, configuration, refactors, bug fixes, features, dependency
 updates, and CI/CD changes all use the same path:
 
-1. Create or resume a feature branch before editing.
+1. Record the GitHub Issue Ticket, then create or resume its feature branch
+   before editing.
 2. Implement the planned change and run the selected tests.
 3. Run the redaction scan when the artifact set may contain sensitive content.
 4. Commit and push the branch, then create or update its PR.

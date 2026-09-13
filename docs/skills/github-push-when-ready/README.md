@@ -27,7 +27,7 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - The project-scoped `reviewer` is optional supplemental analysis and never
   replaces the mandatory `codex review` gate.
 - Merge only after Automatic Review passes, update the default branch, close the
-  Ticket when one exists, and then update State / Docs.
+  Ticket, and then update State / Docs.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.
 - Check GitHub repository metadata when the task includes publishing or a pull
