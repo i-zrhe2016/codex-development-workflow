@@ -31,8 +31,9 @@ When the skill is selected for a planning request, it:
    execute sequentially or pass through the optional delegation gate.
 4. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
-5. Creates or updates one parent plan Issue and one Issue per Ticket before
-   implementation branches start, reusing stable markers to avoid duplicates.
+5. Creates or updates one Issue per Ticket before implementation branches
+   start, plus a parent plan Issue for multi-Ticket work, reusing stable
+   markers to avoid duplicates.
 6. Assigns or resumes one implementation branch and base branch for each
    Ticket, using the updated default branch for new dependency-ready Tickets;
    each Ticket Issue and branch remain a one-to-one pair.
@@ -63,10 +64,10 @@ the mandatory PR gate.
 Make the skill available in a Codex skills environment, then provide a change
 request or implementation idea in a repository with a resolvable GitHub
 remote. The frontmatter description in `SKILL.md` is used for skill selection.
-The skill creates/updates the parent plan Issue and Ticket Issues before
-returning a successful plan with execution-ready Tickets and nested Slices. If
-the connector or required permission is unavailable, the result is blocked
-rather than an unpersisted plan.
+The skill creates/updates the Ticket Issues, plus a parent plan Issue for
+multi-Ticket work, before returning a successful plan with execution-ready
+Tickets and nested Slices. If the connector or required permission is
+unavailable, the result is blocked rather than an unpersisted plan.
 
 For repository-aware planning, include the relevant repository in the working
 context. The skill will reuse existing architecture and conventions where they

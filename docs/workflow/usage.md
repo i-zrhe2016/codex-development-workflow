@@ -66,10 +66,10 @@ Slice instead of growing the patch.
 ## Persistent plan and ticket handoff
 
 When `plan-to-ticket` creates a plan or ticket, GitHub Issues are the mandatory
-durable source of truth. Create or update one parent plan Issue and one Issue
-per ticket before implementation branches start. A single-Ticket requirement
-records one Ticket Issue without a parent plan Issue. Each ticket Issue
-retains:
+durable source of truth. Create or update every required Ticket Issue before
+implementation branches start, plus a parent plan Issue for multi-Ticket work.
+A single-Ticket requirement records one Ticket Issue without a parent plan
+Issue. Each ticket Issue retains:
 
 - `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
 - `Branch`, `Base`, `Dependencies`, and `PR` metadata;

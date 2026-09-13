@@ -16,7 +16,7 @@ remain inside their own `SKILL.md` files.
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
 | `.codex/agents/reviewer.toml` | Optional project-scoped supplemental read-only reviewer; it cannot replace `codex review`. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
-| `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the parent plan and ticket Issues before branch work. |
+| `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the ticket Issues, plus the parent plan Issue for multi-Ticket work, before branch work. |
 | GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
@@ -123,12 +123,12 @@ order within the branch. Tiny work is one Ticket with one implicit Slice.
 ### Persistent ticket authority
 
 GitHub Issues are the sole durable authority for plans and tickets created by
-`plan-to-ticket`. A parent plan Issue holds the overall plan and links to one
-Issue per behavior ticket. Each ticket Issue retains its goal, scope,
-dependencies, acceptance criteria, validation, and `Status`, `Branch`, `Base`,
-and `PR` metadata. The workflow blocks when required Issue reads or writes
-fail; it does not create a local Markdown mirror or treat chat output as
-completion.
+`plan-to-ticket`. For multi-Ticket work, a parent plan Issue holds the overall
+plan and links to one Issue per behavior ticket. Each ticket Issue retains its
+goal, scope, dependencies, acceptance criteria, validation, and `Status`,
+`Branch`, `Base`, and `PR` metadata. The workflow blocks when required Issue
+reads or writes fail; it does not create a local Markdown mirror or treat chat
+output as completion.
 
 `Repo_Current_State.md` remains a compact recovery pointer to the active Issue,
 not a backlog or second ticket database.

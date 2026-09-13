@@ -25,7 +25,7 @@ application infrastructure topology.
 | --- | --- | --- |
 | [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines trigger metadata, Ticket-first planning rules, Issue persistence contract, Slice structure, scope constraints, and verification expectations. | It plans and persists Issue records; it does not implement the planned change. |
 | [`skills/plan-to-ticket/agents/openai.yaml`](../../../skills/plan-to-ticket/agents/openai.yaml) | Supplies the display name and short interface description. | It describes the skill in the interface; it does not define planning behavior. |
-| GitHub Issues connector | Creates, finds, and updates the parent plan Issue and one Issue per ticket. | It is the external durable authority; no local Markdown mirror is maintained. |
+| GitHub Issues connector | Creates, finds, and updates one Issue per ticket, plus the parent plan Issue for multi-Ticket work. | It is the external durable authority; no local Markdown mirror is maintained. |
 | This documentation package | Explains the bundle structure, behavior, output contract, and maintenance expectations. | Documentation does not add executable behavior. |
 
 ## Request flow
@@ -38,8 +38,8 @@ application infrastructure topology.
 4. The skill decomposes each Ticket into dependency-ordered execution Slices
    with their own acceptance and validation contract.
 5. The skill resolves the repository's GitHub target, searches stable markers,
-   and creates or updates the parent plan Issue and Ticket Issues before
-   implementation branches start.
+   and creates or updates the Ticket Issues, plus the parent plan Issue for
+   multi-Ticket work, before implementation branches start.
 6. The skill assigns or resumes one branch and base branch per Ticket, records
    those values on the same Issue, and uses the updated default branch for new
    dependency-ready Tickets.

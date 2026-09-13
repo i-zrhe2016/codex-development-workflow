@@ -341,8 +341,9 @@ do not duplicate its detailed procedure here.
   work; split requirements into Tickets before generating their Slices. A
   single-behavior requirement records one Ticket Issue directly instead of
   invoking the skill. Generated Slices must satisfy the Slice contract above,
-  persist the plan and Tickets to GitHub Issues before branch work, and expose
-  enough boundaries for the delegation gate to make a safe decision.
+  persist its Tickets and any parent plan to GitHub Issues before branch work,
+  and expose enough boundaries for the delegation gate to make a safe
+  decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
