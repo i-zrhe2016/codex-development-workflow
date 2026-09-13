@@ -39,7 +39,7 @@ main --> delegates : bounded tasks
 main --> context : understand
 main --> plan : decompose multi-Ticket work
 main --> tests : validate / integrate
-main --> redact : sharing boundary
+main --> redact : staged scan
 main --> publish : deliver
 main --> state : reconcile after merge
 main --> deploy : when requested

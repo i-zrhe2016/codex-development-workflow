@@ -29,8 +29,12 @@ Interpret the result:
 - `findings`: stop publication, inspect only the reported files/lines, sanitize the values, stage the fixes, and run the scan again.
 - `needs_review`: stop publication because a staged file could not be safely inspected, such as a binary, oversized, or non-UTF-8 file.
 - `noop`: no staged files; no redaction action is required.
+- `error`: stop; the scan could not run, for example outside a Git repository or when the staged diff cannot be read. Fix the cause and run the scan again.
 
-Do not bypass `findings` or `needs_review` merely because tests pass.
+The scanner exits `0` for `pass`/`noop`, `1` for `findings`, `2` for
+`needs_review`, and `3` for `error`.
+
+Do not bypass `findings`, `needs_review`, or `error` merely because tests pass.
 
 ## What to detect
 
