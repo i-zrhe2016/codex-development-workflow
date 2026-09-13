@@ -224,10 +224,10 @@ Stage the intended change, then invoke `data-document-redaction` and follow
 [redaction.md](redaction.md) before creating the commit. Repeat the scan after
 any blocking review fix that changes staged content, before the next commit.
 
-The scan returns `pass`, `findings`, `needs_review`, or `noop`. Only `pass` and
-`noop` continue; record the inspected scope and skip only when the staged
-change carries no sensitive surface. `findings` and `needs_review` stop the
-boundary transition until the reported gap is resolved.
+The scan returns `pass`, `findings`, `needs_review`, `noop`, or `error`. Only
+`pass` and `noop` continue; record the inspected scope and skip only when the
+staged change carries no sensitive surface. `findings`, `needs_review`, and
+`error` stop the boundary transition until the reported gap is resolved.
 
 The gate covers the staged commit set only. Document, PDF, Office, OCR,
 repository-wide, and non-Git export sanitization are out of scope and need

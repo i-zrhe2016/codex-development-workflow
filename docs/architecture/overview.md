@@ -224,8 +224,8 @@ checkout where Codex runs.
 
 Run the gate on the files staged for the next commit and repeat it after any
 blocking review fix that changes staged content. The scan reports `pass`,
-`findings`, `needs_review`, or `noop`; only `pass` and `noop` continue, and a
-recorded skip is allowed only when the staged change carries no sensitive
+`findings`, `needs_review`, `noop`, or `error`; only `pass` and `noop` continue,
+and a recorded skip is allowed only when the staged change carries no sensitive
 surface.
 
 The packaged specialist covers the staged commit set only. Document, PDF,

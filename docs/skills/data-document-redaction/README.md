@@ -25,6 +25,10 @@ Interpret the result:
 | `findings` | Stop publication; sanitize only the reported files and lines, stage the fixes, and re-scan. |
 | `needs_review` | Stop publication; a staged file could not be safely inspected, such as a binary, oversized, or non-UTF-8 file. |
 | `noop` | No staged files; no redaction action is required. |
+| `error` | Stop; the scanner could not run, for example outside a Git repository or when the staged diff cannot be read. Fix the cause and re-run. |
+
+The scanner exits `0` for `pass`/`noop`, `1` for `findings`, `2` for
+`needs_review`, and `3` for `error`.
 
 In the unified PR lifecycle, run this scan before the initial commit and repeat
 it after any blocking Automatic Review fix before the next commit. When the

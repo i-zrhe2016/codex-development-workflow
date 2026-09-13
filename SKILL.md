@@ -413,8 +413,9 @@ blocking review fix that changes staged content before the next commit.
   follow [`docs/workflow/redaction.md`](docs/workflow/redaction.md).
 - Continue on `pass` or `noop`; record the inspected scope and skip only when
   the staged change carries no sensitive surface.
-- `findings` and `needs_review` stop the boundary transition. Sanitize only the
-  reported files, stage the corrections, and re-scan until `pass`.
+- `findings`, `needs_review`, and `error` stop the boundary transition.
+  Sanitize only the reported files, stage the corrections, and re-scan until
+  `pass`; fix the cause first when the scan itself could not run.
 - The specialist reports finding types, file paths, and line numbers only.
   Never include original values, mappings, credentials, or full matching
   context.

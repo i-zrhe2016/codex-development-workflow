@@ -36,7 +36,11 @@ not rely on cleaning up a secret or personal value after it has been committed.
 | `findings` | Stop publication; sanitize the reported files and re-scan. |
 | `needs_review` | Stop publication; resolve the uninspectable staged file. |
 | `noop` | Nothing is staged; no redaction action is required. |
+| `error` | Stop; the scan could not run, for example outside a Git repository or when the staged diff cannot be read. Fix the cause and re-run. |
 | No sensitive surface in the staged change | Record the inspected scope and the skip reason; continue. |
+
+The scanner exits `0` for `pass`/`noop`, `1` for `findings`, `2` for
+`needs_review`, and `3` for `error`.
 
 If a secret was already committed or pushed, stop and treat it as credential
 exposure: revoke or rotate it first, then handle history separately if
