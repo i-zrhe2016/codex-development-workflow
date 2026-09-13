@@ -164,7 +164,9 @@ new commits against the last assessed head when their impact is bounded; verify
 the original findings are resolved. Base/history changes, interface or security
 boundary changes, cross-module behavior, and uncertain impact require full review.
 Use the [recoverable review runner](../../skills/github-push-when-ready/references/review-execution.md)
-to stream and retain logs, reuse matching results, and avoid duplicate processes.
+to stream and retain logs, reuse matching results, and avoid duplicate
+processes. Pass the remote-tracking base (`origin/<base>`); the runner blocks a
+stale local base branch instead of reviewing the wrong range.
 
 The project-scoped `.codex/agents/reviewer.toml` is optional supplemental
 read-only analysis. It may be invoked from an interactive Codex session, but it

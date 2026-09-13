@@ -21,6 +21,40 @@ def git(*args):
     return subprocess.check_output(["git", *args], text=True).strip()
 
 
+def try_git(*args):
+    result = subprocess.run(["git", *args], text=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.DEVNULL)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def stale_base_error(argument, base):
+    """Block a local base branch that disagrees with its origin counterpart.
+
+    A stale local branch silently reviews the wrong range because the PR base
+    is the remote ref. Refuse instead of substituting an unrequested ref.
+    """
+    if argument.startswith("refs/"):
+        return None
+    local_ref = f"refs/heads/{argument}"
+    local = try_git("rev-parse", "--verify", f"{local_ref}^{{commit}}")
+    if local is None or local != base:
+        # The reviewed base is not this local branch tip (for example a
+        # same-named tag won ref resolution), so there is nothing to block.
+        return None
+    upstream = try_git("for-each-ref", "--format=%(upstream)", local_ref)
+    for remote_ref in filter(None, (upstream, f"origin/{argument}")):
+        remote = try_git("rev-parse", "--verify", f"{remote_ref}^{{commit}}")
+        if remote is None:  # pragma: no cover - defensive
+            continue
+        if remote == local:
+            return None
+        shown = remote_ref.removeprefix("refs/remotes/")
+        return (f"Base '{argument}' resolves to {local[:12]} but '{shown}' is "
+                f"{remote[:12]}; the PR base is the remote ref. Re-run with "
+                f"--base {shown}, or pass the exact ref you intend.")
+    return None
+
+
 def save(path, data):
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(data, indent=2) + "\n")
@@ -128,6 +162,9 @@ def main():
             else:
                 print(f"Previous child may still be active; inspect {state_path}")
                 return 2
+        stale = stale_base_error(args.base, base)
+        if stale:
+            parser.error(stale)
         scope = choose_scope(base, head, previous, args.incremental and not args.force_full)
         run_id = uuid.uuid4().hex
         log_path = directory / (run_id + ".log")

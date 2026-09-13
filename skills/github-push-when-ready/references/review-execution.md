@@ -1,7 +1,10 @@
 # Recoverable Codex review
 
 Run from a clean, published PR branch. Resolve and refresh the actual PR base
-before starting; a stale local base cannot detect upstream changes.
+before starting; a stale local base cannot detect upstream changes. The runner
+refuses a bare local base branch that differs from its configured upstream
+(`<remote>/<branch>`, falling back to `origin/<branch>`) instead of silently
+reviewing the wrong range, and it points at that remote ref in the error.
 
 ```bash
 python3 <skill-dir>/scripts/run_review.py --base origin/main
