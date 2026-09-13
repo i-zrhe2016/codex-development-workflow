@@ -1,24 +1,27 @@
 # Repository Current State
 
-Last verified: 2026-09-10 @ f3a90d6
+Last verified: 2026-09-13 @ 2a5c519
 
 ## Current Focus
 
-- Unified PR delivery and recoverable Codex review are implemented and verified.
+- Mandatory per-requirement Tickets, unified PR delivery, and recoverable
+  Codex review are implemented and verified.
 
 ## Implemented
 
-- The workflow now runs Requirement -> Understand repo -> Plan -> Slice/Ticket
-  if needed -> Create feature branch -> Implement -> Test -> applicable
+- The workflow now runs Requirement -> Understand repo -> Plan -> Record
+  Ticket + Slices -> Create feature branch -> Implement -> Test -> applicable
   Redaction -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix
-  loop when blocked -> Merge -> branch cleanup/default synchronization -> State/
-  Docs -> Deploy if needed.
+  loop when blocked -> Merge -> branch cleanup/default synchronization -> Close
+  Ticket -> State/Docs -> Deploy if needed -> one bounded process evaluation.
 - Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
   changes all use the feature-branch and PR path; no direct default-branch
   delivery exception remains.
-- Complex requirements are split into behavior Tickets before their dependency-ordered Slices; tiny requests may remain one implicit Slice without Ticket overhead.
-- A ticketless focused Slice still requires the same branch, test, redaction,
-  commit, push, PR, Automatic Review, merge, and cleanup gates.
+- Every requirement is recorded as a GitHub Issue Ticket before branch work.
+  A single-behavior requirement is one Ticket with one execution Slice; larger
+  work splits into behavior Tickets and dependency-ordered Slices, and every
+  Ticket keeps the same branch, test, redaction, commit, push, PR, Automatic
+  Review, merge, and cleanup gates.
 - Normal and complex Slices define scope, exclusions, dependencies, acceptance criteria, relevant context, test strategy, verification level, test cases, and validation commands.
 - Verification levels are `minimal`, `focused`, `regression`, and `full`; focused is the default and passing evidence stops expansion unless escalation is justified.
 - Test-first behavior is conditional on meaningful behavioral risk; non-behavioral changes use direct minimal validation.
@@ -42,7 +45,10 @@ Last verified: 2026-09-10 @ f3a90d6
   Initial review is full-range; bounded fixes can use the last assessed head.
 - Ticket Issues and implementation branches are one-to-one through `Branch`/`Base` metadata, and PR head/base must match those fields.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
-- `plan-to-ticket` now requires a parent plan Issue and one Issue per ticket before branch work, with stable markers, lifecycle metadata, and no Markdown/chat fallback.
+- `plan-to-ticket` persists every Ticket Issue, plus the parent plan Issue for
+  multi-Ticket work, before branch work, with stable markers, lifecycle
+  metadata, and no Markdown/chat fallback; single-behavior requirements record
+  one Ticket Issue directly under the same Issue contract.
 - The root workflow creates or resumes a feature branch before implementation,
   requires a PR for every change, and merges only after Automatic Review passes.
 
@@ -71,7 +77,7 @@ Last verified: 2026-09-10 @ f3a90d6
 ## Architecture Snapshot
 
 - `SKILL.md` owns main-agent stage routing, Ticket/Slice hierarchy, the optional Delegation Gate, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
-- `plan-to-ticket` owns Ticket-first decomposition, dependency-ordered Slice generation, and mandatory GitHub Issue persistence; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
+- `plan-to-ticket` owns Ticket-first decomposition, dependency-ordered Slice generation, and mandatory GitHub Issue persistence, including the shared contract used by directly recorded single-Ticket Issues; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
 - `docs/skills/` contains explanatory documentation for every managed specialist skill; operational references and scripts remain beside the runtime bundles under `skills/`.
 - `data-document-redaction` and `auto-deploy` remain conditional gates;
   `github-push-when-ready` governs every publication, PR, merge, and branch
