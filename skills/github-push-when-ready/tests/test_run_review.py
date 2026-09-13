@@ -80,6 +80,62 @@ class ReviewTests(unittest.TestCase):
             self.assertEqual(review.choose_scope("base", "head", {
                 "base": "base", "head": "old", "assessment": "pass"}, True), "base")
 
+    def test_stale_local_base_reports_both_refs(self):
+        def fake_try_git(*args):
+            ref = args[-1]
+            if ref == "refs/heads/main^{commit}":
+                return "a" * 40
+            if ref == "origin/main^{commit}":
+                return "b" * 40
+            return None
+        with patch.object(review, "try_git", side_effect=fake_try_git):
+            message = review.stale_base_error("main", "a" * 40)
+        self.assertIsNotNone(message)
+        self.assertIn("origin/main", message)
+
+    def test_matching_and_non_local_bases_are_accepted(self):
+        def fake_try_git(*args):
+            ref = args[-1]
+            if ref.startswith("refs/heads/"):
+                return "a" * 40
+            if ref.startswith("origin/"):
+                return "a" * 40
+            return None
+        with patch.object(review, "try_git", side_effect=fake_try_git):
+            self.assertIsNone(review.stale_base_error("main", "a" * 40))
+            self.assertIsNone(review.stale_base_error("origin/main", "a" * 40))
+            self.assertIsNone(review.stale_base_error("deadbeef", "a" * 40))
+
+    def test_stale_local_base_blocks_before_review_starts(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "codex-review"
+            directory.mkdir(exist_ok=True)
+
+            def fake_git(*args):
+                if args[0] == "status":
+                    return ""
+                if "--absolute-git-dir" in args:
+                    return str(root)
+                return "head" if args[-1] == "HEAD" else "a" * 40
+
+            def fake_try_git(*args):
+                ref = args[-1]
+                if ref == "refs/heads/main^{commit}":
+                    return "a" * 40
+                if ref == "origin/main^{commit}":
+                    return "b" * 40
+                return None
+
+            with patch.object(review, "git", side_effect=fake_git), patch.object(
+                    review, "try_git", side_effect=fake_try_git), patch.object(
+                    review, "stream") as runner, patch.object(
+                    review.sys, "argv", ["run_review", "--base", "main"]):
+                with self.assertRaises(SystemExit):
+                    review.main()
+            runner.assert_not_called()
+            self.assertFalse((directory / "state.json").exists())
+
     def test_output_is_saved_and_failure_is_preserved(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

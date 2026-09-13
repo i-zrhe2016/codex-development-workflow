@@ -21,6 +21,31 @@ def git(*args):
     return subprocess.check_output(["git", *args], text=True).strip()
 
 
+def try_git(*args):
+    result = subprocess.run(["git", *args], text=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.DEVNULL)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def stale_base_error(argument, base):
+    """Block a local base branch that disagrees with its origin counterpart.
+
+    A stale local branch silently reviews the wrong range because the PR base
+    is the remote ref. Refuse instead of substituting an unrequested ref.
+    """
+    if argument.startswith("refs/"):
+        return None
+    local = try_git("rev-parse", "--verify", f"refs/heads/{argument}^{{commit}}")
+    if local is None:
+        return None
+    remote = try_git("rev-parse", "--verify", f"origin/{argument}^{{commit}}")
+    if remote is None or remote == local:
+        return None
+    return (f"Base '{argument}' resolves to {local[:12]} but 'origin/{argument}' "
+            f"is {remote[:12]}; the PR base is the remote ref. Re-run with "
+            f"--base origin/{argument}, or pass the exact ref you intend.")
+
+
 def save(path, data):
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(data, indent=2) + "\n")
@@ -95,6 +120,9 @@ def main():
     if git("status", "--porcelain"):
         parser.error("Review requires a clean worktree")
     base = git("rev-parse", "--verify", args.base + "^{commit}")
+    stale = stale_base_error(args.base, base)
+    if stale:
+        parser.error(stale)
     head = git("rev-parse", "HEAD")
     directory = Path(git("rev-parse", "--absolute-git-dir")) / "codex-review"
     directory.mkdir(mode=0o700, exist_ok=True)
