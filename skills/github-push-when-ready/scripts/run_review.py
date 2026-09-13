@@ -35,15 +35,22 @@ def stale_base_error(argument, base):
     """
     if argument.startswith("refs/"):
         return None
-    local = try_git("rev-parse", "--verify", f"refs/heads/{argument}^{{commit}}")
+    local_ref = f"refs/heads/{argument}"
+    local = try_git("rev-parse", "--verify", f"{local_ref}^{{commit}}")
     if local is None:
         return None
-    remote = try_git("rev-parse", "--verify", f"origin/{argument}^{{commit}}")
-    if remote is None or remote == local:
-        return None
-    return (f"Base '{argument}' resolves to {local[:12]} but 'origin/{argument}' "
-            f"is {remote[:12]}; the PR base is the remote ref. Re-run with "
-            f"--base origin/{argument}, or pass the exact ref you intend.")
+    upstream = try_git("for-each-ref", "--format=%(upstream)", local_ref)
+    for remote_ref in filter(None, (upstream, f"origin/{argument}")):
+        remote = try_git("rev-parse", "--verify", f"{remote_ref}^{{commit}}")
+        if remote is None:  # pragma: no cover - defensive
+            continue
+        if remote == local:
+            return None
+        shown = remote_ref.removeprefix("refs/remotes/")
+        return (f"Base '{argument}' resolves to {local[:12]} but '{shown}' is "
+                f"{remote[:12]}; the PR base is the remote ref. Re-run with "
+                f"--base {shown}, or pass the exact ref you intend.")
+    return None
 
 
 def save(path, data):
