@@ -144,6 +144,55 @@ class ReviewTests(unittest.TestCase):
         with patch.object(review, "try_git", side_effect=fake_try_git):
             self.assertIsNone(review.stale_base_error("main", "a" * 40))
 
+    def test_resolved_base_that_is_not_the_branch_tip_is_accepted(self):
+        # A same-named tag may win ref resolution, so only guard when the
+        # resolved base really is the local branch tip.
+        def fake_try_git(*args):
+            ref = args[-1]
+            if ref == "refs/heads/main^{commit}":
+                return "a" * 40
+            if ref == "origin/main^{commit}":
+                return "b" * 40
+            return None
+        with patch.object(review, "try_git", side_effect=fake_try_git):
+            self.assertIsNone(review.stale_base_error("main", "b" * 40))
+
+    def test_record_is_not_blocked_by_a_stale_base(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            prior = dict(run_id="old", base="base", head="head",
+                         status="completed", assessment="pending")
+
+            def fake_git(*args):
+                if args[0] == "status":
+                    return ""
+                if "--absolute-git-dir" in args:
+                    return str(root)
+                return "head" if args[-1] == "HEAD" else "base"
+
+            def fake_try_git(*args):
+                if args[0] == "for-each-ref":
+                    return None
+                ref = args[-1]
+                if ref == "refs/heads/main^{commit}":
+                    return "base"
+                if ref == "origin/main^{commit}":
+                    return "b" * 40
+                return None
+
+            directory = root / "codex-review"
+            directory.mkdir(exist_ok=True)
+            review.save(directory / "state.json", prior)
+            with patch.object(review, "git", side_effect=fake_git), \
+                    patch.object(review, "try_git", side_effect=fake_try_git), \
+                    patch.object(review, "stream") as runner, \
+                    patch.object(review.sys, "argv",
+                                 ["run_review", "--base", "main",
+                                  "--record", "pass", "--note", "ok"]):
+                self.assertEqual(review.main(), 0)
+            runner.assert_not_called()
+            self.assertEqual(json.loads((directory / "state.json").read_text())["assessment"], "pass")
+
     def test_stale_local_base_blocks_before_review_starts(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

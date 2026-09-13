@@ -37,7 +37,9 @@ def stale_base_error(argument, base):
         return None
     local_ref = f"refs/heads/{argument}"
     local = try_git("rev-parse", "--verify", f"{local_ref}^{{commit}}")
-    if local is None:
+    if local is None or local != base:
+        # The reviewed base is not this local branch tip (for example a
+        # same-named tag won ref resolution), so there is nothing to block.
         return None
     upstream = try_git("for-each-ref", "--format=%(upstream)", local_ref)
     for remote_ref in filter(None, (upstream, f"origin/{argument}")):
@@ -127,9 +129,6 @@ def main():
     if git("status", "--porcelain"):
         parser.error("Review requires a clean worktree")
     base = git("rev-parse", "--verify", args.base + "^{commit}")
-    stale = stale_base_error(args.base, base)
-    if stale:
-        parser.error(stale)
     head = git("rev-parse", "HEAD")
     directory = Path(git("rev-parse", "--absolute-git-dir")) / "codex-review"
     directory.mkdir(mode=0o700, exist_ok=True)
@@ -163,6 +162,9 @@ def main():
             else:
                 print(f"Previous child may still be active; inspect {state_path}")
                 return 2
+        stale = stale_base_error(args.base, base)
+        if stale:
+            parser.error(stale)
         scope = choose_scope(base, head, previous, args.incremental and not args.force_full)
         run_id = uuid.uuid4().hex
         log_path = directory / (run_id + ".log")
