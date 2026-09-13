@@ -24,7 +24,12 @@ class ReviewTests(unittest.TestCase):
             if "--absolute-git-dir" in args:
                 return str(root)
             return "head" if args[-1] == "HEAD" else "base"
+        def fake_try_git(*args):
+            # Keep the helper hermetic: equal local/remote refs skip the
+            # stale-base guard without touching the ambient repository.
+            return "base"
         with patch.object(review, "git", side_effect=fake_git), patch.object(
+                review, "try_git", side_effect=fake_try_git), patch.object(
                 review, "stream", return_value=stream_result) as runner, patch.object(
                 review.sys, "argv", ["run_review", "--base", "main", *arguments]):
             result = review.main()
