@@ -15,7 +15,7 @@ title Codex Development Workflow - Unified PR-Gated Lifecycle
 state "Requirement" as requirement
 state "Understand repo\nRead current state + architecture + relevant code\n[context-efficiency when context-heavy]" as understand
 state "Plan\nScope / exclusions / acceptance / dependencies" as plan
-state "Slice / Ticket if needed\n[plan-to-ticket when Ticketed]\nTicket first for multiple behaviors;\nSlices inside each Ticket" as decompose
+state "Record Ticket + Slices\n[GitHub Issue before branch]\nOne behavior -> one Ticket;\n[plan-to-ticket] for multiple Tickets" as decompose
 state "Create feature branch\n(all change types)" as branch
 state "Implement\n(main agent; optional bounded delegation)" as implement
 state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression / full" as test
@@ -33,7 +33,7 @@ state "Push branch" as push_fix
 state "Merge PR\nRequired checks + reviewed head verified\n[github-push-when-ready]" as merge
 state "Delete source branch" as delete_branch
 state "Synchronize actual PR base\nFast-forward + prune" as update_main
-state "Close Ticket\nif applicable" as close_ticket
+state "Close Ticket" as close_ticket
 state "Update State / Docs\n[repo-current-state]" as state_docs
 state "Deploy if needed\n[auto-deploy]" as deploy
 state "Verify / Rollback" as verify #EAF2F8
@@ -69,12 +69,13 @@ verify --> [*] : pass
 verify --> [*] : fail / rollback or escalate
 
 note right of decompose
-Persist parent plan + Ticket Issues before branching.
+Persist Ticket Issues before branching; add the
+parent plan Issue for multi-Ticket work.
 One Ticket owns one branch and PR; its Slices share it.
 Dependent Tickets start after prerequisites merge.
-Use one Slice without a Ticket when one behavior
-can be planned, implemented, tested, and reviewed
-as one unit. This never removes the branch or PR gate.
+Every requirement gets a Ticket; one behavior uses
+one Ticket with one Slice. This never removes the
+branch or PR gate.
 end note
 
 note right of review

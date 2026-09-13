@@ -1,6 +1,6 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Route every change through a feature branch, tests, applicable redaction, commit, push, PR, automatic review, merge, cleanup, state update, and post-delivery process evaluation, with bounded self-improvement and Ticket/Slice planning when needed."
+description: "Entry point for repository-wide Codex development. Record every requirement as a GitHub Issue Ticket, then route it through a feature branch, tests, applicable redaction, commit, push, PR, automatic review, merge, cleanup, state update, and post-delivery process evaluation."
 ---
 
 # Codex Development Workflow
@@ -8,9 +8,10 @@ description: "Entry point for repository-wide Codex development. Route every cha
 Use this skill as the entry point for repository development. The main agent
 owns requirements, architecture, planning, Ticket/Slice decomposition,
 integration, delivery gates, process evaluation, and final judgment. Every
-change follows the same feature-branch and PR lifecycle; only planning depth,
-test level, and whether a Ticket is needed may vary. Specialist skills provide
-procedures for the work they own.
+change follows the same feature-branch and PR lifecycle, and every requirement
+is recorded as a GitHub Issue Ticket before implementation starts; only
+planning depth and test level may vary. Specialist skills provide procedures
+for the work they own.
 
 ## Core workflow
 
@@ -18,7 +19,7 @@ procedures for the work they own.
 Requirement
     -> Understand repo
     -> Plan
-    -> Slice / Ticket if needed
+    -> Record Ticket + Slice plan (GitHub Issue)
     -> Create branch
     -> Implement
     -> Test
@@ -52,13 +53,14 @@ updates, and CI/CD changes all use the same path:
 6. If review finds a blocking issue, fix it and repeat Test, applicable
    Redaction, Commit, Push, and Automatic Review.
 7. Merge only after review passes, delete the source branch, update the base
-   branch, close the Ticket when one exists, and then update State / Docs.
+   branch, close the Ticket, and then update State / Docs.
 8. After delivery and any requested deployment, evaluate the workflow and start
    at most one bounded follow-up improvement when the evidence is reusable.
 
 The delivery path never has a direct-push exception for documentation, small
-fixes, configuration, or other change categories. A single behavior may use
-one Slice without a Ticket, but it still requires a branch and PR.
+fixes, configuration, or other change categories. Every requirement, however
+small, has a Ticket; a single-behavior requirement is one Ticket containing one
+implicit Slice, and it still requires a branch and PR.
 
 ## Ticket-to-Slice hierarchy
 
@@ -68,14 +70,17 @@ one Slice without a Ticket, but it still requires a branch and PR.
 - A **Slice** is an execution-ready unit inside a Ticket. It carries its own
   scope, dependencies, acceptance criteria, test strategy, test level, test
   cases, and validation command.
+- Every requirement has a Ticket Issue before branch work starts. A
+  single-behavior requirement is one Ticket with a single Slice; larger work
+  adds more Tickets and Slices.
 - For a large or multi-behavior request, split the requirements into Tickets
   first, then split each Ticket into dependency-ordered Slices. Do not create
   Slices before the Ticket boundaries are clear.
 - Keep all Slices for one Ticket on that Ticket's branch. Ticket dependencies
   control when a branch may start; Slice dependencies control execution order
   within the branch.
-- A single-behavior request may remain one Slice without a Ticket or Issue;
-  this changes only planning overhead, never the branch or PR gate.
+- Planning depth scales with the requirement. A smaller Ticket reduces the
+  number of Slices, never the branch or PR gate.
 
 Planning controls architecture and scope. Testing controls implementation
 evidence. Neither replaces the other.
@@ -97,12 +102,13 @@ Test cases
 Validation command
 ```
 
-When `plan-to-ticket` is used, each Ticket carries its canonical GitHub Issue
-link and execution metadata; its Slices inherit the Ticket's Issue, branch, and
-base while carrying their own execution contract. The parent plan Issue and all
-initial Ticket Issues must exist before implementation branches are created; a
-failed Issue operation blocks the workflow and has no Markdown or chat-only
-fallback.
+Every Ticket carries its canonical GitHub Issue link and execution metadata;
+its Slices inherit the Ticket's Issue, branch, and base while carrying their
+own execution contract. A single-behavior requirement records one Ticket Issue
+directly; `plan-to-ticket` adds the parent plan Issue when work spans multiple
+Tickets. All required Issues must exist before implementation branches are
+created; a failed Issue operation blocks the workflow and has no Markdown or
+chat-only fallback.
 
 Only start dependency-ready Slices. The main agent may execute one Slice
 itself, or the delegation gate may start multiple independent Slices with
@@ -150,10 +156,8 @@ subagents unless explicitly required.
 - Create or resume a feature branch before editing for every change, regardless
   of whether the change is documentation, code, configuration, a refactor, a
   bug fix, a feature, a dependency update, or CI/CD work.
-- For Ticketed work, use one branch per Ticket:
+- Record the Ticket Issue before branching, then use one branch per Ticket:
   `<type>/<ticket-id>-<short-description>`.
-- For a single Slice without a Ticket, use a descriptive feature branch such as
-  `<type>/<short-description>`.
 - Create new branches from the updated default branch. Start dependent Ticket
   branches after their prerequisite Tickets are merged.
 - Keep a Ticket's implementation, tests, and related documentation on its
@@ -177,8 +181,7 @@ subagents unless explicitly required.
 - Track implementation readiness separately from merge status. A passing
   change is ready to open or update a PR; it is delivered only after merging.
 - After Automatic Review passes, merge the PR, delete the source branch, update
-  the default branch, close the Ticket when one exists, and then update State /
-  Docs.
+  the default branch, close the Ticket, and then update State / Docs.
 - If a ticket needs to be abandoned, preserve its work and re-plan.
   Do not automatically delete unmerged branches or reset user changes.
 
@@ -235,7 +238,7 @@ waiting for user confirmation.
   relevant integration or regression checks.
 - Commit and push the feature branch, then create or update its PR before
   Automatic Review.
-- Review the complete PR diff, including every Slice in a Ticket when Ticketed.
+- Review the complete PR diff, including every Slice in the Ticket.
 - If findings block merge, fix them and repeat Test, applicable Redaction,
   Commit, Push, and Automatic Review on the updated PR.
 - When multiple Tickets come together, add broader integration or regression
@@ -335,10 +338,11 @@ do not duplicate its detailed procedure here.
 - `context-efficiency`: large, unfamiliar, or context-heavy repository
   exploration; it is an optional context-loading aid, not a workflow stage.
 - `plan-to-ticket`: complex, multi-ticket, multi-slice, or dependency-driven
-  work; split requirements into Tickets before generating their Slices.
-  Generated Slices must satisfy the Slice contract above, persist the plan and
-  Tickets to GitHub Issues before branch work, and expose enough boundaries for
-  the delegation gate to make a safe decision.
+  work; split requirements into Tickets before generating their Slices. A
+  single-behavior requirement records one Ticket Issue directly instead of
+  invoking the skill. Generated Slices must satisfy the Slice contract above,
+  persist the plan and Tickets to GitHub Issues before branch work, and expose
+  enough boundaries for the delegation gate to make a safe decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
@@ -358,7 +362,8 @@ replacing its workflow.
 
 For every change, regardless of its file type or size:
 
-1. Create or resume a feature branch before editing.
+1. Record the GitHub Issue Ticket, then create or resume its feature branch
+   before editing.
 2. Implement the change and run its selected tests.
 3. Classify the complete output set and run `data-document-redaction` when
    potentially sensitive surfaces are in scope; continue only on `pass` or a
@@ -369,7 +374,7 @@ For every change, regardless of its file type or size:
 6. On blocking findings, repeat Fix -> Test -> Redaction if applicable ->
    Commit -> Push -> Automatic Review until the findings are resolved.
 7. Merge only after Automatic Review passes, delete the source branch, update
-   the default branch, and close the linked Ticket when one exists.
+   the default branch, and close the linked Ticket.
 8. Update `docs/Repo_Current_State.md` and other State / Docs after the merge
    and default-branch update when verified project state changed.
 9. When deployment is requested, invoke `auto-deploy` for target-specific

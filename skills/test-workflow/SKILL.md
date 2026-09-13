@@ -145,7 +145,7 @@ Browser tests complement unit/integration checks; they do not replace them.
 
 ## Completion
 
-A Ticket or ticketless Slice is test-complete when:
+A Ticket's Slices are test-complete when:
 
 - each acceptance criterion has concrete test or validation evidence;
 - the selected checks for the chosen level are GREEN;

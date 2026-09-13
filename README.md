@@ -8,7 +8,7 @@ required specialist skills managed in this repository.
 Requirement
   -> Understand repo
   -> Plan
-  -> Slice / Ticket if needed
+  -> Record Ticket + Slices
   -> Create branch
   -> Implement
   -> Test
@@ -28,13 +28,14 @@ Requirement
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
 
-The macro workflow controls architecture and scope. If requirements span
-multiple behaviors, define behavior Tickets first and then split each Ticket
-into Slices. A single-behavior request may use one Slice without a Ticket, but
-every change still uses a feature branch and the same PR gate. Each Slice
-carries its own acceptance criteria, relevant context, test strategy, and
-validation command.
-Ticketed work keeps its implementation, tests, and related documentation on one
+The macro workflow controls architecture and scope. Every requirement is
+recorded as a GitHub Issue Ticket before branch work starts, so a
+single-behavior request is one Ticket with one implicit Slice while larger work
+defines behavior Tickets first and then splits each Ticket into Slices. Every
+change still uses a feature branch and the same PR gate, and each Slice carries
+its own acceptance criteria, relevant context, test strategy, and validation
+command.
+A Ticket keeps its implementation, tests, and related documentation on one
 branch created from the updated default branch; the Ticket Issue records the
 exact branch and base branch. Ticket dependencies remain separate from Slice
 dependencies, and the PR head and base must match the Ticket metadata.
@@ -123,8 +124,9 @@ Restart Codex after installation.
 `plan-to-ticket` persists every generated plan and Ticket to GitHub Issues
 before implementation branches start. GitHub Issues are the sole durable
 Ticket authority; chat output and `Repo_Current_State.md` provide links and
-recovery context, not a parallel backlog. A Ticket is optional for a single
-behavior Slice, but the branch/PR gate is not optional.
+recovery context, not a parallel backlog. Every requirement has a Ticket, and a
+single-behavior requirement records one Ticket Issue without a parent plan
+Issue; the branch/PR gate is mandatory for every Ticket.
 
 ## Skill documentation
 
