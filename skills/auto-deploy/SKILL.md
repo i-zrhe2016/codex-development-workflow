@@ -136,7 +136,8 @@ unavailable production health endpoint.
 Use related Skills when their triggers apply:
 
 - `test-workflow` for release validation and smoke-test evidence;
-- `data-document-redaction` before deployment artifacts or logs cross a
+- `data-document-redaction` for the staged commit set, and project-specific
+  sanitization/review when deployment artifacts or logs cross a non-Git
   sharing/publication boundary;
 - `github-push-when-ready` for commits, pushes, PRs, and merged source-branch
   cleanup; and

@@ -17,7 +17,7 @@ package "Specialist procedures (invoked when applicable)" #F0FDF4 {
   component "context-efficiency\nLoad relevant context" as context
   component "plan-to-ticket\nRequirement -> behavior Tickets\nEach Ticket -> ordered Slices" as plan
   component "test-workflow\nAcceptance -> selected checks\nEvidence + failures" as tests
-  component "data-document-redaction\nClassify sharing surfaces\nScan / transform / verify" as redact
+  component "data-document-redaction\nScan staged files\nBlock publication on findings" as redact
 }
 package "Delivery and recovery" #FFF7ED {
   component "github-push-when-ready\nReadiness / identity / actual push targets\nCommit / push / PR / merge / cleanup" as publish
@@ -39,7 +39,7 @@ main --> delegates : bounded tasks
 main --> context : understand
 main --> plan : decompose multi-Ticket work
 main --> tests : validate / integrate
-main --> redact : sharing boundary
+main --> redact : staged scan
 main --> publish : deliver
 main --> state : reconcile after merge
 main --> deploy : when requested

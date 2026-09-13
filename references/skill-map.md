@@ -16,7 +16,7 @@ bundle's `agents/openai.yaml`.
 | `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` | `plan-to-ticket` |
 | `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` | `test-workflow` |
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` |
-| `data-document-redaction` | `skills/data-document-redaction/` with its references and scripts | `docs/skills/data-document-redaction/` | `data-document-redaction` |
+| `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` |
 | `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` |
 | `auto-deploy` | `skills/auto-deploy/` | `docs/skills/auto-deploy/` | `auto-deploy` |
 
@@ -36,8 +36,8 @@ requirement's Issue directly under the same Issue contract.
 conditionally performs browser/E2E verification when browser-visible behavior
 changes.
 
-`data-document-redaction` owns the applicable redaction scan before commit and
-after blocking review fixes. `github-push-when-ready` owns the feature-branch
+`data-document-redaction` owns the staged-file scan before commit and repeats it
+after blocking review fixes that change staged content. `github-push-when-ready` owns the feature-branch
 publication path, Commit, Push, Create/Update PR, Merge, and source-branch
 cleanup gates. The built-in `codex review` command is the mandatory Automatic
 Review gate; it is not installed by this script and runs after PR creation or

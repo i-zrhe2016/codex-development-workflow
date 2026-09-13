@@ -1,53 +1,78 @@
-# Data and Document Redaction
+# Git Commit Redaction
 
-`data-document-redaction` is the safety gate for sensitive content crossing a
-commit, sharing, export, upload, or publication boundary. It covers personal
-information, credentials, private keys, business-confidential material, and
-other data that should not be exposed in the resulting artifact.
+`data-document-redaction` is the pre-publication gate for sensitive values in
+the files staged for the next Git commit. It catches credentials, tokens,
+private keys, personal identifiers, and similar values before they reach
+GitHub.
 
-The runtime instructions live in [`SKILL.md`](../../../skills/data-document-redaction/SKILL.md).
+The runtime instructions live in
+[`SKILL.md`](../../../skills/data-document-redaction/SKILL.md).
 
-## Standard flow
+## Gate
 
-1. Define the output audience, purpose, allowed detail, and source scope.
-2. Inventory visible, hidden, and metadata surfaces before transforming the
-   content.
-3. Detect sensitive values and choose the least destructive suitable action:
-   remove, mask, pseudonymize, generalize, or synthesize.
-4. Preserve the structure and meaning required by the task without copying
-   secrets or unnecessary personal data.
-5. Validate the rendered/shared artifact independently, including metadata and
-   alternate representations where the format supports them.
-6. Report what was checked and any remaining limitations without reproducing
-   the sensitive value.
+Stage the intended files, then run the bundled scanner before creating the
+commit:
 
-In the unified PR lifecycle, run this scan before the initial commit when
-applicable and repeat it after any blocking Automatic Review fix before the
-next commit. It does not create a direct-push exception for any change type.
+```bash
+python3 skills/data-document-redaction/scripts/scan_staged.py
+```
 
-Do not overwrite the original when a recoverable output is practical. Do not
-attempt to recover or bypass redaction, and do not treat this documentation as
-a substitute for applicable legal, regulatory, or organizational review.
+Interpret the result:
 
-## Managed references and tools
-
-Detailed, format-specific guidance remains beside the runtime bundle:
-
-| Resource | Purpose |
+| Result | Action |
 |---|---|
-| [`authoritative-sources.md`](../../../skills/data-document-redaction/references/authoritative-sources.md) | Source and evidence handling |
-| [`document-surfaces.md`](../../../skills/data-document-redaction/references/document-surfaces.md) | Visible, hidden, and metadata surfaces |
-| [`transformation-matrix.md`](../../../skills/data-document-redaction/references/transformation-matrix.md) | Choosing a transformation |
-| [`reddit-practices.md`](../../../skills/data-document-redaction/references/reddit-practices.md) | Practical workflow observations |
-| [`output-report.md`](../../../skills/data-document-redaction/references/output-report.md) | Reporting and handoff format |
-| [`scan_sensitive.py`](../../../skills/data-document-redaction/scripts/scan_sensitive.py) | Sensitive-content scan helper |
-| [`verify_pdf.py`](../../../skills/data-document-redaction/scripts/verify_pdf.py) | PDF output verification helper |
+| `pass` | Continue to the commit. |
+| `findings` | Stop publication; sanitize only the reported files and lines, stage the fixes, and re-scan. |
+| `needs_review` | Stop publication; a staged file could not be safely inspected, such as a binary, oversized, or non-UTF-8 file. |
+| `noop` | No staged files; no redaction action is required. |
+| `error` | Stop; the scanner could not run, for example outside a Git repository or when the staged diff cannot be read. Fix the cause and re-run. |
 
-Use the scripts as focused checks within the task; they do not replace
-format-specific inspection or human judgment.
+The scanner exits `0` for `pass`/`noop`, `1` for `findings`, `2` for
+`needs_review`, and `3` for `error`.
+
+In the unified PR lifecycle, run this scan before the initial commit and repeat
+it after any blocking Automatic Review fix before the next commit. When the
+staged change carries no sensitive surface, record the inspected scope and the
+skip reason. The gate does not create a direct-push exception for any change
+type.
+
+## What it protects
+
+- Credentials: passwords, API keys, access tokens, bearer tokens, JWTs, private
+  keys, and credentials embedded in URLs or configuration assignments.
+- Personal or sensitive values in staged files: real email addresses, phone
+  numbers, national IDs, SSN-like identifiers, and payment-card-like numbers.
+- Infrastructure addresses that repository policy treats as sensitive.
+
+The scanner intentionally ignores common documentation placeholders such as
+`example.com`, RFC documentation IP ranges, `127.0.0.1`, `0.0.0.0`, and obvious
+redacted or dummy secret values.
+
+## Boundaries
+
+- It scans the staged files of the next commit only, not the whole repository
+  and not Git history.
+- It is not a PDF, Office, OCR, or general document-anonymization tool, and it
+  is not a repository-wide privacy audit. Non-Git export or sharing boundaries
+  need project-specific sanitization and review.
+- A `pass` result protects the next commit; it is not proof that the repository
+  or its history contains no secrets. If a secret was already committed or
+  pushed, treat it as credential exposure: revoke or rotate it first, then
+  handle history separately.
+- Never print matched values. Report finding types, file paths, and line
+  numbers only.
+
+## Repository layout
+
+```text
+skills/data-document-redaction/
+├── SKILL.md              # Runtime instructions and gate contract
+├── agents/openai.yaml    # Skill interface metadata
+└── scripts/
+    └── scan_staged.py    # Staged-file scanner
+```
 
 ## Maintenance
 
-Update this index when the skill's repository integration changes. Keep
-format-specific procedures and supporting references in the runtime bundle's
-`references/` and `scripts/` directories.
+Keep this document aligned with `skills/data-document-redaction/SKILL.md`.
+Update it when the gate outcomes, scan scope, or bundled scripts change.

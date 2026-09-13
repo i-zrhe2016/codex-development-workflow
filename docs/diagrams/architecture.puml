@@ -19,7 +19,7 @@ state "Record Ticket + Slices\n[GitHub Issue before branch]\nOne behavior -> one
 state "Create feature branch\n(all change types)" as branch
 state "Implement\n(main agent; optional bounded delegation)" as implement
 state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression / full" as test
-state "Redaction scan\nif applicable\n[data-document-redaction]" as redact
+state "Staged redaction scan\nbefore commit\n[data-document-redaction]" as redact
 state "Publication readiness + Commit\n[github-push-when-ready]\nIdentity / clean boundaries / Conventional Commits" as commit
 state "Push branch\n[github-push-when-ready]" as push
 state "Create / Update PR\n[github-push-when-ready]" as pr
@@ -27,7 +27,7 @@ state "Automatic Review\nrun_review.py -> codex review\nFull first; bounded incr
 state "Blocking findings?" as blocking #FFF4CC
 state "Batch confirmed findings\nFix affected behavior" as fix
 state "Test again\n[test-workflow]" as test_again
-state "Redaction scan again\nif applicable" as redact_again
+state "Redaction scan again\nafter review fix" as redact_again
 state "Commit fix" as commit_fix
 state "Push branch" as push_fix
 state "Merge PR\nRequired checks + reviewed head verified\n[github-push-when-ready]" as merge

@@ -102,7 +102,7 @@ Prefer a single delegation level. Subagents should not create further subagents 
 | Feature, bug fix, regression, integration, or browser validation       | `test-workflow`              |
 | Architecture or flow visualization materially improves understanding   | `plantuml-skill`             |
 | Verified repository state materially changed                           | `repo-current-state`         |
-| Potentially sensitive output crosses a sharing or publication boundary | `data-document-redaction`    |
+| Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
 | Deployment, release automation, rollout verification, or rollback      | `auto-deploy`                |
 | Branch publication, Commit, Push, PR, Merge, or branch cleanup is required | `github-push-when-ready`     |
 | Implementation and required validation are complete                    | `bark-finish-notify`         |
