@@ -397,7 +397,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
             f"Working tree changes are on the default branch '{default_branch}'; "
             "create a feature branch before committing or pushing."
         )
-        commands.append("git switch -c <type>/<short-description>")
+        commands.append("git switch -c <type>/<ticket-id>-<short-description>")
     elif default_branch and branch == default_branch and (
         ahead > 0 or (has_commits and not upstream)
     ):

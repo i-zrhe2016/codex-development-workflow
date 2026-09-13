@@ -39,7 +39,7 @@ smaller change solves the same problem.
 
 | Area | Question | Typical redundancy signal |
 |---|---|---|
-| Planning | Was Ticket/Slice planning proportional to the change? | Tiny change required issue decomposition or repeated planning |
+| Planning | Was Slice planning and Ticket sizing proportional to the change? | A tiny Ticket required extra Tickets, repeated planning, or unnecessary re-decomposition |
 | Context | Was the same repository context loaded repeatedly? | Re-reading large files because no compact recovery state existed |
 | Delegation | Did another agent reduce work or add coordination? | Main agent repeated delegated exploration or integration cost exceeded benefit |
 | Implementation | Was work expanded beyond acceptance criteria? | Unrelated refactor or future-slice work appeared |
@@ -60,7 +60,7 @@ optional because they may not be reliably available.
 ```text
 Run / PR:
 Change type:
-Planning level: implicit slice | ticketed
+Planning level: single-Ticket slice | multi-Ticket
 Verification level: minimal | focused | regression | full
 Review rounds:
 Repeated stages:
@@ -118,12 +118,12 @@ Use future real runs to confirm or reject them.
 | Post-delivery evaluation can itself create a documentation-only PR every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
 | Automatic Review after every PR update | Necessary gate, but full-range repetition can be wasteful | Preserve mandatory review while using bounded review only when the existing review policy proves the change is isolated |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
-| Optional Ticket/Slice/delegation machinery | Useful for complexity, wasteful when forced on tiny changes | Preserve adaptive gates: implicit Slice for small work, Tickets/delegation only when complexity provides evidence for them |
+| Ticket/Slice/delegation machinery | Every requirement has a Ticket; delegation remains optional | Keep the Ticket mandatory and scale only its shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |
 
 ## Improvement backlog discipline
 
 Do not turn this document into a backlog. When an improvement is actionable,
-create the normal Issue/Ticket only if the change is large enough to need one.
-Otherwise use a single follow-up Slice and PR. Remove or rewrite resolved
-baseline findings so this file stays a compact description of current process
-quality rather than a historical archive.
+record it as the normal Issue/Ticket before implementation; a small improvement
+is one Ticket with a single Slice and PR. Remove or rewrite resolved baseline
+findings so this file stays a compact description of current process quality
+rather than a historical archive.

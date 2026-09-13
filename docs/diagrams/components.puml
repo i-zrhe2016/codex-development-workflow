@@ -26,7 +26,7 @@ package "Delivery and recovery" #FFF7ED {
   component "auto-deploy (conditional)\nExisting deployment contract\nHealth verification / rollback" as deploy
 }
 package "Tools and durable evidence" #F8FAFC {
-  database "GitHub Issues\nParent plan + Ticket records\nStatus / Branch / Base / PR\nAuthoritative when Ticketed" as issues
+  database "GitHub Issues\nTicket records; parent plan for\nmulti-Ticket work\nStatus / Branch / Base / PR\nAuthoritative for every Ticket" as issues
   database "Git + GitHub PR\nFeature commits / checks / merged status\nDefault branch protected by workflow" as github
   component "Built-in Codex CLI\ncodex review --base <ref>\nMandatory Automatic Review" as cli
   database "Local Git metadata\ncodex-review/\nState / run history / logs\nNever committed" as logs
@@ -37,7 +37,7 @@ package "Tools and durable evidence" #F8FAFC {
 user --> main
 main --> delegates : bounded tasks
 main --> context : understand
-main --> plan : decompose if needed
+main --> plan : decompose multi-Ticket work
 main --> tests : validate / integrate
 main --> redact : sharing boundary
 main --> publish : deliver

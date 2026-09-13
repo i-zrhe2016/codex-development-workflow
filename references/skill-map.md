@@ -26,13 +26,15 @@ backward compatibility; its installer entry copies only the files needed by
 the orchestrator rather than the whole repository.
 
 `plan-to-ticket` owns Ticket-first decomposition, Slice generation, and
-mandatory persistence of the parent plan and Ticket Issues; each Slice should
-provide boundaries, acceptance criteria, relevant context, test strategy, test
-level, test cases, and a validation command. `test-workflow` owns the Test stage
-for the selected
-`minimal`, `focused`, `regression`, or `full` verification level and reports
-bounded evidence. It conditionally performs browser/E2E verification when
-browser-visible behavior changes.
+mandatory persistence of the Ticket Issues, plus the parent plan Issue when a
+requirement spans multiple Tickets; each Slice should provide boundaries,
+acceptance criteria, relevant context, test strategy, test level, test cases,
+and a validation command. The root orchestrator records a single-Ticket
+requirement's Issue directly under the same Issue contract.
+`test-workflow` owns the Test stage for the selected `minimal`, `focused`,
+`regression`, or `full` verification level and reports bounded evidence. It
+conditionally performs browser/E2E verification when browser-visible behavior
+changes.
 
 `data-document-redaction` owns the applicable redaction scan before commit and
 after blocking review fixes. `github-push-when-ready` owns the feature-branch

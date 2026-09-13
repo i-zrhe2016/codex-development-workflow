@@ -16,7 +16,7 @@ remain inside their own `SKILL.md` files.
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
 | `.codex/agents/reviewer.toml` | Optional project-scoped supplemental read-only reviewer; it cannot replace `codex review`. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
-| `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the parent plan and ticket Issues before branch work. |
+| `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the ticket Issues, plus the parent plan Issue for multi-Ticket work, before branch work. |
 | GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
@@ -56,7 +56,7 @@ Editable source: [`architecture.puml`](../diagrams/architecture.puml).
 Requirement
   -> Understand repo
   -> Plan
-  -> Slice / Ticket if needed
+  -> Record Ticket + Slices
   -> Create branch
   -> Implement
   -> Test
@@ -76,14 +76,15 @@ Requirement
 
 All change types—Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
 Dependency, and CI/CD—use the same feature-branch and PR lifecycle. Planning
-depth, test level, and whether a Ticket is needed may vary, but no category may
-direct-push around the PR gate. If a Ticket is used, split its Slices only after
-the Ticket boundary is clear; a single-behavior change may use one Slice without
-a Ticket and still follows the complete delivery path.
+depth and test level may vary, but no category may direct-push around the PR
+gate. Every requirement is recorded as a GitHub Issue Ticket before branch
+work; split a Ticket's Slices only after its boundary is clear, and treat a
+single-behavior change as one Ticket with one implicit Slice.
 
-If `plan-to-ticket` is used, it persists the plan and Ticket Issues before the
-branch is created. Each Slice loads only the context needed for its acceptance
-criteria. A wrong design assumption returns to Plan or causes a Slice split.
+If `plan-to-ticket` is used, it persists the Ticket Issues, and the parent plan
+Issue for multi-Ticket work, before the branch is created. Each Slice loads
+only the context needed for its acceptance criteria. A wrong design assumption
+returns to Plan or causes a Slice split.
 
 ### Ticket-to-Slice hierarchy
 
@@ -118,33 +119,32 @@ validation command. For a large or multi-behavior request, establish the
 Ticket boundaries first, then split each Ticket into its dependency-ordered
 Slices. All Slices for one Ticket share its implementation branch; Ticket
 dependencies control branch readiness, while Slice dependencies control work
-order within the branch. Tiny work may remain one implicit Slice without a
-Ticket.
+order within the branch. Tiny work is one Ticket with one implicit Slice.
 
 ### Persistent ticket authority
 
 GitHub Issues are the sole durable authority for plans and tickets created by
-`plan-to-ticket`. A parent plan Issue holds the overall plan and links to one
-Issue per behavior ticket. Each ticket Issue retains its goal, scope,
-dependencies, acceptance criteria, validation, and `Status`, `Branch`, `Base`,
-and `PR` metadata. The workflow blocks when required Issue reads or writes
-fail; it does not create a local Markdown mirror or treat chat output as
-completion.
+`plan-to-ticket`. For multi-Ticket work, a parent plan Issue holds the overall
+plan and links to one Issue per behavior ticket. Each ticket Issue retains its
+goal, scope, dependencies, acceptance criteria, validation, and `Status`,
+`Branch`, `Base`, and `PR` metadata. The workflow blocks when required Issue
+reads or writes fail; it does not create a local Markdown mirror or treat chat
+output as completion.
 
 `Repo_Current_State.md` remains a compact recovery pointer to the active Issue,
 not a backlog or second ticket database.
 
 ### Ticket branches
 
-Every change owns a feature branch created or resumed before editing. Ticketed
-work uses one branch named `<type>/<ticket-id>-<short-description>`; a single
-Slice without a Ticket uses `<type>/<short-description>`. Create branches from
-the updated default branch and wait for prerequisite Tickets to merge before
-branching dependent work. Parallel workers use separate Git worktrees and
-branches; they never switch branches in a shared working directory. Each Ticket
-Issue is the one-to-one owner of its branch: record `Branch` and `Base` before
-editing, set `Status: in_progress` when work starts, and require the PR head/base
-to match those fields.
+Every change owns a feature branch created or resumed before editing, after its
+Ticket Issue exists. Each Ticket uses one branch named
+`<type>/<ticket-id>-<short-description>`. Create branches from the updated
+default branch and wait for prerequisite Tickets to merge before branching
+dependent work. Parallel workers use separate Git worktrees and branches; they
+never switch branches in a shared working directory. Each Ticket Issue is the
+one-to-one owner of its branch: record `Branch` and `Base` before editing, set
+`Status: in_progress` when work starts, and require the PR head/base to match
+those fields.
 
 ### Delegation gate
 
@@ -204,7 +204,7 @@ Commit -> Push -> `codex review` again on the updated PR. Merge only after the
 review passes. When multiple Tickets are delivered together, add broader
 integration/regression checks across them in addition to each Ticket's checks.
 
-`Understand -> Plan -> Slice/Ticket if needed -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
+`Understand -> Plan -> Record Ticket + Slices -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
 
 Automatic Review remains separate from tests, diagnostics, linting, and static
 analysis. The project-scoped `.codex/agents/reviewer.toml` is optional
@@ -244,7 +244,7 @@ must remain aligned.
 ## Boundaries
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
-- Slices and Tickets are planning tools; a single-behavior request may remain one implicit Slice, but every change still uses a feature branch and PR.
+- Every requirement has a Ticket; a single-behavior request is one Ticket with one implicit Slice, and every change still uses a feature branch and PR.
 - Tests provide evidence inside a Slice; Automatic Review is a mandatory PR-stage merge gate after the branch is published.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - Redaction is conditional, not a mandatory transformation of every artifact.
