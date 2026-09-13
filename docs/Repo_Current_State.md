@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-13 @ 2a5c519
+Last verified: 2026-09-13 @ 83775aa
 
 ## Current Focus
 
@@ -43,6 +43,9 @@ Last verified: 2026-09-13 @ 2a5c519
 - The review runner streams and persists local logs, prevents duplicate runs,
   and separates execution completion from the main agent's recorded assessment.
   Initial review is full-range; bounded fixes can use the last assessed head.
+  Before starting a new review it refuses a bare local base that differs from
+  the branch's configured upstream (falling back to `origin/<branch>`), so a
+  stale local base cannot silently review the wrong range.
 - Ticket Issues and implementation branches are one-to-one through `Branch`/`Base` metadata, and PR head/base must match those fields.
 - `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
 - `plan-to-ticket` persists every Ticket Issue, plus the parent plan Issue for
