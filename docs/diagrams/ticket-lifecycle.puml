@@ -7,7 +7,7 @@ title Ticket Loop - Planning, Dependencies and Delivery
 
 state "Define behavior Tickets\nThen define ordered Slices inside each Ticket\nAcceptance / scope / dependencies / validation" as plan
 state "Resolve repository + base + Issue access\nSearch stable plan/Ticket markers" as lookup
-state "Reuse unique matches or create Issues\nParent plan -> all initial Tickets -> parent index\nPersist Status / Branch / Base / Dependencies / PR" as persist
+state "Reuse unique matches or create Issues\nAll Tickets; parent plan for multi-Ticket work\nPersist Status / Branch / Base / Dependencies / PR" as persist
 state "Planning blocked\nReport ambiguity or failed persistence\nKeep created Issue links; no local ticket mirror" as plan_blocked #FFF4CC
 state "Select unfinished Ticket\nRead authoritative Issue + dependency evidence" as select
 state "Dependency gate\nPrerequisite PRs merged?" as dependency
@@ -40,7 +40,7 @@ state_docs --> select : next Ticket; use updated base
 complete --> [*]
 
 note right of persist
-Parent Issue: milestones + Ticket links.
+Parent Issue (multi-Ticket work): milestones + Ticket links.
 Ticket Issue: behavior + nested Slice plan + current state.
 One Ticket = one Issue = one implementation branch / PR.
 Slices do not create separate branches or ticket Issues.

@@ -81,9 +81,10 @@ gate. Every requirement is recorded as a GitHub Issue Ticket before branch
 work; split a Ticket's Slices only after its boundary is clear, and treat a
 single-behavior change as one Ticket with one implicit Slice.
 
-If `plan-to-ticket` is used, it persists the plan and Ticket Issues before the
-branch is created. Each Slice loads only the context needed for its acceptance
-criteria. A wrong design assumption returns to Plan or causes a Slice split.
+If `plan-to-ticket` is used, it persists the Ticket Issues, and the parent plan
+Issue for multi-Ticket work, before the branch is created. Each Slice loads
+only the context needed for its acceptance criteria. A wrong design assumption
+returns to Plan or causes a Slice split.
 
 ### Ticket-to-Slice hierarchy
 

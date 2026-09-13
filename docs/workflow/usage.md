@@ -75,9 +75,10 @@ Issue. Each ticket Issue retains:
 - `Branch`, `Base`, `Dependencies`, and `PR` metadata;
 - the goal, scope, acceptance criteria, and validation contract.
 
-The plan Issue contains the overall plan and links to the ticket Issues. Chat
-output contains convenience links only. `docs/Repo_Current_State.md` may link
-to the active Issue but must not become a duplicate plan or backlog.
+For multi-Ticket work, the plan Issue contains the overall plan and links to
+the ticket Issues. Chat output contains convenience links only.
+`docs/Repo_Current_State.md` may link to the active Issue but must not become a
+duplicate plan or backlog.
 
 Search for stable plan/ticket markers before creating Issues so retries reuse
 existing records. If the GitHub connector, repository target, authentication,
