@@ -106,10 +106,13 @@ Validation command
 Every Ticket carries its canonical GitHub Issue link and execution metadata;
 its Slices inherit the Ticket's Issue, branch, and base while carrying their
 own execution contract. A single-behavior requirement records one Ticket Issue
-directly; `plan-to-ticket` adds the parent plan Issue when work spans multiple
-Tickets. All required Issues must exist before implementation branches are
-created; a failed Issue operation blocks the workflow and has no Markdown or
-chat-only fallback.
+directly, using the same Issue contract that `plan-to-ticket` defines (stable
+marker, `Status`/`Branch`/`Base`/`Dependencies`/`PR` metadata, and the
+documented lifecycle updates) without invoking full decomposition, and
+`plan-to-ticket` adds the parent plan Issue when work spans multiple Tickets.
+All required Issues must exist before implementation branches are created; a
+failed Issue operation blocks the workflow and has no Markdown or chat-only
+fallback.
 
 Only start dependency-ready Slices. The main agent may execute one Slice
 itself, or the delegation gate may start multiple independent Slices with
@@ -385,10 +388,11 @@ For every change, regardless of its file type or size:
     reusable improvement qualifies for automatic self-improvement, start it as
     a separate follow-up change through the same branch/PR lifecycle.
 
-When a ticket is produced by `plan-to-ticket`, update its status and branch/PR
-metadata at the workflow boundaries defined by that skill. Keep tickets open
-through `in_review`; set `done` and close them only after the linked PR is
-verified merged.
+Update every Ticket's status and branch/PR metadata at the workflow boundaries
+defined by the Ticket Issue contract, whether the Issue came from
+`plan-to-ticket` or was recorded directly. Keep tickets open through
+`in_review`; set `done` and close them only after the linked PR is verified
+merged.
 
 ## Repo state as a recovery point
 
