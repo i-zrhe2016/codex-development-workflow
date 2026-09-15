@@ -10,6 +10,81 @@ existing automation, preflight validation, bounded observation, health checks,
 and rollback. It does not own an application's infrastructure, invent a cloud
 provider, or replace the repository's test and publication gates.
 
+## Mandatory target security preflight
+
+Run this preflight on the deployment target before any deployment, SSH
+configuration, firewall, HTTP listener, or access-catalog mutation. It applies
+to every operating mode. A failed or ambiguous check is a refusal; do not
+continue with a best-effort deployment.
+
+1. **Require a deployment host.** Read the target's actual `hostname` output
+   on the target and compare it case-insensitively with the substring
+   `deploy`. A missing command, empty result, or hostname without that
+   substring stops the deployment. Do not trust a hostname supplied by the
+   caller or inferred from a repository label.
+
+   ```bash
+   TARGET_HOSTNAME="$(hostname)" || exit 1
+   case "${TARGET_HOSTNAME,,}" in
+     *deploy*) ;;
+     *) echo "refusing deployment: target hostname must contain deploy" >&2; exit 1 ;;
+   esac
+   ```
+
+2. **Require Tailscale.** Confirm that the Tailscale daemon is running and
+   authenticated, that the target has a current Tailscale address, and that
+   the address belongs to the target itself. Obtain the address on the target
+   (for example, with `tailscale ip -4`) instead of accepting an arbitrary
+   caller-provided address. Missing, stale, or conflicting Tailscale state
+   stops the deployment.
+
+3. **Require a Tailscale SSH path.** When the deployment uses SSH, the
+   connection must target the discovered Tailscale address and its source
+   peer must be in the same Tailscale network. Inspect the connection metadata
+   (`SSH_CONNECTION` where available) and the route actually used. A public
+   source address, public DNS/IP target, wildcard fallback, or unknown route
+   stops the deployment. Non-SSH runners must provide an equivalent verified
+   target access path before they may proceed.
+
+4. **Bind SSH to Tailscale.** Where the target's SSH daemon supports address
+   binding, configure `ListenAddress` for the discovered Tailscale address(es)
+   and remove wildcard listeners. Validate the configuration before reload and
+   confirm with the socket table that TCP/22 has no public listener. The
+   interface-scoped firewall rule below remains mandatory even when daemon
+   binding is available.
+
+5. **Deny public inbound traffic.** Snapshot the current firewall policy and
+   its rollback command before changing it. The effective policy must deny
+   incoming traffic by default on every public interface and allow only:
+
+   - established/related traffic and loopback as required by the firewall;
+   - TCP/22 on the detected Tailscale interface (normally `tailscale0`);
+   - TCP/80 on that interface for the access catalog; and
+   - explicitly declared service ports on that interface only.
+
+   A broad allow rule for SSH, port 80, or a service port is a refusal. For a
+   UFW target, the intended shape is `default deny incoming`, `default allow
+   outgoing`, and interface-scoped rules such as:
+
+   ```bash
+   ufw default deny incoming
+   ufw default allow outgoing
+   ufw allow in on tailscale0 to any port 22 proto tcp
+   ufw allow in on tailscale0 to any port 80 proto tcp
+   ```
+
+   Add declared service ports with the same `in on tailscale0` scope. Inspect
+   and remove conflicting wildcard allow rules before enabling the policy; do
+   not run a blind firewall reset. For nftables or another provider, enforce
+   the same interface-scoped allowlist and public-input drop invariant.
+
+6. **Verify the boundary.** Validate the SSH daemon and firewall syntax,
+   inspect effective listeners and rules, then open a new SSH connection to
+   the Tailscale address from an approved Tailscale peer. A failed second
+   connection, an uninspectable rule set, or an unavailable rollback path
+   leaves the target blocked. Record only safe status and addresses; never
+   print credentials or secret-bearing command arguments.
+
 ## Required deployment contract
 
 Before any mutating deployment action, identify and record:
@@ -61,40 +136,44 @@ build or from a request to deploy to a different environment.
    revision, artifact, expected user impact, approval boundary, and rollback
    owner. For a scheduled or event-triggered deployment, verify the exact
    trigger and branch/tag filter.
-2. **Discover the deployment contract.** Inspect the README and deployment
+2. **Run the target security preflight.** Complete the mandatory target
+   security preflight above before inspecting or mutating the deployment
+   target. Preserve the discovered hostname, Tailscale address, interface, and
+   verification result as safe deployment evidence.
+3. **Discover the deployment contract.** Inspect the README and deployment
    documentation, CI workflows, container/build files, manifests, scripts,
    environment examples, and runbooks. Prefer an existing workflow dispatch,
    release job, or documented command. Distinguish local development commands
    from shared-environment deployment commands.
-3. **Run preflight checks.** Use `test-workflow` for the smallest checks that
+4. **Run release preflight checks.** Use `test-workflow` for the smallest checks that
    prove the release contract: configuration validation, focused tests, build,
    image/package creation, and relevant integration or smoke tests. Confirm
    the source revision is available, the artifact is traceable, required secret
    names and permissions are present, and the destination has capacity and a
    rollback target. Do not bypass a failed required check just to trigger a
    deployment.
-4. **Prepare the release.** Produce or select the immutable artifact, record
+5. **Prepare the release.** Produce or select the immutable artifact, record
    its digest/checksum/build ID, and ensure the deployment configuration is
    reviewed. If automation must be added or changed, make the smallest
    reviewable change, use least-broad triggers, protect production environments,
    and keep secrets outside the repository.
-5. **Trigger the existing automation.** Use the documented interface and pass
+6. **Trigger the existing automation.** Use the documented interface and pass
    only non-secret inputs. For GitHub Actions, a typical controlled trigger is
    `gh workflow run <workflow> --ref <immutable-ref>` followed by bounded run
    monitoring; adapt to the repository's actual workflow and required inputs.
    Record the workflow/run ID or platform deployment ID.
-6. **Observe and verify.** Follow the rollout state until completion or a
+7. **Observe and verify.** Follow the rollout state until completion or a
    bounded timeout. Check deployment status, logs, health endpoints, error
    rates, readiness, and the smallest meaningful smoke flow. Confirm the
    running revision/digest matches the intended artifact, not merely that a
    command exited successfully.
-7. **Recover on failure.** Stop or pause further rollout, capture safe failure
+8. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
    Roll back through the documented immutable artifact or platform mechanism
    when the rollback is authorized and safe. Re-run health and smoke checks
    after rollback. If rollback is unsafe, unavailable, or partially applied,
    stop and report the concrete recovery action needed.
-8. **Close the release.** Report the target, source revision, artifact ID,
+9. **Close the release.** Report the target, source revision, artifact ID,
    automation/run ID, checks, observed health, rollback result, residual risk,
    and next action without exposing secrets. Update `Repo_Current_State.md` or
    deployment documentation only when verified repository behavior or the
