@@ -89,25 +89,9 @@ not an implicit side effect of connecting over SSH.
    initialization or HTTP-service change that fails before firewall
    verification.
 
-2. **Limit SSH to Tailscale.** Configure the target SSH service to listen only
-   on the discovered Tailscale address(es); for OpenSSH, use explicit
-   `ListenAddress` entries and remove wildcard listeners. Validate the
-   configuration before reload. The change is rejected if the socket table
-   still shows TCP/22 on a public address, or if the daemon cannot enforce the
-   Tailscale-only listener requirement. The firewall source/ACL restriction
-   below remains mandatory.
-
-3. **Provision the baseline catalog.** Before firewall verification, create or
-   validate a catalog page and registry for the target. The page must show the
-   discovered target Tailscale IP and may start with zero service entries; only
-   verified deployments may add service rows. Configure the existing HTTP
-   service to serve the page at the target's Tailscale address on TCP/80. Bind
-   it to that address where supported; if the service uses a wildcard listener,
-   the firewall and public-side probe below must still prove that it is not
-   publicly reachable. If the page cannot be initialized and served, stop
-   before changing the firewall.
-
-4. **Deny every public inbound port.** Preserve the existing outbound policy;
+2. **Deny every public inbound port before listener changes.** Apply the
+   incoming policy before reloading SSH or starting/reloading the HTTP service.
+   Preserve the existing outbound policy;
    never change a restricted egress policy to allow all outgoing traffic as a
    side effect. The effective inbound policy must drop unsolicited traffic by
    default on every public interface and allow only established/related
@@ -134,12 +118,34 @@ not an implicit side effect of connecting over SSH.
    outgoing`. For nftables or another provider, enforce the same source and
    interface allowlist, preserve egress policy, and drop all public input.
 
-5. **Verify, recover, and retire the restore.** Validate the SSH daemon and
-   firewall syntax,
-   inspect effective listeners and rules, open a new SSH connection to the
-   Tailscale address from an approved peer, and request the catalog through
-   that path. Verify from a public-side probe or equivalent firewall evidence
-   that TCP/22, TCP/80, and every declared service port are denied publicly.
+3. **Limit SSH to Tailscale.** If SSH is enabled, configure the target SSH
+   service to listen only on the discovered Tailscale address(es); for
+   OpenSSH, use explicit `ListenAddress` entries and remove wildcard
+   listeners. Validate the configuration before reload. The change is
+   rejected if the socket table still shows TCP/22 on a public address, or if
+   the daemon cannot enforce the Tailscale-only listener requirement. If the
+   approved target access path is non-SSH, do not enable SSH; the firewall
+   source/ACL restriction remains mandatory.
+
+4. **Stage the baseline catalog offline.** Create or validate the catalog
+   registry and page without starting or reloading the HTTP service. The page
+   must show the discovered target Tailscale IP and may start with zero service
+   entries; only verified deployments may add service rows. Keep the staged
+   page and its atomic restore in the recovery plan. Do not expose the new
+   page until the scoped firewall policy in step 2 is effective.
+
+5. **Activate, verify, recover, and retire the restore.** With the firewall
+   policy effective, configure the existing HTTP service to serve the staged
+   page at the target's Tailscale address on TCP/80, then start or reload it.
+   Bind it to that address where supported; if the service uses a wildcard
+   listener, the already-active firewall and public-side probe below must
+   still prove that it is not publicly reachable. If the approved target
+   access path uses SSH, open a new SSH connection to the Tailscale address
+   from an approved peer. Otherwise, exercise the approved non-SSH management
+   path and record that SSH was not used. In both cases request the catalog
+   through the approved Tailscale path. Verify from a public-side probe or
+   equivalent firewall evidence that TCP/22, TCP/80, and every declared
+   service port are denied publicly.
    If any check fails, invoke the independently armed restore immediately and
    verify the restored SSH, firewall, HTTP, and catalog boundary. If restore
    also fails, mark the target
