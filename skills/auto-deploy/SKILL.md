@@ -119,8 +119,14 @@ not an implicit side effect of connecting over SSH.
    under the target lock before expiry; if renewal is lost or the TTL cannot
    cover the bounded operation, stop new mutations and invoke recovery before
    the restore expires. Do not mutate any boundary when independent recovery
-   is unavailable. A restore must also cover a catalog initialization or
-   HTTP-service change that fails before firewall verification.
+   is unavailable. Treat any snapshot, restore-command, arming, lease, or
+   heartbeat setup failure as a recovery-setup failure: stop before boundary
+   mutation, run the common cleanup path, release the current owner's target
+   lock, and verify that its lease and fencing token are retired. If release
+   cannot be verified, mark the target `blocked` and hand it to the independent
+   recovery owner; do not leave the lease waiting for its TTL. A restore must
+   also cover a catalog initialization or HTTP-service change that fails before
+   firewall verification.
 
 2. **Deny every public inbound port before listener changes.** Apply the
    incoming policy before reloading SSH or starting/reloading the HTTP service.
@@ -185,7 +191,14 @@ not an implicit side effect of connecting over SSH.
    path and record that SSH was not used. In both cases request the catalog
    through the approved Tailscale path. Verify from a public-side probe or
    equivalent firewall evidence that TCP/22, TCP/80, and every declared
-   service port are denied publicly.
+   service port are denied publicly. Before that verification, inspect the
+   connection-tracking and socket/session state and drain every existing
+   inbound session whose source or route is public or otherwise outside the
+   approved Tailscale policy. Preserve the current approved Tailscale
+   management session and approved Tailscale flows. If non-Tailscale sessions
+   cannot be identified and terminated (or an equivalent connection-drain
+   operation cannot be verified), invoke recovery; a new-connection probe alone
+   is insufficient.
    If any check fails, invoke the independently armed restore immediately and
    verify the restored SSH, firewall, HTTP, and catalog boundary. If restore
    also fails, mark the target `blocked`, stop deployment, and hand the
@@ -226,6 +239,9 @@ Before any mutating deployment action, identify and record:
 - for a `tailscale-hardened` target, the target-lock mechanism and owner/lease
   policy that serialize hardening, deployment, catalog, and recovery, including
   lease expiry, heartbeat renewal, and fencing-token or generation checks;
+- for a `tailscale-hardened` target, an authenticated handoff by which the
+  existing deployment entry point receives and validates that target fence
+  before each mutation, or an explicit refusal to use that entry point;
 - for a `tailscale-hardened` target, the access-catalog registry/page paths,
   HTTP serving entry point, and all declared service ports. Each catalog
   deployment address must be target-local or resolve and route through the
@@ -313,10 +329,17 @@ build or from a request to deploy to a different environment.
    reviewable change, use least-broad triggers, protect production environments,
    and keep secrets outside the repository.
 7. **Trigger the existing automation.** Use the documented interface and pass
-   only non-secret inputs. For GitHub Actions, a typical controlled trigger is
-   `gh workflow run <workflow> --ref <immutable-ref>` followed by bounded run
-   monitoring; adapt to the repository's actual workflow and required inputs.
-   Record the workflow/run ID or platform deployment ID.
+   only non-secret inputs. Before triggering, bind the run to the current
+   target-lock owner, renewable lease, and exact fencing token or generation.
+   The workflow or platform job must validate that same authenticated fence
+   immediately before every target mutation and stop on expiry, owner change,
+   or generation mismatch. Verify that scheduled and concurrent runs use the
+   same target serialization and cannot bypass this handshake. For GitHub
+   Actions, a typical controlled trigger is `gh workflow run <workflow> --ref
+   <immutable-ref>` followed by bounded run monitoring; adapt to the
+   repository's actual workflow and required inputs. If the existing entry
+   point cannot carry and enforce the current target fence, refuse to trigger
+   it. Record the workflow/run ID or platform deployment ID.
 8. **Observe and verify.** Follow the rollout state until completion or a
    bounded timeout. Check deployment status, logs, health endpoints, error
    rates, readiness, and the smallest meaningful smoke flow. Confirm the
