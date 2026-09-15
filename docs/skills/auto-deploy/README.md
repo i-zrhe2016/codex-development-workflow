@@ -10,15 +10,17 @@ smoke verification, and reports or performs a safe rollback when authorized.
 It does not assume a cloud provider, create infrastructure without an explicit
 request, or treat a successful trigger command as proof of a healthy release.
 
-Before any target mutation, the runtime Skill performs a read-only gate that
-requires the target hostname to contain `deploy` (case-insensitive), a live
-local Tailscale address, an authorized Tailscale SSH path, and inspectable
-listeners and firewall policy. A separate authorized hardening phase then
-limits SSH to Tailscale, denies every public inbound port, preserves the
-existing outbound policy, scopes the catalog and declared service ports to
-approved Tailscale sources, and arms independent recovery before changes.
-Failed verification must restore the previous boundary before the release can
-be reported as anything other than blocked or unverified.
+For a service-publishing target explicitly designated `tailscale-hardened`, the
+runtime Skill performs a read-only gate that requires the target hostname to
+contain `deploy` (case-insensitive), the approved Tailscale node identity, a
+live local Tailscale address, and an authorized Tailscale SSH or non-SSH access
+path. A separate authorized hardening phase then limits SSH to Tailscale,
+denies every public inbound port, preserves the existing outbound policy,
+scopes the catalog and declared service ports to approved Tailscale sources,
+and serializes the complete release with independent recovery. The firewall is
+verified again after service and catalog changes before recovery is retired.
+An explicitly non-publishing local/development target may skip this gate when
+the contract records that no shared service is exposed.
 
 The runtime instructions are in
 [`skills/auto-deploy/SKILL.md`](../../../skills/auto-deploy/SKILL.md), and the

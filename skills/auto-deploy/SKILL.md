@@ -26,6 +26,12 @@ read-only bootstrap for this preflight. It may inspect status and listeners but
 must not change SSH, firewall, HTTP, catalog, or deployment state. If that
 session is unavailable, use a concrete approved non-SSH management channel; a
 public SSH bootstrap is never permitted.
+Before that bootstrap, acquire an exclusive target-scoped lock keyed by the
+approved stable Tailscale node identity. Hold it through target hardening,
+deployment, catalog publication, final boundary verification, and recovery.
+If the lock is unavailable, its owner or lease is stale, or the mechanism
+cannot prevent a second actor from mutating the target, refuse the deployment;
+never steal a stale lock without independent recovery authorization.
 
 1. **Require a deployment host and approved identity.** The deployment
    contract must contain the exact approved Tailscale node identity (stable
@@ -115,8 +121,12 @@ not an implicit side effect of connecting over SSH.
    Add declared service ports with the same interface and approved-source
    scope. Inspect and remove conflicting wildcard allow rules only under the
    recovery plan; do not run a blind firewall reset or `ufw default allow
-   outgoing`. For nftables or another provider, enforce the same source and
-   interface allowlist, preserve egress policy, and drop all public input.
+   outgoing`. If UFW is inactive, activate it only after the allowlist is
+   staged, then reload it as required and verify that `ufw status` is active
+   and the effective kernel rules enforce the policy. A saved UFW policy is
+   not evidence of filtering. For nftables or another provider, validate,
+   activate, and inspect the effective ruleset; preserve egress policy and
+   drop all public input.
 
 3. **Limit SSH to Tailscale.** If SSH is enabled, configure the target SSH
    service to listen only on the discovered Tailscale address(es); for
@@ -134,7 +144,7 @@ not an implicit side effect of connecting over SSH.
    page and its atomic restore in the recovery plan. Do not expose the new
    page until the scoped firewall policy in step 2 is effective.
 
-5. **Activate, verify, recover, and retire the restore.** With the firewall
+5. **Activate, verify, recover, and retain the restore.** With the firewall
    policy effective, configure the existing HTTP service to serve the staged
    page at the target's Tailscale address on TCP/80, then start or reload it.
    Bind it to that address where supported; if the service uses a wildcard
@@ -148,14 +158,17 @@ not an implicit side effect of connecting over SSH.
    service port are denied publicly.
    If any check fails, invoke the independently armed restore immediately and
    verify the restored SSH, firewall, HTTP, and catalog boundary. If restore
-   also fails, mark the target
-   `blocked`, stop deployment, and hand the recovery action to the out-of-band
-   owner. After either a successful hardening verification or a completed
-   restore, cancel and retire the time-bounded restore, then verify through the
-   independent channel that it is disarmed. If disarming cannot be confirmed,
-   keep the target `blocked` and do not continue. Never declare success while
-   a boundary or recovery result is unknown. Record only safe status and
-   addresses; never print credentials or secret-bearing command arguments.
+   also fails, mark the target `blocked`, stop deployment, and hand the
+   recovery action to the out-of-band owner. After a successful hardening
+   verification, keep the time-bounded restore armed and retain the target
+   lock through deployment and catalog publication; the final post-deployment
+   boundary check retires it. After a completed restore, cancel and retire the
+   time-bounded restore, then verify through the independent channel that it is
+   disarmed before ending the failed operation. If disarming cannot be
+   confirmed, keep the target `blocked` and do not continue. Never declare
+   success while a boundary or recovery result is unknown. Record only safe
+   status and addresses; never print credentials or secret-bearing command
+   arguments.
 
 ## Required deployment contract
 
@@ -172,6 +185,8 @@ Before any mutating deployment action, identify and record:
   platform command, or operator runbook);
 - required approvals, environment protections, permissions, and maintenance
   window;
+- for a `tailscale-hardened` target, the target-lock mechanism and owner/lease
+  policy that serialize hardening, deployment, catalog, and recovery;
 - for a `tailscale-hardened` target, the access-catalog registry/page paths,
   HTTP serving entry point, and all declared service ports;
 - health endpoint, smoke test, success threshold, and observation window; and
@@ -243,8 +258,10 @@ build or from a request to deploy to a different environment.
    unless SSH is Tailscale-only, the baseline catalog is served on Tailscale
    TCP/80, public inbound ports are denied, the catalog and declared service
    ports are limited to approved Tailscale sources, and the recovery
-   verification and restore retirement pass. Skip this phase only for the
-   explicitly non-publishing local/development designation.
+   verification passes. Keep the target lock and hardening restore armed
+   through the later deployment and catalog steps; the final boundary check
+   retires the restore. Skip this phase only for the explicitly non-publishing
+   local/development designation.
 6. **Prepare the release.** Produce or select the immutable artifact, record
    its digest/checksum/build ID, and ensure the deployment configuration is
    reviewed. If automation must be added or changed, make the smallest
@@ -269,13 +286,26 @@ build or from a request to deploy to a different environment.
    check that fails makes the release unverified and follows the rollback
    policy. Do not publish a shared service or update a catalog for the
    explicitly non-publishing local/development designation.
-10. **Recover on failure.** Stop or pause further rollout, capture safe failure
+10. **Recheck the final boundary and retire recovery.** While the target lock
+   and hardening restore remain active, repeat the complete boundary checks
+   after service startup and catalog publication: approved target identity and
+   hostname, Tailscale access path, SSH or approved non-SSH path, active and
+   effective firewall rules, catalog access, listener bindings, and public
+   denial for every declared port. If all checks pass, cancel and retire the
+   hardening restore, verify through the independent channel that it is
+   disarmed, and release the target lock. If a check fails, keep both active
+   and enter recovery.
+11. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
-   Roll back through the documented immutable artifact or platform mechanism
-   when the rollback is authorized and safe. Re-run health and smoke checks
-   after rollback. If rollback is unsafe, unavailable, or partially applied,
-   stop and report the concrete recovery action needed.
-11. **Close the release.** Report the target, source revision, artifact ID,
+   Keep the target lock and hardening restore active while rolling back through
+   the documented immutable artifact or platform mechanism. Atomically
+   reconcile the access catalog at the same time: restore the prior page or
+   remove/update the affected row to the last known-good deployment address.
+   Request the restored page through the approved Tailscale path and rerun the
+   full final boundary checks. Only then retire the restore and release the
+   lock. If rollback is unsafe, unavailable, partially applied, or cannot
+   retire recovery safely, stop and report the concrete recovery action needed.
+12. **Close the release.** Report the target, source revision, artifact ID,
    automation/run ID, checks, observed health, rollback result, residual risk,
    and next action without exposing secrets. Update `Repo_Current_State.md` or
    deployment documentation only when verified repository behavior or the
