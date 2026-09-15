@@ -27,17 +27,23 @@ must not change SSH, firewall, HTTP, catalog, or deployment state. If that
 session is unavailable, use a concrete approved non-SSH management channel; a
 public SSH bootstrap is never permitted.
 Before that bootstrap, acquire an exclusive target-scoped lock keyed by the
-approved stable Tailscale node identity. Hold it through target hardening,
+approved immutable Tailscale node ID. Hold it through target hardening,
 deployment, catalog publication, final boundary verification, and recovery.
 If the lock is unavailable, its owner or lease is stale, or the mechanism
 cannot prevent a second actor from mutating the target, refuse the deployment;
 never steal a stale lock without independent recovery authorization.
+If any later read-only preflight check refuses before mutation, release the
+current owner's lock in a cleanup path and verify that it was released. If the
+lock cannot be released, mark the operation `blocked` and hand it to the
+independent recovery owner; do not leave an ordinary preflight refusal holding
+the target indefinitely.
 
 1. **Require a deployment host and approved identity.** The deployment
-   contract must contain the exact approved Tailscale node identity (stable
-   node name or ID) and expected target hostname. On the target, read the
-   actual `hostname` and Tailscale identity/status, then verify that they map
-   to the approved identity and expected hostname before proceeding. The
+   contract must contain the exact approved immutable Tailscale node ID and
+   expected target hostname. A node name is display metadata and cannot
+   authorize a target. On the target, read the actual `hostname` and
+   Tailscale identity/status, then verify that they map to the approved node ID
+   and expected hostname before proceeding. The
    actual hostname must also contain `deploy`, case-insensitively. A missing
    command, empty result, hostname without that substring, identity mismatch,
    or unverifiable mapping stops the deployment. Do not trust a hostname, node
@@ -90,10 +96,14 @@ not an implicit side effect of connecting over SSH.
    ownership or service-unit state. Prepare exact restore commands for all of
    those surfaces and arm a tested time-bounded restore through an independent
    channel such as a provider console, separate management plane, or an
-   already-authorized recovery operator. Do not mutate any boundary when
-   independent recovery is unavailable. A restore must also cover a catalog
-   initialization or HTTP-service change that fails before firewall
-   verification.
+   already-authorized recovery operator. The restore lease must have an
+   end-to-end TTL that covers hardening, deployment, observation, catalog
+   publication, rollback, and final verification. Renew it with a heartbeat
+   under the target lock before expiry; if renewal is lost or the TTL cannot
+   cover the bounded operation, stop new mutations and invoke recovery before
+   the restore expires. Do not mutate any boundary when independent recovery
+   is unavailable. A restore must also cover a catalog initialization or
+   HTTP-service change that fails before firewall verification.
 
 2. **Deny every public inbound port before listener changes.** Apply the
    incoming policy before reloading SSH or starting/reloading the HTTP service.
@@ -178,7 +188,8 @@ Before any mutating deployment action, identify and record:
 - target designation (`tailscale-hardened` for every service-publishing target,
   or an explicit non-publishing local/development target);
 - for a `tailscale-hardened` target, the approved target identity (exact
-  Tailscale node name or ID and expected hostname);
+  immutable Tailscale node ID and expected hostname; node names are display
+  metadata only);
 - source commit, tag, release, or other immutable revision;
 - artifact and provenance (image digest, package checksum, or build ID);
 - existing trigger and deployment entry point (workflow, release job, script,
@@ -240,7 +251,7 @@ build or from a request to deploy to a different environment.
 3. **Run the target eligibility gate.** For a service-publishing or otherwise
    `tailscale-hardened` target, complete the mandatory read-only security
    preflight above and preserve the discovered hostname, approved node
-   identity, Tailscale address, interface, authorized peer policy, and
+   ID, Tailscale address, interface, authorized peer policy, and
    verification result as safe deployment evidence. For an explicitly
    non-publishing local/development target, record why the gate is not
    applicable and do not expose a shared service. An unknown designation is a
@@ -255,9 +266,10 @@ build or from a request to deploy to a different environment.
    a failed required check just to trigger a deployment.
 5. **Apply and verify target hardening.** For a `tailscale-hardened` target,
    complete the separate authorized target-hardening phase. Do not continue
-   unless SSH is Tailscale-only, the baseline catalog is served on Tailscale
-   TCP/80, public inbound ports are denied, the catalog and declared service
-   ports are limited to approved Tailscale sources, and the recovery
+   unless SSH is disabled or listens only on Tailscale, the approved non-SSH
+   path is verified when SSH is disabled, the baseline catalog is served on
+   Tailscale TCP/80, public inbound ports are denied, the catalog and declared
+   service ports are limited to approved Tailscale sources, and the recovery
    verification passes. Keep the target lock and hardening restore armed
    through the later deployment and catalog steps; the final boundary check
    retires the restore. Skip this phase only for the explicitly non-publishing
