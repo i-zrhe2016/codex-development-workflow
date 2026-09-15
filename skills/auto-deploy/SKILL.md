@@ -12,15 +12,26 @@ provider, or replace the repository's test and publication gates.
 
 ## Mandatory target security preflight
 
+Run this gate for every target designated `tailscale-hardened`; service
+publication requires that designation. A target without a designation is
+ineligible. A local or development target may skip this gate only when the
+deployment contract explicitly records that it is non-publishing and no
+shared service will be exposed.
+
 The security preflight is read-only. Run it on the target before any SSH,
 firewall, HTTP listener, access-catalog, or deployment mutation. A failed or
 ambiguous check is a refusal; do not continue with a best-effort deployment.
 
-1. **Require a deployment host.** Read the target's actual `hostname` output
-   on the target and compare it case-insensitively with the substring
-   `deploy`. A missing command, empty result, or hostname without that
-   substring stops the deployment. Do not trust a hostname supplied by the
-   caller or inferred from a repository label.
+1. **Require a deployment host and approved identity.** The deployment
+   contract must contain the exact approved Tailscale node identity (stable
+   node name or ID) and expected target hostname. On the target, read the
+   actual `hostname` and Tailscale identity/status, then verify that they map
+   to the approved identity and expected hostname before proceeding. The
+   actual hostname must also contain `deploy`, case-insensitively. A missing
+   command, empty result, hostname without that substring, identity mismatch,
+   or unverifiable mapping stops the deployment. Do not trust a hostname, node
+   name, or IP
+   supplied only by the caller or inferred from a repository label.
 
    ```bash
    TARGET_HOSTNAME="$(hostname)" || exit 1
@@ -50,17 +61,18 @@ ambiguous check is a refusal; do not continue with a best-effort deployment.
 4. **Inventory the current boundary without changing it.** Record the
    effective SSH listeners, firewall rules on every interface, current
    outbound policy, Tailscale interface, and listeners for TCP/80 and all
-   declared service ports. A public listener or wildcard allow rule is a
-   hardening task, not permission to deploy. If the listener or firewall state
-   cannot be inspected, stop.
+   declared service ports. Record whether the baseline access catalog exists,
+   its registry/page paths, and the HTTP service that serves it. A public
+   listener or wildcard allow rule is a hardening task, not permission to
+   deploy. If the listener or firewall state cannot be inspected, stop.
 
 ## Authorized target hardening
 
-Apply this separate mutating phase only after the target passes the read-only
-preflight, the deployment contract is known, required approvals are present,
-and the release has an authorized rollback owner. The phase must be recorded
-as part of the deployment evidence; it is not an implicit side effect of
-connecting over SSH.
+Apply this separate mutating phase only to a `tailscale-hardened` target,
+after it passes the read-only preflight, the deployment contract is known,
+required approvals are present, and the release has an authorized rollback
+owner. The phase must be recorded as part of the deployment evidence; it is
+not an implicit side effect of connecting over SSH.
 
 1. **Prepare independent recovery.** Snapshot the SSH configuration and
    firewall policy, prepare the exact restore commands, and arm a tested
@@ -77,7 +89,17 @@ connecting over SSH.
    Tailscale-only listener requirement. The firewall source/ACL restriction
    below remains mandatory.
 
-3. **Deny every public inbound port.** Preserve the existing outbound policy;
+3. **Provision the baseline catalog.** Before firewall verification, create or
+   validate a catalog page and registry for the target. The page must show the
+   discovered target Tailscale IP and may start with zero service entries; only
+   verified deployments may add service rows. Configure the existing HTTP
+   service to serve the page at the target's Tailscale address on TCP/80. Bind
+   it to that address where supported; if the service uses a wildcard listener,
+   the firewall and public-side probe below must still prove that it is not
+   publicly reachable. If the page cannot be initialized and served, stop
+   before changing the firewall.
+
+4. **Deny every public inbound port.** Preserve the existing outbound policy;
    never change a restricted egress policy to allow all outgoing traffic as a
    side effect. The effective inbound policy must drop unsolicited traffic by
    default on every public interface and allow only established/related
@@ -104,7 +126,8 @@ connecting over SSH.
    outgoing`. For nftables or another provider, enforce the same source and
    interface allowlist, preserve egress policy, and drop all public input.
 
-4. **Verify and recover.** Validate the SSH daemon and firewall syntax,
+5. **Verify, recover, and retire the restore.** Validate the SSH daemon and
+   firewall syntax,
    inspect effective listeners and rules, open a new SSH connection to the
    Tailscale address from an approved peer, and request the catalog through
    that path. Verify from a public-side probe or equivalent firewall evidence
@@ -112,21 +135,30 @@ connecting over SSH.
    If any check fails, invoke the independently armed restore immediately and
    verify the restored boundary. If restore also fails, mark the target
    `blocked`, stop deployment, and hand the recovery action to the out-of-band
-   owner. Never declare success while a boundary or recovery result is
-   unknown. Record only safe status and addresses; never print credentials or
-   secret-bearing command arguments.
+   owner. After either a successful hardening verification or a completed
+   restore, cancel and retire the time-bounded restore, then verify through the
+   independent channel that it is disarmed. If disarming cannot be confirmed,
+   keep the target `blocked` and do not continue. Never declare success while
+   a boundary or recovery result is unknown. Record only safe status and
+   addresses; never print credentials or secret-bearing command arguments.
 
 ## Required deployment contract
 
 Before any mutating deployment action, identify and record:
 
 - target environment (`local`, `development`, `staging`, or `production`);
+- target designation (`tailscale-hardened` for every service-publishing target,
+  or an explicit non-publishing local/development target);
+- approved target identity (exact Tailscale node name or ID and expected
+  hostname);
 - source commit, tag, release, or other immutable revision;
 - artifact and provenance (image digest, package checksum, or build ID);
 - existing trigger and deployment entry point (workflow, release job, script,
   platform command, or operator runbook);
 - required approvals, environment protections, permissions, and maintenance
   window;
+- the access-catalog registry/page paths, HTTP serving entry point, and all
+  declared service ports;
 - health endpoint, smoke test, success threshold, and observation window; and
 - the last known-good artifact and a tested rollback path.
 
@@ -163,19 +195,26 @@ build or from a request to deploy to a different environment.
 
 ## Workflow
 
-1. **Classify the release.** Define the environment, release scope, source
-   revision, artifact, expected user impact, approval boundary, and rollback
-   owner. For a scheduled or event-triggered deployment, verify the exact
+1. **Classify the release.** Define the environment, target designation,
+   approved target identity, release scope, source revision, artifact,
+   expected user impact, approval boundary, and rollback owner. A service
+   publication must use `tailscale-hardened`; a local/development deployment
+   may use the non-publishing designation only when it exposes no shared
+   service. For a scheduled or event-triggered deployment, verify the exact
    trigger and branch/tag filter.
 2. **Discover the deployment contract.** Inspect the README and deployment
    documentation, CI workflows, container/build files, manifests, scripts,
    environment examples, and runbooks. Prefer an existing workflow dispatch,
    release job, or documented command. Distinguish local development commands
    from shared-environment deployment commands.
-3. **Run the read-only target security preflight.** Complete the mandatory
-   target security preflight above and preserve the discovered hostname,
-   Tailscale address, interface, authorized peer policy, and verification
-   result as safe deployment evidence.
+3. **Run the target eligibility gate.** For a service-publishing or otherwise
+   `tailscale-hardened` target, complete the mandatory read-only security
+   preflight above and preserve the discovered hostname, approved node
+   identity, Tailscale address, interface, authorized peer policy, and
+   verification result as safe deployment evidence. For an explicitly
+   non-publishing local/development target, record why the gate is not
+   applicable and do not expose a shared service. An unknown designation is a
+   refusal.
 4. **Run release preflight checks.** Use `test-workflow` for the smallest checks that
    prove the release contract: configuration validation, focused tests, build,
    image/package creation, and relevant integration or smoke tests. Confirm
@@ -184,10 +223,13 @@ build or from a request to deploy to a different environment.
    rollback target. Confirm the target hardening approval and independent
    recovery path are ready. Do not bypass a failed required check just to
    trigger a deployment.
-5. **Apply and verify target hardening.** Complete the separate authorized
-   target-hardening phase. Do not continue unless SSH is Tailscale-only,
-   public inbound ports are denied, the catalog and declared service ports are
-   limited to approved Tailscale sources, and the recovery verification passes.
+5. **Apply and verify target hardening.** For a `tailscale-hardened` target,
+   complete the separate authorized target-hardening phase. Do not continue
+   unless SSH is Tailscale-only, the baseline catalog is served on Tailscale
+   TCP/80, public inbound ports are denied, the catalog and declared service
+   ports are limited to approved Tailscale sources, and the recovery
+   verification and restore retirement pass. Skip this phase only for the
+   explicitly non-publishing local/development designation.
 6. **Prepare the release.** Produce or select the immutable artifact, record
    its digest/checksum/build ID, and ensure the deployment configuration is
    reviewed. If automation must be added or changed, make the smallest
