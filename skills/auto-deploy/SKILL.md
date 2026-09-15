@@ -21,6 +21,11 @@ shared service will be exposed.
 The security preflight is read-only. Run it on the target before any SSH,
 firewall, HTTP listener, access-catalog, or deployment mutation. A failed or
 ambiguous check is a refusal; do not continue with a best-effort deployment.
+An initial session to the approved Tailscale address is allowed solely as a
+read-only bootstrap for this preflight. It may inspect status and listeners but
+must not change SSH, firewall, HTTP, catalog, or deployment state. If that
+session is unavailable, use a concrete approved non-SSH management channel; a
+public SSH bootstrap is never permitted.
 
 1. **Require a deployment host and approved identity.** The deployment
    contract must contain the exact approved Tailscale node identity (stable
@@ -74,12 +79,15 @@ required approvals are present, and the release has an authorized rollback
 owner. The phase must be recorded as part of the deployment evidence; it is
 not an implicit side effect of connecting over SSH.
 
-1. **Prepare independent recovery.** Snapshot the SSH configuration and
-   firewall policy, prepare the exact restore commands, and arm a tested
-   time-bounded restore through an independent channel such as a provider
-   console, separate management plane, or an already-authorized recovery
-   operator. Do not mutate either boundary when independent recovery is
-   unavailable.
+1. **Prepare independent recovery.** Snapshot the SSH configuration, firewall
+   policy, HTTP service configuration, catalog registry/page, and relevant
+   ownership or service-unit state. Prepare exact restore commands for all of
+   those surfaces and arm a tested time-bounded restore through an independent
+   channel such as a provider console, separate management plane, or an
+   already-authorized recovery operator. Do not mutate any boundary when
+   independent recovery is unavailable. A restore must also cover a catalog
+   initialization or HTTP-service change that fails before firewall
+   verification.
 
 2. **Limit SSH to Tailscale.** Configure the target SSH service to listen only
    on the discovered Tailscale address(es); for OpenSSH, use explicit
@@ -133,7 +141,8 @@ not an implicit side effect of connecting over SSH.
    that path. Verify from a public-side probe or equivalent firewall evidence
    that TCP/22, TCP/80, and every declared service port are denied publicly.
    If any check fails, invoke the independently armed restore immediately and
-   verify the restored boundary. If restore also fails, mark the target
+   verify the restored SSH, firewall, HTTP, and catalog boundary. If restore
+   also fails, mark the target
    `blocked`, stop deployment, and hand the recovery action to the out-of-band
    owner. After either a successful hardening verification or a completed
    restore, cancel and retire the time-bounded restore, then verify through the
@@ -149,16 +158,16 @@ Before any mutating deployment action, identify and record:
 - target environment (`local`, `development`, `staging`, or `production`);
 - target designation (`tailscale-hardened` for every service-publishing target,
   or an explicit non-publishing local/development target);
-- approved target identity (exact Tailscale node name or ID and expected
-  hostname);
+- for a `tailscale-hardened` target, the approved target identity (exact
+  Tailscale node name or ID and expected hostname);
 - source commit, tag, release, or other immutable revision;
 - artifact and provenance (image digest, package checksum, or build ID);
 - existing trigger and deployment entry point (workflow, release job, script,
   platform command, or operator runbook);
 - required approvals, environment protections, permissions, and maintenance
   window;
-- the access-catalog registry/page paths, HTTP serving entry point, and all
-  declared service ports;
+- for a `tailscale-hardened` target, the access-catalog registry/page paths,
+  HTTP serving entry point, and all declared service ports;
 - health endpoint, smoke test, success threshold, and observation window; and
 - the last known-good artifact and a tested rollback path.
 
@@ -220,9 +229,9 @@ build or from a request to deploy to a different environment.
    image/package creation, and relevant integration or smoke tests. Confirm
    the source revision is available, the artifact is traceable, required secret
    names and permissions are present, and the destination has capacity and a
-   rollback target. Confirm the target hardening approval and independent
-   recovery path are ready. Do not bypass a failed required check just to
-   trigger a deployment.
+   rollback target. For a `tailscale-hardened` target, also confirm the target
+   hardening approval and independent recovery path are ready. Do not bypass
+   a failed required check just to trigger a deployment.
 5. **Apply and verify target hardening.** For a `tailscale-hardened` target,
    complete the separate authorized target-hardening phase. Do not continue
    unless SSH is Tailscale-only, the baseline catalog is served on Tailscale
@@ -245,12 +254,15 @@ build or from a request to deploy to a different environment.
    rates, readiness, and the smallest meaningful smoke flow. Confirm the
    running revision/digest matches the intended artifact, not merely that a
    command exited successfully.
-9. **Update the access catalog.** After a service's revision and health are
-   verified, update the generated catalog with the service name, deployment
-   address, and target's discovered Tailscale IP. Serve that page on the
-   target's Tailscale address at TCP/80 through the existing HTTP service. A
-   catalog update or Tailscale-only access check that fails makes the release
-   unverified and follows the rollback policy.
+9. **Update the access catalog.** For a `tailscale-hardened` target, after a
+   service's revision and health are verified, update the generated catalog
+   with the service name, deployment address, and target's discovered
+   Tailscale IP. Serve that page on the target's Tailscale address at TCP/80
+   through the existing HTTP service. The update must preserve an atomic
+   restore of the previous catalog. A catalog update or Tailscale-only access
+   check that fails makes the release unverified and follows the rollback
+   policy. Do not publish a shared service or update a catalog for the
+   explicitly non-publishing local/development designation.
 10. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
    Roll back through the documented immutable artifact or platform mechanism
