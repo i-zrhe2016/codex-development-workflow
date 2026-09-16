@@ -26,8 +26,9 @@ through an authenticated Tailscale control-plane status/API lookup or the
 approved tailnet DNS name. Use only the resulting Tailscale address; never use
 an address supplied by the caller. After connecting, verify that the target's
 local Tailscale status maps back to the same node ID and attests the resolved
-address. If that lookup, attestation, or the approved tailnet DNS path is
-unavailable, stop before connecting.
+address. If the selected resolution source is unavailable or the subsequent
+attestation fails, stop before connecting; an unselected alternative source
+does not have to be available.
 An initial session to the approved Tailscale address is allowed solely as a
 read-only bootstrap for this preflight. It may inspect status and listeners but
 must not change SSH, firewall, HTTP, catalog, or deployment state. If that
@@ -41,7 +42,13 @@ token or generation. Validate the current owner, lease, and fencing value
 before every hardening, deployment, catalog, or recovery mutation. If the
 heartbeat, renewal, or fencing check fails, stop new mutations and invoke the
 armed recovery before its lease expires; never continue under an uncertain
-lock. Refuse the deployment when the mechanism cannot provide this fencing.
+lock. The independent recovery owner must use the independent lock authority
+to revoke the lost generation, obtain a new recovery-only fencing generation,
+and verify that the old generation is rejected before any restore mutation.
+If that handoff cannot be issued and verified while recovery is valid, mark
+the target `blocked` and hand it to the out-of-band owner; never mutate with a
+stale token. Refuse the deployment when the mechanism cannot provide this
+fencing.
 If the lock is unavailable, its owner or lease is stale, or the mechanism
 cannot prevent a second actor from mutating the target, refuse the deployment;
 never steal a stale lock without independent recovery authorization.
@@ -329,17 +336,27 @@ build or from a request to deploy to a different environment.
    reviewable change, use least-broad triggers, protect production environments,
    and keep secrets outside the repository.
 7. **Trigger the existing automation.** Use the documented interface and pass
-   only non-secret inputs. Before triggering, bind the run to the current
+   only non-secret ordinary inputs; transfer any fencing value through the
+   authenticated, protected handoff defined by the target contract. For a
+   `tailscale-hardened` target, before triggering bind the run to the current
    target-lock owner, renewable lease, and exact fencing token or generation.
-   The workflow or platform job must validate that same authenticated fence
-   immediately before every target mutation and stop on expiry, owner change,
-   or generation mismatch. Verify that scheduled and concurrent runs use the
-   same target serialization and cannot bypass this handshake. For GitHub
-   Actions, a typical controlled trigger is `gh workflow run <workflow> --ref
-   <immutable-ref>` followed by bounded run monitoring; adapt to the
-   repository's actual workflow and required inputs. If the existing entry
-   point cannot carry and enforce the current target fence, refuse to trigger
-   it. Record the workflow/run ID or platform deployment ID.
+   The workflow or platform job must validate that
+   same authenticated fence immediately before every target mutation and stop
+   on expiry, owner change, or generation mismatch. Verify that scheduled and
+   concurrent runs use the same target serialization and cannot bypass this
+   handshake. For GitHub Actions, a typical controlled trigger is `gh workflow
+   run <workflow> --ref <immutable-ref>` followed by bounded run monitoring;
+   adapt to the repository's actual workflow and required inputs. If the
+   existing entry point cannot carry and enforce the current target fence,
+   refuse to trigger it, cancel and retire the hardening restore through the
+   independent channel, and verify it is disarmed. Only then release the current
+   owner's target lock and verify its lease and fencing token are retired. If
+   either retirement cannot be verified, keep the lock state under the
+   independent recovery owner and mark the target `blocked`. Record the
+   workflow/run ID or platform deployment ID. An explicitly non-publishing
+   local/development target may use its existing local automation without the
+   hardened target lock or restore only after verifying that it exposes no
+   shared service; otherwise refuse it.
 8. **Observe and verify.** Follow the rollout state until completion or a
    bounded timeout. Check deployment status, logs, health endpoints, error
    rates, readiness, and the smallest meaningful smoke flow. Confirm the
@@ -358,31 +375,45 @@ build or from a request to deploy to a different environment.
    fails makes the release unverified and follows the rollback policy. Do not
    publish a shared service or update a catalog for the explicitly
    non-publishing local/development designation.
-10. **Recheck the final boundary and retire recovery.** While the target lock
-   lease and hardening restore remain active, continue the lock heartbeat and
-   validate its fencing value before each check or mutation. Repeat the
-   complete boundary checks after service startup and catalog publication:
-   approved target identity and hostname, Tailscale access path, SSH or
-   approved non-SSH path, and the effective SSH port set (exactly TCP/22 when
-   SSH is enabled, or empty when it is disabled), active and effective
-   firewall rules, catalog access, listener bindings, and public denial for
-   every declared port. If the lock cannot be renewed or fenced, stop and
-   enter recovery. If all checks pass, cancel and retire the hardening restore,
-   verify through the independent channel that it is disarmed, and release the
-   target lock. If a check fails, keep both active and enter recovery.
+10. **Recheck the final boundary and retire recovery.** For a
+   `tailscale-hardened` target, while the target lock lease and hardening
+   restore remain active, continue the lock heartbeat and validate its fencing
+   value before each check or mutation. Repeat the connection-tracking and
+   socket/session inspection at this final boundary and drain every existing
+   inbound session whose source or route is public or outside the approved
+   Tailscale policy, preserving only the approved Tailscale management session
+   and flows. Repeat the complete boundary checks after service startup and
+   catalog publication: approved target identity and hostname, Tailscale
+   access path, SSH or approved non-SSH path, and the effective SSH port set
+   (exactly TCP/22 when SSH is enabled, or empty when it is disabled), active
+   and effective firewall rules, catalog access, listener bindings, and public
+   denial for every declared port. If sessions cannot be drained, or the lock
+   cannot be renewed or fenced, stop and enter recovery. If all checks pass,
+   cancel and retire the hardening restore, verify through the independent
+   channel that it is disarmed, and release the target lock. If a check fails,
+   keep both active and enter recovery. For an explicitly non-publishing
+   local/development target, verify that no shared service is exposed and close
+   the release without requiring a hardened lock, restore, or access catalog.
 11. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
-   Keep the target lock and hardening restore active while rolling back through
-   the documented immutable artifact or platform mechanism. Atomically
-   reconcile the access catalog at the same time: restore the prior page or
-   remove/update the affected row to the last known-good deployment address.
-   Before retiring recovery, rerun the configured health endpoint and smoke
-   flow, and verify that the running revision or digest matches the intended
-   last-known-good artifact. Request the restored page through the approved
-   Tailscale path and rerun the full final boundary checks, including the
-   current lock fencing value. Only then retire the restore and release the
-   lock. If rollback is unsafe, unavailable, partially applied, or cannot
-   retire recovery safely, stop and report the concrete recovery action needed.
+   For a `tailscale-hardened` target, obtain a new recovery-only fencing
+   generation through the independent handoff if the deployment lease was
+   lost, verify that the old generation is rejected, and keep the target lock
+   and hardening restore active while rolling back through the documented
+   immutable artifact or platform mechanism. Atomically reconcile the access
+   catalog at the same time: restore the prior page or remove/update the
+   affected row to the last known-good deployment address. Before retiring
+   recovery, rerun the configured health endpoint and smoke flow, and verify
+   that the running revision or digest matches the intended last-known-good
+   artifact. Request the restored page through the approved Tailscale path,
+   repeat the final session drain, and rerun the full final boundary checks,
+   including the current lock fencing value. Only then retire the restore and
+   release the lock. For an explicitly non-publishing local/development
+   target, use its documented local rollback, rerun its applicable health and
+   smoke checks, and verify that no shared service was exposed; do not require
+   or retain the hardened lock, restore, or catalog. If rollback is unsafe,
+   unavailable, partially applied, or cannot retire recovery safely, stop and
+   report the concrete recovery action needed.
 12. **Close the release.** Report the target, source revision, artifact ID,
    automation/run ID, checks, observed health, rollback result, residual risk,
    and next action without exposing secrets. Update `Repo_Current_State.md` or
