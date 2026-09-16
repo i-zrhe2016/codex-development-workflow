@@ -1,94 +1,60 @@
 # Repository Current State
 
-Last verified: 2026-09-13 @ 83775aa
+Last verified: 2026-09-16 @ working tree
 
 ## Current Focus
 
-- Mandatory per-requirement Tickets, unified PR delivery, and recoverable
-  Codex review are implemented and verified.
+- None.
 
 ## Implemented
 
-- The workflow now runs Requirement -> Understand repo -> Plan -> Record
-  Ticket + Slices -> Create feature branch -> Implement -> Test -> applicable
-  Redaction -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix
-  loop when blocked -> Merge -> branch cleanup/default synchronization -> Close
-  Ticket -> State/Docs -> Deploy if needed -> one bounded process evaluation.
-- Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
-  changes all use the feature-branch and PR path; no direct default-branch
-  delivery exception remains.
-- Every requirement is recorded as a GitHub Issue Ticket before branch work.
-  A single-behavior requirement is one Ticket with one execution Slice; larger
-  work splits into behavior Tickets and dependency-ordered Slices, and every
-  Ticket keeps the same branch, test, redaction, commit, push, PR, Automatic
-  Review, merge, and cleanup gates.
-- Normal and complex Slices define scope, exclusions, dependencies, acceptance criteria, relevant context, test strategy, verification level, test cases, and validation commands.
-- Verification levels are `minimal`, `focused`, `regression`, and `full`; focused is the default and passing evidence stops expansion unless escalation is justified.
-- Test-first behavior is conditional on meaningful behavioral risk; non-behavioral changes use direct minimal validation.
-- The installer packages eight local skills from the root skill and `skills/`; specialist repositories are not cloned at install time.
-- Specialist documentation for all seven managed specialist skills (`plan-to-ticket`, `test-workflow`, `repo-current-state`, `context-efficiency`, `data-document-redaction`, `github-push-when-ready`, and `auto-deploy`) is grouped under `docs/skills/`; committed diagram sources and renderings are retained where applicable.
-- `github-push-when-ready` enforces a per-repository non-root identity policy; this repository is configured for `i-zrhe2016` and verifies the same GitHub account and push credentials before publishing.
-- The publication workflow requires a non-default feature branch, verifies a PR
-  is merged before deleting its source branch remotely and locally, and retains
-  the default branch.
-- The readiness utility blocks local changes or unpublished commits on the
-  resolved default branch or an effective push target that resolves to it, and
-  directs unknown targets to a manual recovery path.
-- `auto-deploy` defines a provider-neutral deployment contract with immutable artifacts, bounded health verification, least-privilege credentials, and authorized rollback handling.
-- Project-scoped `.codex/config.toml` enables subagents with a three-thread concurrency cap; `.codex/agents/reviewer.toml` provides optional supplemental read-only analysis.
-- Automatic Review is the built-in `codex review` command and starts after PR
-  creation or update without user confirmation; blocking findings repeat Fix ->
-  Test -> applicable Redaction -> Commit -> Push -> `codex review` on the updated
-  PR.
-- The review runner streams and persists local logs, prevents duplicate runs,
-  and separates execution completion from the main agent's recorded assessment.
-  Initial review is full-range; bounded fixes can use the last assessed head.
-  Before starting a new review it refuses a bare local base that differs from
-  the branch's configured upstream (falling back to `origin/<branch>`), so a
-  stale local base cannot silently review the wrong range.
-- Ticket Issues and implementation branches are one-to-one through `Branch`/`Base` metadata, and PR head/base must match those fields.
-- `Repo_Current_State.md` is the compact recovery point; ticket detail and lifecycle metadata remain in GitHub Issues.
-- `plan-to-ticket` persists every Ticket Issue, plus the parent plan Issue for
-  multi-Ticket work, before branch work, with stable markers, lifecycle
-  metadata, and no Markdown/chat fallback; single-behavior requirements record
-  one Ticket Issue directly under the same Issue contract.
-- The root workflow creates or resumes a feature branch before implementation,
-  requires a PR for every change, and merges only after Automatic Review passes.
+- Repository changes follow the Issue -> feature branch -> test -> redaction ->
+  PR -> Automatic Review -> merge and cleanup gates defined by `AGENTS.md`.
+- `auto-deploy` provides a provider-neutral deployment contract with immutable
+  artifacts, bounded health and smoke checks, authorized rollback, and a
+  Tailscale-only hardening gate for publishing targets.
+- Publishing targets require an approved immutable Tailscale identity and
+  path, an actual hostname containing `deploy`, SSH restricted to Tailscale,
+  public inbound denial, preserved outbound policy, and fenced recovery.
+- The access catalog updater maintains the local Tailscale IP, service names,
+  and deployment addresses in JSON and escaped HTML. The Skill requires a
+  post-health refresh and Tailscale-only TCP/80 verification through the
+  existing HTTP service; it does not install a server or change firewall state.
+- Catalog writes use validation, atomic replacement, fenced durable recovery,
+  authenticated transaction journals, and focused unit tests.
+- `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
+  hold plans and Tickets, while `docs/skills/` documents the managed skills.
 
 ## In Progress
 
-- No implementation work remains in progress.
+- None.
 
 ## Known Issues / Failing Checks
 
 - Targeted redaction scans report existing identity email examples and SSH URL
-  literals. These require classification when publishing; the scan is not a
-  clean repository-wide redaction result.
+  literals; these require classification when publishing. This is not a clean
+  repository-wide redaction result.
 
 ## Constraints
 
-- Code review requires an installed and authenticated Codex CLI.
-- Specialist behavior is bundled under `skills/` and installed from this repository's local source.
-- `context-efficiency` is a context-loading aid, not a workflow stage. When used,
-  task shell commands require RTK; exact evidence and existing gates use `rtk proxy`.
-  Only dependency bootstrap/repair bypasses RTK. The skill installer does not
-  install the RTK binary or enable global hooks.
-- Delegation is optional; dependent, overlapping, or shared-interface work remains sequential, and integration/final judgment stay with the main agent.
-- `scripts/install-all.sh` requires a complete checkout and copies local bundles; it does not clone specialist repositories.
-- Persisted plans and tickets require a resolvable GitHub repository target and an available, authorized GitHub Issues connector; failed required writes block completion without a Markdown fallback.
+- Automatic Review requires an installed and authenticated Codex CLI.
+- Shell commands use RTK through `context-efficiency`; exact evidence and
+  publication gates use `rtk proxy`.
+- `auto-deploy` does not own target infrastructure or production approval and
+  does not change an unspecified live host.
+- Persisted plans and Tickets require an available, authorized GitHub Issues
+  target; GitHub Issues are the durable authority for future work.
 
 ## Architecture Snapshot
 
-- `SKILL.md` owns main-agent stage routing, Ticket/Slice hierarchy, the optional Delegation Gate, Slice contract, bounded verification, review policy, delivery gates, and recovery-state guidance.
-- `plan-to-ticket` owns Ticket-first decomposition, dependency-ordered Slice generation, and mandatory GitHub Issue persistence, including the shared contract used by directly recorded single-Ticket Issues; `test-workflow` owns selected verification execution and evidence reporting. Both are managed in `skills/`.
-- `docs/skills/` contains explanatory documentation for every managed specialist skill; operational references and scripts remain beside the runtime bundles under `skills/`.
-- `data-document-redaction` and `auto-deploy` remain conditional gates;
-  `github-push-when-ready` governs every publication, PR, merge, and branch
-  cleanup gate, while `repo-current-state` reconciles verified state changes.
-- `auto-deploy` is a conditional deployment gate and does not own target-project infrastructure or production approvals.
-- The parent workflow and `repo-current-state` use GitHub Issues as the durable ticket authority; this file only points to active and next Issues. See `docs/workflow/usage.md` and `docs/skills/plan-to-ticket/architecture.md`.
-- See `docs/architecture/overview.md` and `docs/diagrams/architecture.puml` for the workflow topology.
+- The root workflow owns lifecycle routing, Ticket and Slice gates, delegation,
+  verification, publication, review, merge, and recovery guidance.
+- Runtime skills remain under `skills/`; explanatory documentation is under
+  `docs/skills/`; the installer packages the local skill bundles.
+- `auto-deploy/SKILL.md` owns deployment-boundary behavior, while
+  `update_access_catalog.py` owns catalog validation, rendering, and durable
+  file reconciliation. See `docs/architecture/overview.md` for the topology.
 
 ## Next
 
-- Start the next authorized ticket from the updated default branch.
+- Start the next authorized Ticket from the updated default branch.
