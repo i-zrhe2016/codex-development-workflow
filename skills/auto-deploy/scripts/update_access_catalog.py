@@ -33,6 +33,7 @@ SIDECAR_MODE = 0o660
 REGISTRY_MODE = 0o660
 LOCK_TIMEOUT_SECONDS = 5.0
 LOCK_RETRY_SECONDS = 0.05
+MUTATION_MIN_REMAINING_SECONDS = 0.25
 TAILSCALE_NETWORK = ipaddress.ip_network(".".join(("100", "64", "0", "0")) + "/10")
 
 
@@ -168,7 +169,7 @@ def _acquire_exclusive_lock(
 
 
 class FenceGuard:
-    """Hold the same file lock used by the deployment mutation authority."""
+    """Expose the deployment mutation authority's fenced file operations."""
 
     def __init__(
         self, path: Path, descriptor: int, owner: str, generation: int
@@ -212,6 +213,39 @@ class FenceGuard:
             raise FenceError("catalog fence is no longer current")
         self.role = role
         return record
+
+    def _assert_mutation_window(self) -> None:
+        record = self.assert_current()
+        expiry_value = record["expires_at"]
+        normalized = (
+            expiry_value[:-1] + "+00:00"
+            if expiry_value.endswith("Z")
+            else expiry_value
+        )
+        expiry = datetime.fromisoformat(normalized).astimezone(timezone.utc)
+        if (
+            expiry - datetime.now(timezone.utc)
+        ).total_seconds() < MUTATION_MIN_REMAINING_SECONDS:
+            raise FenceError("catalog fence expires too soon for a mutation")
+
+    def replace(self, temporary: Path, destination: Path) -> None:
+        """Accept one replacement only while this exact fence is current."""
+        self._assert_mutation_window()
+        os.replace(temporary, destination)
+        self.assert_current()
+
+    def unlink(self, path: Path) -> None:
+        """Accept one unlink only while this exact fence is current."""
+        self._assert_mutation_window()
+        path.unlink()
+        self.assert_current()
+
+    def mutate(self, operation: Callable[[], Any]) -> Any:
+        """Run a metadata mutation through the same fenced authority."""
+        self._assert_mutation_window()
+        result = operation()
+        self.assert_current()
+        return result
 
 
 @contextmanager
@@ -398,16 +432,53 @@ def _prepare_registry(path: Path, fence: FenceGuard) -> None:
         raise CatalogError(
             "catalog registry needs an ownership-capable authority for recovery"
         )
-    fence.assert_current()
+    flags = (
+        os.O_RDONLY
+        | os.O_NONBLOCK
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
     try:
-        os.chown(path, file_stat.st_uid, group_id)
-        os.chmod(path, REGISTRY_MODE)
-        _fsync_directory(path.parent)
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise CatalogError(
+            "catalog registry cannot be opened safely for recovery"
+        ) from exc
+    try:
+        descriptor_stat = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(descriptor_stat.st_mode)
+            or descriptor_stat.st_dev != file_stat.st_dev
+            or descriptor_stat.st_ino != file_stat.st_ino
+        ):
+            raise CatalogError("catalog registry changed during inspection")
+        if descriptor_stat.st_mode & 0o007:
+            raise CatalogError("catalog registry permissions are too broad")
+        if (
+            descriptor_stat.st_gid == group_id
+            and (descriptor_stat.st_mode & REGISTRY_MODE) == REGISTRY_MODE
+        ):
+            return
+        if descriptor_stat.st_uid != os.geteuid() and os.geteuid() != 0:
+            raise CatalogError(
+                "catalog registry needs an ownership-capable authority for recovery"
+            )
+
+        def repair_metadata() -> None:
+            if descriptor_stat.st_gid != group_id:
+                os.fchown(descriptor, descriptor_stat.st_uid, group_id)
+            os.fchmod(descriptor, REGISTRY_MODE)
+            _fsync_directory(path.parent)
+
+        fence.mutate(repair_metadata)
+    except CatalogError:
+        raise
     except OSError as exc:
         raise CatalogError(
             "catalog registry cannot be made accessible to recovery"
         ) from exc
-    fence.assert_current()
+    finally:
+        os.close(descriptor)
 
 
 def _load_registry(
@@ -545,6 +616,8 @@ def _registry_metadata(
 def _output_metadata(snapshot: FileSnapshot) -> tuple[int, int, int]:
     if not snapshot.existed:
         return os.geteuid(), os.getegid(), 0o644
+    if snapshot.mode & 0o002:
+        raise CatalogError("HTML output permissions are too broad")
     if os.geteuid() == 0 or (
         snapshot.uid == os.geteuid()
         and (snapshot.gid == os.getegid() or _is_group_member(snapshot.gid))
@@ -557,6 +630,32 @@ def _output_metadata(snapshot: FileSnapshot) -> tuple[int, int, int]:
     raise CatalogError(
         "HTML output owner is incompatible; use an ownership-capable writer"
     )
+
+
+def _validate_output_directory(directory: Path) -> None:
+    """Require a pre-provisioned document root and safe path components."""
+    if any(part in {".", ".."} for part in directory.parts):
+        raise CatalogError("HTML document root path must be normalized")
+    document_root = Path(os.path.abspath(directory))
+    current = document_root
+    while True:
+        try:
+            directory_stat = os.lstat(current)
+        except OSError as exc:
+            raise CatalogError(
+                "HTML document root must be pre-provisioned"
+            ) from exc
+        if stat.S_ISLNK(directory_stat.st_mode) or not stat.S_ISDIR(
+            directory_stat.st_mode
+        ):
+            raise CatalogError("HTML document root must use real directories")
+        if directory_stat.st_mode & 0o002:
+            if current == document_root or not directory_stat.st_mode & 0o1000:
+                raise CatalogError("HTML document root permissions are too broad")
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
 
 
 def _recovery_metadata(
@@ -733,7 +832,7 @@ def _transaction_payload(
 def _write_transaction_journal(
     journal_path: Path,
     payload: dict[str, Any],
-    fence_check: Callable[[], object],
+    fence: FenceGuard,
 ) -> None:
     data = (json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n").encode(
         "utf-8"
@@ -750,8 +849,7 @@ def _write_transaction_journal(
         _sidecar_gid(journal_path.parent),
     )
     try:
-        fence_check()
-        os.replace(temporary, journal_path)
+        fence.replace(temporary, journal_path)
         temporary = None
         _fsync_directory(journal_path.parent)
     finally:
@@ -827,18 +925,15 @@ def _write_transaction_state(
             transaction.output_new,
             state=state,
         ),
-        fence.assert_current,
+        fence,
     )
 
 
-def _remove_transaction(
-    journal_path: Path, fence_check: Callable[[], object]
-) -> None:
+def _remove_transaction(journal_path: Path, fence: FenceGuard) -> None:
     if not _path_exists(journal_path):
         return
-    fence_check()
     try:
-        journal_path.unlink()
+        fence.unlink(journal_path)
     except FileNotFoundError:
         return
     _fsync_directory(journal_path.parent)
@@ -853,7 +948,7 @@ def _snapshot_matches(current: FileSnapshot, expected: FileSnapshot) -> bool:
 def _replace_snapshot(
     path: Path,
     snapshot: FileSnapshot,
-    fence_check: Callable[[], object],
+    fence: FenceGuard,
     *,
     recovery: bool = False,
     registry: bool = False,
@@ -861,9 +956,8 @@ def _replace_snapshot(
     if not snapshot.existed:
         if not _path_exists(path):
             return
-        fence_check()
         try:
-            path.unlink()
+            fence.unlink(path)
         except FileNotFoundError:
             return
         _fsync_directory(path.parent)
@@ -884,8 +978,7 @@ def _replace_snapshot(
         gid,
     )
     try:
-        fence_check()
-        os.replace(temporary, path)
+        fence.replace(temporary, path)
         temporary = None
         _fsync_directory(path.parent)
     finally:
@@ -922,11 +1015,11 @@ def _reconcile_transaction(
             _replace_snapshot(
                 path,
                 old,
-                fence.assert_current,
+                fence,
                 recovery=True,
                 registry=is_registry,
             )
-        _remove_transaction(journal_path, fence.assert_current)
+        _remove_transaction(journal_path, fence)
         return
     current_states: list[tuple[Path, FileSnapshot, FileSnapshot, FileSnapshot]] = []
     for path, old, new, _is_registry in targets:
@@ -937,8 +1030,8 @@ def _reconcile_transaction(
     for path, current, old, new in current_states:
         desired = new
         if current != desired:
-            _replace_snapshot(path, desired, fence.assert_current)
-    _remove_transaction(journal_path, fence.assert_current)
+            _replace_snapshot(path, desired, fence)
+    _remove_transaction(journal_path, fence)
 
 
 def _write_catalog_files(
@@ -950,8 +1043,8 @@ def _write_catalog_files(
 ) -> None:
     if len(registry_data) > MAX_FILE_BYTES or len(html_data) > MAX_FILE_BYTES:
         raise CatalogError("generated catalog is too large")
+    _validate_output_directory(output_path.parent)
     registry_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     registry_old = _read_snapshot(registry_path, REGISTRY_MODE)
     if not registry_old.existed:
         registry_old = FileSnapshot(
@@ -1006,11 +1099,11 @@ def _write_catalog_files(
             registry_new,
             output_new,
         ),
-        fence.assert_current,
+        fence,
     )
     try:
-        _replace_snapshot(registry_path, registry_new, fence.assert_current)
-        _replace_snapshot(output_path, output_new, fence.assert_current)
+        _replace_snapshot(registry_path, registry_new, fence)
+        _replace_snapshot(output_path, output_new, fence)
     except FenceError as exc:
         raise CatalogError(
             "catalog fence changed; authorized recovery is required"
@@ -1048,7 +1141,7 @@ def _write_catalog_files(
             "catalog committed; pending transaction journal needs reconciliation"
         ) from exc
     try:
-        _remove_transaction(journal_path, fence.assert_current)
+        _remove_transaction(journal_path, fence)
     except FenceError as exc:
         raise CatalogError(
             "catalog committed; authorized recovery must remove its journal"

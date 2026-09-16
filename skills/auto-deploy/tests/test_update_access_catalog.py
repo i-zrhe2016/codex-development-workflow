@@ -34,6 +34,7 @@ class AccessCatalogTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix="access-catalog-test-")
         self.addCleanup(self.temporary.cleanup)
         root = Path(self.temporary.name)
+        self.root = root
         self.registry = root / "catalog.json"
         self.output = root / "index.html"
         self.fence = root / "catalog-fence.json"
@@ -73,6 +74,8 @@ class AccessCatalogTests(unittest.TestCase):
             )
 
     def update(self, **arguments: object) -> dict[str, object]:
+        registry = Path(arguments.pop("registry", self.registry))
+        output = Path(arguments.pop("output", self.output))
         arguments.update(
             {
                 "fence_file": self.fence,
@@ -84,7 +87,7 @@ class AccessCatalogTests(unittest.TestCase):
             "update_access_catalog._discover_tailscale_ip",
             return_value=TAILSCALE_IP,
         ):
-            return update_catalog(self.registry, self.output, **arguments)
+            return update_catalog(registry, output, **arguments)
 
     def read_registry(self) -> dict[str, object]:
         return json.loads(self.registry.read_text(encoding="utf-8"))
@@ -425,6 +428,66 @@ class AccessCatalogTests(unittest.TestCase):
                 service_name="api",
                 deployment_address=f"https://{TAILSCALE_IP}:8443/",
             )
+
+    def test_registry_metadata_repair_uses_a_validated_descriptor(self) -> None:
+        self.run_update(
+            "--service-name",
+            "api",
+            "--deployment-address",
+            f"http://{TAILSCALE_IP}:8080/",
+        )
+        self.registry.chmod(0o600)
+
+        with patch.object(
+            catalog.os,
+            "chown",
+            side_effect=AssertionError("pathname ownership repair is unsafe"),
+        ):
+            self.update(
+                service_name="api",
+                deployment_address=f"https://{TAILSCALE_IP}:8443/",
+            )
+
+        self.assertEqual(self.registry.stat().st_mode & 0o777, 0o660)
+
+    def test_world_writable_page_is_rejected(self) -> None:
+        self.run_update(
+            "--service-name",
+            "api",
+            "--deployment-address",
+            f"http://{TAILSCALE_IP}:8080/",
+        )
+        original_page = self.output.read_bytes()
+        self.output.chmod(0o666)
+
+        with self.assertRaises(CatalogError):
+            self.update(
+                service_name="api",
+                deployment_address=f"https://{TAILSCALE_IP}:8443/",
+            )
+
+        self.assertEqual(self.output.read_bytes(), original_page)
+
+    def test_output_directory_is_preprovisioned_and_safe(self) -> None:
+        missing_output = self.root / "missing" / "index.html"
+        with self.assertRaises(CatalogError):
+            self.update(
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                output=missing_output,
+            )
+        self.assertFalse(self.registry.exists())
+
+        document_root = self.root / "world-writable-root"
+        document_root.mkdir()
+        document_root.chmod(0o777)
+        with self.assertRaises(CatalogError):
+            self.update(
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                output=document_root / "index.html",
+            )
+        self.assertFalse((document_root / "index.html").exists())
 
     def test_registry_fifo_is_rejected_without_blocking(self) -> None:
         self.registry.unlink(missing_ok=True)

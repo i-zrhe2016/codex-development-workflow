@@ -34,7 +34,10 @@ service name, serializes concurrent updates behind the deployment mutation
 fence, and uses a durable journal to reconcile the registry/page pair after an
 interrupted write. It preserves the existing page mode and preserves the
 serving group or exact page owner when the writer has that capability; otherwise
-the shared-readable group or other-readable owner contract is required.
+the shared-readable group or other-readable owner contract is required. The
+HTML document-root directory must be pre-provisioned with safe real directory
+components and must not be world-writable; the updater never creates it and
+rejects a world-writable page.
 
 Initialize and update it on the target with:
 

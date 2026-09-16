@@ -288,8 +288,9 @@ fence file and keep its advisory lock compatible with the deployment lock
 authority. Its active JSON record contains `state: "active"`, `role` set to
 `deployment` or `recovery`, the current `owner`, positive `generation`, and a
 future timezone-aware `expires_at`. Pass the exact owner and generation to the
-updater. The updater holds the fence while it stages and publishes both files,
-checks the owner, generation, and lease before every replacement, and rejects a
+updater. The updater holds the fence while it stages and publishes both files.
+Each replacement, unlink, or metadata repair is performed through the fenced
+mutation authority while that exact fence is current; the updater rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is
 left for the independent recovery owner; that owner may use a `recovery` fence
 with `--recover-pending` to restore the prior pair.
@@ -297,10 +298,13 @@ The registry parent must be a non-world-writable directory accessible to both
 authorized Unix principals; provision it with their shared group (and setgid
 when needed). The lock and transaction sidecars use that directory group with
 mode `0660`. The registry also uses mode `0660` and is private to that shared
-group; world permissions are rejected. The page writer must either be able to
+group; world permissions are rejected. Pre-provision the HTML document-root
+directory as a real, non-world-writable directory; the updater never creates
+it and rejects unsafe path components. The page writer must either be able to
 preserve its exact UID/GID or use its shared readable group/other-readable
-contract; an incompatible page owner is refused. Both locks use bounded
-non-blocking acquisition, and a five-second lock timeout is a failed update.
+contract; an incompatible or world-writable page is refused. Both locks use
+bounded non-blocking acquisition, and a five-second lock timeout is a failed
+update.
 
 ```bash
 python3 <skill-dir>/scripts/update_access_catalog.py \
@@ -331,7 +335,8 @@ snapshots before replacement, records rollback intent until both replacements
 are complete, and reconciles an interrupted pair before a later update;
 generated files are size-limited. A missing registry with an existing page,
 non-regular path, malformed metadata, different host, unsafe address, stale
-fence, incompatible page owner, lock timeout, or failed write is an error. The
+fence, unsafe document root, incompatible or world-writable page owner, lock
+timeout, or failed write is an error. The
 `--recover-pending` path uses the durable snapshots and an authorized recovery
 fence; it does not require the Tailscale CLI. The updater never starts an HTTP
 server or changes firewall rules. After each update, request the page through
