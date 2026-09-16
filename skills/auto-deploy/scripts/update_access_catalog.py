@@ -57,7 +57,12 @@ class FileSnapshot:
 
 
 def _has_control(value: str) -> bool:
-    return any(ord(character) < 32 or ord(character) == 127 for character in value)
+    return any(
+        ord(character) < 32
+        or ord(character) == 127
+        or 0xD800 <= ord(character) <= 0xDFFF
+        for character in value
+    )
 
 
 def _validate_tailscale_ip(value: object) -> str:
@@ -179,6 +184,7 @@ class FenceGuard:
         self.owner = owner
         self.generation = generation
         self.role = ""
+        self._required_role: str | None = None
 
     def assert_current(self) -> dict[str, Any]:
         try:
@@ -209,10 +215,17 @@ class FenceGuard:
         role = record.get("role")
         if role not in {"deployment", "recovery"}:
             raise FenceError("catalog fence role is invalid")
+        if self._required_role is not None and role != self._required_role:
+            raise FenceError("catalog fence role changed")
         if record_owner != self.owner or record_generation != self.generation:
             raise FenceError("catalog fence is no longer current")
         self.role = role
         return record
+
+    def pin_role(self) -> None:
+        if self.role not in {"deployment", "recovery"}:
+            raise FenceError("catalog fence role is invalid")
+        self._required_role = self.role
 
     def _assert_mutation_window(self) -> None:
         record = self.assert_current()
@@ -273,6 +286,7 @@ def _fenced_mutation(
             )
             locked = True
             guard.assert_current()
+            guard.pin_role()
         except FenceError:
             raise
         except OSError as exc:
@@ -566,26 +580,35 @@ def _sidecar_gid(directory: Path) -> int:
     return directory_stat.st_gid
 
 
-def _prepare_sidecar(descriptor: int, directory: Path) -> None:
+def _prepare_sidecar(
+    descriptor: int, directory: Path, fence: FenceGuard
+) -> None:
     group_id = _sidecar_gid(directory)
     try:
         descriptor_stat = os.fstat(descriptor)
-        if descriptor_stat.st_gid != group_id:
-            os.fchown(descriptor, descriptor_stat.st_uid, group_id)
-        os.fchmod(descriptor, SIDECAR_MODE)
-    except OSError:
-        try:
-            descriptor_stat = os.fstat(descriptor)
-        except OSError as exc:
-            raise CatalogError("catalog sidecar cannot be inspected") from exc
+        if not stat.S_ISREG(descriptor_stat.st_mode):
+            raise CatalogError("catalog sidecar must be a regular file")
         if (
-            descriptor_stat.st_gid != group_id
-            or (descriptor_stat.st_mode & 0o007)
-            or (descriptor_stat.st_mode & SIDECAR_MODE) != SIDECAR_MODE
+            descriptor_stat.st_gid == group_id
+            and (descriptor_stat.st_mode & 0o777) == SIDECAR_MODE
         ):
-            raise CatalogError(
-                "catalog sidecar is not accessible to the recovery authority"
-            )
+            return
+
+        def repair_metadata() -> None:
+            current_stat = os.fstat(descriptor)
+            if not stat.S_ISREG(current_stat.st_mode):
+                raise CatalogError("catalog sidecar must be a regular file")
+            if current_stat.st_gid != group_id:
+                os.fchown(descriptor, current_stat.st_uid, group_id)
+            os.fchmod(descriptor, SIDECAR_MODE)
+
+        fence.mutate(repair_metadata)
+    except CatalogError:
+        raise
+    except OSError as exc:
+        raise CatalogError(
+            "catalog sidecar is not accessible to the recovery authority"
+        ) from exc
 
 
 def _is_group_member(group_id: int) -> bool:
@@ -784,6 +807,22 @@ def _snapshot_from_payload(value: object) -> FileSnapshot:
     return FileSnapshot(value["existed"], data, mode, uid, gid)
 
 
+def _validate_snapshot_permissions(
+    snapshot: FileSnapshot, *, registry: bool
+) -> None:
+    if registry:
+        unsafe = bool(snapshot.mode & 0o007) or (
+            snapshot.mode & REGISTRY_MODE
+        ) != REGISTRY_MODE
+    else:
+        unsafe = bool(snapshot.mode & 0o002)
+    if unsafe:
+        description = "registry" if registry else "HTML output"
+        raise CatalogError(
+            f"catalog transaction {description} snapshot permissions are unsafe"
+        )
+
+
 @dataclass(frozen=True)
 class CatalogTransaction:
     registry_path: str
@@ -913,15 +952,23 @@ def _load_transaction(
         if state == "cleanup"
         else ("rollback" if state == "prepared" else state)
     )
+    registry_old = _snapshot_from_payload(value.get("registry_old"))
+    output_old = _snapshot_from_payload(value.get("output_old"))
+    registry_new = _snapshot_from_payload(value.get("registry_new"))
+    output_new = _snapshot_from_payload(value.get("output_new"))
+    for snapshot in (registry_old, registry_new):
+        _validate_snapshot_permissions(snapshot, registry=True)
+    for snapshot in (output_old, output_new):
+        _validate_snapshot_permissions(snapshot, registry=False)
     return CatalogTransaction(
         expected_registry,
         expected_output,
         owner,
         generation,
-        _snapshot_from_payload(value.get("registry_old")),
-        _snapshot_from_payload(value.get("output_old")),
-        _snapshot_from_payload(value.get("registry_new")),
-        _snapshot_from_payload(value.get("output_new")),
+        registry_old,
+        output_old,
+        registry_new,
+        output_new,
         normalized_state,
     )
 
@@ -976,7 +1023,15 @@ def _remove_cleanup_marker(cleanup_path: Path, fence: FenceGuard) -> None:
         fence.unlink(cleanup_path)
     except FileNotFoundError:
         return
-    _fsync_directory(cleanup_path.parent)
+    except FenceError:
+        if _path_exists(cleanup_path):
+            raise
+        return
+    try:
+        _fsync_directory(cleanup_path.parent)
+    except OSError:
+        if _path_exists(cleanup_path):
+            raise
 
 
 def _remove_transaction(
@@ -1225,7 +1280,7 @@ def _write_catalog_files(
 
 
 @contextmanager
-def _catalog_lock(registry_path: Path) -> Iterator[None]:
+def _catalog_lock(registry_path: Path, fence: FenceGuard) -> Iterator[None]:
     _validate_registry_directory(registry_path.parent)
     lock_path = registry_path.with_name(registry_path.name + ".lock")
     try:
@@ -1241,11 +1296,11 @@ def _catalog_lock(registry_path: Path) -> Iterator[None]:
         raise CatalogError("cannot create the catalog lock") from exc
     locked = False
     try:
-        _prepare_sidecar(descriptor, registry_path.parent)
         _acquire_exclusive_lock(
             descriptor, CatalogError, "catalog lock is unavailable"
         )
         locked = True
+        _prepare_sidecar(descriptor, registry_path.parent, fence)
         yield
     except CatalogError:
         raise
@@ -1299,7 +1354,7 @@ def update_catalog(
         if recover_pending:
             if fence.role != "recovery":
                 raise FenceError("pending recovery requires a recovery fence")
-            with _catalog_lock(registry_path):
+            with _catalog_lock(registry_path, fence):
                 journal_path = _transaction_path(registry_path)
                 cleanup_path = _cleanup_transaction_path(journal_path)
                 transaction = _load_transaction(
@@ -1343,7 +1398,7 @@ def update_catalog(
                 deployment_address, current_ip
             )
 
-        with _catalog_lock(registry_path):
+        with _catalog_lock(registry_path, fence):
             journal_path = _transaction_path(registry_path)
             cleanup_path = _cleanup_transaction_path(journal_path)
             transaction = _load_transaction(

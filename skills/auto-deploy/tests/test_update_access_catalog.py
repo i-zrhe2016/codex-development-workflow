@@ -280,6 +280,17 @@ class AccessCatalogTests(unittest.TestCase):
                 )
         self.assertFalse(self.registry.exists())
 
+    def test_fence_role_is_pinned_for_the_operation(self) -> None:
+        with catalog._fenced_mutation(
+            self.fence, "deployment-run-1", 1
+        ) as fence:
+            record = json.loads(self.fence.read_text(encoding="utf-8"))
+            record["role"] = "recovery"
+            self.fence.write_text(json.dumps(record), encoding="utf-8")
+            self.fence.chmod(0o600)
+            with self.assertRaises(FenceError):
+                fence.assert_current()
+
     def test_pending_transaction_is_reconciled_before_next_update(self) -> None:
         real_replace = catalog._replace_snapshot
 
@@ -373,6 +384,45 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertTrue(self.registry.exists())
         self.assertTrue(self.output.exists())
         self.assertFalse(cleanup_marker.exists())
+
+    def test_recovery_rejects_unsafe_transaction_snapshot_permissions(self) -> None:
+        real_replace = catalog._replace_snapshot
+
+        def interrupt_before_page(path: Path, snapshot: object, fence: object) -> None:
+            if path == self.output:
+                raise FenceError("simulated fence interruption")
+            real_replace(path, snapshot, fence)
+
+        with patch(
+            "update_access_catalog._replace_snapshot",
+            side_effect=interrupt_before_page,
+        ):
+            with self.assertRaises(CatalogError):
+                self.update(
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                )
+
+        transaction_path = self.registry.with_name("catalog.json.txn")
+        transaction = json.loads(transaction_path.read_text(encoding="utf-8"))
+        transaction["output_old"]["mode"] = 0o666
+        transaction_path.write_text(json.dumps(transaction), encoding="utf-8")
+        transaction_path.chmod(0o660)
+
+        fence = json.loads(self.fence.read_text(encoding="utf-8"))
+        fence.update({"role": "recovery", "owner": "recovery-run-1", "generation": 2})
+        self.fence.write_text(json.dumps(fence), encoding="utf-8")
+        self.fence.chmod(0o600)
+        with self.assertRaises(CatalogError):
+            update_catalog(
+                self.registry,
+                self.output,
+                fence_file=self.fence,
+                fence_owner="recovery-run-1",
+                fence_generation=2,
+                recover_pending=True,
+            )
+        self.assertTrue(transaction_path.exists())
 
     def test_recovery_fence_cannot_publish_a_normal_update(self) -> None:
         fence = json.loads(self.fence.read_text(encoding="utf-8"))
@@ -578,6 +628,22 @@ class AccessCatalogTests(unittest.TestCase):
         with self.assertRaises(CatalogError):
             self.update(
                 service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+
+    def test_catalog_lock_fifo_is_rejected(self) -> None:
+        os.mkfifo(self.registry.with_name("catalog.json.lock"), 0o660)
+
+        with self.assertRaises(CatalogError):
+            self.update(
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+
+    def test_surrogate_text_is_rejected_before_encoding(self) -> None:
+        with self.assertRaises(CatalogError):
+            self.update(
+                service_name="\ud800",
                 deployment_address=f"http://{TAILSCALE_IP}:8080/",
             )
 
