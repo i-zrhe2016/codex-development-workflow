@@ -296,8 +296,11 @@ with `--recover-pending` to restore the prior pair.
 The registry parent must be a non-world-writable directory accessible to both
 authorized Unix principals; provision it with their shared group (and setgid
 when needed). The lock and transaction sidecars use that directory group with
-mode `0660`, while the registry remains private and the page keeps its serving
-ownership.
+mode `0660`. The registry also uses mode `0660` and is private to that shared
+group; world permissions are rejected. The page writer must either be able to
+preserve its exact UID/GID or use its shared readable group/other-readable
+contract; an incompatible page owner is refused. Both locks use bounded
+non-blocking acquisition, and a five-second lock timeout is a failed update.
 
 ```bash
 python3 <skill-dir>/scripts/update_access_catalog.py \
@@ -324,14 +327,17 @@ discovery. It accepts only `http` or `https` addresses whose host is that exact
 Tailscale IP, escapes all HTML values, replaces a matching service name without
 duplicates, and retains unrelated rows. It serializes updates with the fence
 authority and a registry-side lock. A durable transaction journal records both
-snapshots before replacement and reconciles an interrupted pair before a later
-update; generated files are size-limited, and an existing page's mode, owner,
-and group remain in place. A missing registry with an existing page, malformed
-metadata, different host, unsafe address, stale fence, or failed write is an
-error. It never starts an HTTP server or changes firewall rules. After each
-update, request the page through the approved Tailscale path and run the
-public-denial probe before marking the deployment verified. A failed update or
-probe leaves the release unverified and follows the documented recovery path.
+snapshots before replacement, records rollback intent until both replacements
+are complete, and reconciles an interrupted pair before a later update;
+generated files are size-limited. A missing registry with an existing page,
+non-regular path, malformed metadata, different host, unsafe address, stale
+fence, incompatible page owner, lock timeout, or failed write is an error. The
+`--recover-pending` path uses the durable snapshots and an authorized recovery
+fence; it does not require the Tailscale CLI. The updater never starts an HTTP
+server or changes firewall rules. After each update, request the page through
+the approved Tailscale path and run the public-denial probe before marking the
+deployment verified. A failed update or probe leaves the release unverified
+and follows the documented recovery path.
 
 ## Required deployment contract
 

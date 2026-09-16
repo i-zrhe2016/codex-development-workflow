@@ -32,7 +32,9 @@ IP plus each verified service name and deployment address. The updater accepts
 only HTTP(S) addresses on that exact Tailscale IP, updates rows idempotently by
 service name, serializes concurrent updates behind the deployment mutation
 fence, and uses a durable journal to reconcile the registry/page pair after an
-interrupted write. It preserves the existing page owner, group, and mode.
+interrupted write. It preserves the existing page mode and preserves the
+serving group or exact page owner when the writer has that capability; otherwise
+the shared-readable group or other-readable owner contract is required.
 
 Initialize and update it on the target with:
 
@@ -64,7 +66,11 @@ smoke verification, then verify the page from an approved Tailscale peer and
 confirm public port-80 denial. The script does not install an HTTP server or
 modify the firewall. Pre-provision the registry directory as non-world-
 writable and accessible to both the deployment and independent recovery Unix
-principals; its lock and transaction sidecars use their shared group.
+principals; its lock, transaction journal, and mode `0660` registry use their
+shared group. World permissions are rejected. The page writer must preserve its
+owner or satisfy the documented shared-readable owner contract. Lock waits are
+bounded at five seconds, and `--recover-pending` uses the journal and recovery
+fence without requiring Tailscale discovery.
 
 The runtime instructions are in
 [`skills/auto-deploy/SKILL.md`](../../../skills/auto-deploy/SKILL.md), and the

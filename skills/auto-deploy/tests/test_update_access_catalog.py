@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
 import subprocess
@@ -100,6 +101,7 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertIn("No services recorded.", page)
         self.assertTrue(self.registry.with_name("catalog.json.lock").exists())
         self.assertFalse(self.registry.with_name("catalog.json.txn").exists())
+        self.assertEqual(self.registry.stat().st_mode & 0o777, 0o660)
 
     def test_discovers_one_local_tailscale_ip_when_not_supplied(self) -> None:
         completed = subprocess.CompletedProcess(
@@ -261,7 +263,7 @@ class AccessCatalogTests(unittest.TestCase):
 
         with patch(
             "update_access_catalog._discover_tailscale_ip",
-            return_value=TAILSCALE_IP,
+            side_effect=AssertionError("recovery must not discover Tailscale"),
         ):
             with self.assertRaises(FenceError):
                 update_catalog(
@@ -293,6 +295,12 @@ class AccessCatalogTests(unittest.TestCase):
                     deployment_address=f"http://{TAILSCALE_IP}:8080/",
                 )
         self.assertTrue(self.registry.with_name("catalog.json.txn").exists())
+        self.assertEqual(
+            json.loads(
+                self.registry.with_name("catalog.json.txn").read_text(encoding="utf-8")
+            )["state"],
+            "rollback",
+        )
         self.assertTrue(self.registry.exists())
         self.assertFalse(self.output.exists())
         self.assertEqual(
@@ -349,7 +357,7 @@ class AccessCatalogTests(unittest.TestCase):
         self.fence.chmod(0o600)
         with patch(
             "update_access_catalog._discover_tailscale_ip",
-            return_value=TAILSCALE_IP,
+            side_effect=AssertionError("recovery must not discover Tailscale"),
         ):
             registry = update_catalog(
                 self.registry,
@@ -360,7 +368,7 @@ class AccessCatalogTests(unittest.TestCase):
                 recover_pending=True,
             )
 
-        self.assertEqual(registry["services"], [])
+        self.assertEqual(registry["status"], "recovered")
         self.assertFalse(self.registry.exists())
         self.assertFalse(self.output.exists())
         self.assertFalse(self.registry.with_name("catalog.json.txn").exists())
@@ -382,6 +390,15 @@ class AccessCatalogTests(unittest.TestCase):
                         fence_generation=1,
                     )
 
+    def test_lock_contention_returns_after_bounded_timeout(self) -> None:
+        with patch.object(
+            catalog.fcntl, "flock", side_effect=BlockingIOError()
+        ), patch.object(catalog.time, "monotonic", side_effect=(0.0, 6.0)):
+            with self.assertRaises(CatalogError):
+                catalog._acquire_exclusive_lock(
+                    0, CatalogError, "catalog lock is unavailable"
+                )
+
     def test_missing_registry_with_existing_page_fails_closed(self) -> None:
         self.output.write_text("existing catalog page", encoding="utf-8")
 
@@ -393,6 +410,31 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertEqual(
             self.output.read_text(encoding="utf-8"), "existing catalog page"
         )
+
+    def test_registry_rejects_world_accessible_permissions(self) -> None:
+        self.run_update(
+            "--service-name",
+            "api",
+            "--deployment-address",
+            f"http://{TAILSCALE_IP}:8080/",
+        )
+        self.registry.chmod(0o644)
+
+        with self.assertRaises(CatalogError):
+            self.update(
+                service_name="api",
+                deployment_address=f"https://{TAILSCALE_IP}:8443/",
+            )
+
+    def test_registry_fifo_is_rejected_without_blocking(self) -> None:
+        self.registry.unlink(missing_ok=True)
+        os.mkfifo(self.registry)
+
+        with self.assertRaises(CatalogError):
+            self.update(
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
 
     def test_service_limit_rejects_new_name_without_corrupting_catalog(self) -> None:
         with patch("update_access_catalog.MAX_SERVICES", 1):

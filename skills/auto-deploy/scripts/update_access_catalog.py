@@ -8,6 +8,7 @@ import base64
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import errno
 import fcntl
 import html
 import ipaddress
@@ -18,6 +19,7 @@ import subprocess
 import stat
 import sys
 import tempfile
+import time
 from typing import Any, Callable, Iterator
 from urllib.parse import urlsplit
 
@@ -28,6 +30,9 @@ MAX_TEXT_LENGTH = 512
 MAX_FENCE_BYTES = 64_000
 MAX_TRANSACTION_BYTES = 16_000_000
 SIDECAR_MODE = 0o660
+REGISTRY_MODE = 0o660
+LOCK_TIMEOUT_SECONDS = 5.0
+LOCK_RETRY_SECONDS = 0.05
 TAILSCALE_NETWORK = ipaddress.ip_network(".".join(("100", "64", "0", "0")) + "/10")
 
 
@@ -143,6 +148,25 @@ def _read_descriptor(descriptor: int, maximum: int) -> bytes:
     return data
 
 
+def _acquire_exclusive_lock(
+    descriptor: int, error_type: type[CatalogError], message: str
+) -> None:
+    deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return
+        except BlockingIOError:
+            pass
+        except OSError as exc:
+            if exc.errno not in {errno.EACCES, errno.EAGAIN}:
+                raise error_type(message) from exc
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise error_type(message)
+        time.sleep(min(LOCK_RETRY_SECONDS, remaining))
+
+
 class FenceGuard:
     """Hold the same file lock used by the deployment mutation authority."""
 
@@ -168,8 +192,8 @@ class FenceGuard:
             or path_stat.st_ino != descriptor_stat.st_ino
         ):
             raise FenceError("catalog fence was replaced")
-        if path_stat.st_mode & 0o022:
-            raise FenceError("catalog fence is writable by another account")
+        if path_stat.st_mode & 0o077:
+            raise FenceError("catalog fence is accessible to another account")
         try:
             record = json.loads(_read_descriptor(self.descriptor, MAX_FENCE_BYTES))
         except CatalogError as exc:
@@ -207,9 +231,13 @@ def _fenced_mutation(
     except OSError as exc:
         raise FenceError("cannot open the catalog fence") from exc
     guard = FenceGuard(fence_path, descriptor, owner, generation)
+    locked = False
     try:
         try:
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            _acquire_exclusive_lock(
+                descriptor, FenceError, "catalog fence lock is unavailable"
+            )
+            locked = True
             guard.assert_current()
         except FenceError:
             raise
@@ -217,9 +245,12 @@ def _fenced_mutation(
             raise FenceError("catalog fence lock failed") from exc
         yield guard
     finally:
-        try:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
-        finally:
+        if locked:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+            finally:
+                os.close(descriptor)
+        else:
             os.close(descriptor)
 
 
@@ -318,6 +349,67 @@ def _path_exists(path: Path) -> bool:
     return os.path.lexists(path)
 
 
+def _read_regular_file(
+    path: Path, maximum: int, description: str
+) -> tuple[os.stat_result, bytes]:
+    flags = (
+        os.O_RDONLY
+        | os.O_NONBLOCK
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise CatalogError(f"{description} is unreadable") from exc
+    try:
+        file_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(file_stat.st_mode):
+            raise CatalogError(f"{description} must be a regular file")
+        if file_stat.st_size > maximum:
+            raise CatalogError(f"{description} is too large")
+        return file_stat, _read_descriptor(descriptor, maximum)
+    except CatalogError:
+        raise
+    except OSError as exc:
+        raise CatalogError(f"{description} is unreadable") from exc
+    finally:
+        os.close(descriptor)
+
+
+def _prepare_registry(path: Path, fence: FenceGuard) -> None:
+    if not _path_exists(path):
+        return
+    try:
+        file_stat = os.lstat(path)
+    except OSError as exc:
+        raise CatalogError("catalog registry cannot be inspected") from exc
+    if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISREG(file_stat.st_mode):
+        raise CatalogError("catalog registry must be a regular file")
+    if file_stat.st_mode & 0o007:
+        raise CatalogError("catalog registry permissions are too broad")
+    group_id = _sidecar_gid(path.parent)
+    if (
+        file_stat.st_gid == group_id
+        and (file_stat.st_mode & REGISTRY_MODE) == REGISTRY_MODE
+    ):
+        return
+    if file_stat.st_uid != os.geteuid() and os.geteuid() != 0:
+        raise CatalogError(
+            "catalog registry needs an ownership-capable authority for recovery"
+        )
+    fence.assert_current()
+    try:
+        os.chown(path, file_stat.st_uid, group_id)
+        os.chmod(path, REGISTRY_MODE)
+        _fsync_directory(path.parent)
+    except OSError as exc:
+        raise CatalogError(
+            "catalog registry cannot be made accessible to recovery"
+        ) from exc
+    fence.assert_current()
+
+
 def _load_registry(
     path: Path, tailscale_ip: str, output_path: Path
 ) -> dict[str, Any]:
@@ -328,11 +420,15 @@ def _load_registry(
             )
         return _empty_registry(tailscale_ip)
     try:
-        if path.is_symlink():
-            raise CatalogError("catalog registry must be a regular file")
-        if path.stat().st_size > MAX_FILE_BYTES:
-            raise CatalogError("catalog registry is too large")
-        value = json.loads(path.read_text(encoding="utf-8"))
+        file_stat, data = _read_regular_file(
+            path, MAX_FILE_BYTES, "catalog registry"
+        )
+        if (
+            (file_stat.st_mode & 0o007)
+            or (file_stat.st_mode & REGISTRY_MODE) != REGISTRY_MODE
+        ):
+            raise CatalogError("catalog registry permissions are unsafe")
+        value = json.loads(data.decode("utf-8"))
     except CatalogError:
         raise
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -413,24 +509,81 @@ def _prepare_sidecar(descriptor: int, directory: Path) -> None:
             raise CatalogError("catalog sidecar cannot be inspected") from exc
         if (
             descriptor_stat.st_gid != group_id
-            or descriptor_stat.st_mode & 0o002
-            or descriptor_stat.st_mode & SIDECAR_MODE != SIDECAR_MODE
+            or (descriptor_stat.st_mode & 0o007)
+            or (descriptor_stat.st_mode & SIDECAR_MODE) != SIDECAR_MODE
         ):
             raise CatalogError(
                 "catalog sidecar is not accessible to the recovery authority"
             )
 
 
+def _is_group_member(group_id: int) -> bool:
+    try:
+        return group_id == os.getegid() or group_id in os.getgroups()
+    except OSError:
+        return False
+
+
+def _registry_metadata(
+    snapshot: FileSnapshot, directory: Path
+) -> tuple[int, int, int]:
+    group_id = _sidecar_gid(directory)
+    if not snapshot.existed:
+        return os.geteuid(), group_id, REGISTRY_MODE
+    if os.geteuid() == 0 or (
+        snapshot.uid == os.geteuid()
+        and (snapshot.gid == os.getegid() or _is_group_member(snapshot.gid))
+    ):
+        return snapshot.uid, snapshot.gid, snapshot.mode
+    if snapshot.gid == group_id and _is_group_member(group_id):
+        return os.geteuid(), group_id, REGISTRY_MODE
+    raise CatalogError(
+        "catalog registry writer is not compatible with its recovery group"
+    )
+
+
+def _output_metadata(snapshot: FileSnapshot) -> tuple[int, int, int]:
+    if not snapshot.existed:
+        return os.geteuid(), os.getegid(), 0o644
+    if os.geteuid() == 0 or (
+        snapshot.uid == os.geteuid()
+        and (snapshot.gid == os.getegid() or _is_group_member(snapshot.gid))
+    ):
+        return snapshot.uid, snapshot.gid, snapshot.mode
+    if snapshot.mode & 0o040 and _is_group_member(snapshot.gid):
+        return os.geteuid(), snapshot.gid, snapshot.mode
+    if snapshot.mode & 0o004:
+        return os.geteuid(), os.getegid(), snapshot.mode
+    raise CatalogError(
+        "HTML output owner is incompatible; use an ownership-capable writer"
+    )
+
+
+def _recovery_metadata(
+    path: Path, snapshot: FileSnapshot, *, registry: bool
+) -> tuple[int, int, int]:
+    if not snapshot.existed:
+        return snapshot.uid, snapshot.gid, snapshot.mode
+    if os.geteuid() == 0 or (
+        snapshot.uid == os.geteuid()
+        and (snapshot.gid == os.getegid() or _is_group_member(snapshot.gid))
+    ):
+        return snapshot.uid, snapshot.gid, snapshot.mode
+    if registry:
+        group_id = _sidecar_gid(path.parent)
+        if _is_group_member(group_id):
+            return os.geteuid(), group_id, REGISTRY_MODE
+        raise CatalogError(
+            "recovery cannot access the catalog registry group"
+        )
+    return _output_metadata(snapshot)
+
+
 def _read_snapshot(path: Path, default_mode: int) -> FileSnapshot:
     if not _path_exists(path):
         return FileSnapshot(False, None, default_mode, os.geteuid(), os.getegid())
     try:
-        path_stat = os.lstat(path)
-        if stat.S_ISLNK(path_stat.st_mode) or not stat.S_ISREG(path_stat.st_mode):
-            raise CatalogError("catalog file must be a regular file")
-        if path_stat.st_size > MAX_FILE_BYTES:
-            raise CatalogError("catalog file is too large")
-        data = path.read_bytes()
+        path_stat, data = _read_regular_file(path, MAX_FILE_BYTES, "catalog file")
         return FileSnapshot(
             True,
             data,
@@ -536,6 +689,7 @@ class CatalogTransaction:
     output_old: FileSnapshot
     registry_new: FileSnapshot
     output_new: FileSnapshot
+    state: str
 
 
 def _transaction_path(registry_path: Path) -> Path:
@@ -559,10 +713,12 @@ def _transaction_payload(
     output_old: FileSnapshot,
     registry_new: FileSnapshot,
     output_new: FileSnapshot,
+    *,
+    state: str = "rollback",
 ) -> dict[str, Any]:
     return {
         "version": 1,
-        "state": "prepared",
+        "state": state,
         "registry_path": str(registry_path.resolve(strict=False)),
         "output_path": str(output_path.resolve(strict=False)),
         "fence_owner": owner,
@@ -602,7 +758,7 @@ def _write_transaction_journal(
         if temporary is not None:
             try:
                 temporary.unlink()
-            except FileNotFoundError:
+            except (FileNotFoundError, OSError):
                 pass
 
 
@@ -612,24 +768,23 @@ def _load_transaction(
     if not _path_exists(journal_path):
         return None
     try:
-        journal_stat = os.lstat(journal_path)
+        journal_stat, data = _read_regular_file(
+            journal_path, MAX_TRANSACTION_BYTES, "catalog transaction"
+        )
         if (
-            stat.S_ISLNK(journal_stat.st_mode)
-            or not stat.S_ISREG(journal_stat.st_mode)
-            or journal_stat.st_mode & 0o002
-            or journal_stat.st_mode & SIDECAR_MODE != SIDECAR_MODE
+            (journal_stat.st_mode & 0o007)
+            or (journal_stat.st_mode & SIDECAR_MODE) != SIDECAR_MODE
         ):
             raise CatalogError("catalog transaction sidecar permissions are unsafe")
-        if journal_stat.st_size > MAX_TRANSACTION_BYTES:
-            raise CatalogError("catalog transaction is too large")
-        value = json.loads(journal_path.read_text(encoding="utf-8"))
+        value = json.loads(data.decode("utf-8"))
     except CatalogError:
         raise
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise CatalogError("catalog transaction is unreadable") from exc
     if not isinstance(value, dict) or value.get("version") != 1:
         raise CatalogError("catalog transaction is malformed")
-    if value.get("state") != "prepared":
+    state = value.get("state")
+    if state not in {"rollback", "committed", "prepared"}:
         raise CatalogError("catalog transaction state is invalid")
     expected_registry = str(registry_path.resolve(strict=False))
     expected_output = str(output_path.resolve(strict=False))
@@ -649,6 +804,30 @@ def _load_transaction(
         _snapshot_from_payload(value.get("output_old")),
         _snapshot_from_payload(value.get("registry_new")),
         _snapshot_from_payload(value.get("output_new")),
+        "rollback" if state == "prepared" else state,
+    )
+
+
+def _write_transaction_state(
+    journal_path: Path,
+    transaction: CatalogTransaction,
+    fence: FenceGuard,
+    state: str,
+) -> None:
+    _write_transaction_journal(
+        journal_path,
+        _transaction_payload(
+            Path(transaction.registry_path),
+            Path(transaction.output_path),
+            transaction.fence_owner,
+            transaction.fence_generation,
+            transaction.registry_old,
+            transaction.output_old,
+            transaction.registry_new,
+            transaction.output_new,
+            state=state,
+        ),
+        fence.assert_current,
     )
 
 
@@ -672,7 +851,12 @@ def _snapshot_matches(current: FileSnapshot, expected: FileSnapshot) -> bool:
 
 
 def _replace_snapshot(
-    path: Path, snapshot: FileSnapshot, fence_check: Callable[[], object]
+    path: Path,
+    snapshot: FileSnapshot,
+    fence_check: Callable[[], object],
+    *,
+    recovery: bool = False,
+    registry: bool = False,
 ) -> None:
     if not snapshot.existed:
         if not _path_exists(path):
@@ -686,13 +870,18 @@ def _replace_snapshot(
         return
     if snapshot.data is None:
         raise CatalogError("catalog replacement data is unavailable")
+    uid, gid, mode = (
+        _recovery_metadata(path, snapshot, registry=registry)
+        if recovery
+        else (snapshot.uid, snapshot.gid, snapshot.mode)
+    )
     temporary = _write_temp(
         path.parent,
         path.name,
         snapshot.data,
-        snapshot.mode,
-        snapshot.uid,
-        snapshot.gid,
+        mode,
+        uid,
+        gid,
     )
     try:
         fence_check()
@@ -703,7 +892,7 @@ def _replace_snapshot(
         if temporary is not None:
             try:
                 temporary.unlink()
-            except FileNotFoundError:
+            except (FileNotFoundError, OSError):
                 pass
 
 
@@ -715,17 +904,38 @@ def _reconcile_transaction(
     rollback: bool,
 ) -> None:
     targets = (
-        (Path(transaction.registry_path), transaction.registry_old, transaction.registry_new),
-        (Path(transaction.output_path), transaction.output_old, transaction.output_new),
+        (
+            Path(transaction.registry_path),
+            transaction.registry_old,
+            transaction.registry_new,
+            True,
+        ),
+        (
+            Path(transaction.output_path),
+            transaction.output_old,
+            transaction.output_new,
+            False,
+        ),
     )
+    if rollback:
+        for path, old, _new, is_registry in targets:
+            _replace_snapshot(
+                path,
+                old,
+                fence.assert_current,
+                recovery=True,
+                registry=is_registry,
+            )
+        _remove_transaction(journal_path, fence.assert_current)
+        return
     current_states: list[tuple[Path, FileSnapshot, FileSnapshot, FileSnapshot]] = []
-    for path, old, new in targets:
+    for path, old, new, _is_registry in targets:
         current = _read_snapshot(path, old.mode)
         if not _snapshot_matches(current, old) and not _snapshot_matches(current, new):
             raise CatalogError("catalog transaction found unexpected file contents")
         current_states.append((path, current, old, new))
     for path, current, old, new in current_states:
-        desired = old if rollback else new
+        desired = new
         if current != desired:
             _replace_snapshot(path, desired, fence.assert_current)
     _remove_transaction(journal_path, fence.assert_current)
@@ -742,21 +952,33 @@ def _write_catalog_files(
         raise CatalogError("generated catalog is too large")
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    registry_old = _read_snapshot(registry_path, 0o600)
+    registry_old = _read_snapshot(registry_path, REGISTRY_MODE)
+    if not registry_old.existed:
+        registry_old = FileSnapshot(
+            False,
+            None,
+            REGISTRY_MODE,
+            os.geteuid(),
+            _sidecar_gid(registry_path.parent),
+        )
     output_old = _read_snapshot(output_path, 0o644)
+    registry_uid, registry_gid, registry_mode = _registry_metadata(
+        registry_old, registry_path.parent
+    )
+    output_uid, output_gid, output_mode = _output_metadata(output_old)
     registry_new = FileSnapshot(
         True,
         registry_data,
-        registry_old.mode if registry_old.existed else 0o600,
-        registry_old.uid,
-        registry_old.gid,
+        registry_mode,
+        registry_uid,
+        registry_gid,
     )
     output_new = FileSnapshot(
         True,
         html_data,
-        output_old.mode if output_old.existed else 0o644,
-        output_old.uid,
-        output_old.gid,
+        output_mode,
+        output_uid,
+        output_gid,
     )
     journal_path = _transaction_path(registry_path)
     if _path_exists(journal_path):
@@ -770,6 +992,7 @@ def _write_catalog_files(
         output_old,
         registry_new,
         output_new,
+        "rollback",
     )
     _write_transaction_journal(
         journal_path,
@@ -794,6 +1017,16 @@ def _write_catalog_files(
         ) from exc
     except (OSError, IOError, CatalogError) as exc:
         try:
+            _write_transaction_state(journal_path, transaction, fence, "rollback")
+        except FenceError as mark_exc:
+            raise CatalogError(
+                "catalog update failed; authorized recovery is required"
+            ) from mark_exc
+        except (OSError, IOError, CatalogError) as mark_exc:
+            raise CatalogError(
+                "catalog update failed; pending transaction needs recovery"
+            ) from mark_exc
+        try:
             _reconcile_transaction(
                 journal_path, transaction, fence, rollback=True
             )
@@ -804,6 +1037,16 @@ def _write_catalog_files(
         except (OSError, IOError, CatalogError) as restore_exc:
             raise CatalogError("catalog update and restore both failed") from restore_exc
         raise CatalogError("catalog update failed") from exc
+    try:
+        _write_transaction_state(journal_path, transaction, fence, "committed")
+    except FenceError as exc:
+        raise CatalogError(
+            "catalog committed; authorized recovery must reconcile its journal"
+        ) from exc
+    except (OSError, IOError, CatalogError) as exc:
+        raise CatalogError(
+            "catalog committed; pending transaction journal needs reconciliation"
+        ) from exc
     try:
         _remove_transaction(journal_path, fence.assert_current)
     except FenceError as exc:
@@ -831,18 +1074,25 @@ def _catalog_lock(registry_path: Path) -> Iterator[None]:
         )
     except OSError as exc:
         raise CatalogError("cannot create the catalog lock") from exc
+    locked = False
     try:
         _prepare_sidecar(descriptor, registry_path.parent)
-        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        _acquire_exclusive_lock(
+            descriptor, CatalogError, "catalog lock is unavailable"
+        )
+        locked = True
         yield
     except CatalogError:
         raise
     except OSError as exc:
         raise CatalogError("catalog lock failed") from exc
     finally:
-        try:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
-        finally:
+        if locked:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+            finally:
+                os.close(descriptor)
+        else:
             os.close(descriptor)
 
 
@@ -880,6 +1130,23 @@ def update_catalog(
         raise CatalogError("recover-pending cannot include a catalog update")
 
     with _fenced_mutation(fence_file, fence_owner, fence_generation) as fence:
+        if recover_pending:
+            if fence.role != "recovery":
+                raise FenceError("pending recovery requires a recovery fence")
+            with _catalog_lock(registry_path):
+                journal_path = _transaction_path(registry_path)
+                transaction = _load_transaction(
+                    journal_path, registry_path, output_path
+                )
+                if transaction is None:
+                    raise CatalogError("no pending catalog transaction to recover")
+                _reconcile_transaction(
+                    journal_path, transaction, fence, rollback=True
+                )
+            return {"status": "recovered"}
+
+        if fence.role != "deployment":
+            raise FenceError("normal catalog mutation requires a deployment fence")
         current_ip = _discover_tailscale_ip()
         if tailscale_ip is not None:
             asserted_ip = _validate_tailscale_ip(tailscale_ip)
@@ -888,18 +1155,12 @@ def update_catalog(
                     "caller Tailscale IPv4 does not match local discovery"
                 )
         fence.assert_current()
-        if recover_pending and fence.role != "recovery":
-            raise FenceError("pending recovery requires a recovery fence")
-        if not recover_pending and fence.role != "deployment":
-            raise FenceError("normal catalog mutation requires a deployment fence")
         if initialize:
             if service_name is not None or deployment_address is not None:
                 raise CatalogError("initialize cannot include a service update")
-        elif not recover_pending and (
-            service_name is None or deployment_address is None
-        ):
+        elif service_name is None or deployment_address is None:
             raise CatalogError("service name and deployment address are required")
-        elif not recover_pending:
+        else:
             service_name = _validate_service_name(service_name)
             deployment_address = _validate_deployment_address(
                 deployment_address, current_ip
@@ -915,24 +1176,22 @@ def update_catalog(
                     transaction.fence_owner == fence.owner
                     and transaction.fence_generation == fence.generation
                 )
-                if recover_pending and fence.role == "recovery":
+                if not same_fence:
+                    raise FenceError(
+                        "pending catalog transaction requires authorized recovery"
+                    )
+                if transaction.state == "rollback":
                     _reconcile_transaction(
                         journal_path, transaction, fence, rollback=True
                     )
-                elif same_fence:
+                elif transaction.state == "committed":
                     _reconcile_transaction(
                         journal_path, transaction, fence, rollback=False
                     )
                 else:
-                    raise FenceError(
-                        "pending catalog transaction requires authorized recovery"
-                    )
-            elif recover_pending:
-                raise CatalogError("no pending catalog transaction to recover")
-
+                    raise CatalogError("catalog transaction state is invalid")
+            _prepare_registry(registry_path, fence)
             registry = _load_registry(registry_path, current_ip, output_path)
-            if recover_pending:
-                return registry
             if initialize:
                 if registry["services"]:
                     raise CatalogError("cannot initialize a non-empty catalog")
