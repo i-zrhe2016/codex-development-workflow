@@ -295,6 +295,14 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertTrue(self.registry.with_name("catalog.json.txn").exists())
         self.assertTrue(self.registry.exists())
         self.assertFalse(self.output.exists())
+        self.assertEqual(
+            self.registry.with_name("catalog.json.lock").stat().st_mode & 0o777,
+            0o660,
+        )
+        self.assertEqual(
+            self.registry.with_name("catalog.json.txn").stat().st_mode & 0o777,
+            0o660,
+        )
 
         self.update(
             service_name="api",
@@ -304,6 +312,75 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertIn(
             f"https://{TAILSCALE_IP}:8443/", self.output.read_text(encoding="utf-8")
         )
+
+    def test_recovery_fence_cannot_publish_a_normal_update(self) -> None:
+        fence = json.loads(self.fence.read_text(encoding="utf-8"))
+        fence["role"] = "recovery"
+        self.fence.write_text(json.dumps(fence), encoding="utf-8")
+        self.fence.chmod(0o600)
+
+        with self.assertRaises(FenceError):
+            self.update(
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+
+    def test_recovery_fence_can_rollback_a_pending_transaction(self) -> None:
+        real_replace = catalog._replace_snapshot
+
+        def interrupt_before_page(path: Path, snapshot: object, check: object) -> None:
+            if path == self.output:
+                raise FenceError("simulated fence interruption")
+            real_replace(path, snapshot, check)
+
+        with patch(
+            "update_access_catalog._replace_snapshot",
+            side_effect=interrupt_before_page,
+        ):
+            with self.assertRaises(CatalogError):
+                self.update(
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                )
+
+        fence = json.loads(self.fence.read_text(encoding="utf-8"))
+        fence.update({"role": "recovery", "owner": "recovery-run-1", "generation": 2})
+        self.fence.write_text(json.dumps(fence), encoding="utf-8")
+        self.fence.chmod(0o600)
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            return_value=TAILSCALE_IP,
+        ):
+            registry = update_catalog(
+                self.registry,
+                self.output,
+                fence_file=self.fence,
+                fence_owner="recovery-run-1",
+                fence_generation=2,
+                recover_pending=True,
+            )
+
+        self.assertEqual(registry["services"], [])
+        self.assertFalse(self.registry.exists())
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.registry.with_name("catalog.json.txn").exists())
+
+    def test_reserved_sidecar_output_is_rejected(self) -> None:
+        for output in (
+            self.registry.with_name("catalog.json.lock"),
+            self.registry.with_name("catalog.json.txn"),
+        ):
+            with self.subTest(output=output):
+                with self.assertRaises(CatalogError):
+                    update_catalog(
+                        self.registry,
+                        output,
+                        service_name="api",
+                        deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                        fence_file=self.fence,
+                        fence_owner="deployment-run-1",
+                        fence_generation=1,
+                    )
 
     def test_missing_registry_with_existing_page_fails_closed(self) -> None:
         self.output.write_text("existing catalog page", encoding="utf-8")

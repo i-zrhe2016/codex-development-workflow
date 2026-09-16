@@ -26,7 +26,8 @@ MAX_FILE_BYTES = 2_000_000
 MAX_SERVICES = 1_000
 MAX_TEXT_LENGTH = 512
 MAX_FENCE_BYTES = 64_000
-MAX_TRANSACTION_BYTES = 8_000_000
+MAX_TRANSACTION_BYTES = 16_000_000
+SIDECAR_MODE = 0o660
 TAILSCALE_NETWORK = ipaddress.ip_network(".".join(("100", "64", "0", "0")) + "/10")
 
 
@@ -388,6 +389,38 @@ def _fsync_directory(directory: Path) -> None:
         os.close(descriptor)
 
 
+def _sidecar_gid(directory: Path) -> int:
+    try:
+        directory_stat = os.stat(directory)
+    except OSError as exc:
+        raise CatalogError("catalog sidecar directory is unreadable") from exc
+    if not stat.S_ISDIR(directory_stat.st_mode) or directory_stat.st_mode & 0o002:
+        raise CatalogError("catalog sidecar directory is not safe")
+    return directory_stat.st_gid
+
+
+def _prepare_sidecar(descriptor: int, directory: Path) -> None:
+    group_id = _sidecar_gid(directory)
+    try:
+        descriptor_stat = os.fstat(descriptor)
+        if descriptor_stat.st_gid != group_id:
+            os.fchown(descriptor, descriptor_stat.st_uid, group_id)
+        os.fchmod(descriptor, SIDECAR_MODE)
+    except OSError:
+        try:
+            descriptor_stat = os.fstat(descriptor)
+        except OSError as exc:
+            raise CatalogError("catalog sidecar cannot be inspected") from exc
+        if (
+            descriptor_stat.st_gid != group_id
+            or descriptor_stat.st_mode & 0o002
+            or descriptor_stat.st_mode & SIDECAR_MODE != SIDECAR_MODE
+        ):
+            raise CatalogError(
+                "catalog sidecar is not accessible to the recovery authority"
+            )
+
+
 def _read_snapshot(path: Path, default_mode: int) -> FileSnapshot:
     if not _path_exists(path):
         return FileSnapshot(False, None, default_mode, os.geteuid(), os.getegid())
@@ -509,6 +542,14 @@ def _transaction_path(registry_path: Path) -> Path:
     return registry_path.with_name(registry_path.name + ".txn")
 
 
+def _reserved_catalog_paths(registry_path: Path) -> set[Path]:
+    return {
+        registry_path.resolve(strict=False),
+        registry_path.with_name(registry_path.name + ".lock").resolve(strict=False),
+        _transaction_path(registry_path).resolve(strict=False),
+    }
+
+
 def _transaction_payload(
     registry_path: Path,
     output_path: Path,
@@ -548,9 +589,9 @@ def _write_transaction_journal(
         journal_path.parent,
         journal_path.name,
         data,
-        0o600,
+        SIDECAR_MODE,
         os.geteuid(),
-        os.getegid(),
+        _sidecar_gid(journal_path.parent),
     )
     try:
         fence_check()
@@ -575,9 +616,10 @@ def _load_transaction(
         if (
             stat.S_ISLNK(journal_stat.st_mode)
             or not stat.S_ISREG(journal_stat.st_mode)
-            or journal_stat.st_mode & 0o022
+            or journal_stat.st_mode & 0o002
+            or journal_stat.st_mode & SIDECAR_MODE != SIDECAR_MODE
         ):
-            raise CatalogError("catalog transaction must be a regular file")
+            raise CatalogError("catalog transaction sidecar permissions are unsafe")
         if journal_stat.st_size > MAX_TRANSACTION_BYTES:
             raise CatalogError("catalog transaction is too large")
         value = json.loads(journal_path.read_text(encoding="utf-8"))
@@ -785,13 +827,12 @@ def _catalog_lock(registry_path: Path) -> Iterator[None]:
             | os.O_CREAT
             | getattr(os, "O_CLOEXEC", 0)
             | getattr(os, "O_NOFOLLOW", 0),
-            0o600,
+            SIDECAR_MODE,
         )
     except OSError as exc:
         raise CatalogError("cannot create the catalog lock") from exc
     try:
-        if os.fstat(descriptor).st_mode & 0o022:
-            raise CatalogError("catalog lock is writable by another account")
+        _prepare_sidecar(descriptor, registry_path.parent)
         fcntl.flock(descriptor, fcntl.LOCK_EX)
         yield
     except CatalogError:
@@ -820,8 +861,19 @@ def update_catalog(
 ) -> dict[str, Any]:
     registry_path = Path(registry_path)
     output_path = Path(output_path)
-    if registry_path.resolve(strict=False) == output_path.resolve(strict=False):
+    registry_resolved = registry_path.resolve(strict=False)
+    output_resolved = output_path.resolve(strict=False)
+    if registry_resolved == output_resolved:
         raise CatalogError("registry and HTML output must be different files")
+    if registry_path.name.endswith((".lock", ".txn")):
+        raise CatalogError("registry path uses a reserved catalog sidecar name")
+    reserved_paths = _reserved_catalog_paths(registry_path)
+    if output_resolved in reserved_paths:
+        raise CatalogError("HTML output collides with a reserved catalog sidecar")
+    if fence_file is not None and Path(fence_file).resolve(strict=False) in (
+        reserved_paths | {output_resolved}
+    ):
+        raise CatalogError("catalog fence collides with a reserved catalog sidecar")
     if recover_pending and (
         initialize or service_name is not None or deployment_address is not None
     ):
@@ -836,6 +888,10 @@ def update_catalog(
                     "caller Tailscale IPv4 does not match local discovery"
                 )
         fence.assert_current()
+        if recover_pending and fence.role != "recovery":
+            raise FenceError("pending recovery requires a recovery fence")
+        if not recover_pending and fence.role != "deployment":
+            raise FenceError("normal catalog mutation requires a deployment fence")
         if initialize:
             if service_name is not None or deployment_address is not None:
                 raise CatalogError("initialize cannot include a service update")

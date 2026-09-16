@@ -62,7 +62,9 @@ updater always discovers the local Tailscale IPv4; an optional `--tailscale-ip`
 value is checked against that discovery. Run the update only after health and
 smoke verification, then verify the page from an approved Tailscale peer and
 confirm public port-80 denial. The script does not install an HTTP server or
-modify the firewall.
+modify the firewall. Pre-provision the registry directory as non-world-
+writable and accessible to both the deployment and independent recovery Unix
+principals; its lock and transaction sidecars use their shared group.
 
 The runtime instructions are in
 [`skills/auto-deploy/SKILL.md`](../../../skills/auto-deploy/SKILL.md), and the

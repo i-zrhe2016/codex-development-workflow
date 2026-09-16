@@ -293,6 +293,11 @@ checks the owner, generation, and lease before every replacement, and rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is
 left for the independent recovery owner; that owner may use a `recovery` fence
 with `--recover-pending` to restore the prior pair.
+The registry parent must be a non-world-writable directory accessible to both
+authorized Unix principals; provision it with their shared group (and setgid
+when needed). The lock and transaction sidecars use that directory group with
+mode `0660`, while the registry remains private and the page keeps its serving
+ownership.
 
 ```bash
 python3 <skill-dir>/scripts/update_access_catalog.py \
