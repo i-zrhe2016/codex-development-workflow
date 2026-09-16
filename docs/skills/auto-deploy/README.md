@@ -40,9 +40,12 @@ components and must not be world-writable; the updater never creates it and
 rejects a world-writable page. The registry directory is also pre-provisioned,
 shared by deployment and recovery, and its `0660` journal sidecars include a
 cleanup marker retained when journal deletion cannot be confirmed. Shared
-group-writable catalog or document-root directories are supported when they are
-non-world-writable and writable by both authorized deployment and recovery
-principals; private descriptor-pinned staging protects replacement paths.
+group-writable catalog or document-root directories must be non-world-writable
+and sticky. Because sticky directories restrict replacement and removal to the
+directory or existing-file owner, deployment and recovery mutations must use
+the same catalog-writer UID or an ownership-capable privileged authority;
+recovery authorization may remain independent. Private descriptor-pinned
+staging also protects replacement paths.
 
 Initialize and update it on the target with:
 
@@ -86,10 +89,11 @@ that discovery. Run the update only after health and
 smoke verification, then verify the page from an approved Tailscale peer and
 confirm public port-80 denial. The script does not install an HTTP server or
 modify the firewall. The pre-provisioned registry directory must be a real,
-non-world-writable path accessible to both the deployment and independent
-recovery Unix principals; the updater does not create it and its lock,
-transaction journal, cleanup marker, and mode `0660` registry use their shared
-group. The cleanup marker is rewritten to a durable `cleared` tombstone after
+non-world-writable path accessible to the deployment writer and recovery
+authority; for a sticky group-writable path, both mutation paths must use the
+same catalog-writer UID or an ownership-capable privileged authority. The
+updater does not create it and its lock, transaction journal, cleanup marker,
+and mode `0660` registry use their shared group. The cleanup marker is rewritten to a durable `cleared` tombstone after
 successful cleanup and remains available if marker retirement is uncertain.
 World permissions are rejected. The page writer must preserve its
 owner or satisfy the documented shared-readable owner contract. The versioned

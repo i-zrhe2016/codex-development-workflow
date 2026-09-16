@@ -302,18 +302,23 @@ whose parent and directory descriptors are pinned and validated. The file is
 created and renamed relative to those descriptors, and its creation-time
 descriptor remains open through the rename, so a shared registry directory
 cannot substitute a different source inode or staging pathname. Shared
-group-writable catalog or document-root directories may be used when they are
-non-world-writable and writable by both authorized deployment and recovery
-principals; the descriptor-pinned private staging protects replacement paths.
+group-writable catalog or document-root directories must be non-world-writable
+and sticky. Sticky directories restrict replacement and removal to the
+directory or existing-file owner, so deployment and recovery mutations must
+use the same catalog-writer UID or an ownership-capable privileged authority;
+recovery authorization may remain independent. The descriptor-pinned private
+staging also protects replacement paths.
 Each replacement, unlink, or metadata repair is performed through the fenced
 mutation authority while that exact fence is current; the updater rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is
 left for the independent recovery owner; that owner may use a `recovery` fence
 with `--recover-pending` to restore the prior pair.
 The registry parent must be pre-provisioned as a real, non-world-writable
-directory accessible to both authorized Unix principals; provision it with
-their shared group (and setgid when needed). The updater never creates this
-directory and rejects unsafe path components. The lock, transaction, and
+directory accessible to the deployment writer and recovery authority; for a
+sticky group-writable directory, both mutation paths must use the same
+catalog-writer UID or an ownership-capable privileged authority. Provision it
+with their shared group (and setgid when needed). The updater never creates
+this directory and rejects unsafe path components. The lock, transaction, and
 cleanup-marker sidecars use that directory group with mode `0660`. The
 registry also uses mode `0660` and is private to that shared group; world
 permissions are rejected. Pre-provision the HTML document-root

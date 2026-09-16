@@ -910,6 +910,14 @@ class AccessCatalogTests(unittest.TestCase):
         group_registry_root = self.root / "group-registry-root"
         group_registry_root.mkdir()
         group_registry_root.chmod(0o770)
+        with self.assertRaises(CatalogError):
+            self.update(
+                registry=group_registry_root / "catalog.json",
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+
+        group_registry_root.chmod(0o1770)
         result = self.update(
             registry=group_registry_root / "catalog.json",
             service_name="api",
