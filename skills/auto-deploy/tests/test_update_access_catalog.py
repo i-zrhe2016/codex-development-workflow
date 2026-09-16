@@ -125,6 +125,25 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertEqual(run.call_args.kwargs["timeout"], 5)
         self.assertEqual(self.read_registry()["tailscale_ip"], TAILSCALE_IP)
 
+    def test_rechecks_tailscale_ip_after_acquiring_catalog_lock(self) -> None:
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            side_effect=(TAILSCALE_IP, OTHER_TAILSCALE_IP),
+        ) as discover:
+            with self.assertRaises(CatalogError):
+                update_catalog(
+                    self.registry,
+                    self.output,
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                    fence_file=self.fence,
+                    fence_owner="deployment-run-1",
+                    fence_generation=1,
+                )
+        self.assertEqual(discover.call_count, 2)
+        self.assertFalse(self.registry.exists())
+        self.assertFalse(self.output.exists())
+
     def test_new_service_is_escaped_and_linked(self) -> None:
         service = "<img src=x onerror=alert(1)>"
         address = f"https://{TAILSCALE_IP}:8443/app"
@@ -291,6 +310,32 @@ class AccessCatalogTests(unittest.TestCase):
             with self.assertRaises(FenceError):
                 fence.assert_current()
 
+    def test_fence_authority_lock_blocks_replacement_by_new_generation(self) -> None:
+        replacement = self.root / "replacement-fence.json"
+        replacement.write_text(
+            json.dumps(
+                {
+                    "state": "active",
+                    "role": "recovery",
+                    "owner": "recovery-run-1",
+                    "generation": 2,
+                    "expires_at": "2099-01-01T00:00:00Z",
+                }
+            ),
+            encoding="utf-8",
+        )
+        replacement.chmod(0o600)
+        with catalog._fenced_mutation(
+            self.fence, "deployment-run-1", 1
+        ):
+            os.replace(replacement, self.fence)
+            with patch.object(catalog, "LOCK_TIMEOUT_SECONDS", 0.0):
+                with self.assertRaises(FenceError):
+                    with catalog._fenced_mutation(
+                        self.fence, "recovery-run-1", 2
+                    ):
+                        pass
+
     def test_pending_transaction_is_reconciled_before_next_update(self) -> None:
         real_replace = catalog._replace_snapshot
 
@@ -383,7 +428,10 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertEqual(result["status"], "recovered")
         self.assertTrue(self.registry.exists())
         self.assertTrue(self.output.exists())
-        self.assertFalse(cleanup_marker.exists())
+        self.assertEqual(
+            json.loads(cleanup_marker.read_text(encoding="utf-8"))["state"],
+            "cleared",
+        )
 
     def test_recovery_rejects_unsafe_transaction_snapshot_permissions(self) -> None:
         real_replace = catalog._replace_snapshot
@@ -423,6 +471,41 @@ class AccessCatalogTests(unittest.TestCase):
                 recover_pending=True,
             )
         self.assertTrue(transaction_path.exists())
+
+    def test_cleanup_marker_sync_failure_keeps_a_durable_marker_path(self) -> None:
+        self.update(
+            service_name="api",
+            deployment_address=f"http://{TAILSCALE_IP}:8080/",
+        )
+        cleanup_marker = self.registry.with_name("catalog.json.txn.cleanup")
+        marker = json.loads(cleanup_marker.read_text(encoding="utf-8"))
+        marker["state"] = "cleanup"
+        cleanup_marker.write_text(json.dumps(marker), encoding="utf-8")
+        cleanup_marker.chmod(0o660)
+        transaction = catalog._load_cleanup_marker(
+            cleanup_marker, self.registry, self.output
+        )
+        self.assertIsNotNone(transaction)
+        assert transaction is not None
+
+        with catalog._fenced_mutation(
+            self.fence, "deployment-run-1", 1
+        ) as fence:
+            with patch.object(
+                catalog,
+                "_fsync_directory",
+                side_effect=(None, OSError("simulated sync failure")),
+            ):
+                with self.assertRaises(CatalogError):
+                    catalog._clear_cleanup_marker(
+                        cleanup_marker, transaction, fence
+                    )
+
+        self.assertTrue(cleanup_marker.exists())
+        self.assertEqual(
+            json.loads(cleanup_marker.read_text(encoding="utf-8"))["state"],
+            "cleared",
+        )
 
     def test_recovery_fence_cannot_publish_a_normal_update(self) -> None:
         fence = json.loads(self.fence.read_text(encoding="utf-8"))

@@ -284,8 +284,10 @@ and page. Initialize an empty baseline before the first publication, then run
 the updater after the service revision, health, and smoke checks pass:
 
 The deployment mutation authority must first create a target-scoped, owner-only
-fence file and keep its advisory lock compatible with the deployment lock
-authority. Its active JSON record contains `state: "active"`, `role` set to
+fence file and its stable sibling `.lock` authority file. Deployment and
+recovery must acquire that same sibling lock before changing the fence record;
+the lock inode must never be replaced while an operation is active. Its active
+JSON record contains `state: "active"`, `role` set to
 `deployment` or `recovery`, the current `owner`, positive `generation`, and a
 future timezone-aware `expires_at`. Pass the exact owner and generation to the
 updater. The updater holds the fence while it stages and publishes both files.
@@ -336,8 +338,10 @@ authority and a registry-side lock. A durable transaction journal records both
 snapshots before replacement, records rollback intent until both replacements
 are complete, and reconciles an interrupted pair before a later update. If
 journal removal or its directory sync cannot be confirmed, a durable cleanup
-marker remains until an authorized retry or recovery clears it; generated
-files are size-limited. A missing registry with an existing page,
+marker remains until an authorized retry or recovery clears it. The marker is
+rewritten to a durable `cleared` tombstone after successful cleanup so an
+uncertain marker sync never removes the last recovery metadata; generated files
+are size-limited. A missing registry with an existing page,
 non-regular path, malformed metadata, different host, unsafe address, stale
 fence, unsafe document root, incompatible or world-writable page owner, lock
 timeout, or failed write is an error. The

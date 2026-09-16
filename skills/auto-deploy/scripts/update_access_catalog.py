@@ -31,6 +31,7 @@ MAX_FENCE_BYTES = 64_000
 MAX_TRANSACTION_BYTES = 16_000_000
 SIDECAR_MODE = 0o660
 REGISTRY_MODE = 0o660
+FENCE_LOCK_MODE = 0o600
 LOCK_TIMEOUT_SECONDS = 5.0
 LOCK_RETRY_SECONDS = 0.05
 MUTATION_MIN_REMAINING_SECONDS = 0.25
@@ -173,14 +174,60 @@ def _acquire_exclusive_lock(
         time.sleep(min(LOCK_RETRY_SECONDS, remaining))
 
 
+def _fence_lock_path(fence_path: Path) -> Path:
+    return fence_path.with_name(fence_path.name + ".lock")
+
+
+def _open_fence_lock(fence_path: Path) -> int:
+    lock_path = _fence_lock_path(fence_path)
+    descriptor = -1
+    try:
+        descriptor = os.open(
+            lock_path,
+            os.O_RDWR
+            | os.O_CREAT
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0),
+            FENCE_LOCK_MODE,
+        )
+        descriptor_stat = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(descriptor_stat.st_mode)
+            or descriptor_stat.st_mode & 0o077
+        ):
+            raise FenceError("catalog fence lock is not owner-only")
+        return descriptor
+    except FenceError:
+        if descriptor != -1:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+        raise
+    except OSError as exc:
+        if descriptor != -1:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+        raise FenceError("cannot open the catalog fence lock") from exc
+
+
 class FenceGuard:
     """Expose the deployment mutation authority's fenced file operations."""
 
     def __init__(
-        self, path: Path, descriptor: int, owner: str, generation: int
+        self,
+        path: Path,
+        descriptor: int,
+        authority_descriptor: int,
+        owner: str,
+        generation: int,
     ) -> None:
         self.path = path
         self.descriptor = descriptor
+        self.authority_path = _fence_lock_path(path)
+        self.authority_descriptor = authority_descriptor
         self.owner = owner
         self.generation = generation
         self.role = ""
@@ -188,10 +235,20 @@ class FenceGuard:
 
     def assert_current(self) -> dict[str, Any]:
         try:
+            authority_path_stat = os.lstat(self.authority_path)
+            authority_descriptor_stat = os.fstat(self.authority_descriptor)
             path_stat = os.lstat(self.path)
             descriptor_stat = os.fstat(self.descriptor)
         except OSError as exc:
             raise FenceError("catalog fence cannot be inspected") from exc
+        if (
+            stat.S_ISLNK(authority_path_stat.st_mode)
+            or not stat.S_ISREG(authority_path_stat.st_mode)
+            or authority_path_stat.st_mode & 0o077
+            or authority_path_stat.st_dev != authority_descriptor_stat.st_dev
+            or authority_path_stat.st_ino != authority_descriptor_stat.st_ino
+        ):
+            raise FenceError("catalog fence authority lock was replaced")
         if stat.S_ISLNK(path_stat.st_mode) or not stat.S_ISREG(path_stat.st_mode):
             raise FenceError("catalog fence must be a regular file")
         if (
@@ -270,36 +327,46 @@ def _fenced_mutation(
     fence_path = Path(fence_path)
     owner = _validate_fence_owner(owner)
     generation = _validate_fence_generation(generation)
-    try:
-        descriptor = os.open(
-            fence_path,
-            os.O_RDWR | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
-        )
-    except OSError as exc:
-        raise FenceError("cannot open the catalog fence") from exc
-    guard = FenceGuard(fence_path, descriptor, owner, generation)
+    authority_descriptor = -1
+    descriptor = -1
     locked = False
     try:
+        authority_descriptor = _open_fence_lock(fence_path)
+        _acquire_exclusive_lock(
+            authority_descriptor,
+            FenceError,
+            "catalog fence authority lock is unavailable",
+        )
+        locked = True
         try:
-            _acquire_exclusive_lock(
-                descriptor, FenceError, "catalog fence lock is unavailable"
+            descriptor = os.open(
+                fence_path,
+                os.O_RDWR
+                | getattr(os, "O_CLOEXEC", 0)
+                | getattr(os, "O_NOFOLLOW", 0),
             )
-            locked = True
-            guard.assert_current()
-            guard.pin_role()
-        except FenceError:
-            raise
         except OSError as exc:
-            raise FenceError("catalog fence lock failed") from exc
+            raise FenceError("cannot open the catalog fence") from exc
+        guard = FenceGuard(
+            fence_path,
+            descriptor,
+            authority_descriptor,
+            owner,
+            generation,
+        )
+        guard.assert_current()
+        guard.pin_role()
         yield guard
     finally:
+        if descriptor != -1:
+            os.close(descriptor)
         if locked:
             try:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
+                fcntl.flock(authority_descriptor, fcntl.LOCK_UN)
             finally:
-                os.close(descriptor)
-        else:
-            os.close(descriptor)
+                os.close(authority_descriptor)
+        elif authority_descriptor != -1:
+            os.close(authority_descriptor)
 
 
 def _validate_service_name(value: object) -> str:
@@ -932,9 +999,15 @@ def _load_transaction(
     if not isinstance(value, dict) or value.get("version") != 1:
         raise CatalogError("catalog transaction is malformed")
     state = value.get("state")
-    if state not in {"rollback", "committed", "prepared", "cleanup"}:
+    if state not in {
+        "rollback",
+        "committed",
+        "prepared",
+        "cleanup",
+        "cleared",
+    }:
         raise CatalogError("catalog transaction state is invalid")
-    if state == "cleanup":
+    if state in {"cleanup", "cleared"}:
         cleanup_of = value.get("cleanup_of")
         if cleanup_of not in {"rollback", "committed"}:
             raise CatalogError("catalog cleanup marker is malformed")
@@ -980,6 +1053,7 @@ def _load_cleanup_marker(
     if transaction is not None and transaction.state not in {
         "cleanup:rollback",
         "cleanup:committed",
+        "cleared",
     }:
         raise CatalogError("catalog cleanup marker is invalid")
     return transaction
@@ -1004,8 +1078,8 @@ def _write_transaction_state(
         transaction.output_new,
         state=state,
     )
-    if state == "cleanup":
-        cleanup_phase = cleanup_of or transaction.state
+    if state in {"cleanup", "cleared"}:
+        cleanup_phase = cleanup_of or transaction.state.removeprefix("cleanup:")
         if cleanup_phase not in {"rollback", "committed"}:
             raise CatalogError("catalog cleanup phase is invalid")
         payload["cleanup_of"] = cleanup_phase
@@ -1016,22 +1090,30 @@ def _write_transaction_state(
     )
 
 
-def _remove_cleanup_marker(cleanup_path: Path, fence: FenceGuard) -> None:
+def _clear_cleanup_marker(
+    cleanup_path: Path,
+    transaction: CatalogTransaction,
+    fence: FenceGuard,
+) -> None:
     if not _path_exists(cleanup_path):
         return
-    try:
-        fence.unlink(cleanup_path)
-    except FileNotFoundError:
+    cleanup_of = transaction.state.removeprefix("cleanup:")
+    if cleanup_of == "cleared":
+        fence.assert_current()
         return
-    except FenceError:
-        if _path_exists(cleanup_path):
-            raise
-        return
+    if cleanup_of not in {"rollback", "committed"}:
+        raise CatalogError("catalog cleanup marker is invalid")
     try:
+        _write_transaction_state(
+            cleanup_path,
+            transaction,
+            fence,
+            "cleared",
+            cleanup_of=cleanup_of,
+        )
         _fsync_directory(cleanup_path.parent)
-    except OSError:
-        if _path_exists(cleanup_path):
-            raise
+    except (OSError, IOError) as exc:
+        raise CatalogError("catalog cleanup marker sync failed") from exc
 
 
 def _remove_transaction(
@@ -1055,7 +1137,7 @@ def _remove_transaction(
         except FileNotFoundError:
             pass
         _fsync_directory(journal_path.parent)
-    _remove_cleanup_marker(cleanup_path, fence)
+    _clear_cleanup_marker(cleanup_path, transaction, fence)
 
 
 def _snapshot_matches(current: FileSnapshot, expected: FileSnapshot) -> bool:
@@ -1340,10 +1422,14 @@ def update_catalog(
     reserved_paths = _reserved_catalog_paths(registry_path)
     if output_resolved in reserved_paths:
         raise CatalogError("HTML output collides with a reserved catalog sidecar")
-    if fence_file is not None and Path(fence_file).resolve(strict=False) in (
-        reserved_paths | {output_resolved}
-    ):
-        raise CatalogError("catalog fence collides with a reserved catalog sidecar")
+    if fence_file is not None:
+        fence_path = Path(fence_file)
+        fence_resolved = fence_path.resolve(strict=False)
+        fence_lock_resolved = _fence_lock_path(fence_path).resolve(strict=False)
+        if fence_resolved in (reserved_paths | {output_resolved}) or (
+            fence_lock_resolved in (reserved_paths | {output_resolved})
+        ):
+            raise CatalogError("catalog fence collides with a reserved catalog sidecar")
     if recover_pending and (
         initialize or service_name is not None or deployment_address is not None
     ):
@@ -1368,9 +1454,11 @@ def update_catalog(
                         raise CatalogError(
                             "no pending catalog transaction to recover"
                         )
-                    _remove_cleanup_marker(cleanup_path, fence)
+                    _clear_cleanup_marker(cleanup_path, cleanup, fence)
                     return {"status": "recovered"}
-                if transaction.state.startswith("cleanup:"):
+                if transaction.state.startswith("cleanup:") or (
+                    transaction.state == "cleared"
+                ):
                     raise CatalogError("catalog cleanup marker is misplaced")
                 _reconcile_transaction(
                     journal_path, transaction, fence, rollback=True
@@ -1405,7 +1493,9 @@ def update_catalog(
                 journal_path, registry_path, output_path
             )
             if transaction is not None:
-                if transaction.state.startswith("cleanup:"):
+                if transaction.state.startswith("cleanup:") or (
+                    transaction.state == "cleared"
+                ):
                     raise CatalogError("catalog cleanup marker is misplaced")
                 same_fence = (
                     transaction.fence_owner == fence.owner
@@ -1426,8 +1516,11 @@ def update_catalog(
                 else:
                     raise CatalogError("catalog transaction state is invalid")
             elif _path_exists(cleanup_path):
-                _load_cleanup_marker(cleanup_path, registry_path, output_path)
-                _remove_cleanup_marker(cleanup_path, fence)
+                cleanup = _load_cleanup_marker(
+                    cleanup_path, registry_path, output_path
+                )
+                if cleanup is not None:
+                    _clear_cleanup_marker(cleanup_path, cleanup, fence)
             _prepare_registry(registry_path, fence)
             registry = _load_registry(registry_path, current_ip, output_path)
             if initialize:
@@ -1453,6 +1546,16 @@ def update_catalog(
                 )
                 services.sort(key=lambda item: item["name"].casefold())
                 registry["services"] = services
+            locked_ip = _discover_tailscale_ip()
+            if locked_ip != current_ip:
+                raise CatalogError(
+                    "local Tailscale IPv4 changed while acquiring the catalog lock"
+                )
+            current_ip = locked_ip
+            if not initialize:
+                deployment_address = _validate_deployment_address(
+                    deployment_address, current_ip
+                )
             registry["updated_at"] = _now()
             registry["tailscale_ip"] = current_ip
             registry_data = (

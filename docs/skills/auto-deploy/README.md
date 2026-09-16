@@ -62,18 +62,23 @@ python3 <skill-dir>/scripts/update_access_catalog.py \
   --deployment-address http://<local-tailscale-ip>:<declared-port>/
 ```
 
-The mutation authority must provide an owner-only active fence record with the
-current owner, positive generation, future `expires_at`, and `role` set to
-`deployment` (or `recovery` for authorized pending-transaction rollback). The
-updater always discovers the local Tailscale IPv4; an optional `--tailscale-ip`
-value is checked against that discovery. Run the update only after health and
+The mutation authority must provide an owner-only active fence record and a
+stable owner-only sibling `.lock` file. Deployment and recovery acquire that
+same lock before changing the fence record and never replace its inode while
+an operation is active. The record contains the current owner, positive
+generation, future `expires_at`, and `role` set to `deployment` (or `recovery`
+for authorized pending-transaction rollback). The updater always discovers the
+local Tailscale IPv4; an optional `--tailscale-ip` value is checked against
+that discovery. Run the update only after health and
 smoke verification, then verify the page from an approved Tailscale peer and
 confirm public port-80 denial. The script does not install an HTTP server or
 modify the firewall. The pre-provisioned registry directory must be a real,
 non-world-writable path accessible to both the deployment and independent
 recovery Unix principals; the updater does not create it and its lock,
 transaction journal, cleanup marker, and mode `0660` registry use their shared
-group. World permissions are rejected. The page writer must preserve its
+group. The cleanup marker is rewritten to a durable `cleared` tombstone after
+successful cleanup and remains available if marker retirement is uncertain.
+World permissions are rejected. The page writer must preserve its
 owner or satisfy the documented shared-readable owner contract. Lock waits are
 bounded at five seconds, and `--recover-pending` uses the journal and recovery
 fence without requiring Tailscale discovery.
