@@ -46,7 +46,8 @@ mutation and rejects an old or revoked generation. A separate pre-check before
 a normal command is insufficient. If the mutation authority cannot enforce
 that atomic check, refuse the deployment. If the heartbeat, renewal, or
 fencing check fails, stop new mutations and invoke the armed recovery before
-its lease expires; never continue under an uncertain lock. The independent recovery owner must use the independent lock authority
+its lease expires; never continue under an uncertain lock. The independent
+recovery owner must use the independent lock authority
 to revoke the lost generation, obtain a new recovery-only fencing generation,
 and verify that the old generation is rejected before any restore mutation.
 If that handoff cannot be issued and verified while recovery is valid, mark
@@ -410,12 +411,14 @@ build or from a request to deploy to a different environment.
    the release without requiring a hardened lock, restore, or access catalog.
 11. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
-   For a `tailscale-hardened` target, obtain a new recovery-only fencing
-   generation through the independent handoff if the deployment lease was
-   lost, verify that the old generation is rejected, and keep the target lock
-   and hardening restore active while rolling back through the documented
-   immutable artifact or platform mechanism. Atomically reconcile the access
-   catalog at the same time: restore the prior page or remove/update the
+   For a `tailscale-hardened` target, if the deployment lease was lost, stop
+   and have the independent recovery owner revoke the old generation, acquire
+   the target lock under a new recovery-only fencing generation, and verify
+   that the old generation is rejected before any restore mutation. Keep that
+   fenced target lock and the hardening restore active while rolling back
+   through the documented immutable artifact or platform mechanism. Atomically
+   reconcile the access catalog at the same time: restore the prior page or
+   remove/update the
    affected row to the last known-good deployment address. Before retiring
    recovery, rerun the configured health endpoint and smoke flow, and verify
    that the running revision or digest matches the intended last-known-good
