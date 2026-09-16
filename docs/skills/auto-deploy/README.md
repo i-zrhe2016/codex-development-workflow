@@ -64,10 +64,13 @@ python3 <skill-dir>/scripts/update_access_catalog.py \
 
 The mutation authority must provide an owner-only active fence record and a
 stable owner-only sibling `.lock` file. Deployment and recovery acquire that
-same lock before changing the fence record and never replace its inode while
-an operation is active. The record contains the current owner, positive
-generation, future `expires_at`, and `role` set to `deployment` (or `recovery`
-for authorized pending-transaction rollback). The updater always discovers the
+same lock before changing the fence record. A missing lock is an error: the
+updater never recreates it, never replaces its inode while an operation is
+active, and rejects a fence with hard-link aliases. The record contains the
+current owner, positive generation, future `expires_at`, and `role` set to
+`deployment` (or `recovery` for authorized pending-transaction rollback). A
+recovery fence must use a newly issued generation different from the pending
+transaction's deployment generation. The updater always discovers the
 local Tailscale IPv4; an optional `--tailscale-ip` value is checked against
 that discovery. Run the update only after health and
 smoke verification, then verify the page from an approved Tailscale peer and

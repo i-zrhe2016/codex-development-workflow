@@ -31,7 +31,6 @@ MAX_FENCE_BYTES = 64_000
 MAX_TRANSACTION_BYTES = 16_000_000
 SIDECAR_MODE = 0o660
 REGISTRY_MODE = 0o660
-FENCE_LOCK_MODE = 0o600
 LOCK_TIMEOUT_SECONDS = 5.0
 LOCK_RETRY_SECONDS = 0.05
 MUTATION_MIN_REMAINING_SECONDS = 0.25
@@ -185,10 +184,8 @@ def _open_fence_lock(fence_path: Path) -> int:
         descriptor = os.open(
             lock_path,
             os.O_RDWR
-            | os.O_CREAT
             | getattr(os, "O_CLOEXEC", 0)
             | getattr(os, "O_NOFOLLOW", 0),
-            FENCE_LOCK_MODE,
         )
         descriptor_stat = os.fstat(descriptor)
         if (
@@ -256,6 +253,8 @@ class FenceGuard:
             or path_stat.st_ino != descriptor_stat.st_ino
         ):
             raise FenceError("catalog fence was replaced")
+        if path_stat.st_nlink != 1 or descriptor_stat.st_nlink != 1:
+            raise FenceError("catalog fence must not have hard-link aliases")
         if path_stat.st_mode & 0o077:
             raise FenceError("catalog fence is accessible to another account")
         try:
@@ -1116,6 +1115,13 @@ def _clear_cleanup_marker(
         raise CatalogError("catalog cleanup marker sync failed") from exc
 
 
+def _require_fresh_recovery_fence(
+    transaction: CatalogTransaction, fence: FenceGuard
+) -> None:
+    if transaction.fence_generation == fence.generation:
+        raise FenceError("pending recovery requires a new fence generation")
+
+
 def _remove_transaction(
     journal_path: Path,
     transaction: CatalogTransaction,
@@ -1454,12 +1460,14 @@ def update_catalog(
                         raise CatalogError(
                             "no pending catalog transaction to recover"
                         )
+                    _require_fresh_recovery_fence(cleanup, fence)
                     _clear_cleanup_marker(cleanup_path, cleanup, fence)
                     return {"status": "recovered"}
                 if transaction.state.startswith("cleanup:") or (
                     transaction.state == "cleared"
                 ):
                     raise CatalogError("catalog cleanup marker is misplaced")
+                _require_fresh_recovery_fence(transaction, fence)
                 _reconcile_transaction(
                     journal_path, transaction, fence, rollback=True
                 )

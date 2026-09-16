@@ -51,6 +51,8 @@ class AccessCatalogTests(unittest.TestCase):
             encoding="utf-8",
         )
         self.fence.chmod(0o600)
+        self.fence_lock = self.fence.with_name(self.fence.name + ".lock")
+        self.fence_lock.touch(mode=0o600)
 
     def run_update(self, *arguments: str) -> int:
         with patch(
@@ -105,6 +107,14 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertTrue(self.registry.with_name("catalog.json.lock").exists())
         self.assertFalse(self.registry.with_name("catalog.json.txn").exists())
         self.assertEqual(self.registry.stat().st_mode & 0o777, 0o660)
+
+    def test_missing_fence_lock_is_rejected_without_recreation(self) -> None:
+        self.fence_lock.unlink()
+
+        with self.assertRaises(FenceError):
+            self.update(initialize=True)
+
+        self.assertFalse(self.fence_lock.exists())
 
     def test_discovers_one_local_tailscale_ip_when_not_supplied(self) -> None:
         completed = subprocess.CompletedProcess(
@@ -309,6 +319,22 @@ class AccessCatalogTests(unittest.TestCase):
             self.fence.chmod(0o600)
             with self.assertRaises(FenceError):
                 fence.assert_current()
+
+    def test_hard_linked_fence_alias_is_rejected(self) -> None:
+        alias = self.root / "fence-alias.json"
+        alias_lock = alias.with_name(alias.name + ".lock")
+        os.link(self.fence, alias)
+        alias_lock.touch(mode=0o600)
+
+        with self.assertRaises(FenceError):
+            update_catalog(
+                self.registry,
+                self.output,
+                initialize=True,
+                fence_file=alias,
+                fence_owner="deployment-run-1",
+                fence_generation=1,
+            )
 
     def test_fence_authority_lock_blocks_replacement_by_new_generation(self) -> None:
         replacement = self.root / "replacement-fence.json"
@@ -536,6 +562,20 @@ class AccessCatalogTests(unittest.TestCase):
                     service_name="api",
                     deployment_address=f"http://{TAILSCALE_IP}:8080/",
                 )
+
+        fence = json.loads(self.fence.read_text(encoding="utf-8"))
+        fence["role"] = "recovery"
+        self.fence.write_text(json.dumps(fence), encoding="utf-8")
+        self.fence.chmod(0o600)
+        with self.assertRaises(FenceError):
+            update_catalog(
+                self.registry,
+                self.output,
+                fence_file=self.fence,
+                fence_owner="deployment-run-1",
+                fence_generation=1,
+                recover_pending=True,
+            )
 
         fence = json.loads(self.fence.read_text(encoding="utf-8"))
         fence.update({"role": "recovery", "owner": "recovery-run-1", "generation": 2})

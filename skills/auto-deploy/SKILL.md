@@ -286,11 +286,14 @@ the updater after the service revision, health, and smoke checks pass:
 The deployment mutation authority must first create a target-scoped, owner-only
 fence file and its stable sibling `.lock` authority file. Deployment and
 recovery must acquire that same sibling lock before changing the fence record;
-the lock inode must never be replaced while an operation is active. Its active
-JSON record contains `state: "active"`, `role` set to
-`deployment` or `recovery`, the current `owner`, positive `generation`, and a
-future timezone-aware `expires_at`. Pass the exact owner and generation to the
-updater. The updater holds the fence while it stages and publishes both files.
+the updater refuses a missing lock and never recreates it, and the lock inode
+must never be replaced while an operation is active. The fence must have one
+hard-link; aliases are rejected. Its active JSON record contains
+`state: "active"`, `role` set to `deployment` or `recovery`, the current
+`owner`, positive `generation`, and a future timezone-aware `expires_at`. Pass
+the exact owner and generation to the updater. Recovery must use a newly issued
+generation that differs from the pending transaction's deployment generation.
+The updater holds the fence while it stages and publishes both files.
 Each replacement, unlink, or metadata repair is performed through the fenced
 mutation authority while that exact fence is current; the updater rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is
