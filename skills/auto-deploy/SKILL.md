@@ -24,25 +24,29 @@ ambiguous check is a refusal; do not continue with a best-effort deployment.
 Before opening the bootstrap session, resolve the approved immutable node ID
 through an authenticated Tailscale control-plane status/API lookup or the
 approved tailnet DNS name. Use only the resulting Tailscale address; never use
-an address supplied by the caller. After connecting, verify that the target's
-local Tailscale status maps back to the same node ID and attests the resolved
-address. If the selected resolution source is unavailable or the subsequent
-attestation fails, stop before connecting; an unselected alternative source
-does not have to be available.
-An initial session to the approved Tailscale address is allowed solely as a
-read-only bootstrap for this preflight. It may inspect status and listeners but
-must not change SSH, firewall, HTTP, catalog, or deployment state. If that
-session is unavailable, use a concrete approved non-SSH management channel; a
-public SSH bootstrap is never permitted.
+an address supplied by the caller. If the selected resolution source is
+unavailable, stop before connecting; an unselected alternative source does not
+have to be available. Connect only to the resolved address for the read-only
+bootstrap. After connecting, verify that the target's local Tailscale status
+maps back to the same node ID and attests the resolved address. If that
+attestation fails, stop immediately, make no mutation, and use the lock cleanup
+path below. An initial session to the approved Tailscale address is allowed
+solely as a read-only bootstrap for this preflight. It may inspect status and
+listeners but must not change SSH, firewall, HTTP, catalog, or deployment
+state. If that session is unavailable, use a concrete approved non-SSH
+management channel; a public SSH bootstrap is never permitted.
 Before that bootstrap, acquire an exclusive target-scoped lock keyed by the
 approved immutable Tailscale node ID. Hold it through target hardening,
 deployment, catalog publication, final boundary verification, and recovery.
 The lock must be a bounded renewable lease with a heartbeat and a fencing
-token or generation. Validate the current owner, lease, and fencing value
-before every hardening, deployment, catalog, or recovery mutation. If the
-heartbeat, renewal, or fencing check fails, stop new mutations and invoke the
-armed recovery before its lease expires; never continue under an uncertain
-lock. The independent recovery owner must use the independent lock authority
+token or generation. Every hardening, deployment, catalog, and recovery
+mutation must go through a mutation authority that atomically verifies the
+current owner, unexpired lease, and fencing value as part of accepting the
+mutation and rejects an old or revoked generation. A separate pre-check before
+a normal command is insufficient. If the mutation authority cannot enforce
+that atomic check, refuse the deployment. If the heartbeat, renewal, or
+fencing check fails, stop new mutations and invoke the armed recovery before
+its lease expires; never continue under an uncertain lock. The independent recovery owner must use the independent lock authority
 to revoke the lost generation, obtain a new recovery-only fencing generation,
 and verify that the old generation is rejected before any restore mutation.
 If that handoff cannot be issued and verified while recovery is valid, mark
@@ -166,7 +170,14 @@ not an implicit side effect of connecting over SSH.
    and the effective kernel rules enforce the policy. A saved UFW policy is
    not evidence of filtering. For nftables or another provider, validate,
    activate, and inspect the effective ruleset; preserve egress policy and
-   drop all public input.
+   drop all public input. Immediately after the firewall is active and before
+   reloading any listener or starting/reloading the HTTP service, inspect the
+   connection-tracking and socket/session state and drain every existing
+   inbound session whose source or route is public or outside the approved
+   Tailscale policy. Preserve only the current approved Tailscale management
+   session and approved Tailscale flows. If non-Tailscale sessions cannot be
+   identified and terminated, or the drain cannot be verified, invoke
+   recovery and do not change a listener.
 
 3. **Limit SSH to Tailscale.** If SSH is enabled, configure the target SSH
    service to listen only on the discovered Tailscale address(es); for
@@ -390,8 +401,11 @@ build or from a request to deploy to a different environment.
    denial for every declared port. If sessions cannot be drained, or the lock
    cannot be renewed or fenced, stop and enter recovery. If all checks pass,
    cancel and retire the hardening restore, verify through the independent
-   channel that it is disarmed, and release the target lock. If a check fails,
-   keep both active and enter recovery. For an explicitly non-publishing
+   channel that it is disarmed, release the target lock, and independently
+   verify that its lease and fencing generation are inactive. If any
+   retirement or verification is uncertain, keep the target `blocked` under
+   the independent recovery owner. If a check fails, keep both active and
+   enter recovery. For an explicitly non-publishing
    local/development target, verify that no shared service is exposed and close
    the release without requiring a hardened lock, restore, or access catalog.
 11. **Recover on failure.** Stop or pause further rollout, capture safe failure
@@ -407,13 +421,16 @@ build or from a request to deploy to a different environment.
    that the running revision or digest matches the intended last-known-good
    artifact. Request the restored page through the approved Tailscale path,
    repeat the final session drain, and rerun the full final boundary checks,
-   including the current lock fencing value. Only then retire the restore and
-   release the lock. For an explicitly non-publishing local/development
-   target, use its documented local rollback, rerun its applicable health and
-   smoke checks, and verify that no shared service was exposed; do not require
-   or retain the hardened lock, restore, or catalog. If rollback is unsafe,
-   unavailable, partially applied, or cannot retire recovery safely, stop and
-   report the concrete recovery action needed.
+   including the current lock fencing value. Only then cancel and retire the
+   restore and independently verify that it is disarmed; release the lock and
+   independently verify that its lease and fencing generation are inactive.
+   If either retirement cannot be verified, keep the target `blocked` and hand
+   it to the out-of-band recovery owner. For an explicitly non-publishing
+   local/development target, use its documented local rollback, rerun its
+   applicable health and smoke checks, and verify that no shared service was
+   exposed; do not require or retain the hardened lock, restore, or catalog. If
+   rollback is unsafe, unavailable, partially applied, or cannot retire
+   recovery safely, stop and report the concrete recovery action needed.
 12. **Close the release.** Report the target, source revision, artifact ID,
    automation/run ID, checks, observed health, rollback result, residual risk,
    and next action without exposing secrets. Update `Repo_Current_State.md` or
