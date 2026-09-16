@@ -269,6 +269,114 @@ not an implicit side effect of connecting over SSH.
    the lock cannot be released or its retirement cannot be verified, keep the
    target `blocked` and hand it to the independent recovery owner.
 
+## Tailscale access catalog
+
+For a `tailscale-hardened` publishing target, the access catalog is a generated
+page served by the target's existing HTTP service at
+`http://<local-tailscale-ip>/` on TCP/80. The page displays the current local
+Tailscale IP and one row per verified service with its service name and
+deployment address. The HTTP service must bind to the target Tailscale address
+where supported; otherwise the already-effective firewall must deny TCP/80 on
+every public interface and allow it only from the approved Tailscale sources.
+
+Use `scripts/update_access_catalog.py` on the target to maintain the registry
+and page. Initialize an empty baseline before the first publication, then run
+the updater after the service revision, health, and smoke checks pass:
+
+The deployment mutation authority must first create a target-scoped, owner-only
+fence file and its stable sibling `.lock` authority file. Deployment and
+recovery must acquire that same sibling lock before changing the fence record;
+the updater refuses a missing lock and never recreates it, and the lock inode
+must never be replaced while an operation is active. The fence must have one
+hard-link; aliases are rejected. Its active JSON record contains
+`state: "active"`, `role` set to `deployment` or `recovery`, the current
+`owner`, positive `generation`, a future timezone-aware `expires_at`, and a
+target-scoped 32-byte hexadecimal `catalog_hmac_key` held only by the mutation
+authority. Keep that key unchanged when issuing the recovery generation and
+never log it. Pass the exact owner and generation to the updater. Recovery must
+use a newly issued generation that differs from the pending transaction's
+deployment generation.
+The updater holds the fence while it stages and publishes both files. Each
+staged file is created in a private same-filesystem `0700` staging directory
+whose parent and directory descriptors are pinned and validated. The file is
+created and renamed relative to those descriptors, and its creation-time
+descriptor remains open through the rename, so a shared registry directory
+cannot substitute a different source inode or staging pathname. Shared
+group-writable catalog or document-root directories must be non-world-writable
+and sticky. Sticky directories restrict replacement and removal to the
+directory or existing-file owner, so deployment and recovery mutations must
+use the same catalog-writer UID or an ownership-capable privileged authority;
+recovery authorization may remain independent. The descriptor-pinned private
+staging also protects replacement paths.
+Each replacement, unlink, or metadata repair is performed through the fenced
+mutation authority while that exact fence is current; the updater rejects a
+missing, expired, replaced, or revoked fence. A stale pending transaction is
+left for the independent recovery owner; that owner may use a `recovery` fence
+with `--recover-pending` to restore the prior pair.
+The registry parent must be pre-provisioned as a real, non-world-writable
+directory accessible to the deployment writer and recovery authority; for a
+sticky group-writable directory, both mutation paths must use the same
+catalog-writer UID or an ownership-capable privileged authority. Provision it
+with their shared group (and setgid when needed). The updater never creates
+this directory and rejects unsafe path components. The lock, transaction, and
+cleanup-marker sidecars use that directory group with mode `0660`. The
+registry also uses mode `0660` and is private to that shared group; world
+permissions are rejected. Pre-provision the HTML document-root
+directory as a real, non-world-writable directory; the updater never creates
+it and rejects unsafe path components. The page writer must either be able to
+preserve its exact UID/GID or use its shared readable group/other-readable
+contract; an incompatible or world-writable page is refused. Both locks use
+bounded non-blocking acquisition, and a five-second lock timeout is a failed
+update.
+
+```bash
+python3 <skill-dir>/scripts/update_access_catalog.py \
+  --registry /var/lib/auto-deploy/access-catalog.json \
+  --output /var/www/auto-deploy/index.html \
+  --fence-file /run/auto-deploy/catalog-fence.json \
+  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
+  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
+  --initialize
+
+python3 <skill-dir>/scripts/update_access_catalog.py \
+  --registry /var/lib/auto-deploy/access-catalog.json \
+  --output /var/www/auto-deploy/index.html \
+  --fence-file /run/auto-deploy/catalog-fence.json \
+  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
+  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
+  --service-name <service-name> \
+  --deployment-address http://<local-tailscale-ip>:<declared-port>/
+```
+
+The updater always discovers the local Tailscale IPv4 and treats
+`--tailscale-ip`, when supplied, only as an assertion against that fresh
+discovery. It accepts only `http` or `https` addresses whose host is that exact
+Tailscale IP, escapes all HTML values, replaces a matching service name without
+duplicates, and retains unrelated rows. It serializes updates with the fence
+authority and a registry-side lock. A durable transaction journal records both
+snapshots before replacement, records rollback intent until both replacements
+are complete, and reconciles an interrupted pair before a later update. If
+journal removal or its directory sync cannot be confirmed, a durable cleanup
+marker remains until an authorized retry or recovery clears it. The marker is
+rewritten to a durable `cleared` tombstone after successful cleanup so an
+uncertain marker sync never removes the last recovery metadata; generated files
+are size-limited. A missing registry with an existing page,
+non-regular path, malformed metadata, different host, unsafe address, stale
+fence, unsafe document root, incompatible or world-writable page owner, lock
+timeout, or failed write is an error. The transaction journal is versioned and
+carries an HMAC over its state, target paths, and all old/new snapshots, using
+the owner-only `catalog_hmac_key` from
+the active fence. Recovery verifies that authentication before it accepts any
+snapshot, so a shared-group edit cannot publish arbitrary registry or HTML
+content. Malformed JSON, nested parser failures, and UID/GID values outside the
+platform range fail closed through the normal catalog error path. The
+`--recover-pending` path uses the authenticated durable snapshots and an
+authorized recovery fence; it does not require the Tailscale CLI. The updater
+never starts an HTTP server or changes firewall rules. After each update,
+request the page through the approved Tailscale path and run the public-denial probe before marking the
+deployment verified. A failed update or probe leaves the release unverified
+and follows the documented recovery path.
+
 ## Required deployment contract
 
 Before any mutating deployment action, identify and record:
