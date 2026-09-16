@@ -6,7 +6,7 @@ skinparam ArrowColor #475569
 title Codex Review - Scope, Execution, Assessment and Recovery
 
 start
-:PR published; worktree clean\nRefresh actual PR base; resolve base/head SHAs;
+:PR published on named feature branch; worktree clean\nRefresh actual PR base; resolve base/head SHAs;
 :Acquire worktree review lock\nRead local saved state;
 if (Active runner or possible orphan child?) then (yes)
   :Report existing state/log\nInspect exact process; do not duplicate;
@@ -16,18 +16,20 @@ endif
 if (Same base/head execution completed\nand no --force-full?) then (yes)
   :Reuse saved execution + log\nRead existing assessment or assess pending result;
 else (no)
-  if (--incremental explicitly selected\nPrevious review assessed pass/blocking\nSame base; previous head is ancestor\nDifferent current head; no --force-full?) then (yes)
-    :Review base = previous assessed head\nAll intervening commits are included;
+  if (Previous review completed and assessed pass/blocking\nSame feature branch and base; previous head is ancestor\nDifferent current head; no --force-full?) then (yes)
+    :Review base = previous assessed head by default\nAll intervening commits are included;
     note right
-      Main agent must establish bounded fix impact.
+      Main agent must establish bounded fix impact before
+      accepting the normal incremental path.
       Interfaces / security boundaries / cross-module
-      behavior / uncertainty require full coverage.
+      behavior / architecture / API / schema / history
+      changes / uncertainty require full coverage.
       Previous findings are verified separately.
     end note
   else (no)
     :Review base = actual PR base\nFull PR coverage;
   endif
-  :Archive previous record\nSave running state + scope + head + log path;
+  :Archive previous record\nSave running state + branch + scope + head + log path;
   :Invoke built-in codex review --base <resolved SHA>\nStream output to terminal and local log;
   note right
     Every 5 min: elapsed + output-idle notice.

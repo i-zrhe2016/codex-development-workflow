@@ -153,9 +153,24 @@ findings block merge, fix them and repeat the Test -> Redaction (if applicable)
 -> Commit -> Push -> Automatic Review loop. The project-scoped `reviewer` is
 optional supplemental analysis and never replaces `codex review`.
 
+The first review covers the full PR. After a completed, assessed `pass` or
+`blocking` review, the normal fix loop reviews only new commits from the last
+assessed head on the same feature branch. The runner persists and checks that
+branch identity; an unbound legacy state or a state from another branch falls
+back to full. Use a full review again for architecture, public API/interface,
+security/authentication, database/schema, cross-module behavior, base/history
+changes, rewrites or rebases, or uncertain impact. Once the selected review
+and current CI/tests pass, do not repeat a full AI review solely because the PR
+head changed.
+
+For persisted scope, logs, and explicit assessment, use the recoverable runner:
+
 ```bash
-codex review --base main
+python3 skills/github-push-when-ready/scripts/run_review.py --base origin/main
 ```
+
+The runner invokes the same built-in review command with the selected scope;
+use `--force-full` only when the documented escalation conditions apply.
 
 To run the optional supplemental project reviewer, start an interactive Codex
 session from this project root and enter:

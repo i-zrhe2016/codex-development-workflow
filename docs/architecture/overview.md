@@ -188,21 +188,28 @@ escalation.
 
 Editable source: [`review-execution.puml`](../diagrams/review-execution.puml).
 The runner persists execution separately from the main agent's assessment.
-Completed results with matching base/head can be reused. The first review is
-full; explicitly selected bounded fixes can use the last assessed head. Base
-changes, rewritten history, interface/security boundary changes, cross-module
-behavior or uncertain impact require full review. An interrupted latest run
-currently causes a full-review fallback on retry rather than reusing an older
-assessment. See the [execution contract](../../skills/github-push-when-ready/references/review-execution.md).
+Completed results with matching base/head and feature-branch identity can be
+reused. The first review is full; after a completed, assessed `pass` or
+`blocking` result, bounded fixes on the same named feature branch default to the
+last assessed head and include every intervening commit. Unbound legacy state or
+a state from another branch falls back to full. Base
+changes, rewritten history, architecture, public API or interface,
+security/authentication, database/schema, cross-module behavior, or uncertain
+impact require full review. An interrupted or unassessed latest run cannot
+become an incremental baseline and falls back to full coverage on retry. See
+the [execution contract](../../skills/github-push-when-ready/references/review-execution.md).
 
 Every change must be committed and pushed to a feature branch, then have a PR
 created or updated before Automatic Review starts. Automatic Review is exactly
 the built-in `codex review` command; run it immediately without waiting for user
 confirmation, using the selected review range, branch boundary, and available CI
-results. Batch blocking findings before Fix -> Test -> Redaction if applicable ->
-Commit -> Push -> `codex review` again on the updated PR. Merge only after the
-review passes. When multiple Tickets are delivered together, add broader
-integration/regression checks across them in addition to each Ticket's checks.
+results. The first run is full; the normal bounded fix loop is Fix -> Test ->
+Redaction if applicable -> Commit -> Push -> incremental review from the last
+assessed head. Escalate that loop to full review for the documented high-impact,
+base/history, or uncertain cases. Merge after the selected review and required
+checks pass; no extra full AI review is needed solely because the head changed.
+When multiple Tickets are delivered together, add broader integration/regression
+checks across them in addition to each Ticket's checks.
 
 `Understand -> Plan -> Record Ticket + Slices -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
 

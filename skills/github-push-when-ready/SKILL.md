@@ -69,22 +69,29 @@ authenticated and create the PR against the repository's default branch:
 gh pr create --fill --base <default-branch> --head <feature-branch>
 ```
 
-After creating or updating the PR, run the built-in `codex review --base
-<default-branch>` command immediately as Automatic Review, without waiting for
-user confirmation. The project-scoped reviewer is optional supplemental
-analysis and never replaces this gate. If `codex review` reports blocking
-findings, fix them, rerun the affected tests and redaction scan when
-applicable, commit and push the updated branch, then run `codex review` again.
+After creating or updating the PR, run the recoverable review runner immediately
+as Automatic Review, without waiting for user confirmation. It covers the full
+PR on the first review, then defaults to the commits after the last assessed
+`pass` or `blocking` head on later bounded fixes on the same named feature
+branch. The runner persists that branch identity, so an unbound legacy state
+or a state from another branch falls back to a full review. The project-scoped reviewer
+is optional supplemental analysis and never replaces this gate. If review
+reports blocking findings, fix them, rerun the affected tests and redaction
+scan when applicable, commit and push the updated branch, then run the runner
+again; the next bounded review is incremental by default.
 If PR creation/update fails after the push, report the branch and exact
 blocker; do not claim the feature is delivered.
 
-The first review is full-range. Subsequent bounded fixes may be reviewed against
-the last assessed head, including all new commits and verification of prior
-findings. Base/history changes, interface/security boundary changes, cross-module
-behavior, or uncertain impact require full review. Batch each round's findings
-before testing and pushing. Use [review execution](references/review-execution.md)
-for the persistent runner, result reuse, and progress diagnosis. This scope policy
-also applies to the review steps and command examples below.
+The first review is full-range. Subsequent bounded fixes use the last assessed
+head by default, including all new commits and verification of prior findings.
+Base/history changes, rewrites or rebases, architecture, public API or
+interface, security or authentication, database or schema, cross-module
+behavior, or uncertain impact require full review. Before merge, current
+CI/tests and the selected review must pass; a passing incremental review does
+not need an additional full AI review. Batch each round's findings before
+testing and pushing. Use [review execution](references/review-execution.md)
+for the persistent runner, result reuse, and progress diagnosis. This scope
+policy also applies to the review steps and command examples below.
 
 When merging a PR, use `gh pr merge <number> --merge --delete-branch` after the required checks so GitHub removes the merged source branch. If the PR was already merged without cleanup, first verify `state=MERGED`, the exact base and head branch names, and the merge commit, then delete only that remote head ref:
 
@@ -111,8 +118,8 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 5. Before any push, verify unpublished commit subjects follow Conventional Commits 1.0.0 and check/complete the GitHub repository About description. The guarded scripts do this automatically when executed.
 6. Treat `push` as eligible only when the working tree is clean, the local branch is ahead of its upstream or has no upstream yet, and About verification succeeds.
 7. Use `push_if_ready.py --execute` with explicit `--pathspec` values for the standard guarded commit-and-push flow. If one file mixes multiple functional units, stage only the intended hunks manually after assessment, then use the equivalent guarded commit and push commands.
-8. After the push succeeds, check for an existing PR and create or update it with `gh pr create`/`gh pr edit` as needed. Record the PR URL or blocker, then run `codex review --base <default-branch>` immediately as Automatic Review without waiting for confirmation.
-9. If `codex review` finds blocking issues, repeat the affected Test, Redaction when applicable, Commit, Push, and `codex review` steps on the updated PR until it passes.
+8. After the push succeeds, check for an existing PR and create or update it with `gh pr create`/`gh pr edit` as needed. Record the PR URL or blocker, then run the recoverable review runner immediately as Automatic Review without waiting for confirmation. The first run is full; later bounded runs select the last assessed head by default.
+9. If review finds blocking issues, batch them, repeat the affected Test, Redaction when applicable, Commit, and Push steps, then run the review runner again. Use `--force-full` for the documented high-impact, changed-base/history, or uncertain cases; otherwise the updated PR receives incremental coverage.
 10. When the PR passes review, merge it, verify the exact `MERGED` state, base branch, head branch, and merge commit, delete the remote and local source branches, synchronize the base branch, and then hand off to State / Docs.
 11. For another functional unit, re-inspect the remaining diff and restart this workflow from the readiness assessment.
 
@@ -159,7 +166,7 @@ Behavior:
 - Enforce the configured repository identity and verified GitHub account before committing or pushing; the post-commit hook uses the same guard.
 - Push with `git push` when upstream exists.
 - Push with `git push -u <remote> <branch>` when upstream is missing.
-- It does not create or merge a pull request. After it succeeds, check for an existing PR and run `gh pr create --fill --base <default-branch> --head <feature-branch>` when needed, then run `codex review --base <default-branch>` as Automatic Review. After `codex review` passes and the PR is merged, follow the verified remote/local source-branch cleanup procedure above.
+- It does not create or merge a pull request. After it succeeds, check for an existing PR and run `gh pr create --fill --base <default-branch> --head <feature-branch>` when needed, then run the recoverable review runner as Automatic Review. After the selected review passes and the PR is merged, follow the verified remote/local source-branch cleanup procedure above.
 
 ### `scripts/install_post_commit_hook.py`
 
