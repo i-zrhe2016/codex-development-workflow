@@ -46,7 +46,11 @@ that bootstrap. Hold it through target hardening, deployment, catalog
 publication, final boundary verification, and recovery. For `verify`, use only
 a read-only observation lease that cannot authorize mutation, release it after
 the checks, and never acquire or reuse the mutating target lock or hardening
-restore.
+restore. The observation authority must atomically refuse the lease while a
+mutating target lock, deployment generation, or hardening restore is active,
+and must prevent a mutating lease from being acquired until observation ends.
+If that mutual exclusion cannot be verified, mark verification `blocked` and
+do not inspect or mutate the target.
 The lock must be a bounded renewable lease with a heartbeat and a fencing
 token or generation. Every hardening, deployment, catalog, and recovery
 mutation must go through a mutation authority that atomically verifies the
@@ -352,18 +356,24 @@ build or from a request to deploy to a different environment.
    catalog write in step 9, and recovery step 11. Continue with the read-only
    observation in step 8 and the read-only final-boundary checks in step 10,
    then go to step 12. A verify result is successful only when those checks
-   establish the intended running revision, health, smoke flow, access
-   boundary, and catalog state; an unknown or failed check is unverified. A
+   establish the intended running revision, health, smoke flow, and access
+   boundary, plus catalog state for a hardened target; an unknown or failed
+   check is unverified. A
    requested hardening, deployment, catalog update, or rollback requires the
    corresponding authorized `execute` or `rollback` mode.
-4. **Run release preflight checks.** Use `test-workflow` for the smallest checks that
-   prove the release contract: configuration validation, focused tests, build,
-   image/package creation, and relevant integration or smoke tests. Confirm
-   the source revision is available, the artifact is traceable, required secret
-   names and permissions are present, and the destination has capacity and a
-   rollback target. For a `tailscale-hardened` target, also confirm the target
-   hardening approval and independent recovery path are ready. Do not bypass
-   a failed required check just to trigger a deployment.
+4. **Run release preflight checks.** For an authorized `execute` or `rollback`,
+   use `test-workflow` for the smallest checks that prove the release contract:
+   configuration validation, focused tests, build, image/package creation, and
+   relevant integration or smoke tests. Confirm the source revision is
+   available, the artifact is traceable, required secret names and permissions
+   are present, and the destination has capacity and a rollback target. For a
+   `tailscale-hardened` target, also confirm the target hardening approval and
+   independent recovery path are ready. In `verify` mode, inspect the existing
+   immutable release, its running revision or digest, runtime configuration, and
+   available health and smoke evidence; do not build, package, trigger, or
+   require execute-only hardening approval or recovery setup. Missing required
+   evidence leaves the release unverified. Do not bypass a failed required
+   check just to trigger a deployment.
 5. **Apply and verify target hardening.** For an authorized `execute` or
    `rollback` operation on a `tailscale-hardened` target,
    complete the separate authorized target-hardening phase. Do not continue
@@ -418,16 +428,17 @@ build or from a request to deploy to a different environment.
    verifies that endpoint's identity, ACL, and public denial. Serve that page
    on the target's Tailscale address at TCP/80 through the existing HTTP
    service. The update must preserve an atomic restore of the previous
-   catalog. In `verify` mode, read and validate the existing catalog without
-   writing or publishing it; a missing, malformed, or mismatched catalog is
-   unverified. A catalog update or Tailscale-only access check that fails makes
-   the release unverified and follows the rollback policy. Do not publish a
-   shared service or update a catalog for the explicitly non-publishing
-   local/development designation.
-10. **Recheck the final boundary and retire recovery.** For a
-   `tailscale-hardened` target, while the target lock lease and hardening
-   restore remain active, continue the lock heartbeat and validate its fencing
-   value before each check or mutation. Repeat the connection-tracking and
+   catalog. In `verify` mode on a `tailscale-hardened` target, read and
+   validate the existing catalog without writing or publishing it; a missing,
+   malformed, or mismatched catalog is unverified. A catalog update or
+   Tailscale-only access check that fails makes the release unverified and
+   follows the rollback policy. Do not publish a shared service or update a
+   catalog for the explicitly non-publishing local/development designation.
+10. **Recheck the final boundary and retire recovery.** For an `execute` or
+   authorized `rollback` on a `tailscale-hardened` target, while the target
+   lock lease and hardening restore remain active, continue the lock heartbeat
+   and validate its fencing value before each check or mutation. Repeat the
+   connection-tracking and
    socket/session inspection at this final boundary and drain every existing
    inbound session whose source or route is public or outside the approved
    Tailscale policy, preserving only the approved Tailscale management session
@@ -447,8 +458,9 @@ build or from a request to deploy to a different environment.
    verify that its lease and fencing generation are inactive. If any
    retirement or verification is uncertain, keep the target `blocked` under
    the independent recovery owner. If a check fails, keep both active and
-   enter recovery. For `verify` mode, use the read-only observation lease to
-   perform the same final checks without changing listeners, firewall rules,
+   enter recovery. For `verify` mode on a `tailscale-hardened` target, use the
+   read-only observation lease to perform the same final checks without
+   changing listeners, firewall rules,
    catalog files, or sessions: approved target identity and hostname,
    Tailscale path and transport policy, the effective SSH port set, firewall
    ingress and outbound policy, existing catalog contents, listener bindings,
