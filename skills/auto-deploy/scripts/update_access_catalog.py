@@ -845,10 +845,6 @@ def _validate_preprovisioned_directory(directory: Path, description: str) -> Non
             directory_stat.st_mode
         ):
             raise CatalogError(f"{description} must use real directories")
-        if directory_stat.st_mode & 0o020 and not (directory_stat.st_mode & 0o1000):
-            raise CatalogError(
-                f"{description} group-writable directories must be sticky"
-            )
         if directory_stat.st_mode & 0o002:
             if current == document_root or not (directory_stat.st_mode & 0o1000):
                 raise CatalogError(f"{description} permissions are too broad")
@@ -1188,8 +1184,14 @@ def _verify_transaction_auth(value: object, key: bytes) -> None:
         raise CatalogError("catalog transaction authentication is missing")
     unsigned = dict(value)
     unsigned.pop(TRANSACTION_HMAC_FIELD, None)
-    expected = _transaction_hmac(unsigned, key)
-    if not hmac.compare_digest(tag, expected):
+    try:
+        tag_bytes = bytes.fromhex(tag)
+    except (UnicodeError, ValueError) as exc:
+        raise CatalogError("catalog transaction authentication is malformed") from exc
+    if len(tag_bytes) != hashlib.sha256().digest_size:
+        raise CatalogError("catalog transaction authentication is malformed")
+    expected = bytes.fromhex(_transaction_hmac(unsigned, key))
+    if not hmac.compare_digest(tag_bytes, expected):
         raise CatalogError("catalog transaction authentication failed")
 
 

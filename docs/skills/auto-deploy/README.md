@@ -39,8 +39,10 @@ HTML document-root directory must be pre-provisioned with safe real directory
 components and must not be world-writable; the updater never creates it and
 rejects a world-writable page. The registry directory is also pre-provisioned,
 shared by deployment and recovery, and its `0660` journal sidecars include a
-cleanup marker retained when journal deletion cannot be confirmed. Group-writable
-catalog or document-root directories must have the sticky bit set.
+cleanup marker retained when journal deletion cannot be confirmed. Shared
+group-writable catalog or document-root directories are supported when they are
+non-world-writable and writable by both authorized deployment and recovery
+principals; private descriptor-pinned staging protects replacement paths.
 
 Initialize and update it on the target with:
 

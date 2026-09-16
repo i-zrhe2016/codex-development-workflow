@@ -301,9 +301,10 @@ staged file is created in a private same-filesystem `0700` staging directory
 whose parent and directory descriptors are pinned and validated. The file is
 created and renamed relative to those descriptors, and its creation-time
 descriptor remains open through the rename, so a shared registry directory
-cannot substitute a different source inode or staging pathname. Any
-group-writable catalog or document-root directory must also have the sticky bit
-set so an authorized peer cannot rename a newly created staging directory.
+cannot substitute a different source inode or staging pathname. Shared
+group-writable catalog or document-root directories may be used when they are
+non-world-writable and writable by both authorized deployment and recovery
+principals; the descriptor-pinned private staging protects replacement paths.
 Each replacement, unlink, or metadata repair is performed through the fenced
 mutation authority while that exact fence is current; the updater rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is
@@ -321,8 +322,7 @@ it and rejects unsafe path components. The page writer must either be able to
 preserve its exact UID/GID or use its shared readable group/other-readable
 contract; an incompatible or world-writable page is refused. Both locks use
 bounded non-blocking acquisition, and a five-second lock timeout is a failed
-update. Group-writable catalog or document-root directories must have the
-sticky bit set.
+update.
 
 ```bash
 python3 <skill-dir>/scripts/update_access_catalog.py \

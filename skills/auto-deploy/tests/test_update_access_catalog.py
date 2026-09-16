@@ -910,12 +910,42 @@ class AccessCatalogTests(unittest.TestCase):
         group_registry_root = self.root / "group-registry-root"
         group_registry_root.mkdir()
         group_registry_root.chmod(0o770)
-        with self.assertRaises(CatalogError):
-            self.update(
-                registry=group_registry_root / "catalog.json",
-                service_name="api",
-                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+        result = self.update(
+            registry=group_registry_root / "catalog.json",
+            service_name="api",
+            deployment_address=f"http://{TAILSCALE_IP}:8080/",
+        )
+        self.assertEqual(result["services"][0]["name"], "api")
+
+    def test_non_ascii_transaction_authentication_fails_without_traceback(self) -> None:
+        transaction_path = self.leave_pending_transaction()
+        transaction = json.loads(transaction_path.read_text(encoding="utf-8"))
+        transaction[catalog.TRANSACTION_HMAC_FIELD] = "é" * 64
+        transaction_path.write_text(json.dumps(transaction), encoding="utf-8")
+        transaction_path.chmod(0o660)
+        self.use_recovery_fence()
+
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            result = main(
+                [
+                    "--registry",
+                    str(self.registry),
+                    "--output",
+                    str(self.output),
+                    "--fence-file",
+                    str(self.fence),
+                    "--fence-owner",
+                    "recovery-run-1",
+                    "--fence-generation",
+                    "2",
+                    "--recover-pending",
+                ]
             )
+
+        self.assertEqual(result, 2)
+        self.assertIn("catalog transaction authentication", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
 
     def test_registry_fifo_is_rejected_without_blocking(self) -> None:
         self.registry.unlink(missing_ok=True)
