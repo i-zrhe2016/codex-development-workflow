@@ -235,34 +235,47 @@ the level used, commands, result, evidence, and any escalation reason.
 
 Automatic Review is mandatory after every change's PR is created or updated and
 before merge. It is not performed inside a Slice or before the branch is
-published. Use the complete PR diff, branch boundary, and available CI results
-as the review context. Start the selected review path immediately without
-waiting for user confirmation.
+published. Use the selected PR range (complete for the first or escalated full
+review, bounded for an eligible follow-up), branch boundary, and available CI
+results as the review context. Start the selected review path immediately
+without waiting for user confirmation.
 
 - Before committing and pushing, run the change's acceptance checks and
   relevant integration or regression checks.
 - Commit and push the feature branch, then create or update its PR before
   Automatic Review.
-- Review the complete PR diff, including every Slice in the Ticket.
+- The first review covers the complete PR diff, including every Slice in the
+  Ticket.
+- After a completed, assessed `pass` or `blocking` review, the normal fix loop
+  reviews only the new commits from the last assessed head. It must include
+  every intervening commit and verify that the original findings are resolved.
+- Before selecting incremental coverage, classify the fix batch. Architecture,
+  public API or interface, security or authentication, database or schema,
+  cross-module behavior, base/history changes, rewrites or rebases, and
+  uncertain impact require a new full review.
+- A passing incremental review plus current CI and affected tests is enough to
+  merge; do not add another full AI review solely because the PR head changed.
 - If findings block merge, fix them and repeat Test, applicable Redaction,
   Commit, Push, and Automatic Review on the updated PR.
 - When multiple Tickets come together, add broader integration or regression
   checks across them in addition to each Ticket's own checks.
-- For the PR-stage gate, use the Codex CLI review command against the actual
-  base branch:
+- For the PR-stage gate, use the recoverable runner against the actual base
+  ref:
 
   ```bash
-  codex review --base <actual-base-branch>
+  python3 <skill-dir>/scripts/run_review.py --base <actual-base-ref>
   ```
 
-  Use the complete range for the first review. After a completed, assessed
-  review, bounded fixes may use `codex review --base <reviewed-head-sha>`;
-  include all intervening commits and verify the original findings are resolved.
-  Base changes, rewritten history, interface/security boundary changes,
-  cross-module behavior changes, or uncertain impact require a full review.
-  Batch one round's findings into one fix/test/push cycle. Preserve review
-  logs and conclusions; use the runner documented in
-  `skills/github-push-when-ready/references/review-execution.md`.
+  The runner invokes `codex review` with the complete range for the first
+  review. After a completed, assessed review, it defaults to
+  `codex review --base <reviewed-head-sha>` for bounded fixes and includes all
+  intervening commits;
+  the main agent must verify the original findings are resolved. Base changes,
+  rewritten history, architecture, public API or interface, security or
+  authentication, database or schema, cross-module behavior, or uncertain
+  impact require full PR coverage. Batch one round's findings into one
+  fix/test/push cycle. Preserve review logs and conclusions; use the runner
+  documented in `skills/github-push-when-ready/references/review-execution.md`.
   `codex review --uncommitted` is only for a
   narrow pre-commit working-tree check, and `codex review --commit SHA` is only
   for a single-commit check; neither replaces initial complete PR coverage. These

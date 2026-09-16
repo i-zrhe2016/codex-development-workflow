@@ -28,26 +28,36 @@ findings carried forward from earlier runs. Exit zero means execution completed,
 not review passed. Missing conclusions, interruption and errors are incomplete.
 
 Batch the round's fixes, run affected tests and applicable redaction, commit and
-push. If only bounded fixes remain and the main agent has checked their impact:
+push. For the normal post-review fix loop, after the main agent confirms that
+the fixes are bounded:
 
 ```bash
-python3 <skill-dir>/scripts/run_review.py --base origin/main --incremental
+python3 <skill-dir>/scripts/run_review.py --base origin/main
 ```
 
-Incremental review covers every commit after the previous assessed head. The
-runner falls back to full coverage when the base changed or history diverged.
-The main agent must omit `--incremental` for interface/security boundary changes,
-cross-module behavior or uncertain impact. Filename/line-count heuristics alone
-cannot establish eligibility. Original findings must be verified separately;
-the CLI does not automatically inherit the previous review's conversation.
+The runner automatically selects incremental coverage for every commit after
+the previous completed, assessed `pass` or `blocking` head when the base is
+unchanged and history is still a descendant. `--incremental` remains accepted
+as an explicit request, but is not required. The main agent must use a full
+review for architecture, public API or interface, security or authentication,
+database or schema, cross-module behavior, base/history changes, rewrites or
+rebases, or uncertain impact. Filename/line-count heuristics alone cannot
+establish eligibility. Original findings must be verified separately; the CLI
+does not automatically inherit the previous review's conversation.
 
 Matching completed executions are reused; inspect the saved log rather than
 starting again. One active runner per worktree is enforced. If an orphaned child
 is reported, inspect that exact process and its log before restarting. Do not
 infer failure or health merely from process existence or silence.
 
-Use `--force-full` when new evidence requires full coverage of an already reviewed
-head. This bypasses result reuse and incremental scope, but never the active lock.
+Use `--force-full` when new evidence requires full coverage of an already
+reviewed head. This bypasses result reuse and incremental scope, but never the
+active lock. A first review, a pending or incomplete assessment, a changed
+base, or rewritten/divergent history already falls back to full coverage.
+
+Before merge, current CI and affected tests must still pass. A passing
+incremental review is sufficient; do not repeat a full AI review merely because
+the PR head advanced.
 
 Progress notices report elapsed and output-idle time every five minutes. After
 15 minutes inspect logs and process/error evidence: continue useful work, and

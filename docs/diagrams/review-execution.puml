@@ -16,12 +16,14 @@ endif
 if (Same base/head execution completed\nand no --force-full?) then (yes)
   :Reuse saved execution + log\nRead existing assessment or assess pending result;
 else (no)
-  if (--incremental explicitly selected\nPrevious review assessed pass/blocking\nSame base; previous head is ancestor\nDifferent current head; no --force-full?) then (yes)
-    :Review base = previous assessed head\nAll intervening commits are included;
+  if (Previous review completed and assessed pass/blocking\nSame base; previous head is ancestor\nDifferent current head; no --force-full?) then (yes)
+    :Review base = previous assessed head by default\nAll intervening commits are included;
     note right
-      Main agent must establish bounded fix impact.
+      Main agent must establish bounded fix impact before
+      accepting the normal incremental path.
       Interfaces / security boundaries / cross-module
-      behavior / uncertainty require full coverage.
+      behavior / architecture / API / schema / history
+      changes / uncertainty require full coverage.
       Previous findings are verified separately.
     end note
   else (no)

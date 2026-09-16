@@ -61,9 +61,15 @@ def save(path, data):
     temporary.replace(path)
 
 
+def is_assessed(previous):
+    return (previous is not None
+            and previous.get("status") == "completed"
+            and previous.get("assessment") in ("pass", "blocking"))
+
+
 def choose_scope(base, head, previous, incremental):
-    if (incremental and previous and previous.get("base") == base
-            and previous.get("assessment") in ("pass", "blocking")
+    if (incremental and is_assessed(previous)
+            and previous.get("base") == base
             and previous.get("head") != head
             and subprocess.run(["git", "merge-base", "--is-ancestor",
                                 previous["head"], head]).returncode == 0):
@@ -120,9 +126,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True, help="Actual PR base ref")
     parser.add_argument("--incremental", action="store_true",
-                        help="Agent confirms only bounded fixes since last assessed review")
+                        help="Explicitly request bounded review from the last assessed head")
     parser.add_argument("--force-full", action="store_true",
-                        help="Require new full coverage even when this head has a saved result")
+                        help="Require full PR coverage, overriding the incremental default")
     parser.add_argument("--record", choices=("pass", "blocking"))
     parser.add_argument("--note", help="Conclusion evidence, including prior finding resolution")
     args = parser.parse_args()
@@ -165,17 +171,20 @@ def main():
         stale = stale_base_error(args.base, base)
         if stale:
             parser.error(stale)
-        scope = choose_scope(base, head, previous, args.incremental and not args.force_full)
+        incremental = (args.incremental or is_assessed(previous)) and not args.force_full
+        scope = choose_scope(base, head, previous, incremental)
+        coverage = "incremental" if scope != base else "full"
         run_id = uuid.uuid4().hex
         log_path = directory / (run_id + ".log")
         if previous:
             save(directory / (previous["run_id"] + ".json"), previous)
         state = dict(run_id=run_id, base=base, head=head, scope=scope,
+                     coverage=coverage,
                      previous_run=previous.get("run_id") if scope != base else None,
                      status="running", assessment="pending", log=str(log_path),
                      started_at=time.time(), pid=os.getpid())
         save(state_path, state)
-        print(f"Review {scope}..{head}; log={log_path}", flush=True)
+        print(f"Review ({coverage}) {scope}..{head}; log={log_path}", flush=True)
         try:
             code = stream(["codex", "review", "--base", scope], log_path, state, state_path)
             unchanged = git("rev-parse", "HEAD") == head and not git("status", "--porcelain")

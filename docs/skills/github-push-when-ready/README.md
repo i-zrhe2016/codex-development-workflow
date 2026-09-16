@@ -22,8 +22,15 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - After a PR is verified as merged, delete its source branch remotely and locally after switching to and synchronizing the base branch; retain the default branch and unmerged branches.
 - Create or update the PR after the branch is pushed, then run the built-in
   `codex review` as Automatic Review without waiting for user confirmation.
-  Blocking findings repeat the affected Test, Redaction when applicable,
-  Commit, Push, and `codex review` steps.
+  The first review is full-range; after an assessed `pass` or `blocking`
+  result, bounded fixes use incremental coverage from the last assessed head
+  by default. Blocking findings repeat the affected Test, Redaction when
+  applicable, Commit, Push, and review steps.
+- Use full review for architecture, public API/interface, security/authentication,
+  database/schema, cross-module behavior, base/history changes, rewrites or
+  rebases, or uncertain impact. A passing incremental review plus current
+  CI/tests is sufficient; the full review need not repeat solely because the
+  PR head changed.
 - The project-scoped `reviewer` is optional supplemental analysis and never
   replaces the mandatory `codex review` gate.
 - Merge only after Automatic Review passes, update the default branch, close the

@@ -13,7 +13,8 @@ SPEC.loader.exec_module(review)
 
 
 class ReviewTests(unittest.TestCase):
-    def run_main(self, root, arguments, prior=None, stream_result=0):
+    def run_main(self, root, arguments, prior=None, stream_result=0,
+                 ancestor=True):
         directory = root / "codex-review"
         directory.mkdir(exist_ok=True)
         if prior is not None:
@@ -30,31 +31,34 @@ class ReviewTests(unittest.TestCase):
             return "base"
         with patch.object(review, "git", side_effect=fake_git), patch.object(
                 review, "try_git", side_effect=fake_try_git), patch.object(
+                review.subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 0 if ancestor else 1)) as merge_base, patch.object(
                 review, "stream", return_value=stream_result) as runner, patch.object(
                 review.sys, "argv", ["run_review", "--base", "main", *arguments]):
             result = review.main()
-        return result, runner, json.loads((directory / "state.json").read_text())
+        return result, runner, json.loads((directory / "state.json").read_text()), merge_base
 
     def test_completed_execution_is_pending_and_reused(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            code, runner, state = self.run_main(root, [])
+            code, runner, state, _ = self.run_main(root, [])
             self.assertEqual(code, 0)
             self.assertEqual(state["assessment"], "pending")
             self.assertEqual(state["status"], "completed")
-            code, runner, _ = self.run_main(root, [])
+            code, runner, _, _ = self.run_main(root, [])
             runner.assert_not_called()
-            _, _, state = self.run_main(root, ["--record", "pass", "--note", "Verified conclusion"])
+            _, _, state, _ = self.run_main(root, ["--record", "pass", "--note", "Verified conclusion"])
             self.assertEqual(state["assessment"], "pass")
-            _, runner, state = self.run_main(root, ["--force-full"])
+            _, runner, state, _ = self.run_main(root, ["--force-full"])
             runner.assert_called_once()
             self.assertEqual(state["scope"], "base")
+            self.assertEqual(state["coverage"], "full")
             self.assertEqual(state["assessment"], "pending")
 
     def test_failed_execution_cannot_be_recorded_as_pass(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            code, _, state = self.run_main(root, [], stream_result=1)
+            code, _, state, _ = self.run_main(root, [], stream_result=1)
             self.assertEqual(code, 1)
             self.assertEqual(state["status"], "incomplete")
             with self.assertRaises(SystemExit):
@@ -64,7 +68,7 @@ class ReviewTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             prior = dict(run_id="old", base="base", head="head", status="running", child_pid=1)
             with patch.object(review.os, "kill"):
-                code, runner, _ = self.run_main(Path(temporary), [], prior)
+                code, runner, _, _ = self.run_main(Path(temporary), [], prior)
             self.assertEqual(code, 2)
             runner.assert_not_called()
 
@@ -74,16 +78,61 @@ class ReviewTests(unittest.TestCase):
             "base": "base", "head": "old", "assessment": "pending"}, True), "base")
 
     def test_incremental_covers_previous_assessed_head(self):
-        prior = dict(base="base", head="old", assessment="blocking")
+        prior = dict(base="base", head="old", status="completed",
+                     assessment="blocking")
         with patch.object(review.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)):
             self.assertEqual(review.choose_scope("base", "head", prior, True), "old")
             self.assertEqual(review.choose_scope("base", "head", prior, False), "base")
             self.assertEqual(review.choose_scope("new-base", "head", prior, True), "new-base")
 
+    def test_assessed_review_defaults_to_incremental_scope(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            prior = dict(run_id="old-run", base="base", head="old",
+                         status="completed", assessment="pass")
+            code, runner, state, merge_base = self.run_main(
+                Path(temporary), [], prior=prior)
+            self.assertEqual(code, 0)
+            self.assertEqual(state["scope"], "old")
+            self.assertEqual(state["coverage"], "incremental")
+            self.assertEqual(state["previous_run"], "old-run")
+            self.assertEqual(runner.call_args.args[0],
+                             ["codex", "review", "--base", "old"])
+            merge_base.assert_called_once()
+
+    def test_unassessed_or_incomplete_review_defaults_to_full_scope(self):
+        for status, assessment in (("completed", "pending"),
+                                   ("incomplete", "blocking")):
+            with self.subTest(status=status, assessment=assessment), \
+                    tempfile.TemporaryDirectory() as temporary:
+                prior = dict(run_id="old-run", base="base", head="old",
+                             status=status, assessment=assessment)
+                _, runner, state, merge_base = self.run_main(
+                    Path(temporary), [], prior=prior)
+                self.assertEqual(state["scope"], "base")
+                self.assertEqual(state["coverage"], "full")
+                self.assertIsNone(state["previous_run"])
+                self.assertEqual(runner.call_args.args[0],
+                                 ["codex", "review", "--base", "base"])
+                merge_base.assert_not_called()
+
+    def test_force_full_overrides_assessed_incremental_default(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            prior = dict(run_id="old-run", base="base", head="old",
+                         status="completed", assessment="blocking")
+            _, runner, state, merge_base = self.run_main(
+                Path(temporary), ["--force-full"], prior=prior)
+            self.assertEqual(state["scope"], "base")
+            self.assertEqual(state["coverage"], "full")
+            self.assertIsNone(state["previous_run"])
+            self.assertEqual(runner.call_args.args[0],
+                             ["codex", "review", "--base", "base"])
+            merge_base.assert_not_called()
+
     def test_rewritten_history_requires_full_review(self):
         with patch.object(review.subprocess, "run", return_value=subprocess.CompletedProcess([], 1)):
             self.assertEqual(review.choose_scope("base", "head", {
-                "base": "base", "head": "old", "assessment": "pass"}, True), "base")
+                "base": "base", "head": "old", "status": "completed",
+                "assessment": "pass"}, True), "base")
 
     def test_stale_local_base_reports_both_refs(self):
         def fake_try_git(*args):

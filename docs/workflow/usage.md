@@ -152,17 +152,19 @@ commands, result, evidence, and escalation reason.
 
 ## Review and recovery
 
-Automatic Review is the built-in `codex review` command. It is mandatory after
-the PR is created or updated and before merge, not an internal Slice or pre-PR
-stage. Use the complete PR diff, branch boundary, and available CI results;
-run `codex review --base <base-branch>` immediately without waiting for user
-confirmation. Blocking findings repeat Fix -> Test -> Redaction if applicable
--> Commit -> Push -> `codex review` on the updated PR.
+The first Automatic Review covers the full PR. After a completed, assessed
+`pass` or `blocking` result, batch the blocking fixes, run the affected tests
+and applicable redaction, commit, and push; the next review covers only the new
+commits from the last assessed head by default. It must include every
+intervening commit and verify the original findings are resolved.
 
-The first review covers the full PR. Batch each round's fixes, then review all
-new commits against the last assessed head when their impact is bounded; verify
-the original findings are resolved. Base/history changes, interface or security
-boundary changes, cross-module behavior, and uncertain impact require full review.
+Use full coverage again for architecture, public API or interface, security or
+authentication, database or schema, cross-module behavior, base/history
+changes, rewrites or rebases, or uncertain impact. Before merge, CI and tests
+must still pass, but a passing incremental review does not require another full
+AI review. The recoverable runner persists the selected range and accepts
+`--force-full` for the explicit escalation; see its execution reference for
+recovery and assessment rules.
 Use the [recoverable review runner](../../skills/github-push-when-ready/references/review-execution.md)
 to stream and retain logs, reuse matching results, and avoid duplicate
 processes. Pass the remote-tracking base (`origin/<base>`); the runner blocks a
