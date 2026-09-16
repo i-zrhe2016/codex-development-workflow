@@ -5,16 +5,19 @@ before starting; a stale local base cannot detect upstream changes. Before
 starting a new review, the runner refuses a bare local base branch that differs
 from its configured upstream (`<remote>/<branch>`, falling back to
 `origin/<branch>`) instead of silently reviewing the wrong range, and it points
-at that remote ref in the error. Recording an assessment or reusing a saved
-execution is unaffected, because those paths only touch the recorded range.
+at that remote ref in the error. Recording and saved-execution reuse do not
+start a new review, so the stale-base guard is skipped there; branch-identity
+checks still apply.
 
 ```bash
 python3 <skill-dir>/scripts/run_review.py --base origin/main
 ```
 
-The runner invokes built-in `codex review`, streams output, and saves logs and
-base/head identities under the worktree's Git metadata directory `codex-review/`.
-Keep logs local: review output may contain repository-sensitive material.
+The runner invokes built-in `codex review`, streams output, and saves logs,
+branch, and base/head identities under the worktree's Git metadata directory
+`codex-review/`. Incremental reuse is bound to the exact current feature branch;
+an unbound legacy state or a state from another branch falls back to a full
+review. Keep logs local: review output may contain repository-sensitive material.
 The runner neither publishes changes nor merges PRs.
 
 After reading the complete conclusion, the main agent records its assessment:

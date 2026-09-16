@@ -72,7 +72,9 @@ gh pr create --fill --base <default-branch> --head <feature-branch>
 After creating or updating the PR, run the recoverable review runner immediately
 as Automatic Review, without waiting for user confirmation. It covers the full
 PR on the first review, then defaults to the commits after the last assessed
-`pass` or `blocking` head on later bounded fixes. The project-scoped reviewer
+`pass` or `blocking` head on later bounded fixes on the same named feature
+branch. The runner persists that branch identity, so an unbound legacy state
+or a state from another branch falls back to a full review. The project-scoped reviewer
 is optional supplemental analysis and never replaces this gate. If review
 reports blocking findings, fix them, rerun the affected tests and redaction
 scan when applicable, commit and push the updated branch, then run the runner

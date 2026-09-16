@@ -155,8 +155,10 @@ commands, result, evidence, and escalation reason.
 The first Automatic Review covers the full PR. After a completed, assessed
 `pass` or `blocking` result, batch the blocking fixes, run the affected tests
 and applicable redaction, commit, and push; the next review covers only the new
-commits from the last assessed head by default. It must include every
-intervening commit and verify the original findings are resolved.
+commits from the last assessed head by default on the same feature branch. The
+runner persists and checks that branch identity; an unbound legacy state or a
+state from another branch falls back to full. It must include every intervening
+commit and verify the original findings are resolved.
 
 Use full coverage again for architecture, public API or interface, security or
 authentication, database or schema, cross-module behavior, base/history

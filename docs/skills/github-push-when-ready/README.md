@@ -23,9 +23,11 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - Create or update the PR after the branch is pushed, then run the built-in
   `codex review` as Automatic Review without waiting for user confirmation.
   The first review is full-range; after an assessed `pass` or `blocking`
-  result, bounded fixes use incremental coverage from the last assessed head
-  by default. Blocking findings repeat the affected Test, Redaction when
-  applicable, Commit, Push, and review steps.
+  result, bounded fixes on the same named feature branch use incremental
+  coverage from the last assessed head by default. The runner persists and
+  checks that branch identity; unbound legacy state or a state from another
+  branch falls back to full. Blocking findings repeat the affected Test,
+  Redaction when applicable, Commit, Push, and review steps.
 - Use full review for architecture, public API/interface, security/authentication,
   database/schema, cross-module behavior, base/history changes, rewrites or
   rebases, or uncertain impact. A passing incremental review plus current

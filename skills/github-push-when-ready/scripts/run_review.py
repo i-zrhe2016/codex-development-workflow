@@ -61,14 +61,15 @@ def save(path, data):
     temporary.replace(path)
 
 
-def is_assessed(previous):
+def is_assessed(previous, branch):
     return (previous is not None
             and previous.get("status") == "completed"
-            and previous.get("assessment") in ("pass", "blocking"))
+            and previous.get("assessment") in ("pass", "blocking")
+            and previous.get("branch") == branch)
 
 
-def choose_scope(base, head, previous, incremental):
-    if (incremental and is_assessed(previous)
+def choose_scope(base, head, previous, incremental, branch):
+    if (incremental and is_assessed(previous, branch)
             and previous.get("base") == base
             and previous.get("head") != head
             and subprocess.run(["git", "merge-base", "--is-ancestor",
@@ -136,6 +137,9 @@ def main():
         parser.error("Review requires a clean worktree")
     base = git("rev-parse", "--verify", args.base + "^{commit}")
     head = git("rev-parse", "HEAD")
+    branch = git("branch", "--show-current")
+    if not branch:
+        parser.error("Review requires a named feature branch")
     directory = Path(git("rev-parse", "--absolute-git-dir")) / "codex-review"
     directory.mkdir(mode=0o700, exist_ok=True)
     state_path = directory / "state.json"
@@ -147,14 +151,16 @@ def main():
             return 2
         previous = json.loads(state_path.read_text()) if state_path.exists() else None
         same = previous and previous.get("base") == base and previous.get("head") == head
+        same_branch = bool(same and previous.get("branch") == branch)
         if args.record:
-            if not (same and previous.get("status") == "completed" and args.note):
-                parser.error("Recording requires matching completed execution and --note evidence")
+            if not (same_branch and previous.get("status") == "completed" and args.note):
+                parser.error("Recording requires matching completed execution for the current branch and --note evidence")
             previous.update(assessment=args.record, note=args.note)
             save(state_path, previous)
             print(json.dumps(previous, indent=2))
             return 0
-        if same and previous.get("status") == "completed" and not args.force_full:
+        if (same_branch and previous.get("status") == "completed"
+                and not args.force_full):
             print(json.dumps(previous, indent=2))
             print("Reuse saved execution; inspect log and explicitly assess if pending.")
             return 0
@@ -171,14 +177,14 @@ def main():
         stale = stale_base_error(args.base, base)
         if stale:
             parser.error(stale)
-        incremental = (args.incremental or is_assessed(previous)) and not args.force_full
-        scope = choose_scope(base, head, previous, incremental)
+        incremental = (args.incremental or is_assessed(previous, branch)) and not args.force_full
+        scope = choose_scope(base, head, previous, incremental, branch)
         coverage = "incremental" if scope != base else "full"
         run_id = uuid.uuid4().hex
         log_path = directory / (run_id + ".log")
         if previous:
             save(directory / (previous["run_id"] + ".json"), previous)
-        state = dict(run_id=run_id, base=base, head=head, scope=scope,
+        state = dict(run_id=run_id, branch=branch, base=base, head=head, scope=scope,
                      coverage=coverage,
                      previous_run=previous.get("run_id") if scope != base else None,
                      status="running", assessment="pending", log=str(log_path),

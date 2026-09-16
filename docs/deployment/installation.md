@@ -13,17 +13,22 @@ discovered.
 
 ## Run built-in code review
 
-The review gate uses the Codex CLI's built-in `codex review` command. Install
-and authenticate Codex before using it; no separate review skill is required.
-For each PR creation or update, invoke this Automatic Review command immediately:
+The review gate uses the Codex CLI's built-in `codex review` command through the
+recoverable repository runner. Install and authenticate Codex before using it;
+no separate review skill is required. From the project root, invoke this
+Automatic Review command immediately after each PR creation or update:
 
 ```bash
-codex review --base <actual-base-branch>  # complete PR range
+python3 <skill-dir>/scripts/run_review.py --base <actual-base-ref>
 ```
 
-The narrower `codex review --uncommitted` and `codex review --commit SHA`
-forms are local supplemental checks only; neither replaces the complete PR
-review.
+The first run covers the full PR. After a completed and assessed review, a
+bounded fix defaults to reviewing only commits after the previous assessed head
+on the same feature branch. Use `--force-full` for architecture, public API or
+interface, security or authentication, database or schema, cross-module
+behavior, base/history changes, rewrites or rebases, or uncertain impact. The
+narrower `codex review --uncommitted` and `codex review --commit SHA` forms are
+local supplemental checks only; neither replaces the runner's PR review gate.
 
 See the [Codex CLI documentation](https://developers.openai.com/codex/cli/)
 for installation and authentication details.

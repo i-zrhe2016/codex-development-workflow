@@ -247,8 +247,11 @@ without waiting for user confirmation.
 - The first review covers the complete PR diff, including every Slice in the
   Ticket.
 - After a completed, assessed `pass` or `blocking` review, the normal fix loop
-  reviews only the new commits from the last assessed head. It must include
-  every intervening commit and verify that the original findings are resolved.
+  reviews only the new commits from the last assessed head on the same named
+  feature branch. The runner persists and checks that branch identity; an
+  unbound legacy state or a state from another branch falls back to full. It
+  must include every intervening commit and verify that the original findings
+  are resolved.
 - Before selecting incremental coverage, classify the fix batch. Architecture,
   public API or interface, security or authentication, database or schema,
   cross-module behavior, base/history changes, rewrites or rebases, and
@@ -267,9 +270,9 @@ without waiting for user confirmation.
   ```
 
   The runner invokes `codex review` with the complete range for the first
-  review. After a completed, assessed review, it defaults to
-  `codex review --base <reviewed-head-sha>` for bounded fixes and includes all
-  intervening commits;
+  review. After a completed, assessed review on the same named feature branch,
+  it defaults to `codex review --base <reviewed-head-sha>` for bounded fixes
+  and includes all intervening commits;
   the main agent must verify the original findings are resolved. Base changes,
   rewritten history, architecture, public API or interface, security or
   authentication, database or schema, cross-module behavior, or uncertain

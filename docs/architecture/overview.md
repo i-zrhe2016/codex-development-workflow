@@ -188,9 +188,11 @@ escalation.
 
 Editable source: [`review-execution.puml`](../diagrams/review-execution.puml).
 The runner persists execution separately from the main agent's assessment.
-Completed results with matching base/head can be reused. The first review is
-full; after a completed, assessed `pass` or `blocking` result, bounded fixes
-default to the last assessed head and include every intervening commit. Base
+Completed results with matching base/head and feature-branch identity can be
+reused. The first review is full; after a completed, assessed `pass` or
+`blocking` result, bounded fixes on the same named feature branch default to the
+last assessed head and include every intervening commit. Unbound legacy state or
+a state from another branch falls back to full. Base
 changes, rewritten history, architecture, public API or interface,
 security/authentication, database/schema, cross-module behavior, or uncertain
 impact require full review. An interrupted or unassessed latest run cannot
