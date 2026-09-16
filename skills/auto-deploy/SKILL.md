@@ -348,10 +348,14 @@ build or from a request to deploy to a different environment.
    non-publishing local/development target, record why the gate is not
    applicable and do not expose a shared service. An unknown designation is a
    refusal. In `verify` mode, collect only read-only target and release
-   evidence; after any non-mutating checks in step 4, go directly to step 12
-   and do not execute steps 5-11. A requested hardening, deployment, catalog
-   update, or rollback requires the corresponding authorized `execute` or
-   `rollback` mode.
+   evidence. Skip only mutating hardening and release actions: steps 5-7, the
+   catalog write in step 9, and recovery step 11. Continue with the read-only
+   observation in step 8 and the read-only final-boundary checks in step 10,
+   then go to step 12. A verify result is successful only when those checks
+   establish the intended running revision, health, smoke flow, access
+   boundary, and catalog state; an unknown or failed check is unverified. A
+   requested hardening, deployment, catalog update, or rollback requires the
+   corresponding authorized `execute` or `rollback` mode.
 4. **Run release preflight checks.** Use `test-workflow` for the smallest checks that
    prove the release contract: configuration validation, focused tests, build,
    image/package creation, and relevant integration or smoke tests. Confirm
@@ -404,19 +408,22 @@ build or from a request to deploy to a different environment.
    rates, readiness, and the smallest meaningful smoke flow. Confirm the
    running revision/digest matches the intended artifact, not merely that a
    command exited successfully.
-9. **Update the access catalog.** For a `tailscale-hardened` target, after a
-   service's revision and health are verified, update the generated catalog
-   with the service name, a target-local deployment address, and the target's
-   discovered Tailscale IP. Validate that every address resolves and routes to
-   the approved target identity and address before writing it; refuse public
-   load-balancer or different-host addresses unless a separate endpoint
-   contract supplies and verifies that endpoint's identity, ACL, and public
-   denial. Serve that page on the target's Tailscale address at TCP/80 through
-   the existing HTTP service. The update must preserve an atomic restore of
-   the previous catalog. A catalog update or Tailscale-only access check that
-   fails makes the release unverified and follows the rollback policy. Do not
-   publish a shared service or update a catalog for the explicitly
-   non-publishing local/development designation.
+9. **Update the access catalog.** For an `execute` or explicitly authorized
+   `rollback` on a `tailscale-hardened` target, after a service's revision and
+   health are verified, update the generated catalog with the service name, a
+   target-local deployment address, and the target's discovered Tailscale IP.
+   Validate that every address resolves and routes to the approved target
+   identity and address before writing it; refuse public load-balancer or
+   different-host addresses unless a separate endpoint contract supplies and
+   verifies that endpoint's identity, ACL, and public denial. Serve that page
+   on the target's Tailscale address at TCP/80 through the existing HTTP
+   service. The update must preserve an atomic restore of the previous
+   catalog. In `verify` mode, read and validate the existing catalog without
+   writing or publishing it; a missing, malformed, or mismatched catalog is
+   unverified. A catalog update or Tailscale-only access check that fails makes
+   the release unverified and follows the rollback policy. Do not publish a
+   shared service or update a catalog for the explicitly non-publishing
+   local/development designation.
 10. **Recheck the final boundary and retire recovery.** For a
    `tailscale-hardened` target, while the target lock lease and hardening
    restore remain active, continue the lock heartbeat and validate its fencing
@@ -440,19 +447,29 @@ build or from a request to deploy to a different environment.
    verify that its lease and fencing generation are inactive. If any
    retirement or verification is uncertain, keep the target `blocked` under
    the independent recovery owner. If a check fails, keep both active and
-   enter recovery. For an explicitly non-publishing
+   enter recovery. For `verify` mode, use the read-only observation lease to
+   perform the same final checks without changing listeners, firewall rules,
+   catalog files, or sessions: approved target identity and hostname,
+   Tailscale path and transport policy, the effective SSH port set, firewall
+   ingress and outbound policy, existing catalog contents, listener bindings,
+   public denial for every declared port, and the running revision, health,
+   and smoke results from step 8. Do not drain or terminate sessions in this
+   mode; any public or outside-policy session, unknown state, or failed check
+   is unverified. Release the observation lease and verify that it is
+   inactive. For an explicitly non-publishing
    local/development target, verify that no shared service is exposed and close
    the release without requiring a hardened lock, restore, or access catalog.
 11. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
-   For a `tailscale-hardened` target, first cancel or pause the deployment run
-   and verify that no active, queued, or retrying executor can issue another
-   target mutation. The independent recovery owner must then revoke the
-   deployment generation even if its lease still appears valid, acquire the
-   target lock under a new recovery-only fencing generation, and verify that
-   the old generation is rejected before any restore mutation. If run
-   quiescence or this fencing handoff cannot be verified, keep the target
-   `blocked` and do not roll back. Keep that fenced target lock and the
+   For a `tailscale-hardened` target, the independent recovery owner must
+   first revoke the current deployment generation through the independent
+   mutation authority, even if its lease still appears valid. Then cancel or
+   pause the deployment run and verify that no active, queued, or retrying
+   executor can issue another target mutation. Acquire the target lock under
+   a new recovery-only fencing generation and verify that the old generation
+   is rejected before any restore mutation. If run quiescence or this fencing
+   handoff cannot be verified, keep the target `blocked` and do not roll back.
+   Keep that fenced target lock and the
    hardening restore active while rolling back through the documented immutable
    artifact or platform mechanism. Atomically
    reconcile the access catalog at the same time: restore the prior page or
