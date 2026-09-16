@@ -22,6 +22,35 @@ verified again after service and catalog changes before recovery is retired.
 An explicitly non-publishing local/development target may skip this gate when
 the contract records that no shared service is exposed.
 
+## Access catalog
+
+The bundled `scripts/update_access_catalog.py` maintains a dependency-free JSON
+registry and escaped HTML page. On a hardened publishing host, serve the page
+through the existing HTTP service at
+`http://<local-tailscale-ip>/` on TCP/80. The page shows the host's Tailscale
+IP plus each verified service name and deployment address. The updater accepts
+only HTTP(S) addresses on that exact Tailscale IP, updates rows idempotently by
+service name, serializes concurrent updates, and writes both files atomically.
+
+Initialize and update it on the target with:
+
+```bash
+python3 <skill-dir>/scripts/update_access_catalog.py \
+  --registry /var/lib/auto-deploy/access-catalog.json \
+  --output /var/www/auto-deploy/index.html \
+  --initialize
+
+python3 <skill-dir>/scripts/update_access_catalog.py \
+  --registry /var/lib/auto-deploy/access-catalog.json \
+  --output /var/www/auto-deploy/index.html \
+  --service-name <service-name> \
+  --deployment-address http://<local-tailscale-ip>:<declared-port>/
+```
+
+Run the update only after health and smoke verification, then verify the page
+from an approved Tailscale peer and confirm public port-80 denial. The script
+does not install an HTTP server or modify the firewall.
+
 The runtime instructions are in
 [`skills/auto-deploy/SKILL.md`](../../../skills/auto-deploy/SKILL.md), and the
 installed destination is `auto-deploy` under the configured Codex skills

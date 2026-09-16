@@ -269,6 +269,44 @@ not an implicit side effect of connecting over SSH.
    the lock cannot be released or its retirement cannot be verified, keep the
    target `blocked` and hand it to the independent recovery owner.
 
+## Tailscale access catalog
+
+For a `tailscale-hardened` publishing target, the access catalog is a generated
+page served by the target's existing HTTP service at
+`http://<local-tailscale-ip>/` on TCP/80. The page displays the current local
+Tailscale IP and one row per verified service with its service name and
+deployment address. The HTTP service must bind to the target Tailscale address
+where supported; otherwise the already-effective firewall must deny TCP/80 on
+every public interface and allow it only from the approved Tailscale sources.
+
+Use `scripts/update_access_catalog.py` on the target to maintain the registry
+and page. Initialize an empty baseline before the first publication, then run
+the updater after the service revision, health, and smoke checks pass:
+
+```bash
+python3 <skill-dir>/scripts/update_access_catalog.py \
+  --registry /var/lib/auto-deploy/access-catalog.json \
+  --output /var/www/auto-deploy/index.html \
+  --initialize
+
+python3 <skill-dir>/scripts/update_access_catalog.py \
+  --registry /var/lib/auto-deploy/access-catalog.json \
+  --output /var/www/auto-deploy/index.html \
+  --service-name <service-name> \
+  --deployment-address http://<local-tailscale-ip>:<declared-port>/
+```
+
+The updater discovers or validates the local Tailscale IPv4, accepts only
+`http` or `https` addresses whose host is that exact Tailscale IP, escapes all
+HTML values, replaces a matching service name without duplicates, and retains
+unrelated rows. It serializes updates with a registry-side lock and atomically
+replaces each JSON/page file; a malformed registry, different host, unsafe
+address, or failed write is an error. It never starts an HTTP server or changes
+firewall rules. After each update, request the page through the approved
+Tailscale path and run the public-denial probe before marking the deployment
+verified. A failed update or probe leaves the release unverified and follows
+the documented recovery path.
+
 ## Required deployment contract
 
 Before any mutating deployment action, identify and record:
