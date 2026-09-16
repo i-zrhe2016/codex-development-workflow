@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-16 @ working tree
+Last verified: 2026-09-16 @ 8ec181c
 
 ## Current Focus
 
@@ -22,6 +22,10 @@ Last verified: 2026-09-16 @ working tree
   existing HTTP service; it does not install a server or change firewall state.
 - Catalog writes use validation, atomic replacement, fenced durable recovery,
   authenticated transaction journals, and focused unit tests.
+- Automatic Review uses the recoverable runner: the first PR review is full,
+  bounded fixes default to incremental coverage from the last assessed head
+  when base/history and named feature-branch identity match, and unbound or
+  high-impact/uncertain changes fall back to full coverage.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold plans and Tickets, while `docs/skills/` documents the managed skills.
 
