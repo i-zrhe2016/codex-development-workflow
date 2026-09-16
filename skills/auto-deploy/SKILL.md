@@ -40,9 +40,13 @@ preflight. It may inspect status and listeners but must not change SSH,
 firewall, HTTP, catalog, or deployment state. If that session is unavailable,
 use a concrete approved non-SSH management channel; a public SSH bootstrap is
 never permitted.
-Before that bootstrap, acquire an exclusive target-scoped lock keyed by the
-approved immutable Tailscale node ID. Hold it through target hardening,
-deployment, catalog publication, final boundary verification, and recovery.
+For `execute` or an explicitly authorized `rollback`, acquire an exclusive
+target-scoped lock keyed by the approved immutable Tailscale node ID before
+that bootstrap. Hold it through target hardening, deployment, catalog
+publication, final boundary verification, and recovery. For `verify`, use only
+a read-only observation lease that cannot authorize mutation, release it after
+the checks, and never acquire or reuse the mutating target lock or hardening
+restore.
 The lock must be a bounded renewable lease with a heartbeat and a fencing
 token or generation. Every hardening, deployment, catalog, and recovery
 mutation must go through a mutation authority that atomically verifies the
@@ -108,11 +112,12 @@ the target indefinitely.
 4. **Inventory the current boundary without changing it.** Record the
    effective SSH listeners and every effective SSH port, firewall rules on
    every interface, current outbound policy, Tailscale interface, and
-   listeners for TCP/80 and all declared service ports. If SSH is enabled,
-   this contract permits exactly one SSH listener on TCP/22; any non-22 or
-   additional SSH listener is a refusal before mutation. If the approved
-   access path is non-SSH, record that SSH is disabled. Record whether the
-   baseline access catalog exists,
+   Tailscale transport mode (direct underlay or relay), its required underlay
+   interface/port policy, and listeners for TCP/80 and all declared service
+   ports. If SSH is enabled, this contract permits exactly one SSH listener on
+   TCP/22; any non-22 or additional SSH listener is a refusal before mutation.
+   If the approved access path is non-SSH, record that SSH is disabled. Record
+   whether the baseline access catalog exists,
    its registry/page paths, and the HTTP service that serves it. A public
    listener or wildcard allow rule is a hardening task, not permission to
    deploy. If the listener or firewall state cannot be inspected, stop.
@@ -158,6 +163,16 @@ not an implicit side effect of connecting over SSH.
    - TCP/22 for deployment SSH only when SSH is the approved access path;
    - TCP/80 for the access catalog; and
    - declared service ports.
+
+   Before activating this policy, verify that the approved peer has a usable
+   Tailscale transport. For a direct underlay, preserve the currently
+   required Tailscale underlay interface and port rule in the same atomic
+   fenced mutation and verify reachability after activation. If that cannot be
+   preserved, require a verified relay-only path before applying the public
+   default deny. A Tailscale underlay exception carries encrypted Tailscale
+   transport only; it is not a public login or application-port exception. If
+   neither transport can be verified, refuse hardening before changing the
+   firewall.
 
    A broad allow rule for SSH, port 80, or a service port is a refusal. For a
    UFW target, preserve the current outgoing default and have the target's
@@ -256,6 +271,8 @@ Before any mutating deployment action, identify and record:
 - for a `tailscale-hardened` target, the trusted node-ID-to-address resolution
   source (authenticated Tailscale control-plane lookup or approved tailnet
   DNS name);
+- for a `tailscale-hardened` target, the approved Tailscale transport mode and
+  its verified underlay rule or relay-only path;
 - source commit, tag, release, or other immutable revision;
 - artifact and provenance (image digest, package checksum, or build ID);
 - existing trigger and deployment entry point (workflow, release job, script,
@@ -310,7 +327,8 @@ build or from a request to deploy to a different environment.
 
 ## Workflow
 
-1. **Classify the release.** Define the environment, target designation,
+1. **Classify the release.** Define the operation mode (`execute`, `verify`,
+   or explicitly authorized `rollback`), environment, target designation,
    approved target identity, release scope, source revision, artifact,
    expected user impact, approval boundary, and rollback owner. A service
    publication must use `tailscale-hardened`; a local/development deployment
@@ -329,7 +347,11 @@ build or from a request to deploy to a different environment.
    verification result as safe deployment evidence. For an explicitly
    non-publishing local/development target, record why the gate is not
    applicable and do not expose a shared service. An unknown designation is a
-   refusal.
+   refusal. In `verify` mode, collect only read-only target and release
+   evidence; after any non-mutating checks in step 4, go directly to step 12
+   and do not execute steps 5-11. A requested hardening, deployment, catalog
+   update, or rollback requires the corresponding authorized `execute` or
+   `rollback` mode.
 4. **Run release preflight checks.** Use `test-workflow` for the smallest checks that
    prove the release contract: configuration validation, focused tests, build,
    image/package creation, and relevant integration or smoke tests. Confirm
@@ -338,7 +360,8 @@ build or from a request to deploy to a different environment.
    rollback target. For a `tailscale-hardened` target, also confirm the target
    hardening approval and independent recovery path are ready. Do not bypass
    a failed required check just to trigger a deployment.
-5. **Apply and verify target hardening.** For a `tailscale-hardened` target,
+5. **Apply and verify target hardening.** For an authorized `execute` or
+   `rollback` operation on a `tailscale-hardened` target,
    complete the separate authorized target-hardening phase. Do not continue
    unless SSH is disabled or has exactly one TCP/22 listener only on
    Tailscale, the approved non-SSH path is verified when SSH is disabled, the
@@ -403,11 +426,13 @@ build or from a request to deploy to a different environment.
    Tailscale policy, preserving only the approved Tailscale management session
    and flows. Repeat the complete boundary checks after service startup and
    catalog publication: approved target identity and hostname, Tailscale
-   access path, SSH or approved non-SSH path, and the effective SSH port set
-   (exactly TCP/22 when SSH is enabled, or empty when it is disabled), active
-   and effective firewall rules, the effective outbound policy compared with
-   the recorded baseline, catalog access, listener bindings, and public denial
-   for every declared port. If sessions cannot be drained, the outbound policy
+   access path, SSH or approved non-SSH path, Tailscale transport reachability
+   and its recorded underlay or relay-only policy, and the effective SSH port
+   set (exactly TCP/22 when SSH is enabled, or empty when it is disabled),
+   active and effective firewall rules, catalog access, listener bindings, and
+   public denial for every declared port. Compare the effective outbound
+   policy with the recorded baseline. If sessions cannot be drained, the
+   outbound policy
    differs from baseline, or the lock cannot be renewed or fenced, stop and
    enter recovery. If all checks pass,
    cancel and retire the hardening restore, verify through the independent
