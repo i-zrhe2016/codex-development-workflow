@@ -155,30 +155,28 @@ not an implicit side effect of connecting over SSH.
    default on every public interface and allow only established/related
    traffic, loopback, and explicitly authorized Tailscale sources for:
 
-   - TCP/22 for deployment SSH;
+   - TCP/22 for deployment SSH only when SSH is the approved access path;
    - TCP/80 for the access catalog; and
    - declared service ports.
 
    A broad allow rule for SSH, port 80, or a service port is a refusal. For a
-   UFW target, preserve the current outgoing default and use the approved
-   Tailscale source range or peer address in every allow rule:
-
-   ```bash
-   APPROVED_TAILSCALE_PEER_CIDR="<verified-peer-cidr>"
-   ufw default deny incoming
-   ufw allow in on tailscale0 from "$APPROVED_TAILSCALE_PEER_CIDR" to any port 22 proto tcp
-   ufw allow in on tailscale0 from "$APPROVED_TAILSCALE_PEER_CIDR" to any port 80 proto tcp
-   ```
-
-   Add declared service ports with the same interface and approved-source
-   scope. Inspect and remove conflicting wildcard allow rules only under the
-   recovery plan; do not run a blind firewall reset or `ufw default allow
-   outgoing`. If UFW is inactive, activate it only after the allowlist is
-   staged, then reload it as required and verify that `ufw status` is active
-   and the effective kernel rules enforce the policy. A saved UFW policy is
-   not evidence of filtering. For nftables or another provider, validate,
-   activate, and inspect the effective ruleset; preserve egress policy and
-   drop all public input. Immediately after the firewall is active and before
+   UFW target, preserve the current outgoing default and have the target's
+   atomic mutation authority apply `ufw default deny incoming` plus
+   interface- and approved-source-scoped rules for the allowed ports. Carry
+   the current fencing value into that authority for every rule change; never
+   run raw `ufw` commands outside it. Omit the TCP/22 rule when the approved
+   access path is non-SSH. Add declared service ports with the same interface
+   and approved-source scope. Inspect and remove conflicting wildcard allow
+   rules only under the recovery plan; do not run a blind firewall reset or
+   `ufw default allow outgoing`. If UFW is inactive, activate it only after
+   the allowlist is staged, then reload it as required and verify that the
+   `ufw status` output is active and the effective kernel rules enforce the
+   policy. Activation and reload are also mutations and must use the same
+   atomic fencing authority. A saved UFW policy is not evidence of filtering.
+   For nftables or another provider,
+   validate, activate, and inspect the effective ruleset through the same
+   atomic mutation authority; preserve egress policy and drop all public input.
+   Immediately after the firewall is active and before
    reloading any listener or starting/reloading the HTTP service, inspect the
    connection-tracking and socket/session state and drain every existing
    inbound session whose source or route is public or outside the approved
@@ -197,7 +195,9 @@ not an implicit side effect of connecting over SSH.
    reload. The change is rejected if the socket table still shows TCP/22 on a
    public address, or if the daemon cannot enforce the Tailscale-only listener
    requirement. If the approved target access path is non-SSH, do not enable
-   SSH; the firewall source/ACL restriction remains mandatory.
+   SSH: the effective SSH listener set must be empty and the firewall must
+   contain no TCP/22 allow rule. The firewall source/ACL restriction for the
+   catalog and declared service ports remains mandatory.
 
 4. **Stage the baseline catalog offline.** Create or validate the catalog
    registry and page without starting or reloading the HTTP service. The page
@@ -420,12 +420,16 @@ build or from a request to deploy to a different environment.
    the release without requiring a hardened lock, restore, or access catalog.
 11. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
-   For a `tailscale-hardened` target, if the deployment lease was lost, stop
-   and have the independent recovery owner revoke the old generation, acquire
-   the target lock under a new recovery-only fencing generation, and verify
-   that the old generation is rejected before any restore mutation. Keep that
-   fenced target lock and the hardening restore active while rolling back
-   through the documented immutable artifact or platform mechanism. Atomically
+   For a `tailscale-hardened` target, first cancel or pause the deployment run
+   and verify that no active, queued, or retrying executor can issue another
+   target mutation. The independent recovery owner must then revoke the
+   deployment generation even if its lease still appears valid, acquire the
+   target lock under a new recovery-only fencing generation, and verify that
+   the old generation is rejected before any restore mutation. If run
+   quiescence or this fencing handoff cannot be verified, keep the target
+   `blocked` and do not roll back. Keep that fenced target lock and the
+   hardening restore active while rolling back through the documented immutable
+   artifact or platform mechanism. Atomically
    reconcile the access catalog at the same time: restore the prior page or
    remove/update the
    affected row to the last known-good deployment address. Before retiring
