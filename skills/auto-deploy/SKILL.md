@@ -21,6 +21,13 @@ shared service will be exposed.
 The security preflight is read-only. Run it on the target before any SSH,
 firewall, HTTP listener, access-catalog, or deployment mutation. A failed or
 ambiguous check is a refusal; do not continue with a best-effort deployment.
+For `verify` on a `tailscale-hardened` target, after the approved immutable
+node ID is known and before resolving or using the target address or making
+the first target read, acquire the read-only observation lease through the
+independent lock authority. Hold it through target identity, release, catalog,
+health, smoke, and final-boundary reads, and release it on every success,
+refusal, timeout, or failure path. If acquisition or retirement cannot be
+verified, mark verification `blocked` and do not inspect or mutate the target.
 Before opening the bootstrap session, resolve the approved immutable node ID
 through an authenticated Tailscale control-plane status/API lookup or the
 approved tailnet DNS name. Use only the resulting Tailscale address; never use
@@ -331,8 +338,8 @@ build or from a request to deploy to a different environment.
 
 ## Workflow
 
-1. **Classify the release.** Define the operation mode (`execute`, `verify`,
-   or explicitly authorized `rollback`), environment, target designation,
+1. **Classify the release.** Define the operation mode (`plan` (plan-only),
+   `execute`, `verify`, or explicitly authorized `rollback`), environment, target designation,
    approved target identity, release scope, source revision, artifact,
    expected user impact, approval boundary, and rollback owner. A service
    publication must use `tailscale-hardened`; a local/development deployment
@@ -351,29 +358,40 @@ build or from a request to deploy to a different environment.
    verification result as safe deployment evidence. For an explicitly
    non-publishing local/development target, record why the gate is not
    applicable and do not expose a shared service. An unknown designation is a
-   refusal. In `verify` mode, collect only read-only target and release
+   refusal. In `plan` mode, collect the contract, target requirements, release
+   metadata, approvals, and selected checks as read-only evidence. Do not
+   acquire a mutating lease, harden the target, trigger automation, write the
+   catalog, or recover; after step 4, go to step 12 with status `planned`.
+   In `verify` mode, collect only read-only target and release
    evidence. Skip only mutating hardening and release actions: steps 5-7, the
    catalog write in step 9, and recovery step 11. Continue with the read-only
    observation in step 8 and the read-only final-boundary checks in step 10,
    then go to step 12. A verify result is successful only when those checks
-   establish the intended running revision, health, smoke flow, and access
-   boundary, plus catalog state for a hardened target; an unknown or failed
-   check is unverified. A
+   establish the intended running revision, health, smoke flow, and, for a
+   `tailscale-hardened` target, its access boundary and catalog state; an
+   unknown or failed check is unverified. A
    requested hardening, deployment, catalog update, or rollback requires the
    corresponding authorized `execute` or `rollback` mode.
-4. **Run release preflight checks.** For an authorized `execute` or `rollback`,
-   use `test-workflow` for the smallest checks that prove the release contract:
+4. **Run release preflight checks.** For an authorized `execute`, use
+   `test-workflow` for the smallest checks that prove the release contract:
    configuration validation, focused tests, build, image/package creation, and
    relevant integration or smoke tests. Confirm the source revision is
    available, the artifact is traceable, required secret names and permissions
    are present, and the destination has capacity and a rollback target. For a
    `tailscale-hardened` target, also confirm the target hardening approval and
-   independent recovery path are ready. In `verify` mode, inspect the existing
-   immutable release, its running revision or digest, runtime configuration, and
-   available health and smoke evidence; do not build, package, trigger, or
-   require execute-only hardening approval or recovery setup. Missing required
-   evidence leaves the release unverified. Do not bypass a failed required
-   check just to trigger a deployment.
+   independent recovery path are ready. For an authorized `rollback`, select
+   the recorded last-known-good immutable artifact or digest, confirm its
+   migration compatibility and availability, and verify target capacity and
+   recovery readiness; do not build or package a replacement artifact. In
+   `verify` mode, inspect the existing immutable release, its running revision
+   or digest, runtime configuration, and available health and smoke evidence;
+   do not build, package, trigger, or require execute-only hardening approval
+   or recovery setup. In `plan` mode, record the proposed source, artifact,
+   checks, approvals, target requirements, and rollback target without
+   contacting mutation authorities or creating release artifacts. Missing
+   required evidence leaves the release unverified, or leaves a plan
+   incomplete. Do not bypass a failed required check just to trigger a
+   deployment.
 5. **Apply and verify target hardening.** For an authorized `execute` or
    `rollback` operation on a `tailscale-hardened` target,
    complete the separate authorized target-hardening phase. Do not continue
@@ -415,7 +433,12 @@ build or from a request to deploy to a different environment.
    shared service; otherwise refuse it.
 8. **Observe and verify.** Follow the rollout state until completion or a
    bounded timeout. Check deployment status, logs, health endpoints, error
-   rates, readiness, and the smallest meaningful smoke flow. Confirm the
+   rates, and readiness. For an `execute` or authorized `rollback`, run the
+   smallest configured smoke flow after the release. For `verify`, use existing
+   smoke evidence or run only a contract-declared read-only or idempotent
+   check through the approved Tailscale path; do not POST, enqueue work, invoke
+   administrative actions, or otherwise change target state. If no safe smoke
+   evidence or check exists, leave verification unverified. Confirm the
    running revision/digest matches the intended artifact, not merely that a
    command exited successfully.
 9. **Update the access catalog.** For an `execute` or explicitly authorized
@@ -431,9 +454,11 @@ build or from a request to deploy to a different environment.
    catalog. In `verify` mode on a `tailscale-hardened` target, read and
    validate the existing catalog without writing or publishing it; a missing,
    malformed, or mismatched catalog is unverified. A catalog update or
-   Tailscale-only access check that fails makes the release unverified and
-   follows the rollback policy. Do not publish a shared service or update a
-   catalog for the explicitly non-publishing local/development designation.
+   Tailscale-only access check in `execute`/`rollback` that fails makes the
+   release unverified and follows the rollback policy; a verify-only read
+   check failure makes verification unverified and must not trigger a
+   mutation. Do not publish a shared service or update a catalog for the
+   explicitly non-publishing local/development designation.
 10. **Recheck the final boundary and retire recovery.** For an `execute` or
    authorized `rollback` on a `tailscale-hardened` target, while the target
    lock lease and hardening restore remain active, continue the lock heartbeat
@@ -458,8 +483,14 @@ build or from a request to deploy to a different environment.
    verify that its lease and fencing generation are inactive. If any
    retirement or verification is uncertain, keep the target `blocked` under
    the independent recovery owner. If a check fails, keep both active and
-   enter recovery. For `verify` mode on a `tailscale-hardened` target, use the
-   read-only observation lease to perform the same final checks without
+   enter recovery. For `verify` mode on a `tailscale-hardened` target, continue
+   holding only the read-only observation lease acquired before the first
+   target read. If acquisition was refused or a mutating target lock,
+   deployment generation, or hardening restore is active or appears during
+   verification, mark the result `blocked`/unverified, release only an
+   observation lease owned by this verify run, and do not cancel, retire,
+   release, or alter the mutating resources. While the observation lease is
+   held, perform the same final checks without
    changing listeners, firewall rules,
    catalog files, or sessions: approved target identity and hostname,
    Tailscale path and transport policy, the effective SSH port set, firewall
@@ -507,7 +538,10 @@ build or from a request to deploy to a different environment.
    automation/run ID, checks, observed health, rollback result, residual risk,
    and next action without exposing secrets. Update `Repo_Current_State.md` or
    deployment documentation only when verified repository behavior or the
-   deployment contract changed.
+   deployment contract changed. For `plan`, report status `planned`, the
+   proposed immutable artifact and checks, required approvals, target gate,
+   rollback target, and unresolved blockers; do not report an execution or
+   deployment run that was never created.
 
 ## Operating modes
 
