@@ -293,7 +293,10 @@ hard-link; aliases are rejected. Its active JSON record contains
 `owner`, positive `generation`, and a future timezone-aware `expires_at`. Pass
 the exact owner and generation to the updater. Recovery must use a newly issued
 generation that differs from the pending transaction's deployment generation.
-The updater holds the fence while it stages and publishes both files.
+The updater holds the fence while it stages and publishes both files. Each
+staged file is created in a private same-filesystem `0700` staging directory
+and its creation-time descriptor remains open through the rename, so a shared
+registry directory cannot substitute a different source inode.
 Each replacement, unlink, or metadata repair is performed through the fenced
 mutation authority while that exact fence is current; the updater rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is

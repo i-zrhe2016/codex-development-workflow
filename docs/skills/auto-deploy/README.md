@@ -70,7 +70,10 @@ active, and rejects a fence with hard-link aliases. The record contains the
 current owner, positive generation, future `expires_at`, and `role` set to
 `deployment` (or `recovery` for authorized pending-transaction rollback). A
 recovery fence must use a newly issued generation different from the pending
-transaction's deployment generation. The updater always discovers the
+transaction's deployment generation. Each staged file uses a private same-
+filesystem `0700` staging directory and keeps its creation-time descriptor
+open through the rename, preventing source inode substitution in the shared
+registry directory. The updater always discovers the
 local Tailscale IPv4; an optional `--tailscale-ip` value is checked against
 that discovery. Run the update only after health and
 smoke verification, then verify the page from an approved Tailscale peer and

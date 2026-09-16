@@ -56,6 +56,15 @@ class FileSnapshot:
     gid: int
 
 
+@dataclass
+class StagedFile:
+    """A private staging entry and its still-open identity descriptor."""
+
+    path: Path
+    descriptor: int
+    directory: Path
+
+
 def _has_control(value: str) -> bool:
     return any(
         ord(character) < 32
@@ -308,38 +317,32 @@ class FenceGuard:
         self.assert_current()
         return result
 
-    def replace(self, temporary: Path, destination: Path) -> None:
+    def replace(self, staged: StagedFile, destination: Path) -> None:
         """Accept one replacement only while this exact fence is current."""
 
         def replace_file() -> None:
-            descriptor = -1
-            try:
-                descriptor = os.open(
-                    temporary,
-                    os.O_RDONLY
-                    | os.O_NONBLOCK
-                    | getattr(os, "O_CLOEXEC", 0)
-                    | getattr(os, "O_NOFOLLOW", 0),
-                )
-                temporary_stat = os.fstat(descriptor)
-                if (
-                    not stat.S_ISREG(temporary_stat.st_mode)
-                    or temporary_stat.st_nlink != 1
-                ):
-                    raise FenceError("catalog replacement source is not a regular file")
-                os.replace(temporary, destination)
-                destination_stat = os.lstat(destination)
-                if (
-                    stat.S_ISLNK(destination_stat.st_mode)
-                    or not stat.S_ISREG(destination_stat.st_mode)
-                    or destination_stat.st_nlink != 1
-                    or destination_stat.st_dev != temporary_stat.st_dev
-                    or destination_stat.st_ino != temporary_stat.st_ino
-                ):
-                    raise FenceError("catalog replacement target changed")
-            finally:
-                if descriptor != -1:
-                    os.close(descriptor)
+            temporary_stat = os.fstat(staged.descriptor)
+            path_stat = os.lstat(staged.path)
+            if (
+                not stat.S_ISREG(temporary_stat.st_mode)
+                or temporary_stat.st_nlink != 1
+                or stat.S_ISLNK(path_stat.st_mode)
+                or not stat.S_ISREG(path_stat.st_mode)
+                or path_stat.st_nlink != 1
+                or path_stat.st_dev != temporary_stat.st_dev
+                or path_stat.st_ino != temporary_stat.st_ino
+            ):
+                raise FenceError("catalog replacement source changed")
+            os.replace(staged.path, destination)
+            destination_stat = os.lstat(destination)
+            if (
+                stat.S_ISLNK(destination_stat.st_mode)
+                or not stat.S_ISREG(destination_stat.st_mode)
+                or destination_stat.st_nlink != 1
+                or destination_stat.st_dev != temporary_stat.st_dev
+                or destination_stat.st_ino != temporary_stat.st_ino
+            ):
+                raise FenceError("catalog replacement target changed")
 
         self._authorized_mutation(replace_file)
 
@@ -826,37 +829,66 @@ def _read_snapshot(path: Path, default_mode: int) -> FileSnapshot:
         raise CatalogError("catalog file is unreadable") from exc
 
 
+def _cleanup_staged_file(staged: StagedFile) -> None:
+    try:
+        os.close(staged.descriptor)
+    except OSError:
+        pass
+    try:
+        staged.path.unlink()
+    except (FileNotFoundError, OSError):
+        pass
+    try:
+        staged.directory.rmdir()
+    except (FileNotFoundError, OSError):
+        pass
+
+
 def _write_temp(
     directory: Path, basename: str, data: bytes, mode: int, uid: int, gid: int
-) -> Path:
-    descriptor, name = tempfile.mkstemp(
-        prefix=f".{basename}.", suffix=".tmp", dir=str(directory)
+) -> StagedFile:
+    staging_directory = Path(
+        tempfile.mkdtemp(prefix=f".{basename}.staging-", dir=str(directory))
     )
-    temporary = Path(name)
+    descriptor = -1
+    name = ""
+    temporary: Path | None = None
     completed = False
     try:
+        descriptor, name = tempfile.mkstemp(
+            prefix=f".{basename}.", suffix=".tmp", dir=str(staging_directory)
+        )
+        temporary = Path(name)
         os.fchown(descriptor, uid, gid)
         os.fchmod(descriptor, mode)
-        with os.fdopen(descriptor, "wb") as handle:
-            descriptor = -1
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
+        remaining = memoryview(data)
+        while remaining:
+            written = os.write(descriptor, remaining)
+            if written <= 0:
+                raise OSError(errno.EIO, "catalog staging write made no progress")
+            remaining = remaining[written:]
+        os.fsync(descriptor)
         completed = True
     except (OSError, IOError) as exc:
         raise CatalogError("catalog staging failed") from exc
     finally:
-        if descriptor != -1:
+        if not completed and descriptor != -1:
             try:
                 os.close(descriptor)
             except OSError:
                 pass
         if not completed:
+            if temporary is not None:
+                try:
+                    temporary.unlink()
+                except (FileNotFoundError, OSError):
+                    pass
             try:
-                temporary.unlink()
+                staging_directory.rmdir()
             except (FileNotFoundError, OSError):
                 pass
-    return temporary
+    assert temporary is not None
+    return StagedFile(temporary, descriptor, staging_directory)
 
 
 def _snapshot_payload(snapshot: FileSnapshot) -> dict[str, Any]:
@@ -991,7 +1023,7 @@ def _write_transaction_journal(
     )
     if len(data) > MAX_TRANSACTION_BYTES:
         raise CatalogError("catalog transaction is too large")
-    temporary = _write_temp(
+    staged = _write_temp(
         journal_path.parent,
         journal_path.name,
         data,
@@ -1000,15 +1032,10 @@ def _write_transaction_journal(
         _sidecar_gid(journal_path.parent),
     )
     try:
-        fence.replace(temporary, journal_path)
-        temporary = None
+        fence.replace(staged, journal_path)
         _fsync_directory(journal_path.parent)
     finally:
-        if temporary is not None:
-            try:
-                temporary.unlink()
-            except (FileNotFoundError, OSError):
-                pass
+        _cleanup_staged_file(staged)
 
 
 def _load_transaction(
@@ -1211,7 +1238,7 @@ def _replace_snapshot(
         if recovery
         else (snapshot.uid, snapshot.gid, snapshot.mode)
     )
-    temporary = _write_temp(
+    staged = _write_temp(
         path.parent,
         path.name,
         snapshot.data,
@@ -1220,15 +1247,10 @@ def _replace_snapshot(
         gid,
     )
     try:
-        fence.replace(temporary, path)
-        temporary = None
+        fence.replace(staged, path)
         _fsync_directory(path.parent)
     finally:
-        if temporary is not None:
-            try:
-                temporary.unlink()
-            except (FileNotFoundError, OSError):
-                pass
+        _cleanup_staged_file(staged)
 
 
 def _reconcile_transaction(
