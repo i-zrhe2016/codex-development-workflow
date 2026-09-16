@@ -324,6 +324,56 @@ class AccessCatalogTests(unittest.TestCase):
             f"https://{TAILSCALE_IP}:8443/", self.output.read_text(encoding="utf-8")
         )
 
+    def test_cleanup_marker_survives_a_racing_journal_unlink(self) -> None:
+        real_unlink = catalog.FenceGuard.unlink
+
+        def unlink_then_lose_fence(guard: catalog.FenceGuard, path: Path) -> None:
+            if path == self.registry.with_name("catalog.json.txn"):
+                real_unlink(guard, path)
+                raise FenceError("simulated fence change after journal unlink")
+            real_unlink(guard, path)
+
+        with patch.object(
+            catalog.FenceGuard,
+            "unlink",
+            autospec=True,
+            side_effect=unlink_then_lose_fence,
+        ):
+            with self.assertRaises(CatalogError):
+                self.update(
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                )
+
+        cleanup_marker = self.registry.with_name("catalog.json.txn.cleanup")
+        self.assertFalse(self.registry.with_name("catalog.json.txn").exists())
+        self.assertEqual(
+            json.loads(cleanup_marker.read_text(encoding="utf-8"))["cleanup_of"],
+            "committed",
+        )
+
+        fence = json.loads(self.fence.read_text(encoding="utf-8"))
+        fence.update({"role": "recovery", "owner": "recovery-run-1", "generation": 2})
+        self.fence.write_text(json.dumps(fence), encoding="utf-8")
+        self.fence.chmod(0o600)
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            side_effect=AssertionError("recovery must not discover Tailscale"),
+        ):
+            result = update_catalog(
+                self.registry,
+                self.output,
+                fence_file=self.fence,
+                fence_owner="recovery-run-1",
+                fence_generation=2,
+                recover_pending=True,
+            )
+
+        self.assertEqual(result["status"], "recovered")
+        self.assertTrue(self.registry.exists())
+        self.assertTrue(self.output.exists())
+        self.assertFalse(cleanup_marker.exists())
+
     def test_recovery_fence_cannot_publish_a_normal_update(self) -> None:
         fence = json.loads(self.fence.read_text(encoding="utf-8"))
         fence["role"] = "recovery"
@@ -380,6 +430,7 @@ class AccessCatalogTests(unittest.TestCase):
         for output in (
             self.registry.with_name("catalog.json.lock"),
             self.registry.with_name("catalog.json.txn"),
+            self.registry.with_name("catalog.json.txn.cleanup"),
         ):
             with self.subTest(output=output):
                 with self.assertRaises(CatalogError):
@@ -488,6 +539,37 @@ class AccessCatalogTests(unittest.TestCase):
                 output=document_root / "index.html",
             )
         self.assertFalse((document_root / "index.html").exists())
+
+    def test_registry_directory_is_preprovisioned_and_safe(self) -> None:
+        missing_registry = self.root / "missing-registry" / "catalog.json"
+        with self.assertRaises(CatalogError):
+            self.update(
+                registry=missing_registry,
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+        self.assertFalse(missing_registry.parent.exists())
+
+        real_registry_root = self.root / "real-registry-root"
+        real_registry_root.mkdir()
+        linked_registry_root = self.root / "linked-registry-root"
+        linked_registry_root.symlink_to(real_registry_root, target_is_directory=True)
+        with self.assertRaises(CatalogError):
+            self.update(
+                registry=linked_registry_root / "catalog.json",
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+
+        world_registry_root = self.root / "world-registry-root"
+        world_registry_root.mkdir()
+        world_registry_root.chmod(0o777)
+        with self.assertRaises(CatalogError):
+            self.update(
+                registry=world_registry_root / "catalog.json",
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
 
     def test_registry_fifo_is_rejected_without_blocking(self) -> None:
         self.registry.unlink(missing_ok=True)

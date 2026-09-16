@@ -294,11 +294,13 @@ mutation authority while that exact fence is current; the updater rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is
 left for the independent recovery owner; that owner may use a `recovery` fence
 with `--recover-pending` to restore the prior pair.
-The registry parent must be a non-world-writable directory accessible to both
-authorized Unix principals; provision it with their shared group (and setgid
-when needed). The lock and transaction sidecars use that directory group with
-mode `0660`. The registry also uses mode `0660` and is private to that shared
-group; world permissions are rejected. Pre-provision the HTML document-root
+The registry parent must be pre-provisioned as a real, non-world-writable
+directory accessible to both authorized Unix principals; provision it with
+their shared group (and setgid when needed). The updater never creates this
+directory and rejects unsafe path components. The lock, transaction, and
+cleanup-marker sidecars use that directory group with mode `0660`. The
+registry also uses mode `0660` and is private to that shared group; world
+permissions are rejected. Pre-provision the HTML document-root
 directory as a real, non-world-writable directory; the updater never creates
 it and rejects unsafe path components. The page writer must either be able to
 preserve its exact UID/GID or use its shared readable group/other-readable
@@ -332,8 +334,10 @@ Tailscale IP, escapes all HTML values, replaces a matching service name without
 duplicates, and retains unrelated rows. It serializes updates with the fence
 authority and a registry-side lock. A durable transaction journal records both
 snapshots before replacement, records rollback intent until both replacements
-are complete, and reconciles an interrupted pair before a later update;
-generated files are size-limited. A missing registry with an existing page,
+are complete, and reconciles an interrupted pair before a later update. If
+journal removal or its directory sync cannot be confirmed, a durable cleanup
+marker remains until an authorized retry or recovery clears it; generated
+files are size-limited. A missing registry with an existing page,
 non-regular path, malformed metadata, different host, unsafe address, stale
 fence, unsafe document root, incompatible or world-writable page owner, lock
 timeout, or failed write is an error. The

@@ -632,30 +632,36 @@ def _output_metadata(snapshot: FileSnapshot) -> tuple[int, int, int]:
     )
 
 
-def _validate_output_directory(directory: Path) -> None:
-    """Require a pre-provisioned document root and safe path components."""
+def _validate_preprovisioned_directory(directory: Path, description: str) -> None:
+    """Require a pre-provisioned directory with safe path components."""
     if any(part in {".", ".."} for part in directory.parts):
-        raise CatalogError("HTML document root path must be normalized")
+        raise CatalogError(f"{description} path must be normalized")
     document_root = Path(os.path.abspath(directory))
     current = document_root
     while True:
         try:
             directory_stat = os.lstat(current)
         except OSError as exc:
-            raise CatalogError(
-                "HTML document root must be pre-provisioned"
-            ) from exc
+            raise CatalogError(f"{description} must be pre-provisioned") from exc
         if stat.S_ISLNK(directory_stat.st_mode) or not stat.S_ISDIR(
             directory_stat.st_mode
         ):
-            raise CatalogError("HTML document root must use real directories")
+            raise CatalogError(f"{description} must use real directories")
         if directory_stat.st_mode & 0o002:
-            if current == document_root or not directory_stat.st_mode & 0o1000:
-                raise CatalogError("HTML document root permissions are too broad")
+            if current == document_root or not (directory_stat.st_mode & 0o1000):
+                raise CatalogError(f"{description} permissions are too broad")
         parent = current.parent
         if parent == current:
             break
         current = parent
+
+
+def _validate_output_directory(directory: Path) -> None:
+    _validate_preprovisioned_directory(directory, "HTML document root")
+
+
+def _validate_registry_directory(directory: Path) -> None:
+    _validate_preprovisioned_directory(directory, "catalog registry directory")
 
 
 def _recovery_metadata(
@@ -795,11 +801,17 @@ def _transaction_path(registry_path: Path) -> Path:
     return registry_path.with_name(registry_path.name + ".txn")
 
 
+def _cleanup_transaction_path(journal_path: Path) -> Path:
+    return journal_path.with_name(journal_path.name + ".cleanup")
+
+
 def _reserved_catalog_paths(registry_path: Path) -> set[Path]:
+    journal_path = _transaction_path(registry_path)
     return {
         registry_path.resolve(strict=False),
         registry_path.with_name(registry_path.name + ".lock").resolve(strict=False),
-        _transaction_path(registry_path).resolve(strict=False),
+        journal_path.resolve(strict=False),
+        _cleanup_transaction_path(journal_path).resolve(strict=False),
     }
 
 
@@ -839,7 +851,6 @@ def _write_transaction_journal(
     )
     if len(data) > MAX_TRANSACTION_BYTES:
         raise CatalogError("catalog transaction is too large")
-    journal_path.parent.mkdir(parents=True, exist_ok=True)
     temporary = _write_temp(
         journal_path.parent,
         journal_path.name,
@@ -882,8 +893,12 @@ def _load_transaction(
     if not isinstance(value, dict) or value.get("version") != 1:
         raise CatalogError("catalog transaction is malformed")
     state = value.get("state")
-    if state not in {"rollback", "committed", "prepared"}:
+    if state not in {"rollback", "committed", "prepared", "cleanup"}:
         raise CatalogError("catalog transaction state is invalid")
+    if state == "cleanup":
+        cleanup_of = value.get("cleanup_of")
+        if cleanup_of not in {"rollback", "committed"}:
+            raise CatalogError("catalog cleanup marker is malformed")
     expected_registry = str(registry_path.resolve(strict=False))
     expected_output = str(output_path.resolve(strict=False))
     if (
@@ -893,6 +908,11 @@ def _load_transaction(
         raise CatalogError("catalog transaction targets different files")
     owner = _validate_fence_owner(value.get("fence_owner"))
     generation = _validate_fence_generation(value.get("fence_generation"))
+    normalized_state = (
+        f"cleanup:{value['cleanup_of']}"
+        if state == "cleanup"
+        else ("rollback" if state == "prepared" else state)
+    )
     return CatalogTransaction(
         expected_registry,
         expected_output,
@@ -902,8 +922,20 @@ def _load_transaction(
         _snapshot_from_payload(value.get("output_old")),
         _snapshot_from_payload(value.get("registry_new")),
         _snapshot_from_payload(value.get("output_new")),
-        "rollback" if state == "prepared" else state,
+        normalized_state,
     )
+
+
+def _load_cleanup_marker(
+    marker_path: Path, registry_path: Path, output_path: Path
+) -> CatalogTransaction | None:
+    transaction = _load_transaction(marker_path, registry_path, output_path)
+    if transaction is not None and transaction.state not in {
+        "cleanup:rollback",
+        "cleanup:committed",
+    }:
+        raise CatalogError("catalog cleanup marker is invalid")
+    return transaction
 
 
 def _write_transaction_state(
@@ -911,32 +943,64 @@ def _write_transaction_state(
     transaction: CatalogTransaction,
     fence: FenceGuard,
     state: str,
+    *,
+    cleanup_of: str | None = None,
 ) -> None:
+    payload = _transaction_payload(
+        Path(transaction.registry_path),
+        Path(transaction.output_path),
+        transaction.fence_owner,
+        transaction.fence_generation,
+        transaction.registry_old,
+        transaction.output_old,
+        transaction.registry_new,
+        transaction.output_new,
+        state=state,
+    )
+    if state == "cleanup":
+        cleanup_phase = cleanup_of or transaction.state
+        if cleanup_phase not in {"rollback", "committed"}:
+            raise CatalogError("catalog cleanup phase is invalid")
+        payload["cleanup_of"] = cleanup_phase
     _write_transaction_journal(
         journal_path,
-        _transaction_payload(
-            Path(transaction.registry_path),
-            Path(transaction.output_path),
-            transaction.fence_owner,
-            transaction.fence_generation,
-            transaction.registry_old,
-            transaction.output_old,
-            transaction.registry_new,
-            transaction.output_new,
-            state=state,
-        ),
+        payload,
         fence,
     )
 
 
-def _remove_transaction(journal_path: Path, fence: FenceGuard) -> None:
-    if not _path_exists(journal_path):
+def _remove_cleanup_marker(cleanup_path: Path, fence: FenceGuard) -> None:
+    if not _path_exists(cleanup_path):
         return
     try:
-        fence.unlink(journal_path)
+        fence.unlink(cleanup_path)
     except FileNotFoundError:
         return
-    _fsync_directory(journal_path.parent)
+    _fsync_directory(cleanup_path.parent)
+
+
+def _remove_transaction(
+    journal_path: Path,
+    transaction: CatalogTransaction,
+    fence: FenceGuard,
+    *,
+    cleanup_of: str | None = None,
+) -> None:
+    cleanup_path = _cleanup_transaction_path(journal_path)
+    _write_transaction_state(
+        cleanup_path,
+        transaction,
+        fence,
+        "cleanup",
+        cleanup_of=cleanup_of,
+    )
+    if _path_exists(journal_path):
+        try:
+            fence.unlink(journal_path)
+        except FileNotFoundError:
+            pass
+        _fsync_directory(journal_path.parent)
+    _remove_cleanup_marker(cleanup_path, fence)
 
 
 def _snapshot_matches(current: FileSnapshot, expected: FileSnapshot) -> bool:
@@ -996,6 +1060,8 @@ def _reconcile_transaction(
     *,
     rollback: bool,
 ) -> None:
+    _validate_output_directory(Path(transaction.output_path).parent)
+    _validate_registry_directory(Path(transaction.registry_path).parent)
     targets = (
         (
             Path(transaction.registry_path),
@@ -1019,7 +1085,9 @@ def _reconcile_transaction(
                 recovery=True,
                 registry=is_registry,
             )
-        _remove_transaction(journal_path, fence)
+        _remove_transaction(
+            journal_path, transaction, fence, cleanup_of="rollback"
+        )
         return
     current_states: list[tuple[Path, FileSnapshot, FileSnapshot, FileSnapshot]] = []
     for path, old, new, _is_registry in targets:
@@ -1031,7 +1099,9 @@ def _reconcile_transaction(
         desired = new
         if current != desired:
             _replace_snapshot(path, desired, fence)
-    _remove_transaction(journal_path, fence)
+    _remove_transaction(
+        journal_path, transaction, fence, cleanup_of="committed"
+    )
 
 
 def _write_catalog_files(
@@ -1044,7 +1114,7 @@ def _write_catalog_files(
     if len(registry_data) > MAX_FILE_BYTES or len(html_data) > MAX_FILE_BYTES:
         raise CatalogError("generated catalog is too large")
     _validate_output_directory(output_path.parent)
-    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    _validate_registry_directory(registry_path.parent)
     registry_old = _read_snapshot(registry_path, REGISTRY_MODE)
     if not registry_old.existed:
         registry_old = FileSnapshot(
@@ -1141,7 +1211,9 @@ def _write_catalog_files(
             "catalog committed; pending transaction journal needs reconciliation"
         ) from exc
     try:
-        _remove_transaction(journal_path, fence)
+        _remove_transaction(
+            journal_path, transaction, fence, cleanup_of="committed"
+        )
     except FenceError as exc:
         raise CatalogError(
             "catalog committed; authorized recovery must remove its journal"
@@ -1154,7 +1226,7 @@ def _write_catalog_files(
 
 @contextmanager
 def _catalog_lock(registry_path: Path) -> Iterator[None]:
-    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    _validate_registry_directory(registry_path.parent)
     lock_path = registry_path.with_name(registry_path.name + ".lock")
     try:
         descriptor = os.open(
@@ -1208,7 +1280,7 @@ def update_catalog(
     output_resolved = output_path.resolve(strict=False)
     if registry_resolved == output_resolved:
         raise CatalogError("registry and HTML output must be different files")
-    if registry_path.name.endswith((".lock", ".txn")):
+    if registry_path.name.endswith((".lock", ".txn", ".txn.cleanup")):
         raise CatalogError("registry path uses a reserved catalog sidecar name")
     reserved_paths = _reserved_catalog_paths(registry_path)
     if output_resolved in reserved_paths:
@@ -1223,16 +1295,28 @@ def update_catalog(
         raise CatalogError("recover-pending cannot include a catalog update")
 
     with _fenced_mutation(fence_file, fence_owner, fence_generation) as fence:
+        _validate_output_directory(output_path.parent)
         if recover_pending:
             if fence.role != "recovery":
                 raise FenceError("pending recovery requires a recovery fence")
             with _catalog_lock(registry_path):
                 journal_path = _transaction_path(registry_path)
+                cleanup_path = _cleanup_transaction_path(journal_path)
                 transaction = _load_transaction(
                     journal_path, registry_path, output_path
                 )
                 if transaction is None:
-                    raise CatalogError("no pending catalog transaction to recover")
+                    cleanup = _load_cleanup_marker(
+                        cleanup_path, registry_path, output_path
+                    )
+                    if cleanup is None:
+                        raise CatalogError(
+                            "no pending catalog transaction to recover"
+                        )
+                    _remove_cleanup_marker(cleanup_path, fence)
+                    return {"status": "recovered"}
+                if transaction.state.startswith("cleanup:"):
+                    raise CatalogError("catalog cleanup marker is misplaced")
                 _reconcile_transaction(
                     journal_path, transaction, fence, rollback=True
                 )
@@ -1261,10 +1345,13 @@ def update_catalog(
 
         with _catalog_lock(registry_path):
             journal_path = _transaction_path(registry_path)
+            cleanup_path = _cleanup_transaction_path(journal_path)
             transaction = _load_transaction(
                 journal_path, registry_path, output_path
             )
             if transaction is not None:
+                if transaction.state.startswith("cleanup:"):
+                    raise CatalogError("catalog cleanup marker is misplaced")
                 same_fence = (
                     transaction.fence_owner == fence.owner
                     and transaction.fence_generation == fence.generation
@@ -1283,6 +1370,9 @@ def update_catalog(
                     )
                 else:
                     raise CatalogError("catalog transaction state is invalid")
+            elif _path_exists(cleanup_path):
+                _load_cleanup_marker(cleanup_path, registry_path, output_path)
+                _remove_cleanup_marker(cleanup_path, fence)
             _prepare_registry(registry_path, fence)
             registry = _load_registry(registry_path, current_ip, output_path)
             if initialize:
