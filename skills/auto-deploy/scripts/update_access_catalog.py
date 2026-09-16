@@ -242,6 +242,7 @@ class FenceGuard:
             stat.S_ISLNK(authority_path_stat.st_mode)
             or not stat.S_ISREG(authority_path_stat.st_mode)
             or authority_path_stat.st_mode & 0o077
+            or authority_path_stat.st_nlink != 1
             or authority_path_stat.st_dev != authority_descriptor_stat.st_dev
             or authority_path_stat.st_ino != authority_descriptor_stat.st_ino
         ):
@@ -297,24 +298,58 @@ class FenceGuard:
         ).total_seconds() < MUTATION_MIN_REMAINING_SECONDS:
             raise FenceError("catalog fence expires too soon for a mutation")
 
-    def replace(self, temporary: Path, destination: Path) -> None:
-        """Accept one replacement only while this exact fence is current."""
-        self._assert_mutation_window()
-        os.replace(temporary, destination)
-        self.assert_current()
-
-    def unlink(self, path: Path) -> None:
-        """Accept one unlink only while this exact fence is current."""
-        self._assert_mutation_window()
-        path.unlink()
-        self.assert_current()
-
-    def mutate(self, operation: Callable[[], Any]) -> Any:
-        """Run a metadata mutation through the same fenced authority."""
+    def _authorized_mutation(self, operation: Callable[[], Any]) -> Any:
+        """Run one filesystem mutation in the authority's acceptance window."""
+        # _fenced_mutation holds this stable authority lock for the complete
+        # operation. Keep the fence acceptance and the filesystem syscall in
+        # this single authority operation so recovery cannot interleave them.
         self._assert_mutation_window()
         result = operation()
         self.assert_current()
         return result
+
+    def replace(self, temporary: Path, destination: Path) -> None:
+        """Accept one replacement only while this exact fence is current."""
+
+        def replace_file() -> None:
+            descriptor = -1
+            try:
+                descriptor = os.open(
+                    temporary,
+                    os.O_RDONLY
+                    | os.O_NONBLOCK
+                    | getattr(os, "O_CLOEXEC", 0)
+                    | getattr(os, "O_NOFOLLOW", 0),
+                )
+                temporary_stat = os.fstat(descriptor)
+                if (
+                    not stat.S_ISREG(temporary_stat.st_mode)
+                    or temporary_stat.st_nlink != 1
+                ):
+                    raise FenceError("catalog replacement source is not a regular file")
+                os.replace(temporary, destination)
+                destination_stat = os.lstat(destination)
+                if (
+                    stat.S_ISLNK(destination_stat.st_mode)
+                    or not stat.S_ISREG(destination_stat.st_mode)
+                    or destination_stat.st_nlink != 1
+                    or destination_stat.st_dev != temporary_stat.st_dev
+                    or destination_stat.st_ino != temporary_stat.st_ino
+                ):
+                    raise FenceError("catalog replacement target changed")
+            finally:
+                if descriptor != -1:
+                    os.close(descriptor)
+
+        self._authorized_mutation(replace_file)
+
+    def unlink(self, path: Path) -> None:
+        """Accept one unlink only while this exact fence is current."""
+        self._authorized_mutation(path.unlink)
+
+    def mutate(self, operation: Callable[[], Any]) -> Any:
+        """Run a metadata mutation through the same fenced authority."""
+        return self._authorized_mutation(operation)
 
 
 @contextmanager

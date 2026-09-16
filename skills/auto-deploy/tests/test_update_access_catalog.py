@@ -336,6 +336,25 @@ class AccessCatalogTests(unittest.TestCase):
                 fence_generation=1,
             )
 
+    def test_replacement_rejects_a_swapped_source_alias(self) -> None:
+        real_replace = catalog.os.replace
+
+        def swap_source(source: object, destination: object) -> None:
+            source_path = Path(source)
+            destination_path = Path(destination)
+            if destination_path == self.output:
+                attacker = self.root / "attacker.html"
+                attacker.write_text("attacker", encoding="utf-8")
+                source_path.unlink()
+                source_path.symlink_to(attacker)
+            real_replace(source_path, destination_path)
+
+        with patch.object(catalog.os, "replace", side_effect=swap_source):
+            with self.assertRaises(CatalogError):
+                self.update(initialize=True)
+
+        self.assertTrue(self.output.is_symlink())
+
     def test_fence_authority_lock_blocks_replacement_by_new_generation(self) -> None:
         replacement = self.root / "replacement-fence.json"
         replacement.write_text(
