@@ -6,19 +6,22 @@ from __future__ import annotations
 import argparse
 import base64
 from contextlib import contextmanager
+import ctypes
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import errno
 import fcntl
+import hashlib
+import hmac
 import html
 import ipaddress
 import json
 import os
 from pathlib import Path
+import secrets
 import subprocess
 import stat
 import sys
-import tempfile
 import time
 from typing import Any, Callable, Iterator
 from urllib.parse import urlsplit
@@ -29,11 +32,17 @@ MAX_SERVICES = 1_000
 MAX_TEXT_LENGTH = 512
 MAX_FENCE_BYTES = 64_000
 MAX_TRANSACTION_BYTES = 16_000_000
+TRANSACTION_VERSION = 2
+TRANSACTION_HMAC_FIELD = "catalog_hmac"
+TRANSACTION_KEY_FIELD = "catalog_hmac_key"
+TRANSACTION_KEY_BYTES = 32
 SIDECAR_MODE = 0o660
 REGISTRY_MODE = 0o660
 LOCK_TIMEOUT_SECONDS = 5.0
 LOCK_RETRY_SECONDS = 0.05
 MUTATION_MIN_REMAINING_SECONDS = 0.25
+# Linux uid_t/gid_t are unsigned 32-bit values; all-ones is the chown sentinel.
+PLATFORM_ID_MAX = (1 << (ctypes.sizeof(ctypes.c_uint) * 8)) - 2
 TAILSCALE_NETWORK = ipaddress.ip_network(".".join(("100", "64", "0", "0")) + "/10")
 
 
@@ -63,6 +72,10 @@ class StagedFile:
     path: Path
     descriptor: int
     directory: Path
+    directory_descriptor: int
+    parent: Path
+    parent_descriptor: int
+    name: str
 
 
 def _has_control(value: str) -> bool:
@@ -122,6 +135,22 @@ def _validate_fence_generation(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise FenceError("invalid catalog fence generation")
     return value
+
+
+def _validate_transaction_key(value: object) -> bytes:
+    if (
+        not isinstance(value, str)
+        or len(value) != TRANSACTION_KEY_BYTES * 2
+        or _has_control(value)
+    ):
+        raise FenceError("invalid catalog transaction key")
+    try:
+        key = bytes.fromhex(value)
+    except ValueError as exc:
+        raise FenceError("invalid catalog transaction key") from exc
+    if len(key) != TRANSACTION_KEY_BYTES:
+        raise FenceError("invalid catalog transaction key")
+    return key
 
 
 def _validate_fence_expiry(value: object) -> str:
@@ -238,6 +267,7 @@ class FenceGuard:
         self.generation = generation
         self.role = ""
         self._required_role: str | None = None
+        self.transaction_key: bytes | None = None
 
     def assert_current(self) -> dict[str, Any]:
         try:
@@ -271,12 +301,15 @@ class FenceGuard:
             record = json.loads(_read_descriptor(self.descriptor, MAX_FENCE_BYTES))
         except CatalogError as exc:
             raise FenceError("catalog fence is unreadable") from exc
-        except (UnicodeError, json.JSONDecodeError) as exc:
+        except (UnicodeError, ValueError, RecursionError) as exc:
             raise FenceError("catalog fence is malformed") from exc
         if not isinstance(record, dict) or record.get("state") != "active":
             raise FenceError("catalog fence is not active")
         record_owner = _validate_fence_owner(record.get("owner"))
         record_generation = _validate_fence_generation(record.get("generation"))
+        transaction_key = _validate_transaction_key(
+            record.get(TRANSACTION_KEY_FIELD)
+        )
         _validate_fence_expiry(record.get("expires_at"))
         role = record.get("role")
         if role not in {"deployment", "recovery"}:
@@ -285,6 +318,9 @@ class FenceGuard:
             raise FenceError("catalog fence role changed")
         if record_owner != self.owner or record_generation != self.generation:
             raise FenceError("catalog fence is no longer current")
+        if self.transaction_key is not None and self.transaction_key != transaction_key:
+            raise FenceError("catalog transaction key changed")
+        self.transaction_key = transaction_key
         self.role = role
         return record
 
@@ -321,8 +357,34 @@ class FenceGuard:
         """Accept one replacement only while this exact fence is current."""
 
         def replace_file() -> None:
+            if Path(os.path.abspath(destination.parent)) != Path(
+                os.path.abspath(staged.parent)
+            ):
+                raise FenceError("catalog replacement parent changed")
+            try:
+                staging_path_stat = os.lstat(staged.directory)
+                staging_descriptor_stat = os.fstat(staged.directory_descriptor)
+                parent_path_stat = os.lstat(staged.parent)
+                parent_descriptor_stat = os.fstat(staged.parent_descriptor)
+            except OSError as exc:
+                raise FenceError("catalog replacement directory changed") from exc
+            if (
+                stat.S_ISLNK(staging_path_stat.st_mode)
+                or not stat.S_ISDIR(staging_path_stat.st_mode)
+                or staging_path_stat.st_dev != staging_descriptor_stat.st_dev
+                or staging_path_stat.st_ino != staging_descriptor_stat.st_ino
+                or stat.S_ISLNK(parent_path_stat.st_mode)
+                or not stat.S_ISDIR(parent_path_stat.st_mode)
+                or parent_path_stat.st_dev != parent_descriptor_stat.st_dev
+                or parent_path_stat.st_ino != parent_descriptor_stat.st_ino
+            ):
+                raise FenceError("catalog replacement directory changed")
             temporary_stat = os.fstat(staged.descriptor)
-            path_stat = os.lstat(staged.path)
+            path_stat = os.stat(
+                staged.name,
+                dir_fd=staged.directory_descriptor,
+                follow_symlinks=False,
+            )
             if (
                 not stat.S_ISREG(temporary_stat.st_mode)
                 or temporary_stat.st_nlink != 1
@@ -333,8 +395,17 @@ class FenceGuard:
                 or path_stat.st_ino != temporary_stat.st_ino
             ):
                 raise FenceError("catalog replacement source changed")
-            os.replace(staged.path, destination)
-            destination_stat = os.lstat(destination)
+            os.replace(
+                staged.name,
+                destination.name,
+                src_dir_fd=staged.directory_descriptor,
+                dst_dir_fd=staged.parent_descriptor,
+            )
+            destination_stat = os.stat(
+                destination.name,
+                dir_fd=staged.parent_descriptor,
+                follow_symlinks=False,
+            )
             if (
                 stat.S_ISLNK(destination_stat.st_mode)
                 or not stat.S_ISREG(destination_stat.st_mode)
@@ -620,7 +691,7 @@ def _load_registry(
         value = json.loads(data.decode("utf-8"))
     except CatalogError:
         raise
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
         raise CatalogError("catalog registry is unreadable") from exc
     return _validate_registry(value, tailscale_ip)
 
@@ -774,6 +845,10 @@ def _validate_preprovisioned_directory(directory: Path, description: str) -> Non
             directory_stat.st_mode
         ):
             raise CatalogError(f"{description} must use real directories")
+        if directory_stat.st_mode & 0o020 and not (directory_stat.st_mode & 0o1000):
+            raise CatalogError(
+                f"{description} group-writable directories must be sticky"
+            )
         if directory_stat.st_mode & 0o002:
             if current == document_root or not (directory_stat.st_mode & 0o1000):
                 raise CatalogError(f"{description} permissions are too broad")
@@ -835,30 +910,163 @@ def _cleanup_staged_file(staged: StagedFile) -> None:
     except OSError:
         pass
     try:
-        staged.path.unlink()
+        os.unlink(staged.name, dir_fd=staged.directory_descriptor)
     except (FileNotFoundError, OSError):
         pass
     try:
-        staged.directory.rmdir()
+        staging_path_stat = os.stat(
+            staged.directory.name,
+            dir_fd=staged.parent_descriptor,
+            follow_symlinks=False,
+        )
+        staging_descriptor_stat = os.fstat(staged.directory_descriptor)
+        if (
+            stat.S_ISDIR(staging_path_stat.st_mode)
+            and staging_path_stat.st_dev == staging_descriptor_stat.st_dev
+            and staging_path_stat.st_ino == staging_descriptor_stat.st_ino
+        ):
+            os.rmdir(
+                staged.directory.name,
+                dir_fd=staged.parent_descriptor,
+            )
     except (FileNotFoundError, OSError):
         pass
+    finally:
+        for descriptor in (
+            staged.directory_descriptor,
+            staged.parent_descriptor,
+        ):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+
+def _validate_platform_id(value: object, description: str) -> int:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or not 0 <= value <= PLATFORM_ID_MAX
+    ):
+        raise CatalogError(f"catalog transaction {description} is malformed")
+    return value
+
+
+def _open_directory_descriptor(directory: Path) -> int:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+    if hasattr(os, "O_DIRECTORY"):
+        flags |= os.O_DIRECTORY
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = -1
+    try:
+        descriptor = os.open(directory, flags)
+        directory_stat = os.fstat(descriptor)
+        if not stat.S_ISDIR(directory_stat.st_mode):
+            raise CatalogError("catalog staging parent must be a directory")
+        return descriptor
+    except CatalogError:
+        if descriptor != -1:
+            os.close(descriptor)
+        raise
+    except OSError as exc:
+        if descriptor != -1:
+            os.close(descriptor)
+        raise CatalogError("catalog staging parent is unreadable") from exc
 
 
 def _write_temp(
     directory: Path, basename: str, data: bytes, mode: int, uid: int, gid: int
 ) -> StagedFile:
-    staging_directory = Path(
-        tempfile.mkdtemp(prefix=f".{basename}.staging-", dir=str(directory))
-    )
+    _validate_platform_id(uid, "UID")
+    _validate_platform_id(gid, "GID")
+    parent_descriptor = _open_directory_descriptor(directory)
+    staging_name: str | None = None
+    staging_directory: Path | None = None
+    staging_created_stat: os.stat_result | None = None
+    staging_descriptor = -1
     descriptor = -1
-    name = ""
-    temporary: Path | None = None
+    temporary_name: str | None = None
     completed = False
     try:
-        descriptor, name = tempfile.mkstemp(
-            prefix=f".{basename}.", suffix=".tmp", dir=str(staging_directory)
+        for _ in range(20):
+            candidate = f".{basename}.staging-{secrets.token_hex(16)}"
+            try:
+                os.mkdir(candidate, 0o700, dir_fd=parent_descriptor)
+            except FileExistsError:
+                continue
+            staging_name = candidate
+            staging_created_stat = os.stat(
+                candidate,
+                dir_fd=parent_descriptor,
+                follow_symlinks=False,
+            )
+            break
+        if staging_name is None:
+            raise CatalogError("catalog staging directory could not be created")
+        staging_directory = directory / staging_name
+        directory_flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+        if hasattr(os, "O_DIRECTORY"):
+            directory_flags |= os.O_DIRECTORY
+        if hasattr(os, "O_NOFOLLOW"):
+            directory_flags |= os.O_NOFOLLOW
+        staging_descriptor = os.open(
+            staging_name,
+            directory_flags,
+            dir_fd=parent_descriptor,
         )
-        temporary = Path(name)
+        staging_path_stat = os.stat(
+            staging_name,
+            dir_fd=parent_descriptor,
+            follow_symlinks=False,
+        )
+        staging_descriptor_stat = os.fstat(staging_descriptor)
+        if (
+            not stat.S_ISDIR(staging_descriptor_stat.st_mode)
+            or staging_descriptor_stat.st_mode & 0o077
+            or staging_path_stat.st_dev != staging_descriptor_stat.st_dev
+            or staging_path_stat.st_ino != staging_descriptor_stat.st_ino
+        ):
+            raise CatalogError("catalog staging directory changed")
+
+        file_flags = (
+            os.O_RDWR
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        for _ in range(20):
+            candidate = f".{basename}.{secrets.token_hex(16)}.tmp"
+            try:
+                descriptor = os.open(
+                    candidate,
+                    file_flags,
+                    0o600,
+                    dir_fd=staging_descriptor,
+                )
+            except FileExistsError:
+                continue
+            temporary_name = candidate
+            break
+        if descriptor == -1 or temporary_name is None:
+            raise CatalogError("catalog staging file could not be created")
+        temporary_stat = os.fstat(descriptor)
+        temporary_path_stat = os.stat(
+            temporary_name,
+            dir_fd=staging_descriptor,
+            follow_symlinks=False,
+        )
+        if (
+            not stat.S_ISREG(temporary_stat.st_mode)
+            or temporary_stat.st_nlink != 1
+            or stat.S_ISLNK(temporary_path_stat.st_mode)
+            or not stat.S_ISREG(temporary_path_stat.st_mode)
+            or temporary_path_stat.st_nlink != 1
+            or temporary_path_stat.st_dev != temporary_stat.st_dev
+            or temporary_path_stat.st_ino != temporary_stat.st_ino
+        ):
+            raise CatalogError("catalog staging file changed")
         os.fchown(descriptor, uid, gid)
         os.fchmod(descriptor, mode)
         remaining = memoryview(data)
@@ -869,7 +1077,9 @@ def _write_temp(
             remaining = remaining[written:]
         os.fsync(descriptor)
         completed = True
-    except (OSError, IOError) as exc:
+    except CatalogError:
+        raise
+    except (OSError, IOError, OverflowError, ValueError) as exc:
         raise CatalogError("catalog staging failed") from exc
     finally:
         if not completed and descriptor != -1:
@@ -877,18 +1087,48 @@ def _write_temp(
                 os.close(descriptor)
             except OSError:
                 pass
-        if not completed:
-            if temporary is not None:
-                try:
-                    temporary.unlink()
-                except (FileNotFoundError, OSError):
-                    pass
+        if not completed and temporary_name is not None and staging_descriptor != -1:
             try:
-                staging_directory.rmdir()
+                os.unlink(temporary_name, dir_fd=staging_descriptor)
             except (FileNotFoundError, OSError):
                 pass
-    assert temporary is not None
-    return StagedFile(temporary, descriptor, staging_directory)
+        if not completed and staging_name is not None:
+            try:
+                staging_path_stat = os.stat(
+                    staging_name,
+                    dir_fd=parent_descriptor,
+                    follow_symlinks=False,
+                )
+                staging_descriptor_stat = (
+                    os.fstat(staging_descriptor)
+                    if staging_descriptor != -1
+                    else staging_created_stat
+                )
+                if (
+                    staging_descriptor_stat is not None
+                    and stat.S_ISDIR(staging_path_stat.st_mode)
+                    and staging_path_stat.st_dev == staging_descriptor_stat.st_dev
+                    and staging_path_stat.st_ino == staging_descriptor_stat.st_ino
+                ):
+                    os.rmdir(staging_name, dir_fd=parent_descriptor)
+            except (FileNotFoundError, OSError):
+                pass
+        if not completed:
+            if staging_descriptor != -1:
+                os.close(staging_descriptor)
+            os.close(parent_descriptor)
+    assert staging_directory is not None
+    assert staging_name is not None
+    assert temporary_name is not None
+    return StagedFile(
+        staging_directory / temporary_name,
+        descriptor,
+        staging_directory,
+        staging_descriptor,
+        directory,
+        parent_descriptor,
+        temporary_name,
+    )
 
 
 def _snapshot_payload(snapshot: FileSnapshot) -> dict[str, Any]:
@@ -905,22 +1145,64 @@ def _snapshot_payload(snapshot: FileSnapshot) -> dict[str, Any]:
     }
 
 
+def _canonical_transaction_payload(payload: dict[str, Any]) -> bytes:
+    try:
+        return json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, UnicodeError, ValueError, RecursionError) as exc:
+        raise CatalogError("catalog transaction cannot be authenticated") from exc
+
+
+def _transaction_hmac(payload: dict[str, Any], key: bytes) -> str:
+    return hmac.new(
+        key,
+        _canonical_transaction_payload(payload),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def _transaction_key_for(fence: FenceGuard) -> bytes:
+    if fence.transaction_key is None:
+        raise FenceError("catalog transaction key is unavailable")
+    return fence.transaction_key
+
+
+def _authenticate_transaction_payload(
+    payload: dict[str, Any], key: bytes
+) -> dict[str, Any]:
+    authenticated = dict(payload)
+    authenticated[TRANSACTION_HMAC_FIELD] = _transaction_hmac(payload, key)
+    return authenticated
+
+
+def _verify_transaction_auth(value: object, key: bytes) -> None:
+    if not isinstance(value, dict):
+        raise CatalogError("catalog transaction is malformed")
+    tag = value.get(TRANSACTION_HMAC_FIELD)
+    if not isinstance(tag, str) or len(tag) != hashlib.sha256().digest_size * 2:
+        raise CatalogError("catalog transaction authentication is missing")
+    unsigned = dict(value)
+    unsigned.pop(TRANSACTION_HMAC_FIELD, None)
+    expected = _transaction_hmac(unsigned, key)
+    if not hmac.compare_digest(tag, expected):
+        raise CatalogError("catalog transaction authentication failed")
+
+
 def _snapshot_from_payload(value: object) -> FileSnapshot:
     if not isinstance(value, dict) or not isinstance(value.get("existed"), bool):
         raise CatalogError("catalog transaction is malformed")
     mode = value.get("mode")
-    uid = value.get("uid")
-    gid = value.get("gid")
+    uid = _validate_platform_id(value.get("uid"), "UID")
+    gid = _validate_platform_id(value.get("gid"), "GID")
     if (
         isinstance(mode, bool)
         or not isinstance(mode, int)
         or not 0 <= mode <= 0o777
-        or isinstance(uid, bool)
-        or not isinstance(uid, int)
-        or uid < 0
-        or isinstance(gid, bool)
-        or not isinstance(gid, int)
-        or gid < 0
     ):
         raise CatalogError("catalog transaction metadata is malformed")
     encoded = value.get("data")
@@ -1000,7 +1282,7 @@ def _transaction_payload(
     state: str = "rollback",
 ) -> dict[str, Any]:
     return {
-        "version": 1,
+        "version": TRANSACTION_VERSION,
         "state": state,
         "registry_path": str(registry_path.resolve(strict=False)),
         "output_path": str(output_path.resolve(strict=False)),
@@ -1018,9 +1300,12 @@ def _write_transaction_journal(
     payload: dict[str, Any],
     fence: FenceGuard,
 ) -> None:
-    data = (json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n").encode(
-        "utf-8"
+    authenticated_payload = _authenticate_transaction_payload(
+        payload, _transaction_key_for(fence)
     )
+    data = (
+        json.dumps(authenticated_payload, ensure_ascii=False, sort_keys=True) + "\n"
+    ).encode("utf-8")
     if len(data) > MAX_TRANSACTION_BYTES:
         raise CatalogError("catalog transaction is too large")
     staged = _write_temp(
@@ -1039,7 +1324,10 @@ def _write_transaction_journal(
 
 
 def _load_transaction(
-    journal_path: Path, registry_path: Path, output_path: Path
+    journal_path: Path,
+    registry_path: Path,
+    output_path: Path,
+    fence: FenceGuard,
 ) -> CatalogTransaction | None:
     if not _path_exists(journal_path):
         return None
@@ -1055,9 +1343,10 @@ def _load_transaction(
         value = json.loads(data.decode("utf-8"))
     except CatalogError:
         raise
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
         raise CatalogError("catalog transaction is unreadable") from exc
-    if not isinstance(value, dict) or value.get("version") != 1:
+    _verify_transaction_auth(value, _transaction_key_for(fence))
+    if not isinstance(value, dict) or value.get("version") != TRANSACTION_VERSION:
         raise CatalogError("catalog transaction is malformed")
     state = value.get("state")
     if state not in {
@@ -1108,9 +1397,12 @@ def _load_transaction(
 
 
 def _load_cleanup_marker(
-    marker_path: Path, registry_path: Path, output_path: Path
+    marker_path: Path,
+    registry_path: Path,
+    output_path: Path,
+    fence: FenceGuard,
 ) -> CatalogTransaction | None:
-    transaction = _load_transaction(marker_path, registry_path, output_path)
+    transaction = _load_transaction(marker_path, registry_path, output_path, fence)
     if transaction is not None and transaction.state not in {
         "cleanup:rollback",
         "cleanup:committed",
@@ -1507,11 +1799,11 @@ def update_catalog(
                 journal_path = _transaction_path(registry_path)
                 cleanup_path = _cleanup_transaction_path(journal_path)
                 transaction = _load_transaction(
-                    journal_path, registry_path, output_path
+                    journal_path, registry_path, output_path, fence
                 )
                 if transaction is None:
                     cleanup = _load_cleanup_marker(
-                        cleanup_path, registry_path, output_path
+                        cleanup_path, registry_path, output_path, fence
                     )
                     if cleanup is None:
                         raise CatalogError(
@@ -1555,7 +1847,7 @@ def update_catalog(
             journal_path = _transaction_path(registry_path)
             cleanup_path = _cleanup_transaction_path(journal_path)
             transaction = _load_transaction(
-                journal_path, registry_path, output_path
+                journal_path, registry_path, output_path, fence
             )
             if transaction is not None:
                 if transaction.state.startswith("cleanup:") or (
@@ -1582,7 +1874,7 @@ def update_catalog(
                     raise CatalogError("catalog transaction state is invalid")
             elif _path_exists(cleanup_path):
                 cleanup = _load_cleanup_marker(
-                    cleanup_path, registry_path, output_path
+                    cleanup_path, registry_path, output_path, fence
                 )
                 if cleanup is not None:
                     _clear_cleanup_marker(cleanup_path, cleanup, fence)

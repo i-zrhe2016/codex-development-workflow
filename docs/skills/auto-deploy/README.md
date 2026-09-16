@@ -39,7 +39,8 @@ HTML document-root directory must be pre-provisioned with safe real directory
 components and must not be world-writable; the updater never creates it and
 rejects a world-writable page. The registry directory is also pre-provisioned,
 shared by deployment and recovery, and its `0660` journal sidecars include a
-cleanup marker retained when journal deletion cannot be confirmed.
+cleanup marker retained when journal deletion cannot be confirmed. Group-writable
+catalog or document-root directories must have the sticky bit set.
 
 Initialize and update it on the target with:
 
@@ -68,12 +69,16 @@ same lock before changing the fence record. A missing lock is an error: the
 updater never recreates it, never replaces its inode while an operation is
 active, and rejects a fence with hard-link aliases. The record contains the
 current owner, positive generation, future `expires_at`, and `role` set to
-`deployment` (or `recovery` for authorized pending-transaction rollback). A
-recovery fence must use a newly issued generation different from the pending
-transaction's deployment generation. Each staged file uses a private same-
-filesystem `0700` staging directory and keeps its creation-time descriptor
-open through the rename, preventing source inode substitution in the shared
-registry directory. The updater always discovers the
+`deployment` (or `recovery` for authorized pending-transaction rollback). It
+also carries a target-scoped 32-byte hexadecimal `catalog_hmac_key` that only
+the mutation authority can read; keep that key unchanged across deployment and
+recovery generations and never log it. A recovery fence must use a newly issued
+generation different from the pending transaction's deployment generation.
+Each staged file uses a private same-filesystem `0700` staging directory with
+pinned parent and directory descriptors. The file is created and renamed
+relative to those descriptors, and its creation-time descriptor stays open
+through the rename, preventing source inode or staging pathname substitution in
+the shared registry directory. The updater always discovers the
 local Tailscale IPv4; an optional `--tailscale-ip` value is checked against
 that discovery. Run the update only after health and
 smoke verification, then verify the page from an approved Tailscale peer and
@@ -85,9 +90,13 @@ transaction journal, cleanup marker, and mode `0660` registry use their shared
 group. The cleanup marker is rewritten to a durable `cleared` tombstone after
 successful cleanup and remains available if marker retirement is uncertain.
 World permissions are rejected. The page writer must preserve its
-owner or satisfy the documented shared-readable owner contract. Lock waits are
-bounded at five seconds, and `--recover-pending` uses the journal and recovery
-fence without requiring Tailscale discovery.
+owner or satisfy the documented shared-readable owner contract. The versioned
+transaction journal carries an HMAC over its state, target paths, and old/new
+snapshots. Recovery verifies it before accepting any snapshot, so a shared-group
+edit cannot publish arbitrary registry or HTML content. Malformed JSON, nested
+parser failures, and UID/GID values outside the platform range fail closed.
+Lock waits are bounded at five seconds, and `--recover-pending` uses the
+authenticated journal and recovery fence without requiring Tailscale discovery.
 
 The runtime instructions are in
 [`skills/auto-deploy/SKILL.md`](../../../skills/auto-deploy/SKILL.md), and the

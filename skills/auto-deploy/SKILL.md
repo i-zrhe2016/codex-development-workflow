@@ -290,13 +290,20 @@ the updater refuses a missing lock and never recreates it, and the lock inode
 must never be replaced while an operation is active. The fence must have one
 hard-link; aliases are rejected. Its active JSON record contains
 `state: "active"`, `role` set to `deployment` or `recovery`, the current
-`owner`, positive `generation`, and a future timezone-aware `expires_at`. Pass
-the exact owner and generation to the updater. Recovery must use a newly issued
-generation that differs from the pending transaction's deployment generation.
+`owner`, positive `generation`, a future timezone-aware `expires_at`, and a
+target-scoped 32-byte hexadecimal `catalog_hmac_key` held only by the mutation
+authority. Keep that key unchanged when issuing the recovery generation and
+never log it. Pass the exact owner and generation to the updater. Recovery must
+use a newly issued generation that differs from the pending transaction's
+deployment generation.
 The updater holds the fence while it stages and publishes both files. Each
 staged file is created in a private same-filesystem `0700` staging directory
-and its creation-time descriptor remains open through the rename, so a shared
-registry directory cannot substitute a different source inode.
+whose parent and directory descriptors are pinned and validated. The file is
+created and renamed relative to those descriptors, and its creation-time
+descriptor remains open through the rename, so a shared registry directory
+cannot substitute a different source inode or staging pathname. Any
+group-writable catalog or document-root directory must also have the sticky bit
+set so an authorized peer cannot rename a newly created staging directory.
 Each replacement, unlink, or metadata repair is performed through the fenced
 mutation authority while that exact fence is current; the updater rejects a
 missing, expired, replaced, or revoked fence. A stale pending transaction is
@@ -314,7 +321,8 @@ it and rejects unsafe path components. The page writer must either be able to
 preserve its exact UID/GID or use its shared readable group/other-readable
 contract; an incompatible or world-writable page is refused. Both locks use
 bounded non-blocking acquisition, and a five-second lock timeout is a failed
-update.
+update. Group-writable catalog or document-root directories must have the
+sticky bit set.
 
 ```bash
 python3 <skill-dir>/scripts/update_access_catalog.py \
@@ -350,11 +358,17 @@ uncertain marker sync never removes the last recovery metadata; generated files
 are size-limited. A missing registry with an existing page,
 non-regular path, malformed metadata, different host, unsafe address, stale
 fence, unsafe document root, incompatible or world-writable page owner, lock
-timeout, or failed write is an error. The
-`--recover-pending` path uses the durable snapshots and an authorized recovery
-fence; it does not require the Tailscale CLI. The updater never starts an HTTP
-server or changes firewall rules. After each update, request the page through
-the approved Tailscale path and run the public-denial probe before marking the
+timeout, or failed write is an error. The transaction journal is versioned and
+carries an HMAC over its state, target paths, and all old/new snapshots, using
+the owner-only `catalog_hmac_key` from
+the active fence. Recovery verifies that authentication before it accepts any
+snapshot, so a shared-group edit cannot publish arbitrary registry or HTML
+content. Malformed JSON, nested parser failures, and UID/GID values outside the
+platform range fail closed through the normal catalog error path. The
+`--recover-pending` path uses the authenticated durable snapshots and an
+authorized recovery fence; it does not require the Tailscale CLI. The updater
+never starts an HTTP server or changes firewall rules. After each update,
+request the page through the approved Tailscale path and run the public-denial probe before marking the
 deployment verified. A failed update or probe leaves the release unverified
 and follows the documented recovery path.
 

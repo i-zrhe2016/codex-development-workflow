@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from contextlib import redirect_stderr
+import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -46,6 +49,9 @@ class AccessCatalogTests(unittest.TestCase):
                     "owner": "deployment-run-1",
                     "generation": 1,
                     "expires_at": "2099-01-01T00:00:00Z",
+                    "catalog_hmac_key": hashlib.sha256(
+                        b"access-catalog-unit-test-key"
+                    ).hexdigest(),
                 }
             ),
             encoding="utf-8",
@@ -93,6 +99,35 @@ class AccessCatalogTests(unittest.TestCase):
 
     def read_registry(self) -> dict[str, object]:
         return json.loads(self.registry.read_text(encoding="utf-8"))
+
+    def leave_pending_transaction(self) -> Path:
+        real_replace = catalog._replace_snapshot
+
+        def interrupt_before_page(path: Path, snapshot: object, fence: object) -> None:
+            if path == self.output:
+                raise FenceError("simulated fence interruption")
+            real_replace(path, snapshot, fence)
+
+        with patch(
+            "update_access_catalog._replace_snapshot",
+            side_effect=interrupt_before_page,
+        ):
+            with self.assertRaises(CatalogError):
+                self.update(
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                )
+        transaction_path = self.registry.with_name("catalog.json.txn")
+        self.assertTrue(transaction_path.exists())
+        return transaction_path
+
+    def use_recovery_fence(self) -> None:
+        fence = json.loads(self.fence.read_text(encoding="utf-8"))
+        fence.update(
+            {"role": "recovery", "owner": "recovery-run-1", "generation": 2}
+        )
+        self.fence.write_text(json.dumps(fence), encoding="utf-8")
+        self.fence.chmod(0o600)
 
     def test_initialize_writes_ip_and_empty_page(self) -> None:
         self.assertEqual(self.run_update("--initialize"), 0)
@@ -339,15 +374,25 @@ class AccessCatalogTests(unittest.TestCase):
     def test_replacement_rejects_a_swapped_source_alias(self) -> None:
         real_replace = catalog.os.replace
 
-        def swap_source(source: object, destination: object) -> None:
-            source_path = Path(source)
-            destination_path = Path(destination)
-            if destination_path == self.output:
+        def swap_source(
+            source: object,
+            destination: object,
+            *,
+            src_dir_fd: int | None = None,
+            dst_dir_fd: int | None = None,
+        ) -> None:
+            if destination == self.output.name:
                 attacker = self.root / "attacker.html"
                 attacker.write_text("attacker", encoding="utf-8")
-                source_path.unlink()
-                source_path.symlink_to(attacker)
-            real_replace(source_path, destination_path)
+                assert src_dir_fd is not None
+                os.unlink(source, dir_fd=src_dir_fd)
+                os.symlink(attacker, source, dir_fd=src_dir_fd)
+            real_replace(
+                source,
+                destination,
+                src_dir_fd=src_dir_fd,
+                dst_dir_fd=dst_dir_fd,
+            )
 
         with patch.object(catalog.os, "replace", side_effect=swap_source):
             with self.assertRaises(CatalogError):
@@ -517,6 +562,93 @@ class AccessCatalogTests(unittest.TestCase):
             )
         self.assertTrue(transaction_path.exists())
 
+    def test_recovery_rejects_tampered_transaction_snapshot(self) -> None:
+        transaction_path = self.leave_pending_transaction()
+        transaction = json.loads(transaction_path.read_text(encoding="utf-8"))
+        transaction["registry_old"]["data"] = "YXR0YWNrZXI="
+        transaction_path.write_text(json.dumps(transaction), encoding="utf-8")
+        transaction_path.chmod(0o660)
+        self.use_recovery_fence()
+
+        with self.assertRaisesRegex(CatalogError, "authentication"):
+            update_catalog(
+                self.registry,
+                self.output,
+                fence_file=self.fence,
+                fence_owner="recovery-run-1",
+                fence_generation=2,
+                recover_pending=True,
+            )
+        self.assertTrue(transaction_path.exists())
+
+    def test_malformed_json_loads_fail_closed_without_traceback(self) -> None:
+        self.registry.write_text(
+            '{"malformed": ' + ("9" * 5000) + "}\n", encoding="utf-8"
+        )
+        self.registry.chmod(0o660)
+
+        with redirect_stderr(io.StringIO()):
+            self.assertEqual(
+                self.run_update(
+                    "--service-name",
+                    "api",
+                    "--deployment-address",
+                    f"http://{TAILSCALE_IP}:8080/",
+                ),
+                2,
+            )
+
+    def test_fence_recursion_error_fails_closed(self) -> None:
+        self.fence.write_text("[" * 2000 + "]" * 2000, encoding="utf-8")
+        self.fence.chmod(0o600)
+
+        with self.assertRaises(FenceError):
+            self.update(initialize=True)
+
+    def test_transaction_recursion_error_fails_closed(self) -> None:
+        transaction_path = self.leave_pending_transaction()
+        transaction_path.write_text("[" * 2000 + "]" * 2000, encoding="utf-8")
+        transaction_path.chmod(0o660)
+        self.use_recovery_fence()
+
+        with self.assertRaises(CatalogError):
+            update_catalog(
+                self.registry,
+                self.output,
+                fence_file=self.fence,
+                fence_owner="recovery-run-1",
+                fence_generation=2,
+                recover_pending=True,
+            )
+
+    def test_recovery_rejects_platform_invalid_snapshot_id(self) -> None:
+        transaction_path = self.leave_pending_transaction()
+        transaction = json.loads(transaction_path.read_text(encoding="utf-8"))
+        transaction["registry_old"]["uid"] = catalog.PLATFORM_ID_MAX + 1
+        transaction.pop(catalog.TRANSACTION_HMAC_FIELD, None)
+        transaction = catalog._authenticate_transaction_payload(
+            transaction,
+            bytes.fromhex(
+                json.loads(self.fence.read_text(encoding="utf-8"))[
+                    catalog.TRANSACTION_KEY_FIELD
+                ]
+            ),
+        )
+        transaction_path.write_text(json.dumps(transaction), encoding="utf-8")
+        transaction_path.chmod(0o660)
+        self.use_recovery_fence()
+
+        with self.assertRaisesRegex(CatalogError, "UID"):
+            update_catalog(
+                self.registry,
+                self.output,
+                fence_file=self.fence,
+                fence_owner="recovery-run-1",
+                fence_generation=2,
+                recover_pending=True,
+            )
+        self.assertTrue(transaction_path.exists())
+
     def test_cleanup_marker_sync_failure_keeps_a_durable_marker_path(self) -> None:
         self.update(
             service_name="api",
@@ -525,11 +657,23 @@ class AccessCatalogTests(unittest.TestCase):
         cleanup_marker = self.registry.with_name("catalog.json.txn.cleanup")
         marker = json.loads(cleanup_marker.read_text(encoding="utf-8"))
         marker["state"] = "cleanup"
+        marker.pop(catalog.TRANSACTION_HMAC_FIELD, None)
+        marker = catalog._authenticate_transaction_payload(
+            marker,
+            bytes.fromhex(
+                json.loads(self.fence.read_text(encoding="utf-8"))[
+                    catalog.TRANSACTION_KEY_FIELD
+                ]
+            ),
+        )
         cleanup_marker.write_text(json.dumps(marker), encoding="utf-8")
         cleanup_marker.chmod(0o660)
-        transaction = catalog._load_cleanup_marker(
-            cleanup_marker, self.registry, self.output
-        )
+        with catalog._fenced_mutation(
+            self.fence, "deployment-run-1", 1
+        ) as fence:
+            transaction = catalog._load_cleanup_marker(
+                cleanup_marker, self.registry, self.output, fence
+            )
         self.assertIsNotNone(transaction)
         assert transaction is not None
 
@@ -759,6 +903,16 @@ class AccessCatalogTests(unittest.TestCase):
         with self.assertRaises(CatalogError):
             self.update(
                 registry=world_registry_root / "catalog.json",
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+
+        group_registry_root = self.root / "group-registry-root"
+        group_registry_root.mkdir()
+        group_registry_root.chmod(0o770)
+        with self.assertRaises(CatalogError):
+            self.update(
+                registry=group_registry_root / "catalog.json",
                 service_name="api",
                 deployment_address=f"http://{TAILSCALE_IP}:8080/",
             )
