@@ -14,7 +14,13 @@ from unittest.mock import patch
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from update_access_catalog import CatalogError, main, update_catalog  # noqa: E402
+import update_access_catalog as catalog  # noqa: E402
+from update_access_catalog import (  # noqa: E402
+    CatalogError,
+    FenceError,
+    main,
+    update_catalog,
+)
 
 
 TAILSCALE_IP = ".".join(("100", "64", "12", "34"))
@@ -29,19 +35,55 @@ class AccessCatalogTests(unittest.TestCase):
         root = Path(self.temporary.name)
         self.registry = root / "catalog.json"
         self.output = root / "index.html"
+        self.fence = root / "catalog-fence.json"
+        self.fence.write_text(
+            json.dumps(
+                {
+                    "state": "active",
+                    "role": "deployment",
+                    "owner": "deployment-run-1",
+                    "generation": 1,
+                    "expires_at": "2099-01-01T00:00:00Z",
+                }
+            ),
+            encoding="utf-8",
+        )
+        self.fence.chmod(0o600)
 
     def run_update(self, *arguments: str) -> int:
-        return main(
-            [
-                "--registry",
-                str(self.registry),
-                "--output",
-                str(self.output),
-                "--tailscale-ip",
-                TAILSCALE_IP,
-                *arguments,
-            ]
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            return_value=TAILSCALE_IP,
+        ):
+            return main(
+                [
+                    "--registry",
+                    str(self.registry),
+                    "--output",
+                    str(self.output),
+                    "--fence-file",
+                    str(self.fence),
+                    "--fence-owner",
+                    "deployment-run-1",
+                    "--fence-generation",
+                    "1",
+                    *arguments,
+                ]
+            )
+
+    def update(self, **arguments: object) -> dict[str, object]:
+        arguments.update(
+            {
+                "fence_file": self.fence,
+                "fence_owner": "deployment-run-1",
+                "fence_generation": 1,
+            }
         )
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            return_value=TAILSCALE_IP,
+        ):
+            return update_catalog(self.registry, self.output, **arguments)
 
     def read_registry(self) -> dict[str, object]:
         return json.loads(self.registry.read_text(encoding="utf-8"))
@@ -57,6 +99,7 @@ class AccessCatalogTests(unittest.TestCase):
         self.assertIn(TAILSCALE_IP, page)
         self.assertIn("No services recorded.", page)
         self.assertTrue(self.registry.with_name("catalog.json.lock").exists())
+        self.assertFalse(self.registry.with_name("catalog.json.txn").exists())
 
     def test_discovers_one_local_tailscale_ip_when_not_supplied(self) -> None:
         completed = subprocess.CompletedProcess(
@@ -68,6 +111,9 @@ class AccessCatalogTests(unittest.TestCase):
                 self.output,
                 service_name="api",
                 deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                fence_file=self.fence,
+                fence_owner="deployment-run-1",
+                fence_generation=1,
             )
 
         self.assertEqual(run.call_args.args[0], ["tailscale", "ip", "-4"])
@@ -138,9 +184,7 @@ class AccessCatalogTests(unittest.TestCase):
         ):
             with self.subTest(address=address):
                 with self.assertRaises(CatalogError):
-                    update_catalog(
-                        self.registry,
-                        self.output,
+                    self.update(
                         tailscale_ip=TAILSCALE_IP,
                         service_name="api",
                         deployment_address=address,
@@ -150,9 +194,7 @@ class AccessCatalogTests(unittest.TestCase):
 
     def test_rejects_invalid_tailscale_ip(self) -> None:
         with self.assertRaises(CatalogError):
-            update_catalog(
-                self.registry,
-                self.output,
+            self.update(
                 tailscale_ip=DOCUMENTATION_IP,
                 service_name="api",
                 deployment_address=f"http://{DOCUMENTATION_IP}:8080/",
@@ -162,9 +204,7 @@ class AccessCatalogTests(unittest.TestCase):
         self.registry.write_text("{\"services\": \"not-a-list\"}\n", encoding="utf-8")
 
         with self.assertRaises(CatalogError):
-            update_catalog(
-                self.registry,
-                self.output,
+            self.update(
                 tailscale_ip=TAILSCALE_IP,
                 service_name="api",
                 deployment_address=f"http://{TAILSCALE_IP}:8080/",
@@ -181,14 +221,144 @@ class AccessCatalogTests(unittest.TestCase):
             ),
             0,
         )
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            return_value=OTHER_TAILSCALE_IP,
+        ):
+            with self.assertRaises(CatalogError):
+                update_catalog(
+                    self.registry,
+                    self.output,
+                    service_name="worker",
+                    deployment_address=f"http://{OTHER_TAILSCALE_IP}:8081/",
+                    fence_file=self.fence,
+                    fence_owner="deployment-run-1",
+                    fence_generation=1,
+                )
+
+    def test_caller_ip_must_match_fresh_local_discovery(self) -> None:
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            return_value=OTHER_TAILSCALE_IP,
+        ):
+            with self.assertRaises(CatalogError):
+                update_catalog(
+                    self.registry,
+                    self.output,
+                    tailscale_ip=TAILSCALE_IP,
+                    service_name="api",
+                    deployment_address=f"http://{OTHER_TAILSCALE_IP}:8080/",
+                    fence_file=self.fence,
+                    fence_owner="deployment-run-1",
+                    fence_generation=1,
+                )
+
+    def test_stale_fence_is_rejected(self) -> None:
+        fence = json.loads(self.fence.read_text(encoding="utf-8"))
+        fence["generation"] = 2
+        self.fence.write_text(json.dumps(fence), encoding="utf-8")
+        self.fence.chmod(0o600)
+
+        with patch(
+            "update_access_catalog._discover_tailscale_ip",
+            return_value=TAILSCALE_IP,
+        ):
+            with self.assertRaises(FenceError):
+                update_catalog(
+                    self.registry,
+                    self.output,
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                    fence_file=self.fence,
+                    fence_owner="deployment-run-1",
+                    fence_generation=1,
+                )
+        self.assertFalse(self.registry.exists())
+
+    def test_pending_transaction_is_reconciled_before_next_update(self) -> None:
+        real_replace = catalog._replace_snapshot
+
+        def interrupt_before_page(path: Path, snapshot: object, check: object) -> None:
+            if path == self.output:
+                raise FenceError("simulated fence interruption")
+            real_replace(path, snapshot, check)
+
+        with patch(
+            "update_access_catalog._replace_snapshot",
+            side_effect=interrupt_before_page,
+        ):
+            with self.assertRaises(CatalogError):
+                self.update(
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                )
+        self.assertTrue(self.registry.with_name("catalog.json.txn").exists())
+        self.assertTrue(self.registry.exists())
+        self.assertFalse(self.output.exists())
+
+        self.update(
+            service_name="api",
+            deployment_address=f"https://{TAILSCALE_IP}:8443/",
+        )
+        self.assertFalse(self.registry.with_name("catalog.json.txn").exists())
+        self.assertIn(
+            f"https://{TAILSCALE_IP}:8443/", self.output.read_text(encoding="utf-8")
+        )
+
+    def test_missing_registry_with_existing_page_fails_closed(self) -> None:
+        self.output.write_text("existing catalog page", encoding="utf-8")
+
         with self.assertRaises(CatalogError):
-            update_catalog(
-                self.registry,
-                self.output,
-                tailscale_ip=OTHER_TAILSCALE_IP,
-                service_name="worker",
-                deployment_address=f"http://{OTHER_TAILSCALE_IP}:8081/",
+            self.update(
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
             )
+        self.assertEqual(
+            self.output.read_text(encoding="utf-8"), "existing catalog page"
+        )
+
+    def test_service_limit_rejects_new_name_without_corrupting_catalog(self) -> None:
+        with patch("update_access_catalog.MAX_SERVICES", 1):
+            self.update(
+                service_name="api",
+                deployment_address=f"http://{TAILSCALE_IP}:8080/",
+            )
+            with self.assertRaises(CatalogError):
+                self.update(
+                    service_name="worker",
+                    deployment_address=f"http://{TAILSCALE_IP}:8081/",
+                )
+        self.assertEqual([row["name"] for row in self.read_registry()["services"]], ["api"])
+
+    def test_generated_file_size_is_checked_before_write(self) -> None:
+        with patch("update_access_catalog.MAX_FILE_BYTES", 100):
+            with self.assertRaises(CatalogError):
+                self.update(
+                    service_name="api",
+                    deployment_address=f"http://{TAILSCALE_IP}:8080/",
+                )
+        self.assertFalse(self.registry.exists())
+        self.assertFalse(self.output.exists())
+
+    def test_output_mode_and_owner_survive_replacement(self) -> None:
+        self.run_update(
+            "--service-name",
+            "api",
+            "--deployment-address",
+            f"http://{TAILSCALE_IP}:8080/",
+        )
+        self.output.chmod(0o640)
+        before = self.output.stat()
+
+        self.run_update(
+            "--service-name",
+            "api",
+            "--deployment-address",
+            f"https://{TAILSCALE_IP}:8443/",
+        )
+        after = self.output.stat()
+        self.assertEqual(after.st_mode & 0o777, 0o640)
+        self.assertEqual((after.st_uid, after.st_gid), (before.st_uid, before.st_gid))
 
 
 if __name__ == "__main__":

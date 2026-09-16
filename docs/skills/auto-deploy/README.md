@@ -30,7 +30,9 @@ through the existing HTTP service at
 `http://<local-tailscale-ip>/` on TCP/80. The page shows the host's Tailscale
 IP plus each verified service name and deployment address. The updater accepts
 only HTTP(S) addresses on that exact Tailscale IP, updates rows idempotently by
-service name, serializes concurrent updates, and writes both files atomically.
+service name, serializes concurrent updates behind the deployment mutation
+fence, and uses a durable journal to reconcile the registry/page pair after an
+interrupted write. It preserves the existing page owner, group, and mode.
 
 Initialize and update it on the target with:
 
@@ -38,18 +40,29 @@ Initialize and update it on the target with:
 python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
+  --fence-file /run/auto-deploy/catalog-fence.json \
+  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
+  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
   --initialize
 
 python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
+  --fence-file /run/auto-deploy/catalog-fence.json \
+  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
+  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
   --service-name <service-name> \
   --deployment-address http://<local-tailscale-ip>:<declared-port>/
 ```
 
-Run the update only after health and smoke verification, then verify the page
-from an approved Tailscale peer and confirm public port-80 denial. The script
-does not install an HTTP server or modify the firewall.
+The mutation authority must provide an owner-only active fence record with the
+current owner, positive generation, future `expires_at`, and `role` set to
+`deployment` (or `recovery` for authorized pending-transaction rollback). The
+updater always discovers the local Tailscale IPv4; an optional `--tailscale-ip`
+value is checked against that discovery. Run the update only after health and
+smoke verification, then verify the page from an approved Tailscale peer and
+confirm public port-80 denial. The script does not install an HTTP server or
+modify the firewall.
 
 The runtime instructions are in
 [`skills/auto-deploy/SKILL.md`](../../../skills/auto-deploy/SKILL.md), and the

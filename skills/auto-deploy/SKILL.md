@@ -283,29 +283,50 @@ Use `scripts/update_access_catalog.py` on the target to maintain the registry
 and page. Initialize an empty baseline before the first publication, then run
 the updater after the service revision, health, and smoke checks pass:
 
+The deployment mutation authority must first create a target-scoped, owner-only
+fence file and keep its advisory lock compatible with the deployment lock
+authority. Its active JSON record contains `state: "active"`, `role` set to
+`deployment` or `recovery`, the current `owner`, positive `generation`, and a
+future timezone-aware `expires_at`. Pass the exact owner and generation to the
+updater. The updater holds the fence while it stages and publishes both files,
+checks the owner, generation, and lease before every replacement, and rejects a
+missing, expired, replaced, or revoked fence. A stale pending transaction is
+left for the independent recovery owner; that owner may use a `recovery` fence
+with `--recover-pending` to restore the prior pair.
+
 ```bash
 python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
+  --fence-file /run/auto-deploy/catalog-fence.json \
+  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
+  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
   --initialize
 
 python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
+  --fence-file /run/auto-deploy/catalog-fence.json \
+  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
+  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
   --service-name <service-name> \
   --deployment-address http://<local-tailscale-ip>:<declared-port>/
 ```
 
-The updater discovers or validates the local Tailscale IPv4, accepts only
-`http` or `https` addresses whose host is that exact Tailscale IP, escapes all
-HTML values, replaces a matching service name without duplicates, and retains
-unrelated rows. It serializes updates with a registry-side lock and atomically
-replaces each JSON/page file; a malformed registry, different host, unsafe
-address, or failed write is an error. It never starts an HTTP server or changes
-firewall rules. After each update, request the page through the approved
-Tailscale path and run the public-denial probe before marking the deployment
-verified. A failed update or probe leaves the release unverified and follows
-the documented recovery path.
+The updater always discovers the local Tailscale IPv4 and treats
+`--tailscale-ip`, when supplied, only as an assertion against that fresh
+discovery. It accepts only `http` or `https` addresses whose host is that exact
+Tailscale IP, escapes all HTML values, replaces a matching service name without
+duplicates, and retains unrelated rows. It serializes updates with the fence
+authority and a registry-side lock. A durable transaction journal records both
+snapshots before replacement and reconciles an interrupted pair before a later
+update; generated files are size-limited, and an existing page's mode, owner,
+and group remain in place. A missing registry with an existing page, malformed
+metadata, different host, unsafe address, stale fence, or failed write is an
+error. It never starts an HTTP server or changes firewall rules. After each
+update, request the page through the approved Tailscale path and run the
+public-denial probe before marking the deployment verified. A failed update or
+probe leaves the release unverified and follows the documented recovery path.
 
 ## Required deployment contract
 
