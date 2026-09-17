@@ -8,7 +8,7 @@ This repository bundles the six Codex-compatible skills from
 - `ponytail-audit` — whole-repository over-engineering audit.
 - `ponytail-debt` — report tracked `ponytail:` shortcut markers.
 - `ponytail-gain` — show the upstream benchmark scoreboard.
-- `ponytail-help` — show modes, skills, configuration, and update guidance.
+- `ponytail-help` — show modes, skills, invocation, and update guidance.
 
 ## Source and license
 

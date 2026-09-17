@@ -14,14 +14,14 @@ can't quietly become permanent.
 
 ## Scan
 
-Search source files for comment markers, skipping `node_modules`, `.git`, and
-common build output:
+Search source files for comment markers, skipping prose files, `node_modules`,
+`.git`, and common build output:
 
-`rg -n --hidden -g '!node_modules/**' -g '!.git/**' -g '!dist/**' -g '!build/**' -g '!coverage/**' -g '!vendor/**' '^[[:space:]]*(#|//|/\*|\*|<!--)[[:space:]]*ponytail:' .`
+`rg -n --hidden -g '!node_modules/**' -g '!.git/**' -g '!dist/**' -g '!build/**' -g '!coverage/**' -g '!vendor/**' -g '!*.md' -g '!*.rst' -g '!*.txt' '(^|[[:space:]])(#[[:space:]]*|//[[:space:]]*|/\*\*?[[:space:]]*|\*[[:space:]]*|<!--[[:space:]]*)ponytail:' .`
 
-The start-of-line anchor and comment-prefix alternatives keep prose examples
-out of the ledger; add the comment form used by the target language when
-needed.
+The source-file exclusions filter prose examples, while the comment-prefix
+alternatives match both standalone and inline markers. Add the comment form or
+source-file exclusion used by the target language when needed.
 
 Each hit is one ledger row. The comment prefix keeps prose that merely mentions
 the convention out of the ledger.
