@@ -364,7 +364,8 @@ do not duplicate its detailed procedure here.
 - `ponytail-review` and `ponytail-audit`: explicit over-engineering reports for
   a diff or whole repository; they do not replace correctness or security review.
 - `ponytail-debt`, `ponytail-gain`, and `ponytail-help`: explicit one-shot
-  reporting and reference utilities; they do not mutate the repository.
+  reporting and reference utilities. `ponytail-debt` may write a ledger only
+  when explicitly requested, then follows the normal repository change gates.
 - `plan-to-ticket`: complex, multi-ticket, multi-slice, or dependency-driven
   work; split requirements into Tickets before generating their Slices. A
   single-behavior requirement records one Ticket Issue directly instead of
