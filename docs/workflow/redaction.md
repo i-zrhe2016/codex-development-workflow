@@ -8,7 +8,7 @@ result affects publication.
 ## When the gate runs
 
 Run the gate after the intended files are staged for the next commit and before
-that commit is created. Repeat it after any blocking Automatic Review fix that
+that commit is created. Repeat it after any blocking `pr-review` fix that
 changes staged content, before the next commit. Git history is durable, so do
 not rely on cleaning up a secret or personal value after it has been committed.
 

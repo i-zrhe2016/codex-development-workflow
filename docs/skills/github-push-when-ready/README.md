@@ -1,10 +1,9 @@
 # GitHub Push When Ready
 
-`github-push-when-ready` is the delivery gate for feature branches, commits,
-pushes, pull requests, merges, and source-branch cleanup. It checks that the
-repository is ready to publish, that the change has one clear purpose, that the
-commit follows Conventional Commits 1.0.0, and that no secrets or unrelated
-changes are being shipped.
+`github-push-when-ready` is the publication gate for feature branches, commits,
+pushes, and pull requests. It checks that the repository is ready to publish,
+that the change has one clear purpose, that the commit follows Conventional
+Commits 1.0.0, and that no secrets or unrelated changes are being shipped.
 
 The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-ready/SKILL.md).
 
@@ -19,24 +18,8 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
 - If the default branch cannot be determined from the actual GitHub push target, guarded publication fails closed and requires manual review.
 - The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a feature branch while still tracking an upstream default branch.
-- After a PR is verified as merged, delete its source branch remotely and locally after switching to and synchronizing the base branch; retain the default branch and unmerged branches.
-- Create or update the PR after the branch is pushed, then run Alibaba Open Code
-  Review's `ocr review` as Automatic Review without waiting for user confirmation.
-  The first review is full-range; after an assessed `pass` or `blocking`
-  result, bounded fixes on the same named feature branch use incremental
-  coverage from the last assessed head by default. The runner persists and
-  checks that branch identity; unbound legacy state or a state from another
-  branch falls back to full. Blocking findings repeat the affected Test,
-  Redaction when applicable, Commit, Push, and review steps.
-- Use full review for architecture, public API/interface, security/authentication,
-  database/schema, cross-module behavior, base/history changes, rewrites or
-  rebases, or uncertain impact. A passing incremental review plus current
-  CI/tests is sufficient; the full review need not repeat solely because the
-  PR head changed.
-- The project-scoped `reviewer` is optional supplemental analysis and never
-  replaces the mandatory `ocr review` gate.
-- Merge only after Automatic Review passes, update the default branch, close the
-  Ticket, and then update State / Docs.
+- After the PR is created or updated, return `PR ready` and hand the merge
+  decision to the separate `pr-review` Skill.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.
 - Check GitHub repository metadata when the task includes publishing or a pull
@@ -69,7 +52,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 skills/github-push-when-ready/scripts/assess_p
 ```
 
 Use the exact command and authorization appropriate to the current task before
-running any commit or push action.
+running any commit or push action. Once the PR is ready, invoke
+[`pr-review`](../pr-review/) for the merge decision.
 
 ## Maintenance
 

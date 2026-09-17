@@ -85,7 +85,7 @@ Every ticket output includes the branch handoff:
 
 Ticket planning is complete before implementation begins. The parent workflow
 then runs the same Test -> applicable Redaction -> Commit -> Push -> Create /
-Update PR -> Automatic Review -> Merge lifecycle for every Ticket and its
+Update PR -> `pr-review` -> Merge lifecycle for every Ticket and its
 Slices.
 
 ## Repository layout

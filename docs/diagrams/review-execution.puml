@@ -3,7 +3,7 @@
 skinparam defaultFontName Arial
 skinparam shadowing false
 skinparam ArrowColor #475569
-title Open Code Review - Scope, Execution, Assessment and Recovery
+title PR Review Runner - Execution and Recovery Detail
 
 start
 :PR published on named feature branch; worktree clean\nRefresh actual PR base; resolve base/head SHAs;
