@@ -40,6 +40,16 @@ class ScanDebtTests(unittest.TestCase):
 
         self.assertEqual(scan_debt.marker_lines(source), [5])
 
+    def test_keeps_scanning_after_urls_and_rust_lifetimes(self) -> None:
+        source = "\n".join(
+            (
+                'endpoint: https://host # ponytail: yaml marker',
+                'let x: &\'static str = "x"; // ponytail: rust marker',
+            )
+        )
+
+        self.assertEqual(scan_debt.marker_lines(source), [1, 2])
+
     def test_skips_prose_and_build_directories(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ponytail-debt-test-") as temporary:
             root = Path(temporary)
@@ -60,10 +70,11 @@ class ScanDebtTests(unittest.TestCase):
 
             findings = list(scan_debt.scan(root))
 
-        self.assertEqual(
-            [(path, line_number) for path, line_number, _ in findings],
-            [("source.py", 1), ("source.py", 2)],
-        )
+            self.assertEqual(
+                [(path, line_number) for path, line_number, _ in findings],
+                [("source.py", 1), ("source.py", 2)],
+            )
+            self.assertEqual(list(scan_debt.scan(root / "README.md")), [])
 
 
 if __name__ == "__main__":

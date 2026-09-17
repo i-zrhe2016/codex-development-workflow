@@ -43,6 +43,33 @@ def _is_marker(body: str, allow_leading_star: bool) -> bool:
     return candidate.startswith("ponytail:")
 
 
+def _has_unescaped_quote(line: str, start: int, quote: str) -> bool:
+    escaped = False
+    for character in line[start:]:
+        if escaped:
+            escaped = False
+        elif character == "\\":
+            escaped = True
+        elif character == quote:
+            return True
+    return False
+
+
+def _is_url_separator(line: str, index: int) -> bool:
+    """Return whether ``//`` is the separator in a URI such as ``https://``."""
+    if index == 0 or line[index - 1] != ":":
+        return False
+
+    scheme_end = index - 1
+    scheme_start = scheme_end - 1
+    while scheme_start >= 0 and (
+        line[scheme_start].isalnum()
+        or line[scheme_start] in {"+", ".", "-"}
+    ):
+        scheme_start -= 1
+    return scheme_start < scheme_end - 1
+
+
 def marker_lines(text: str) -> list[int]:
     """Return line numbers whose comments begin with a Ponytail marker."""
     found: list[int] = []
@@ -77,7 +104,14 @@ def marker_lines(text: str) -> list[int]:
             if line.startswith("'''", index) or line.startswith('"""', index):
                 quote = line[index:index + 3]
                 index += 3
-            elif line[index] in {"'", '"', chr(96)}:
+            elif line[index] == "'":
+                # A Rust lifetime such as &'static is not a string delimiter.
+                # Single-quoted literals are line-local in the source forms
+                # this scanner supports, so require a closing quote first.
+                if _has_unescaped_quote(line, index + 1, "'"):
+                    quote = line[index]
+                index += 1
+            elif line[index] in {'"', chr(96)}:
                 quote = line[index]
                 index += 1
             elif line.startswith("/*", index):
@@ -87,6 +121,9 @@ def marker_lines(text: str) -> list[int]:
                 block_end = "-->"
                 index += 4
             elif line.startswith("//", index):
+                if _is_url_separator(line, index):
+                    index += 2
+                    continue
                 if _is_marker(line[index + 2:], allow_leading_star=False):
                     found.append(line_number)
                 break
@@ -102,7 +139,8 @@ def marker_lines(text: str) -> list[int]:
 
 def _source_files(root: Path) -> Iterator[Path]:
     if root.is_file():
-        yield root
+        if root.suffix.lower() not in EXCLUDED_SUFFIXES:
+            yield root
         return
 
     for directory, names, files in os.walk(root):

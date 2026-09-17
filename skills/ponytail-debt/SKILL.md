@@ -17,7 +17,7 @@ can't quietly become permanent.
 Search source files for comment markers, skipping prose files, `node_modules`,
 `.git`, and common build output:
 
-python3 skills/ponytail-debt/scripts/scan_debt.py .
+python3 <skill-dir>/scripts/scan_debt.py .
 
 It recognizes #, //, /* ... */, and <!-- ... --> comments, including markers
 attached directly to code and continuation lines. Add the comment form to
