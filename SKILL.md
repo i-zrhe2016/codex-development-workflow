@@ -324,6 +324,17 @@ Evidence: concrete event from this delivery
 Action: none | follow-up change | report for later
 ```
 
+## Timing a requested workflow run
+
+When the user explicitly asks for timing, capture monotonic wall-clock duration
+for each externally observable gate: Ticket and branch setup, implementation,
+validation, redaction, commit/push, PR and Automatic Review, merge/cleanup, and
+any requested Skill installation or synchronization. Use the measured command
+boundaries rather than estimates, report the total separately, and identify
+whether network or reviewer latency dominated the run. Timing is observational
+and does not add a new delivery gate; do not persist session-specific timing
+logs or include credentials, tokens, or private endpoint values in the report.
+
 Self-improvement is bounded by these rules:
 
 1. Improve the workflow only when the lesson is reusable across future work and
