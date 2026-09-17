@@ -70,7 +70,8 @@ The project configuration keeps multi-agent support deliberately small:
 - `.codex/config.toml` enables subagents and caps concurrent spawned-agent
   threads at three, excluding the main thread.
 - `.codex/agents/reviewer.toml` defines an optional supplemental read-only
-  reviewer; Automatic Review is always the built-in `codex review` command.
+  reviewer; Automatic Review is always Alibaba Open Code Review's `ocr review`
+  command.
 
 The built-in `explorer` and `worker` roles cover read-heavy exploration and
 isolated implementation Slices. The delegation gate remains optional; keep
@@ -147,11 +148,11 @@ relevant bundle.
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 | `auto-deploy` | [`skills/auto-deploy/`](skills/auto-deploy/) | [Skill documentation](docs/skills/auto-deploy/README.md) |
 
-Automatic Review is the built-in `codex review` command. Run it after the PR is
-created or updated and before merge, without waiting for user confirmation. If
-findings block merge, fix them and repeat the Test -> Redaction (if applicable)
--> Commit -> Push -> Automatic Review loop. The project-scoped `reviewer` is
-optional supplemental analysis and never replaces `codex review`.
+Automatic Review is Alibaba Open Code Review's `ocr review` command. Run it
+after the PR is created or updated and before merge, without waiting for user
+confirmation. If findings block merge, fix them and repeat the Test -> Redaction
+(if applicable) -> Commit -> Push -> Automatic Review loop. The project-scoped
+`reviewer` is optional supplemental analysis and never replaces `ocr review`.
 
 The first review covers the full PR. After a completed, assessed `pass` or
 `blocking` review, the normal fix loop reviews only new commits from the last

@@ -3,7 +3,7 @@
 skinparam defaultFontName Arial
 skinparam shadowing false
 skinparam ArrowColor #475569
-title Codex Review - Scope, Execution, Assessment and Recovery
+title Open Code Review - Scope, Execution, Assessment and Recovery
 
 start
 :PR published on named feature branch; worktree clean\nRefresh actual PR base; resolve base/head SHAs;
@@ -30,7 +30,7 @@ else (no)
     :Review base = actual PR base\nFull PR coverage;
   endif
   :Archive previous record\nSave running state + branch + scope + head + log path;
-  :Invoke built-in codex review --base <resolved SHA>\nStream output to terminal and local log;
+  :Invoke ocr review --from <scope> --to <resolved head>\nStream output to terminal and local log;
   note right
     Every 5 min: elapsed + output-idle notice.
     After 15 min: inspect progress / error evidence.

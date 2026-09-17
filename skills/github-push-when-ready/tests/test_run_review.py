@@ -15,7 +15,7 @@ SPEC.loader.exec_module(review)
 class ReviewTests(unittest.TestCase):
     def run_main(self, root, arguments, prior=None, stream_result=0,
                  ancestor=True, branch="branch"):
-        directory = root / "codex-review"
+        directory = root / "ocr-review"
         directory.mkdir(exist_ok=True)
         if prior is not None:
             review.save(directory / "state.json", prior)
@@ -104,7 +104,7 @@ class ReviewTests(unittest.TestCase):
             self.assertEqual(state["previous_run"], "old-run")
             self.assertEqual(state["branch"], "branch")
             self.assertEqual(runner.call_args.args[0],
-                             ["codex", "review", "--base", "old"])
+                             ["ocr", "review", "--from", "old", "--to", "head"])
             merge_base.assert_called_once()
 
     def test_unassessed_or_incomplete_review_defaults_to_full_scope(self):
@@ -120,7 +120,7 @@ class ReviewTests(unittest.TestCase):
                 self.assertEqual(state["coverage"], "full")
                 self.assertIsNone(state["previous_run"])
                 self.assertEqual(runner.call_args.args[0],
-                                 ["codex", "review", "--base", "base"])
+                                 ["ocr", "review", "--from", "base", "--to", "head"])
                 merge_base.assert_not_called()
 
     def test_force_full_overrides_assessed_incremental_default(self):
@@ -133,7 +133,7 @@ class ReviewTests(unittest.TestCase):
             self.assertEqual(state["coverage"], "full")
             self.assertIsNone(state["previous_run"])
             self.assertEqual(runner.call_args.args[0],
-                             ["codex", "review", "--base", "base"])
+                             ["ocr", "review", "--from", "base", "--to", "head"])
             merge_base.assert_not_called()
 
     def test_other_branch_or_legacy_state_defaults_to_full_scope(self):
@@ -150,7 +150,7 @@ class ReviewTests(unittest.TestCase):
                 self.assertEqual(state["coverage"], "full")
                 self.assertIsNone(state["previous_run"])
                 self.assertEqual(runner.call_args.args[0],
-                                 ["codex", "review", "--base", "base"])
+                                 ["ocr", "review", "--from", "base", "--to", "head"])
                 merge_base.assert_not_called()
 
     def test_completed_execution_from_other_branch_is_not_reused(self):
@@ -269,7 +269,7 @@ class ReviewTests(unittest.TestCase):
                     return "b" * 40
                 return None
 
-            directory = root / "codex-review"
+            directory = root / "ocr-review"
             directory.mkdir(exist_ok=True)
             review.save(directory / "state.json", prior)
             with patch.object(review, "git", side_effect=fake_git), \
@@ -294,7 +294,7 @@ class ReviewTests(unittest.TestCase):
     def test_stale_local_base_blocks_before_review_starts(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            directory = root / "codex-review"
+            directory = root / "ocr-review"
             directory.mkdir(exist_ok=True)
 
             def fake_git(*args):

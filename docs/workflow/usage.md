@@ -174,7 +174,7 @@ stale local base branch instead of reviewing the wrong range.
 
 The project-scoped `.codex/agents/reviewer.toml` is optional supplemental
 read-only analysis. It may be invoked from an interactive Codex session, but it
-never replaces the mandatory `codex review` gate.
+never replaces the mandatory `ocr review` gate.
 
 Read `docs/Repo_Current_State.md` at the start of planning. After merge, source
 branch deletion, and default-branch synchronization, update it when verified

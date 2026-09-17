@@ -13,9 +13,17 @@ discovered.
 
 ## Run built-in code review
 
-The review gate uses the Codex CLI's built-in `codex review` command through the
-recoverable repository runner. Install and authenticate Codex before using it;
-no separate review skill is required. From the project root, invoke this
+The review gate uses Alibaba Open Code Review's `ocr review` command through
+the recoverable repository runner. Install and configure Open Code Review before
+using it:
+
+```bash
+npm install --global @alibaba-group/open-code-review
+ocr config provider
+ocr config model
+```
+
+No separate review skill is required. From the project root, invoke this
 Automatic Review command immediately after each PR creation or update:
 
 ```bash
@@ -24,20 +32,20 @@ python3 <skill-dir>/scripts/run_review.py --base <actual-base-ref>
 
 The first run covers the full PR. After a completed and assessed review, a
 bounded fix defaults to reviewing only commits after the previous assessed head
-on the same feature branch. Use `--force-full` for architecture, public API or
-interface, security or authentication, database or schema, cross-module
-behavior, base/history changes, rewrites or rebases, or uncertain impact. The
-narrower `codex review --uncommitted` and `codex review --commit SHA` forms are
-local supplemental checks only; neither replaces the runner's PR review gate.
+on the same feature branch. The runner maps the selected range to
+`ocr review --from <scope> --to <head>`. Use `--force-full` for architecture,
+public API or interface, security or authentication, database or schema,
+cross-module behavior, base/history changes, rewrites or rebases, or uncertain
+impact. The runner remains the mandatory PR review gate.
 
-See the [Codex CLI documentation](https://developers.openai.com/codex/cli/)
-for installation and authentication details.
+See the [Open Code Review repository](https://github.com/alibaba/open-code-review)
+for installation, configuration, and CLI details.
 
 ## Run the optional supplemental project reviewer
 
 The custom `.codex/agents/reviewer.toml` is invoked by an interactive Codex
 session as an additional read-only check, not as Automatic Review. Automatic
-Review remains the mandatory built-in `codex review` command. From the project
+Review remains the mandatory `ocr review` command. From the project
 root, start `codex` and enter:
 
 ```text
@@ -135,7 +143,7 @@ This checkout also contains the optional project-scoped Codex configuration:
 - `.codex/config.toml` enables subagents and caps concurrent spawned-agent
   threads at three, excluding the main thread.
 - `.codex/agents/reviewer.toml` defines an optional supplemental read-only
-  reviewer; it never replaces the built-in `codex review` gate.
+  reviewer; it never replaces the mandatory `ocr review` gate.
 
 The installer copies managed skills only; it does not install or overwrite
 project-scoped `.codex/` files in another repository. Copy or adapt these files

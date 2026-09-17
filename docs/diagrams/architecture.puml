@@ -23,7 +23,7 @@ state "Staged redaction scan\nbefore commit\n[data-document-redaction]" as redac
 state "Publication readiness + Commit\n[github-push-when-ready]\nIdentity / clean boundaries / Conventional Commits" as commit
 state "Push branch\n[github-push-when-ready]" as push
 state "Create / Update PR\n[github-push-when-ready]" as pr
-state "Automatic Review\nrun_review.py -> codex review\nFull first; bounded incremental fixes\nPersist logs + explicit assessment" as review
+state "Automatic Review\nrun_review.py -> ocr review\nFull first; bounded incremental fixes\nPersist logs + explicit assessment" as review
 state "Blocking findings?" as blocking #FFF4CC
 state "Batch confirmed findings\nFix affected behavior" as fix
 state "Test again\n[test-workflow]" as test_again

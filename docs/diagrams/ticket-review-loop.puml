@@ -9,7 +9,7 @@ state "Ticket validated\nFeature branch; selected checks passed" as ready
 state "Applicable redaction + publication readiness\nIdentity / scope / actual push target\nConventional Commit -> push branch" as publish
 state "Create/update existing PR\nVerify PR head/base match Ticket Branch/Base\nStatus: in_review; persist canonical PR link" as pr
 state "Select review scope\nFirst full PR; bounded fixes may be incremental\nBase/history/boundary changes or uncertainty -> full" as scope
-state "Execute/reuse codex review via runner\nFull logs + base/head identity + execution status\nSee review-execution.svg for exact recovery behavior" as review
+state "Execute/reuse ocr review via runner\nFull logs + base/head identity + execution status\nSee review-execution.svg for exact recovery behavior" as review
 state "Main agent assesses complete conclusion\nVerify previous findings + latest test evidence" as assess
 state "Batch confirmed blocking findings\nFix -> affected tests -> applicable redaction\nKeep same Ticket branch and PR" as fix
 state "Blocked / incomplete\nRecord cause + logs + resume stage; Issue stays open\nNever treat timeout, exit 0 or missing output as pass" as blocked #FFF4CC
