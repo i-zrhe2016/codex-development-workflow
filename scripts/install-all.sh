@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 DEST_ROOT="${CODEX_HOME:-$HOME/.codex}/skills"
 UPDATE=0
+ADOPT_LEGACY=0
 MANAGED_MARKER=".codex-development-workflow-managed"
 
 usage() {
@@ -13,10 +14,12 @@ Install the complete Codex development workflow skill set bundled in this
 repository.
 
 Usage:
-  install-all.sh [--update] [--dest PATH]
+  install-all.sh [--update] [--adopt-legacy] [--dest PATH]
 
 Options:
   --update       Replace already-installed workflow skills.
+  --adopt-legacy Adopt pre-marker destinations during --update, moving them
+                 to a recoverable backup first.
   --dest PATH    Install into PATH instead of $CODEX_HOME/skills.
   -h, --help     Show this help.
 USAGE
@@ -25,6 +28,7 @@ USAGE
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --update) UPDATE=1; shift ;;
+    --adopt-legacy) ADOPT_LEGACY=1; shift ;;
     --dest)
       [ "$#" -ge 2 ] || { echo "error: --dest requires a path" >&2; exit 2; }
       DEST_ROOT="$2"; shift 2 ;;
@@ -32,6 +36,11 @@ while [ "$#" -gt 0 ]; do
     *) echo "error: unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+if [ "$ADOPT_LEGACY" -eq 1 ] && [ "$UPDATE" -eq 0 ]; then
+  echo "error: --adopt-legacy requires --update" >&2
+  exit 2
+fi
 
 command -v tar >/dev/null 2>&1 || { echo "error: tar is required" >&2; exit 1; }
 
@@ -82,8 +91,29 @@ destination_is_managed() {
   grep -Fqx -- "codex-development-workflow:$name" "$dest/$MANAGED_MARKER"
 }
 
+backup_legacy_destination() {
+  local dest="$1"
+  local name="$2"
+
+  if [ -z "${LEGACY_BACKUP:-}" ]; then
+    LEGACY_BACKUP="$(mktemp -d "$DEST_ROOT/.codex-development-workflow-legacy.XXXXXX")"
+  fi
+
+  local backup="$LEGACY_BACKUP/$name"
+  if [ -e "$backup" ] || [ -L "$backup" ]; then
+    echo "error: legacy backup destination already exists: $backup" >&2
+    return 1
+  fi
+
+  mv -- "$dest" "$backup"
+  echo "adopt: $name -> $backup"
+  migrated=$((migrated + 1))
+}
+
 installed=0
 skipped=0
+migrated=0
+LEGACY_BACKUP=""
 
 if [ "$UPDATE" -eq 1 ]; then
   for name in "${OBSOLETE_SKILLS[@]}"; do
@@ -92,6 +122,8 @@ if [ "$UPDATE" -eq 1 ]; then
       if destination_is_managed "$dest" "$name"; then
         echo "remove: $name (retired)"
         rm -rf "$dest"
+      elif [ "$ADOPT_LEGACY" -eq 1 ]; then
+        backup_legacy_destination "$dest" "$name"
       else
         echo "preserve: $name (ownership unverified)"
       fi
@@ -118,10 +150,12 @@ for spec in "${SKILLS[@]}"; do
     exit 1
   fi
 
-  if [ -e "$dest" ]; then
+  if [ -e "$dest" ] || [ -L "$dest" ]; then
     if [ "$UPDATE" -eq 1 ]; then
       if destination_is_managed "$dest" "$name"; then
         rm -rf "$dest"
+      elif [ "$ADOPT_LEGACY" -eq 1 ]; then
+        backup_legacy_destination "$dest" "$name"
       else
         echo "preserve: $name (ownership unverified)"
         skipped=$((skipped + 1))
@@ -154,5 +188,9 @@ done
 echo
 echo "Installed: $installed"
 echo "Skipped:   $skipped"
+echo "Migrated:  $migrated"
 echo "Location:  $DEST_ROOT"
+if [ -n "$LEGACY_BACKUP" ]; then
+  echo "Backup:    $LEGACY_BACKUP"
+fi
 echo "Restart Codex to discover newly installed skills."

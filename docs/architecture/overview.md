@@ -243,7 +243,9 @@ and need project-specific tooling and review.
 
 1. Obtain a checkout of this repository and run `scripts/install-all.sh`.
 2. The installer validates each local `SKILL.md` and copies the configured bundle into `${CODEX_HOME:-$HOME/.codex}/skills` or `--dest PATH`.
-3. Existing skills are skipped unless `--update` is used.
+3. Existing marked skills are skipped unless `--update` is used; unmarked paths
+   are preserved unless `--update --adopt-legacy` explicitly moves them to a
+   recoverable backup first.
 4. Restart Codex to discover installed skills.
 
 The installer and [`references/skill-map.md`](../../references/skill-map.md)

@@ -93,7 +93,17 @@ The marker is stored as the hidden file
 `.codex-development-workflow-managed` inside each installed bundle. This
 prevents an update from recursively deleting an unrelated skill that happens
 to use a retired or current workflow name. Installations created before this
-marker existed remain untouched until their ownership is verified manually.
+marker existed remain untouched by the default update. To migrate one of those
+installations, explicitly opt in:
+
+```bash
+bash scripts/install-all.sh --update --adopt-legacy
+```
+
+This one-time adoption moves every unmarked configured destination to a hidden,
+recoverable backup under the skills directory before updating or pruning it;
+the command requires `--update`. Review the printed backup path before removing
+it manually.
 
 ## Choose another destination
 
