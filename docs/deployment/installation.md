@@ -84,8 +84,9 @@ bash scripts/install-all.sh --update
 
 Without `--update`, an existing skill directory is reported as `skip` and is
 left unchanged. With `--update`, the existing destination directory is removed
-before the local bundled content is copied into place. Back up any local edits
-before using this option.
+before the local bundled content is copied into place, and retired managed
+skill destinations are removed. Back up any local edits before using this
+option.
 
 ## Choose another destination
 

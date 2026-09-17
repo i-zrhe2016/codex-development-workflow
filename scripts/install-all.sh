@@ -61,8 +61,29 @@ SKILLS=(
   "skills/auto-deploy|auto-deploy"
 )
 
+# Destinations from bundles retired by the workflow. These are removed only
+# during an explicit update so old installations do not keep discovering them.
+OBSOLETE_SKILLS=(
+  "ponytail"
+  "ponytail-review"
+  "ponytail-audit"
+  "ponytail-debt"
+  "ponytail-gain"
+  "ponytail-help"
+)
+
 installed=0
 skipped=0
+
+if [ "$UPDATE" -eq 1 ]; then
+  for name in "${OBSOLETE_SKILLS[@]}"; do
+    dest="$DEST_ROOT/$name"
+    if [ -e "$dest" ] || [ -L "$dest" ]; then
+      echo "remove: $name (retired)"
+      rm -rf "$dest"
+    fi
+  done
+fi
 
 for spec in "${SKILLS[@]}"; do
   IFS='|' read -r subpath name <<< "$spec"
