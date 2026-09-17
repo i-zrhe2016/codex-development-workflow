@@ -358,6 +358,13 @@ do not duplicate its detailed procedure here.
 
 - `context-efficiency`: large, unfamiliar, or context-heavy repository
   exploration; it is an optional context-loading aid, not a workflow stage.
+- `ponytail`: coding-task implementation minimalism using YAGNI, existing
+  capabilities, stdlib/native features, and the smallest correct solution;
+  it never overrides explicit requirements or workflow quality gates.
+- `ponytail-review` and `ponytail-audit`: explicit over-engineering reports for
+  a diff or whole repository; they do not replace correctness or security review.
+- `ponytail-debt`, `ponytail-gain`, and `ponytail-help`: explicit one-shot
+  reporting and reference utilities; they do not mutate the repository.
 - `plan-to-ticket`: complex, multi-ticket, multi-slice, or dependency-driven
   work; split requirements into Tickets before generating their Slices. A
   single-behavior requirement records one Ticket Issue directly instead of

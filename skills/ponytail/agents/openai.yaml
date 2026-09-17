@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ponytail"
+  short_description: "Prefer YAGNI and the smallest correct implementation"
+  default_prompt: "Use $ponytail for this coding task: check whether the change is needed, reuse existing capabilities, prefer stdlib/native features, and implement the smallest correct solution without weakening required validation or safety."
+policy:
+  allow_implicit_invocation: true
