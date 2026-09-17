@@ -60,6 +60,7 @@ class ScanDebtTests(unittest.TestCase):
                 "remote=git+ssh://host/path # ponytail: remote marker",
                 "curl https://host;# ponytail: shell marker",
                 "url: https://host/path;#ponytail:fragment",
+                "authority: https://ponytail:443/path",
                 "value='first",
                 "# ponytail: quoted text",
                 "second'",
@@ -67,9 +68,13 @@ class ScanDebtTests(unittest.TestCase):
             )
         )
 
-        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 3, 4, 5, 6, 11])
+        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 3, 4, 5, 6, 12])
         self.assertEqual(
             scan_debt.marker_lines("curl https://host;#ponytail: shell marker", ".sh"),
+            [1],
+        )
+        self.assertEqual(
+            scan_debt.marker_lines("curl https://host;#ponytail: shell marker", "", "Makefile"),
             [1],
         )
 
@@ -85,6 +90,13 @@ class ScanDebtTests(unittest.TestCase):
         )
 
         self.assertEqual(scan_debt.marker_lines(source), [1, 2, 5])
+        rust_source = "\n".join(
+            (
+                "let value = 'assigned: loop { // ponytail: assignment marker",
+                "return 'returned: loop { // ponytail: return marker",
+            )
+        )
+        self.assertEqual(scan_debt.marker_lines(rust_source, ".rs"), [1, 2])
 
     def test_skips_prose_and_build_directories(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ponytail-debt-test-") as temporary:

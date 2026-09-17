@@ -43,6 +43,14 @@ def _is_marker(body: str, allow_leading_star: bool) -> bool:
     return candidate.startswith("ponytail:")
 
 
+def _is_comment_marker_body(body: str) -> bool:
+    candidate = body.lstrip()
+    if not candidate.startswith("ponytail:"):
+        return False
+    remainder = candidate[len("ponytail:"):]
+    return not remainder or remainder[0].isspace()
+
+
 def _is_url_separator(line: str, index: int) -> bool:
     """Return whether ``//`` is the separator in a URI such as ``https://``."""
     if index == 0 or line[index - 1] != ":" or index + 2 >= len(line):
@@ -60,23 +68,24 @@ def _is_url_separator(line: str, index: int) -> bool:
         bool(scheme)
         and scheme[0].isalpha()
         and not line[index + 2].isspace()
-        and not _is_marker(line[index + 2:], allow_leading_star=False)
+        and not _is_comment_marker_body(line[index + 2:])
     )
 
 
 SHELL_SUFFIXES = {".bash", ".command", ".fish", ".sh", ".zsh"}
+SHELL_FILENAMES = {"gnumakefile", "makefile"}
 
 
-def _skip_uri(line: str, index: int, suffix: str) -> int:
+def _skip_uri(line: str, index: int, shell_like: bool) -> int:
     while index < len(line) and not line[index].isspace():
         if line[index] in ";|" and index + 1 < len(line):
             next_index = index + 1
             if line[next_index] == "#":
-                if suffix in SHELL_SUFFIXES or line[next_index + 1:next_index + 2].isspace():
+                if shell_like or line[next_index + 1:next_index + 2].isspace():
                     break
             elif line.startswith("//", next_index):
                 comment_body = line[next_index + 2:]
-                if suffix in SHELL_SUFFIXES or not comment_body or comment_body[0].isspace() or _is_marker(comment_body, allow_leading_star=False):
+                if shell_like or not comment_body or comment_body[0].isspace() or _is_marker(comment_body, allow_leading_star=False):
                     break
         if line[index] == "#" and index + 1 < len(line) and line[index + 1].isspace():
             break
@@ -106,7 +115,9 @@ def _is_rust_lifetime(line: str, index: int, suffix: str) -> bool:
         return True
 
     label_tail = line[identifier_end:].lstrip()
-    if label_tail.startswith(":") and (not prefix or prefix[-1] in "{;"):
+    if label_tail.startswith(":") and (
+        suffix == ".rs" or not prefix or prefix[-1] in "{;"
+    ):
         label_body = label_tail[1:].lstrip()
         if label_body.startswith(("loop", "while", "for")):
             return True
@@ -114,11 +125,12 @@ def _is_rust_lifetime(line: str, index: int, suffix: str) -> bool:
     return suffix == ".rs" and prefix.endswith(":")
 
 
-def marker_lines(text: str, suffix: str = "") -> list[int]:
+def marker_lines(text: str, suffix: str = "", filename: str = "") -> list[int]:
     """Return line numbers whose comments begin with a Ponytail marker."""
     found: list[int] = []
     block_end: str | None = None
     quote: str | None = None
+    shell_like = suffix in SHELL_SUFFIXES or filename.lower() in SHELL_FILENAMES
 
     for line_number, line in enumerate(text.splitlines(), start=1):
         index = 0
@@ -164,7 +176,7 @@ def marker_lines(text: str, suffix: str = "") -> list[int]:
                 index += 4
             elif line.startswith("//", index):
                 if _is_url_separator(line, index):
-                    index = _skip_uri(line, index + 2, suffix)
+                    index = _skip_uri(line, index + 2, shell_like)
                     continue
                 if _is_marker(line[index + 2:], allow_leading_star=False):
                     found.append(line_number)
@@ -208,7 +220,7 @@ def scan(root: Path) -> Iterator[tuple[str, int, str]]:
         text = raw.decode("utf-8", errors="replace")
         lines = text.splitlines()
         relative = path.relative_to(base).as_posix()
-        for line_number in marker_lines(text, path.suffix.lower()):
+        for line_number in marker_lines(text, path.suffix.lower(), path.name):
             yield relative, line_number, lines[line_number - 1]
 
 
