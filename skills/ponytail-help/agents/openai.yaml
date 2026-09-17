@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ponytail Help"
+  short_description: "Show Ponytail modes and companion skills"
+  default_prompt: "Use $ponytail-help to show the Ponytail modes, companion skills, invocation, and workflow update path without changing files."
