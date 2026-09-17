@@ -55,6 +55,9 @@ class ScanDebtTests(unittest.TestCase):
             (
                 "label:// ponytail: label marker",
                 "endpoint=https://host/#ponytail: url text # ponytail: real marker",
+                "path=file://host/path # ponytail: file marker",
+                "remote=git+ssh://host/path # ponytail: remote marker",
+                "curl https://host;# ponytail: shell marker",
                 "value='first",
                 "# ponytail: quoted text",
                 "second'",
@@ -62,7 +65,19 @@ class ScanDebtTests(unittest.TestCase):
             )
         )
 
-        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 6])
+        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 3, 4, 5, 9])
+
+    def test_keeps_rust_labels_out_of_single_quoted_values(self) -> None:
+        source = "\n".join(
+            (
+                "'outer: loop { // ponytail: label marker",
+                "    break 'outer; // ponytail: break marker",
+                "key: 'foo # ponytail: quoted text'",
+                "key: 'value' # ponytail: real marker",
+            )
+        )
+
+        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 4])
 
     def test_skips_prose_and_build_directories(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ponytail-debt-test-") as temporary:

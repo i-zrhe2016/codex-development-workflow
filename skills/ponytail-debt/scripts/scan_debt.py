@@ -34,7 +34,6 @@ EXCLUDED_SUFFIXES = {
     ".webp",
     ".zip",
 }
-URI_SCHEMES = {"ftp", "ftps", "git", "http", "https", "ssh", "ws", "wss"}
 
 
 def _is_marker(body: str, allow_leading_star: bool) -> bool:
@@ -57,28 +56,52 @@ def _is_url_separator(line: str, index: int) -> bool:
     ):
         scheme_start -= 1
     scheme = line[scheme_start + 1:scheme_end]
-    return scheme.lower() in URI_SCHEMES and not line[index + 2].isspace()
+    return (
+        bool(scheme)
+        and scheme[0].isalpha()
+        and not line[index + 2].isspace()
+    )
 
 
 def _skip_uri(line: str, index: int) -> int:
     while index < len(line) and not line[index].isspace():
+        if line[index] in ";|" and index + 1 < len(line):
+            if line[index + 1] in "#/":
+                break
+        if line[index] == "#" and index + 1 < len(line) and line[index + 1].isspace():
+            break
         index += 1
     return index
 
 
-def _is_rust_lifetime(line: str, index: int) -> bool:
+def _identifier_end(line: str, index: int) -> int:
+    end = index
+    while end < len(line) and (line[end].isalnum() or line[end] == "_"):
+        end += 1
+    return end
+
+
+def _is_rust_lifetime(line: str, index: int, suffix: str) -> bool:
     if index + 1 >= len(line) or not (
         line[index + 1].isalpha() or line[index + 1] == "_"
     ):
         return False
 
+    identifier_end = _identifier_end(line, index + 1)
     prefix = line[:index].rstrip()
-    if not prefix:
-        return False
-    return prefix[-1] in "&<>,:+" or prefix.endswith(("where", "for"))
+    if prefix and (prefix[-1] in "&<>,+" or prefix.endswith(("break", "continue", "where", "for"))):
+        return True
+
+    label_tail = line[identifier_end:].lstrip()
+    if label_tail.startswith(":"):
+        label_body = label_tail[1:].lstrip()
+        if label_body.startswith(("loop", "while", "for")):
+            return True
+
+    return suffix == ".rs" and prefix.endswith(":")
 
 
-def marker_lines(text: str) -> list[int]:
+def marker_lines(text: str, suffix: str = "") -> list[int]:
     """Return line numbers whose comments begin with a Ponytail marker."""
     found: list[int] = []
     block_end: str | None = None
@@ -114,7 +137,7 @@ def marker_lines(text: str) -> list[int]:
                 index += 3
             elif line[index] == "'":
                 # A Rust lifetime such as &'static is not a string delimiter.
-                if not _is_rust_lifetime(line, index):
+                if not _is_rust_lifetime(line, index, suffix):
                     quote = line[index]
                 index += 1
             elif line[index] in {'"', chr(96)}:
@@ -172,7 +195,7 @@ def scan(root: Path) -> Iterator[tuple[str, int, str]]:
         text = raw.decode("utf-8", errors="replace")
         lines = text.splitlines()
         relative = path.relative_to(base).as_posix()
-        for line_number in marker_lines(text):
+        for line_number in marker_lines(text, path.suffix.lower()):
             yield relative, line_number, lines[line_number - 1]
 
 
