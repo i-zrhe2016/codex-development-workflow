@@ -48,6 +48,24 @@ commands for unknown tooling. The parent workflow decides whether any Slice is
 delegated. A required GitHub read/write failure blocks completion; the skill
 does not fall back to local Markdown or chat-only storage.
 
+## Naming contract
+
+The skill uses stable, distinct names for every planning record:
+
+| Record | Identifier | GitHub Issue or output title |
+| --- | --- | --- |
+| Parent plan | lowercase kebab-case `codex-plan-id` slug | `[PLAN] <short plan title>` |
+| Ticket | repository-scoped `T` plus four digits, such as `T0016` | `[T0016] <short behavior/capability title>` |
+| Slice | parent Ticket digits plus a one-based ordinal, such as `S0016.1` | Nested Slice heading `S0016.1 - <slice title>` |
+| Branch | lowercase Ticket ID plus a short description | `<type>/t0016-<short-description>` |
+
+New Ticket IDs are selected by scanning both open and closed Issue bodies and
+must be greater than every existing valid ID; IDs are never reused. Duplicate
+IDs in closed historical Issues are legacy records and are not renumbered.
+When a matching Issue is reused, its title is normalized without changing its
+stable marker or identifier. A single-Ticket request has no parent plan Issue,
+but its Ticket still uses the canonical Ticket title.
+
 ## Ticket-to-Slice hierarchy
 
 Ticket decomposition comes before Slice decomposition. A Ticket is the
