@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-17 @ daec771d65b13db6421fc45d43d73e538e246679
+Last verified: 2026-09-17 @ 9b942cbc08918a97a60aff56876fc40717ea2740
 
 ## Current Focus
 
@@ -22,6 +22,8 @@ Last verified: 2026-09-17 @ daec771d65b13db6421fc45d43d73e538e246679
   Tailscale-only hardening gate for publishing targets.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold plans and Tickets, while `docs/skills/` documents the managed skills.
+- `plan-to-ticket` uses canonical `[PLAN]` and `[T####]` Issue titles,
+  repository-scoped non-reused Ticket IDs, and linked Slice/branch identifiers.
 - The installer records per-bundle ownership markers, protects unmarked paths,
   and offers recoverable `--adopt-legacy` migration for pre-marker installs.
 
