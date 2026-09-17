@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-17 @ 323b628
+Last verified: 2026-09-17 @ working tree
 
 ## Current Focus
 
@@ -28,6 +28,8 @@ Last verified: 2026-09-17 @ 323b628
   high-impact/uncertain changes fall back to full coverage.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold plans and Tickets, while `docs/skills/` documents the managed skills.
+- The installer records per-bundle ownership markers, protects unmarked paths,
+  and offers recoverable `--adopt-legacy` migration for pre-marker installs.
 
 ## In Progress
 
