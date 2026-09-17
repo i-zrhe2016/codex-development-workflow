@@ -143,8 +143,16 @@ Point to the immediate next ticket/issue when known. Do not duplicate the full b
 
 Always maintain a `Last verified` line.
 
-- If the working tree is clean, use the current short commit SHA when available.
-- If the file is updated before the implementation commit, use `working tree` rather than inventing the future commit SHA.
+- If the working tree is clean and this file was not changed by the commit being
+  verified, use the current short commit SHA when available.
+- If the file is updated before the implementation commit, use `working tree`
+  rather than inventing the future commit SHA. Keep that marker in the commit
+  carrying the state-file update: replacing it with that commit's own SHA would
+  be self-referential. A later clean-tree verification may replace it with the
+  actual SHA.
+- For a post-merge refresh performed on its own feature branch, the state-only
+  commit may retain `working tree` or record the already-verified base/parent
+  SHA. Never use that state-only commit's own SHA.
 - Use the current date only when actually updating or validating the file.
 - If a section cannot be verified, mark the specific item `Unverified` or remove it.
 
