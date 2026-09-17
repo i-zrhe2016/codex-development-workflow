@@ -14,7 +14,7 @@ remain inside their own `SKILL.md` files.
 | `codex-development-workflow` | Coordinates the single Requirement-to-PR-to-Merge lifecycle, Plan/Ticket/Slice decomposition, bounded verification, and delivery gates. |
 | Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
-| `.codex/agents/reviewer.toml` | Optional project-scoped supplemental read-only reviewer; it cannot replace `codex review`. |
+| `.codex/agents/reviewer.toml` | Optional project-scoped supplemental read-only reviewer; it cannot replace `ocr review`. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
 | `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the ticket Issues, plus the parent plan Issue for multi-Ticket work, before branch work. |
 | GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
@@ -184,7 +184,7 @@ escalation.
 
 ### Automatic Review and final gates
 
-![Codex review execution and recovery](../diagrams/review-execution.svg)
+![Open Code Review execution and recovery](../diagrams/review-execution.svg)
 
 Editable source: [`review-execution.puml`](../diagrams/review-execution.puml).
 The runner persists execution separately from the main agent's assessment.
@@ -201,9 +201,10 @@ the [execution contract](../../skills/github-push-when-ready/references/review-e
 
 Every change must be committed and pushed to a feature branch, then have a PR
 created or updated before Automatic Review starts. Automatic Review is exactly
-the built-in `codex review` command; run it immediately without waiting for user
-confirmation, using the selected review range, branch boundary, and available CI
-results. The first run is full; the normal bounded fix loop is Fix -> Test ->
+Alibaba Open Code Review's `ocr review` command; run it immediately without
+waiting for user confirmation, using the selected review range, branch boundary,
+and available CI results. The first run is full; the normal bounded fix loop is
+Fix -> Test ->
 Redaction if applicable -> Commit -> Push -> incremental review from the last
 assessed head. Escalate that loop to full review for the documented high-impact,
 base/history, or uncertain cases. Merge after the selected review and required
@@ -215,7 +216,7 @@ checks across them in addition to each Ticket's checks.
 
 Automatic Review remains separate from tests, diagnostics, linting, and static
 analysis. The project-scoped `.codex/agents/reviewer.toml` is optional
-supplemental review and cannot replace the built-in `codex review` gate; invoke
+supplemental review and cannot replace the mandatory `ocr review` gate; invoke
 it only as an additional read-only check from an interactive Codex session.
 
 ### Project-scoped Codex configuration

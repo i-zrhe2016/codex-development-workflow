@@ -1,4 +1,4 @@
-# Recoverable Codex review
+# Recoverable Open Code Review
 
 Run from a clean, published PR branch. Resolve and refresh the actual PR base
 before starting; a stale local base cannot detect upstream changes. Before
@@ -13,9 +13,9 @@ checks still apply.
 python3 <skill-dir>/scripts/run_review.py --base origin/main
 ```
 
-The runner invokes built-in `codex review`, streams output, and saves logs,
-branch, and base/head identities under the worktree's Git metadata directory
-`codex-review/`. Incremental reuse is bound to the exact current feature branch;
+The runner invokes Alibaba Open Code Review's `ocr review`, streams output, and
+saves logs, branch, and base/head identities under the worktree's Git metadata directory
+`ocr-review/`. Incremental reuse is bound to the exact current feature branch;
 an unbound legacy state or a state from another branch falls back to a full
 review. Keep logs local: review output may contain repository-sensitive material.
 The runner neither publishes changes nor merges PRs.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stream Codex review into recoverable, worktree-local Git metadata.
+"""Stream Open Code Review into recoverable, worktree-local Git metadata.
 
 Exit 0 means execution completed, never that the review passed. The main
 agent must inspect the saved conclusion and explicitly record its assessment.
@@ -140,7 +140,7 @@ def main():
     branch = git("branch", "--show-current")
     if not branch:
         parser.error("Review requires a named feature branch")
-    directory = Path(git("rev-parse", "--absolute-git-dir")) / "codex-review"
+    directory = Path(git("rev-parse", "--absolute-git-dir")) / "ocr-review"
     directory.mkdir(mode=0o700, exist_ok=True)
     state_path = directory / "state.json"
     with (directory / "lock").open("w") as lock:
@@ -192,7 +192,8 @@ def main():
         save(state_path, state)
         print(f"Review ({coverage}) {scope}..{head}; log={log_path}", flush=True)
         try:
-            code = stream(["codex", "review", "--base", scope], log_path, state, state_path)
+            code = stream(["ocr", "review", "--from", scope, "--to", head],
+                          log_path, state, state_path)
             unchanged = git("rev-parse", "HEAD") == head and not git("status", "--porcelain")
             state.update(exit_code=code, status="completed" if code == 0 and unchanged else "incomplete")
         except BaseException:

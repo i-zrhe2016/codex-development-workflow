@@ -28,8 +28,8 @@ package "Delivery and recovery" #FFF7ED {
 package "Tools and durable evidence" #F8FAFC {
   database "GitHub Issues\nTicket records; parent plan for\nmulti-Ticket work\nStatus / Branch / Base / PR\nAuthoritative for every Ticket" as issues
   database "Git + GitHub PR\nFeature commits / checks / merged status\nDefault branch protected by workflow" as github
-  component "Built-in Codex CLI\ncodex review --base <ref>\nMandatory Automatic Review" as cli
-  database "Local Git metadata\ncodex-review/\nState / run history / logs\nNever committed" as logs
+  component "Alibaba Open Code Review CLI\nocr review --from <ref> --to <head>\nMandatory Automatic Review" as cli
+  database "Local Git metadata\nocr-review/\nState / run history / logs\nNever committed" as logs
   artifact "docs/Repo_Current_State.md\nCompact recovery index\nNot a ticket database" as snapshot
   node "Target project's existing CI/CD\nNot provisioned by this package" as cicd
 }
@@ -53,6 +53,6 @@ deploy --> cicd : rollout / verify / rollback
 legend bottom
 Skills guide the main agent; they are not autonomous background services.
 The main agent consumes evidence and decides whether workflow gates pass.
-Optional reviewer analysis supplements, but never replaces, built-in Codex review.
+Optional reviewer analysis supplements, but never replaces, Alibaba Open Code Review.
 endlegend
 @enduml

@@ -39,8 +39,8 @@ changes.
 `data-document-redaction` owns the staged-file scan before commit and repeats it
 after blocking review fixes that change staged content. `github-push-when-ready` owns the feature-branch
 publication path, Commit, Push, Create/Update PR, Merge, and source-branch
-cleanup gates. The built-in `codex review` command is the mandatory Automatic
-Review gate; it is not installed by this script and runs after PR creation or
-update. The project-scoped `.codex/agents/reviewer.toml` is optional
+cleanup gates. Alibaba Open Code Review's `ocr review` command is the mandatory
+Automatic Review gate; it is not installed by this script and runs after PR
+creation or update. The project-scoped `.codex/agents/reviewer.toml` is optional
 supplemental analysis loaded by an interactive session and never replaces
-`codex review`.
+`ocr review`.

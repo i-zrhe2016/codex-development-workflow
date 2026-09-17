@@ -269,23 +269,22 @@ without waiting for user confirmation.
   python3 <skill-dir>/scripts/run_review.py --base <actual-base-ref>
   ```
 
-  The runner invokes `codex review` with the complete range for the first
-  review. After a completed, assessed review on the same named feature branch,
-  it defaults to `codex review --base <reviewed-head-sha>` for bounded fixes
-  and includes all intervening commits;
+  The runner invokes `ocr review --from <scope> --to <reviewed-head-sha>` with
+  the complete range for the first review. After a completed, assessed review
+  on the same named feature branch, it uses the previous assessed head as the
+  `--from` scope for bounded fixes and includes all intervening commits;
   the main agent must verify the original findings are resolved. Base changes,
   rewritten history, architecture, public API or interface, security or
   authentication, database or schema, cross-module behavior, or uncertain
   impact require full PR coverage. Batch one round's findings into one
   fix/test/push cycle. Preserve review logs and conclusions; use the runner
   documented in `skills/github-push-when-ready/references/review-execution.md`.
-  `codex review --uncommitted` is only for a
-  narrow pre-commit working-tree check, and `codex review --commit SHA` is only
-  for a single-commit check; neither replaces initial complete PR coverage. These
-  commands do not select the optional supplemental `.codex/agents/reviewer.toml`.
+  Direct `ocr review` invocations are only supplemental checks; they do not
+  replace the runner's initial complete PR coverage. These commands do not
+  select the optional supplemental `.codex/agents/reviewer.toml`.
 
   The project-scoped reviewer may be run separately for additional read-only
-  findings, but it never replaces `codex review`:
+  findings, but it never replaces `ocr review`:
 
   ```text
   Use the project-scoped `reviewer` subagent to inspect the current PR diff and
