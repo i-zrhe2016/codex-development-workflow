@@ -17,11 +17,11 @@ can't quietly become permanent.
 Search source files for comment markers, skipping prose files, `node_modules`,
 `.git`, and common build output:
 
-`rg -n --hidden -g '!node_modules/**' -g '!.git/**' -g '!dist/**' -g '!build/**' -g '!coverage/**' -g '!vendor/**' -g '!*.md' -g '!*.rst' -g '!*.txt' '(^|[[:space:]])(#[[:space:]]*|//[[:space:]]*|/\*\*?[[:space:]]*|\*[[:space:]]*|<!--[[:space:]]*)ponytail:' .`
+python3 skills/ponytail-debt/scripts/scan_debt.py .
 
-The source-file exclusions filter prose examples, while the comment-prefix
-alternatives match both standalone and inline markers. Add the comment form or
-source-file exclusion used by the target language when needed.
+It recognizes #, //, /* ... */, and <!-- ... --> comments, including markers
+attached directly to code and continuation lines. Add the comment form to
+scan_debt.py when the target language uses another delimiter.
 
 Each hit is one ledger row. The comment prefix keeps prose that merely mentions
 the convention out of the ledger.
