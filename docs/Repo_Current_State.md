@@ -22,7 +22,8 @@ Last verified: 2026-09-17 @ working tree
   existing HTTP service; it does not install a server or change firewall state.
 - Catalog writes use validation, atomic replacement, fenced durable recovery,
   authenticated transaction journals, and focused unit tests.
-- Automatic Review uses the recoverable runner: the first PR review is full,
+- Automatic Review uses Alibaba Open Code Review through the recoverable `ocr`
+  runner: the first PR review is full,
   bounded fixes default to incremental coverage from the last assessed head
   when base/history and named feature-branch identity match, and unbound or
   high-impact/uncertain changes fall back to full coverage.
@@ -43,7 +44,8 @@ Last verified: 2026-09-17 @ working tree
 
 ## Constraints
 
-- Automatic Review requires an installed and authenticated Codex CLI.
+- Automatic Review requires an installed and configured Alibaba Open Code Review
+  CLI (`ocr`) and a reachable provider endpoint with a supported model.
 - Shell commands use the available native tools through `context-efficiency`;
   exact evidence and publication gates preserve raw output and exit status.
 - `auto-deploy` does not own target infrastructure or production approval and
