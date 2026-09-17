@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ponytail Review"
-  short_description: "Find over-engineering and unnecessary code in a diff"
-  default_prompt: "Use $ponytail-review to inspect the current diff for deletions, stdlib/native replacements, unnecessary abstractions, and avoidable dependencies. Report findings only."

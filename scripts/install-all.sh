@@ -53,12 +53,6 @@ esac
 SKILLS=(
   ".|codex-development-workflow"
   "skills/context-efficiency|context-efficiency"
-  "skills/ponytail|ponytail"
-  "skills/ponytail-review|ponytail-review"
-  "skills/ponytail-audit|ponytail-audit"
-  "skills/ponytail-debt|ponytail-debt"
-  "skills/ponytail-gain|ponytail-gain"
-  "skills/ponytail-help|ponytail-help"
   "skills/plan-to-ticket|plan-to-ticket"
   "skills/test-workflow|test-workflow"
   "skills/repo-current-state|repo-current-state"

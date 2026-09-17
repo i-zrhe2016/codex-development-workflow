@@ -21,7 +21,6 @@ remain inside their own `SKILL.md` files.
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
-| `ponytail` family | Applies minimal implementation guidance and explicit over-engineering/debt/reference reports; it never replaces workflow quality gates. |
 | `auto-deploy` | Discovers the deployment contract, gates automatic releases, verifies health, and coordinates safe rollback. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |

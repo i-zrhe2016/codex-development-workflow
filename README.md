@@ -114,12 +114,6 @@ Restart Codex after installation.
 
 - `codex-development-workflow`
 - `context-efficiency`
-- `ponytail`
-- `ponytail-review`
-- `ponytail-audit`
-- `ponytail-debt`
-- `ponytail-gain`
-- `ponytail-help`
 - `plan-to-ticket`
 - `test-workflow`
 - `repo-current-state`
@@ -146,12 +140,6 @@ relevant bundle.
 |---|---|---|
 | `codex-development-workflow` | [`SKILL.md`](SKILL.md) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 | `context-efficiency` | [`skills/context-efficiency/`](skills/context-efficiency/) | [Skill documentation](docs/skills/context-efficiency/README.md) |
-| `ponytail` | [`skills/ponytail/`](skills/ponytail/) | [Skill documentation](docs/skills/ponytail/README.md) |
-| `ponytail-review` | [`skills/ponytail-review/`](skills/ponytail-review/) | [Skill documentation](docs/skills/ponytail/README.md) |
-| `ponytail-audit` | [`skills/ponytail-audit/`](skills/ponytail-audit/) | [Skill documentation](docs/skills/ponytail/README.md) |
-| `ponytail-debt` | [`skills/ponytail-debt/`](skills/ponytail-debt/) | [Skill documentation](docs/skills/ponytail/README.md) |
-| `ponytail-gain` | [`skills/ponytail-gain/`](skills/ponytail-gain/) | [Skill documentation](docs/skills/ponytail/README.md) |
-| `ponytail-help` | [`skills/ponytail-help/`](skills/ponytail-help/) | [Skill documentation](docs/skills/ponytail/README.md) |
 | `plan-to-ticket` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
 | `test-workflow` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
 | `repo-current-state` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |

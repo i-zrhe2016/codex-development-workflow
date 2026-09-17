@@ -13,12 +13,6 @@ bundle's `agents/openai.yaml`.
 |---|---|---|---|
 | `codex-development-workflow` | Root package: `SKILL.md`, `agents/`, selected workflow references | `docs/workflow/`, `docs/architecture/` | `codex-development-workflow` |
 | `context-efficiency` | `skills/context-efficiency/` | `docs/skills/context-efficiency/` | `context-efficiency` |
-| `ponytail` | `skills/ponytail/` | `docs/skills/ponytail/` | `ponytail` |
-| `ponytail-review` | `skills/ponytail-review/` | `docs/skills/ponytail/` | `ponytail-review` |
-| `ponytail-audit` | `skills/ponytail-audit/` | `docs/skills/ponytail/` | `ponytail-audit` |
-| `ponytail-debt` | `skills/ponytail-debt/` | `docs/skills/ponytail/` | `ponytail-debt` |
-| `ponytail-gain` | `skills/ponytail-gain/` | `docs/skills/ponytail/` | `ponytail-gain` |
-| `ponytail-help` | `skills/ponytail-help/` | `docs/skills/ponytail/` | `ponytail-help` |
 | `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` | `plan-to-ticket` |
 | `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` | `test-workflow` |
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` |

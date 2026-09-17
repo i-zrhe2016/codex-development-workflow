@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ponytail Debt"
-  short_description: "Collect ponytail shortcuts into a debt report"
-  default_prompt: "Use $ponytail-debt to collect every ponytail shortcut marker, its ceiling, and its upgrade trigger into a concise report without changing files."
