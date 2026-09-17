@@ -34,6 +34,7 @@ EXCLUDED_SUFFIXES = {
     ".webp",
     ".zip",
 }
+URI_SCHEMES = {"ftp", "ftps", "git", "http", "https", "ssh", "ws", "wss"}
 
 
 def _is_marker(body: str, allow_leading_star: bool) -> bool:
@@ -43,21 +44,9 @@ def _is_marker(body: str, allow_leading_star: bool) -> bool:
     return candidate.startswith("ponytail:")
 
 
-def _has_unescaped_quote(line: str, start: int, quote: str) -> bool:
-    escaped = False
-    for character in line[start:]:
-        if escaped:
-            escaped = False
-        elif character == "\\":
-            escaped = True
-        elif character == quote:
-            return True
-    return False
-
-
 def _is_url_separator(line: str, index: int) -> bool:
     """Return whether ``//`` is the separator in a URI such as ``https://``."""
-    if index == 0 or line[index - 1] != ":":
+    if index == 0 or line[index - 1] != ":" or index + 2 >= len(line):
         return False
 
     scheme_end = index - 1
@@ -67,7 +56,26 @@ def _is_url_separator(line: str, index: int) -> bool:
         or line[scheme_start] in {"+", ".", "-"}
     ):
         scheme_start -= 1
-    return scheme_start < scheme_end - 1
+    scheme = line[scheme_start + 1:scheme_end]
+    return scheme.lower() in URI_SCHEMES and not line[index + 2].isspace()
+
+
+def _skip_uri(line: str, index: int) -> int:
+    while index < len(line) and not line[index].isspace():
+        index += 1
+    return index
+
+
+def _is_rust_lifetime(line: str, index: int) -> bool:
+    if index + 1 >= len(line) or not (
+        line[index + 1].isalpha() or line[index + 1] == "_"
+    ):
+        return False
+
+    prefix = line[:index].rstrip()
+    if not prefix:
+        return False
+    return prefix[-1] in "&<>,:+" or prefix.endswith(("where", "for"))
 
 
 def marker_lines(text: str) -> list[int]:
@@ -106,9 +114,7 @@ def marker_lines(text: str) -> list[int]:
                 index += 3
             elif line[index] == "'":
                 # A Rust lifetime such as &'static is not a string delimiter.
-                # Single-quoted literals are line-local in the source forms
-                # this scanner supports, so require a closing quote first.
-                if _has_unescaped_quote(line, index + 1, "'"):
+                if not _is_rust_lifetime(line, index):
                     quote = line[index]
                 index += 1
             elif line[index] in {'"', chr(96)}:
@@ -122,7 +128,7 @@ def marker_lines(text: str) -> list[int]:
                 index += 4
             elif line.startswith("//", index):
                 if _is_url_separator(line, index):
-                    index += 2
+                    index = _skip_uri(line, index + 2)
                     continue
                 if _is_marker(line[index + 2:], allow_leading_star=False):
                     found.append(line_number)

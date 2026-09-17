@@ -44,11 +44,25 @@ class ScanDebtTests(unittest.TestCase):
         source = "\n".join(
             (
                 'endpoint: https://host # ponytail: yaml marker',
-                'let x: &\'static str = "x"; // ponytail: rust marker',
+                'let x: &\'static str = "it\'s Bob\'s"; // ponytail: rust marker',
             )
         )
 
         self.assertEqual(scan_debt.marker_lines(source), [1, 2])
+
+    def test_distinguishes_uri_tokens_and_multiline_single_quotes(self) -> None:
+        source = "\n".join(
+            (
+                "label:// ponytail: label marker",
+                "endpoint=https://host/#ponytail: url text # ponytail: real marker",
+                "value='first",
+                "# ponytail: quoted text",
+                "second'",
+                "# ponytail: after quote",
+            )
+        )
+
+        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 6])
 
     def test_skips_prose_and_build_directories(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ponytail-debt-test-") as temporary:
