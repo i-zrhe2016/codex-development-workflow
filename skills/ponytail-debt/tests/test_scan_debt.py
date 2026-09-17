@@ -54,10 +54,12 @@ class ScanDebtTests(unittest.TestCase):
         source = "\n".join(
             (
                 "label:// ponytail: label marker",
+                "label://ponytail: no-space label marker",
                 "endpoint=https://host/#ponytail: url text # ponytail: real marker",
                 "path=file://host/path # ponytail: file marker",
                 "remote=git+ssh://host/path # ponytail: remote marker",
                 "curl https://host;# ponytail: shell marker",
+                "url: https://host/path;#ponytail:fragment",
                 "value='first",
                 "# ponytail: quoted text",
                 "second'",
@@ -65,19 +67,24 @@ class ScanDebtTests(unittest.TestCase):
             )
         )
 
-        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 3, 4, 5, 9])
+        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 3, 4, 5, 6, 11])
+        self.assertEqual(
+            scan_debt.marker_lines("curl https://host;#ponytail: shell marker", ".sh"),
+            [1],
+        )
 
     def test_keeps_rust_labels_out_of_single_quoted_values(self) -> None:
         source = "\n".join(
             (
                 "'outer: loop { // ponytail: label marker",
                 "    break 'outer; // ponytail: break marker",
+                "value = 'foo: loop # ponytail: quoted text'",
                 "key: 'foo # ponytail: quoted text'",
                 "key: 'value' # ponytail: real marker",
             )
         )
 
-        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 4])
+        self.assertEqual(scan_debt.marker_lines(source), [1, 2, 5])
 
     def test_skips_prose_and_build_directories(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ponytail-debt-test-") as temporary:

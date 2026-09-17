@@ -60,14 +60,24 @@ def _is_url_separator(line: str, index: int) -> bool:
         bool(scheme)
         and scheme[0].isalpha()
         and not line[index + 2].isspace()
+        and not _is_marker(line[index + 2:], allow_leading_star=False)
     )
 
 
-def _skip_uri(line: str, index: int) -> int:
+SHELL_SUFFIXES = {".bash", ".command", ".fish", ".sh", ".zsh"}
+
+
+def _skip_uri(line: str, index: int, suffix: str) -> int:
     while index < len(line) and not line[index].isspace():
         if line[index] in ";|" and index + 1 < len(line):
-            if line[index + 1] in "#/":
-                break
+            next_index = index + 1
+            if line[next_index] == "#":
+                if suffix in SHELL_SUFFIXES or line[next_index + 1:next_index + 2].isspace():
+                    break
+            elif line.startswith("//", next_index):
+                comment_body = line[next_index + 2:]
+                if suffix in SHELL_SUFFIXES or not comment_body or comment_body[0].isspace() or _is_marker(comment_body, allow_leading_star=False):
+                    break
         if line[index] == "#" and index + 1 < len(line) and line[index + 1].isspace():
             break
         index += 1
@@ -89,11 +99,14 @@ def _is_rust_lifetime(line: str, index: int, suffix: str) -> bool:
 
     identifier_end = _identifier_end(line, index + 1)
     prefix = line[:index].rstrip()
-    if prefix and (prefix[-1] in "&<>,+" or prefix.endswith(("break", "continue", "where", "for"))):
+    if prefix and (
+        prefix[-1] in "&<>,+"
+        or prefix.endswith(("break", "continue", "where", "for"))
+    ):
         return True
 
     label_tail = line[identifier_end:].lstrip()
-    if label_tail.startswith(":"):
+    if label_tail.startswith(":") and (not prefix or prefix[-1] in "{;"):
         label_body = label_tail[1:].lstrip()
         if label_body.startswith(("loop", "while", "for")):
             return True
@@ -151,7 +164,7 @@ def marker_lines(text: str, suffix: str = "") -> list[int]:
                 index += 4
             elif line.startswith("//", index):
                 if _is_url_separator(line, index):
-                    index = _skip_uri(line, index + 2)
+                    index = _skip_uri(line, index + 2, suffix)
                     continue
                 if _is_marker(line[index + 2:], allow_leading_star=False):
                     found.append(line_number)
