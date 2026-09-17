@@ -21,7 +21,6 @@ remain inside their own `SKILL.md` files.
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
-| `ponytail` family | Applies minimal implementation guidance and explicit over-engineering/debt/reference reports; it never replaces workflow quality gates. |
 | `auto-deploy` | Discovers the deployment contract, gates automatic releases, verifies health, and coordinates safe rollback. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
@@ -244,7 +243,9 @@ and need project-specific tooling and review.
 
 1. Obtain a checkout of this repository and run `scripts/install-all.sh`.
 2. The installer validates each local `SKILL.md` and copies the configured bundle into `${CODEX_HOME:-$HOME/.codex}/skills` or `--dest PATH`.
-3. Existing skills are skipped unless `--update` is used.
+3. Existing marked skills are skipped unless `--update` is used; unmarked paths
+   are preserved unless `--update --adopt-legacy` explicitly moves them to a
+   recoverable backup first.
 4. Restart Codex to discover installed skills.
 
 The installer and [`references/skill-map.md`](../../references/skill-map.md)

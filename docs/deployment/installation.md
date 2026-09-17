@@ -83,9 +83,27 @@ bash scripts/install-all.sh --update
 ```
 
 Without `--update`, an existing skill directory is reported as `skip` and is
-left unchanged. With `--update`, the existing destination directory is removed
-before the local bundled content is copied into place. Back up any local edits
-before using this option.
+left unchanged. With `--update`, an existing destination is replaced only when
+it carries the matching marker written by this installer; an unmarked path is
+preserved and reported as `ownership unverified`. Retired skill destinations
+are removed under the same ownership check. Back up any local edits before
+using this option.
+
+The marker is stored as the hidden file
+`.codex-development-workflow-managed` inside each installed bundle. This
+prevents an update from recursively deleting an unrelated skill that happens
+to use a retired or current workflow name. Installations created before this
+marker existed remain untouched by the default update. To migrate one of those
+installations, explicitly opt in:
+
+```bash
+bash scripts/install-all.sh --update --adopt-legacy
+```
+
+This one-time adoption moves every unmarked configured destination to a hidden,
+recoverable backup under the skills directory before updating or pruning it;
+the command requires `--update`. Review the printed backup path before removing
+it manually.
 
 ## Choose another destination
 
