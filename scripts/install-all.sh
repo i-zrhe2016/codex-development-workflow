@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 DEST_ROOT="${CODEX_HOME:-$HOME/.codex}/skills"
 UPDATE=0
+MANAGED_MARKER=".codex-development-workflow-managed"
 
 usage() {
   cat <<'USAGE'
@@ -72,6 +73,15 @@ OBSOLETE_SKILLS=(
   "ponytail-help"
 )
 
+destination_is_managed() {
+  local dest="$1"
+  local name="$2"
+
+  [ -d "$dest" ] || return 1
+  [ -f "$dest/$MANAGED_MARKER" ] || return 1
+  grep -Fqx -- "codex-development-workflow:$name" "$dest/$MANAGED_MARKER"
+}
+
 installed=0
 skipped=0
 
@@ -79,8 +89,12 @@ if [ "$UPDATE" -eq 1 ]; then
   for name in "${OBSOLETE_SKILLS[@]}"; do
     dest="$DEST_ROOT/$name"
     if [ -e "$dest" ] || [ -L "$dest" ]; then
-      echo "remove: $name (retired)"
-      rm -rf "$dest"
+      if destination_is_managed "$dest" "$name"; then
+        echo "remove: $name (retired)"
+        rm -rf "$dest"
+      else
+        echo "preserve: $name (ownership unverified)"
+      fi
     fi
   done
 fi
@@ -106,7 +120,13 @@ for spec in "${SKILLS[@]}"; do
 
   if [ -e "$dest" ]; then
     if [ "$UPDATE" -eq 1 ]; then
-      rm -rf "$dest"
+      if destination_is_managed "$dest" "$name"; then
+        rm -rf "$dest"
+      else
+        echo "preserve: $name (ownership unverified)"
+        skipped=$((skipped + 1))
+        continue
+      fi
     else
       echo "skip: $name already exists at $dest"
       skipped=$((skipped + 1))
@@ -127,6 +147,7 @@ for spec in "${SKILLS[@]}"; do
       tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
     ) | (cd "$dest" && tar -xf -)
   fi
+  printf '%s\n' "codex-development-workflow:$name" > "$dest/$MANAGED_MARKER"
   installed=$((installed + 1))
 done
 
