@@ -42,8 +42,8 @@ Last verified: 2026-09-16 @ working tree
 ## Constraints
 
 - Automatic Review requires an installed and authenticated Codex CLI.
-- Shell commands use RTK through `context-efficiency`; exact evidence and
-  publication gates use `rtk proxy`.
+- Shell commands use the available native tools through `context-efficiency`;
+  exact evidence and publication gates preserve raw output and exit status.
 - `auto-deploy` does not own target infrastructure or production approval and
   does not change an unspecified live host.
 - Persisted plans and Tickets require an available, authorized GitHub Issues

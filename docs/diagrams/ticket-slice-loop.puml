@@ -43,8 +43,8 @@ Optional parallel work requires disjoint ownership;
 main agent integrates and makes the final judgment.
 end note
 note right of test
-Task shell commands use RTK.
-Tests / raw evidence use rtk proxy.
+Task commands use available native tools.
+Tests / raw evidence preserve real output and exit status.
 Passing focused checks do not trigger a full suite by default.
 end note
 @enduml
