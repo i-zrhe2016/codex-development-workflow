@@ -45,6 +45,7 @@ For each slice:
 * Run the smallest validation set that provides sufficient evidence.
 * Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
 * Do not force strict TDD or multi-Slice decomposition onto trivial changes; a tiny request is one Ticket with one implicit Slice, and it still requires a branch and PR.
+* When the user explicitly requests workflow timing, record measured monotonic wall-clock duration for each externally observable gate and the total run; report whether network or reviewer latency dominated. Timing is observational, does not add a delivery gate, and must not persist session-specific timing logs.
 * After the PR is created, run the automatic review without waiting for user confirmation. Blocking findings repeat the fix, test, redaction, commit, push, and review steps.
 * If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.
 * Do not mix unrelated features, refactors, formatting, or dependency upgrades.
