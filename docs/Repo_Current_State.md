@@ -26,6 +26,10 @@ Last verified: 2026-09-17 @ working tree
   bounded fixes default to incremental coverage from the last assessed head
   when base/history and named feature-branch identity match, and unbound or
   high-impact/uncertain changes fall back to full coverage.
+- The Ponytail integration bundles six stateless Codex skills—`ponytail`,
+  `ponytail-review`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, and
+  `ponytail-help`—with installer and documentation coverage. See
+  `docs/skills/ponytail/README.md`.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold plans and Tickets, while `docs/skills/` documents the managed skills.
 
@@ -55,6 +59,9 @@ Last verified: 2026-09-17 @ working tree
   verification, publication, review, merge, and recovery guidance.
 - Runtime skills remain under `skills/`; explanatory documentation is under
   `docs/skills/`; the installer packages the local skill bundles.
+- Ponytail guidance remains subordinate to explicit requirements and the
+  repository's correctness, testing, redaction, branch, PR, review, and release
+  gates; its debt scanner is comment-aware and source-syntax-aware.
 - `auto-deploy/SKILL.md` owns deployment-boundary behavior, while
   `update_access_catalog.py` owns catalog validation, rendering, and durable
   file reconciliation. See `docs/architecture/overview.md` for the topology.
