@@ -18,6 +18,7 @@ bundle's `agents/openai.yaml`.
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` |
 | `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` |
 | `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` |
+| `pr-review` | `skills/pr-review/` with its runner and execution reference | `docs/skills/pr-review/` | `pr-review` |
 | `auto-deploy` | `skills/auto-deploy/` | `docs/skills/auto-deploy/` | `auto-deploy` |
 
 Each managed source is an independently installable Codex skill folder
@@ -37,10 +38,8 @@ conditionally performs browser/E2E verification when browser-visible behavior
 changes.
 
 `data-document-redaction` owns the staged-file scan before commit and repeats it
-after blocking review fixes that change staged content. `github-push-when-ready` owns the feature-branch
-publication path, Commit, Push, Create/Update PR, Merge, and source-branch
-cleanup gates. Alibaba Open Code Review's `ocr review` command is the mandatory
-Automatic Review gate; it is not installed by this script and runs after PR
-creation or update. The project-scoped `.codex/agents/reviewer.toml` is optional
-supplemental analysis loaded by an interactive session and never replaces
-`ocr review`.
+after blocking review fixes that change staged content. `github-push-when-ready`
+owns the feature-branch publication path through Commit, Push, and Create/Update
+PR readiness. `pr-review` owns the single merge decision gate and invokes
+Alibaba Open Code Review's `ocr review` command through its recoverable runner.
+The runner is packaged with `pr-review` rather than installed separately.

@@ -63,7 +63,7 @@ application infrastructure topology.
   that branch, and the PR head/base must match its Issue metadata.
 - Every requirement has a Ticket Issue; a single-behavior requirement is one
   Ticket with one Slice, and the parent workflow's feature-branch, PR,
-  Automatic Review, merge, and cleanup gates remain mandatory.
+  `pr-review`, merge, and cleanup gates remain mandatory.
 
 ## Ticket-to-Slice hierarchy
 

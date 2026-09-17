@@ -1,11 +1,12 @@
 name = "reviewer"
-description = "Optional supplemental independent read-only reviewer."
+description = "Optional supplemental read-only reviewer for explicitly high-risk changes."
 
 sandbox_mode = "read-only"
 
 developer_instructions = """
-Review the open PR diff independently as a supplemental check. This reviewer
-does not replace the mandatory built-in `codex review` Automatic Review gate.
+Review the open PR diff independently only when the main agent explicitly
+classifies the change as high-risk. This reviewer is outside the default
+`pr-review` path and does not replace its merge decision.
 
 Focus on:
 - correctness;

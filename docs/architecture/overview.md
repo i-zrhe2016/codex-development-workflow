@@ -14,7 +14,7 @@ remain inside their own `SKILL.md` files.
 | `codex-development-workflow` | Coordinates the single Requirement-to-PR-to-Merge lifecycle, Plan/Ticket/Slice decomposition, bounded verification, and delivery gates. |
 | Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
 | `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
-| `.codex/agents/reviewer.toml` | Optional project-scoped supplemental read-only reviewer; it cannot replace `ocr review`. |
+| `.codex/agents/reviewer.toml` | Optional project-scoped supplemental reviewer for explicitly high-risk changes; it is outside the default path. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
 | `plan-to-ticket` | Splits complex requirements into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the ticket Issues, plus the parent plan Issue for multi-Ticket work, before branch work. |
 | GitHub Issues connector | Stores the durable plan/ticket records and their current status, dependency, branch, base, and PR metadata. |
@@ -26,12 +26,14 @@ remain inside their own `SKILL.md` files.
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
 | `references/skill-map.md` | Maps each managed bundle to its local source and Codex destination. |
 | `data-document-redaction` | Scans the files staged for the next commit before publication and repeats the scan after blocking review fixes that change staged content. |
-| `github-push-when-ready` | Guards feature-branch creation/publication, Commit, Push, PR, Merge, and source-branch cleanup. |
+| `github-push-when-ready` | Guards feature-branch publication through Commit, Push, and PR readiness. |
+| `pr-review` | Owns the single PR merge decision and returns `PASS` or `BLOCKED`. |
 
 The main agent centrally owns requirements, architecture, planning, dependency
 ordering, integration, and final judgment. The optional Delegation Gate may
-route independent exploration, testing, isolated implementation, or review to
-bounded workers. Dependent or overlapping work remains sequential, and the
+route independent exploration, testing, or isolated implementation to bounded
+workers. Supplemental review is outside the default path and requires explicit
+high-risk scope. Dependent or overlapping work remains sequential, and the
 main agent must not duplicate active delegated work.
 
 ## Development process
@@ -64,9 +66,9 @@ Requirement
   -> Commit
   -> Push branch
   -> Create / Update PR
-  -> Automatic Review
-  -> Fix / Test / Redaction / Commit / Push / Review loop when blocked
-  -> Merge PR
+  -> pr-review
+  -> PASS: Merge PR
+  -> BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review loop
   -> Delete branch
   -> Update main
   -> Close Ticket
@@ -153,7 +155,7 @@ implementation. The main agent delegates only tasks with a clear goal, scope
 and exclusions, ownership boundary, dependencies, acceptance criteria,
 validation, and expected result summary. Parallel write tasks must not share
 files, interfaces, schemas, migrations, or configuration. Delegation never
-bypasses Test, Redaction when applicable, Commit, Push, PR, Automatic Review, or
+bypasses Test, Redaction when applicable, Commit, Push, PR, `pr-review`, or
 Merge. Prefer a single delegation level.
 
 ### Slice execution
@@ -182,49 +184,33 @@ After the selected level passes, stop unless the acceptance criteria, failure
 evidence, affected boundaries, release requirements, or the user justify an
 escalation.
 
-### Automatic Review and final gates
+### Pull-request review gate
 
 ![Open Code Review execution and recovery](../diagrams/review-execution.svg)
 
 Editable source: [`review-execution.puml`](../diagrams/review-execution.puml).
-The runner persists execution separately from the main agent's assessment.
-Completed results with matching base/head and feature-branch identity can be
-reused. The first review is full; after a completed, assessed `pass` or
-`blocking` result, bounded fixes on the same named feature branch default to the
-last assessed head and include every intervening commit. Unbound legacy state or
-a state from another branch falls back to full. Base
-changes, rewritten history, architecture, public API or interface,
-security/authentication, database/schema, cross-module behavior, or uncertain
-impact require full review. An interrupted or unassessed latest run cannot
-become an incremental baseline and falls back to full coverage on retry. See
-the [execution contract](../../skills/github-push-when-ready/references/review-execution.md).
 
-Every change must be committed and pushed to a feature branch, then have a PR
-created or updated before Automatic Review starts. Automatic Review is exactly
-Alibaba Open Code Review's `ocr review` command; run it immediately without
-waiting for user confirmation, using the selected review range, branch boundary,
-and available CI results. The first run is full; the normal bounded fix loop is
-Fix -> Test ->
-Redaction if applicable -> Commit -> Push -> incremental review from the last
-assessed head. Escalate that loop to full review for the documented high-impact,
-base/history, or uncertain cases. Merge after the selected review and required
-checks pass; no extra full AI review is needed solely because the head changed.
-When multiple Tickets are delivered together, add broader integration/regression
-checks across them in addition to each Ticket's checks.
+`pr-review` is invoked immediately after `github-push-when-ready` reports a
+created or updated PR ready. It is the only policy owner for the merge decision:
+`PASS` permits merge, while `BLOCKED` returns to the fix/test/redaction/commit/
+push loop. The [`pr-review` Skill](../../skills/pr-review/SKILL.md) defines
+blocking criteria and when a complete or bounded review is appropriate; the
+[runner reference](../../skills/pr-review/references/review-execution.md)
+documents only execution recovery mechanics.
 
-`Understand -> Plan -> Record Ticket + Slices -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
+The runner invokes Alibaba Open Code Review's `ocr review` command and keeps its
+logs and state local. The first review covers the complete PR, while eligible
+bounded fixes may use the runner's incremental execution. Current tests and CI
+remain separate evidence and must pass before merge.
 
-Automatic Review remains separate from tests, diagnostics, linting, and static
-analysis. The project-scoped `.codex/agents/reviewer.toml` is optional
-supplemental review and cannot replace the mandatory `ocr review` gate; invoke
-it only as an additional read-only check from an interactive Codex session.
+`Understand -> Plan -> Record Ticket + Slices -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop when blocked -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed`
 
 ### Project-scoped Codex configuration
 
 `.codex/config.toml` enables subagents and limits this project to three
 concurrently open spawned-agent threads, excluding the main thread.
-`.codex/agents/reviewer.toml` provides an optional supplemental read-only
-reviewer. The
+`.codex/agents/reviewer.toml` provides an optional supplemental reviewer only
+for explicitly high-risk changes; it is not part of the default PR path. The
 installer copies managed skills only; these project-scoped files remain in the
 checkout where Codex runs.
 
@@ -256,7 +242,7 @@ must remain aligned.
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
 - Every requirement has a Ticket; a single-behavior request is one Ticket with one implicit Slice, and every change still uses a feature branch and PR.
-- Tests provide evidence inside a Slice; Automatic Review is a mandatory PR-stage merge gate after the branch is published.
+- Tests provide evidence inside a Slice; `pr-review` is the mandatory PR-stage merge gate after the branch is published.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - Redaction is conditional and scoped to the staged commit set; it is not a mandatory transformation of every artifact.
 - State / Docs are updated after merge, source-branch deletion, and default-branch synchronization.

@@ -690,7 +690,7 @@ Use related Skills when their triggers apply:
 - `data-document-redaction` for the staged commit set, and project-specific
   sanitization/review when deployment artifacts or logs cross a non-Git
   sharing/publication boundary;
-- `github-push-when-ready` for commits, pushes, PRs, and merged source-branch
-  cleanup; and
+- `github-push-when-ready` for branch publication, commits, pushes, and PR
+  readiness; and
 - `repo-current-state` after verified deployment-contract or repository-state
   changes.

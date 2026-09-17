@@ -1,28 +1,28 @@
 ---
 name: github-push-when-ready
-description: Guard every Git commit, GitHub push, and pull request by assessing repository readiness, enforcing Conventional Commits 1.0.0, keeping one feature per commit, completing GitHub About metadata, publishing only when safe, and cleaning up merged source branches. Use whenever Codex is about to commit, push, or open a PR, finishes a coherent unit of code work in a GitHub-connected repo, or is asked to ship, publish, or sync changes.
+description: Guard every Git commit, GitHub push, and pull request by assessing repository readiness, enforcing Conventional Commits 1.0.0, keeping one feature per commit, completing GitHub About metadata, and publishing only when safe. Use whenever Codex is about to commit, push, or open a PR, finishes a coherent unit of code work in a GitHub-connected repo, or is asked to ship or sync changes.
 ---
 
 # GitHub Push When Ready
 
 ## Overview
 
-Inspect the current repository and enforce one delivery path for every change:
-`feature branch -> implement -> test -> applicable redaction -> commit -> push ->
-create/update PR -> Automatic Review -> merge -> source-branch cleanup`. Prefer
-the bundled scripts for repeatable checks; only publish after the task is
-complete, validations have passed, and the working tree changes belong to the
-task at hand. A PR is mandatory for Docs, Code, Tests, Config, Refactor, Bugfix,
-Feature, Dependency, and CI/CD changes; none may direct-push around the gate.
+Inspect the current repository and enforce the publication path for every
+change: `feature branch -> implement -> test -> applicable redaction -> commit
+-> push -> create/update PR -> PR ready`. Prefer the bundled scripts for
+repeatable checks; only publish after the task is complete, validations have
+passed, and the working tree changes belong to the task at hand. A PR is
+mandatory for Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency,
+and CI/CD changes; none may direct-push around the gate.
 
 ## Required Git and GitHub Identity
 
-- Identity is a per-target-repository policy. For this repository, configure and use `i-zrhe2016 <zrhe2016@gmail.com>` with GitHub account `i-zrhe2016`:
+- Identity is a per-target-repository policy. For this repository, configure the approved non-root identity and GitHub account:
 
   ```bash
-  git config --local codex.identity.name i-zrhe2016
-  git config --local codex.identity.email zrhe2016@gmail.com
-  git config --local codex.github.account i-zrhe2016
+  git config --local codex.identity.name <approved-name>
+  git config --local codex.identity.email <approved-email>
+  git config --local codex.github.account <approved-account>
   ```
 
 - When targeting another repository, configure that repository's own non-root identity instead of inheriting this repository's values. Do not change global Git configuration or GitHub credentials unless the user explicitly requests it.
@@ -39,7 +39,7 @@ Feature, Dependency, and CI/CD changes; none may direct-push around the gate.
 - If a pending change set contains multiple features, split it into one feature per commit. A commit must not combine unrelated features; keep each feature's implementation, tests, and documentation together.
 - Enforce Conventional Commits 1.0.0 for every new commit: `<type>[optional scope][!]: <description>`. The type must be lowercase, the description must be non-empty, and a scope must be non-empty when present. Body and footer content remain allowed by the specification.
 - Review the diff for each planned commit and stage only its paths or hunks. Prefer explicit `--pathspec` values; never use `--allow-stage-all` when unrelated or independently committable work is present.
-- Validate each functional unit before committing it. Re-run the readiness assessment before each subsequent commit or push because the repository state has changed. After the PR is created or updated, start Automatic Review without waiting for user confirmation; blocking findings restart the affected Test, Redaction, Commit, Push, and Review steps.
+- Validate each functional unit before committing it. Re-run the readiness assessment before each subsequent commit or push because the repository state has changed.
 - Do not create empty commits or push again when the assessment returns `noop`.
 
 ## Quick Start
@@ -69,37 +69,9 @@ authenticated and create the PR against the repository's default branch:
 gh pr create --fill --base <default-branch> --head <feature-branch>
 ```
 
-After creating or updating the PR, run the recoverable review runner immediately
-as Automatic Review, without waiting for user confirmation. It covers the full
-PR on the first review, then defaults to the commits after the last assessed
-`pass` or `blocking` head on later bounded fixes on the same named feature
-branch. The runner persists that branch identity, so an unbound legacy state
-or a state from another branch falls back to a full review. The project-scoped reviewer
-is optional supplemental analysis and never replaces this gate. If review
-reports blocking findings, fix them, rerun the affected tests and redaction
-scan when applicable, commit and push the updated branch, then run the runner
-again; the next bounded review is incremental by default.
-If PR creation/update fails after the push, report the branch and exact
-blocker; do not claim the feature is delivered.
-
-The first review is full-range. Subsequent bounded fixes use the last assessed
-head by default, including all new commits and verification of prior findings.
-Base/history changes, rewrites or rebases, architecture, public API or
-interface, security or authentication, database or schema, cross-module
-behavior, or uncertain impact require full review. Before merge, current
-CI/tests and the selected review must pass; a passing incremental review does
-not need an additional full AI review. Batch each round's findings before
-testing and pushing. Use [review execution](references/review-execution.md)
-for the persistent runner, result reuse, and progress diagnosis. This scope
-policy also applies to the review steps and command examples below.
-
-When merging a PR, use `gh pr merge <number> --merge --delete-branch` after the required checks so GitHub removes the merged source branch. If the PR was already merged without cleanup, first verify `state=MERGED`, the exact base and head branch names, and the merge commit, then delete only that remote head ref:
-
-```bash
-gh api -X DELETE repos/<owner>/<repo>/git/refs/heads/<merged-source-branch>
-```
-
-After remote cleanup, switch to the base branch, fast-forward it, prune remote-tracking refs, and delete the local source branch with `git branch -d <merged-source-branch>`. Never delete the default branch, an unmerged/closed-unmerged source branch, or a branch whose merge target and head were not verified. If local safe deletion cannot prove the branch was merged, keep it and report the blocker.
+When PR creation or update succeeds, report the canonical PR and return
+`PR ready`. If it fails after the push, report the branch and exact blocker; do
+not claim the change is ready for review.
 
 To enforce commit messages and auto-check/auto-push after every new commit, install the managed `commit-msg` and `post-commit` hooks:
 
@@ -107,7 +79,7 @@ To enforce commit messages and auto-check/auto-push after every new commit, inst
 python3 <skill-dir>/scripts/install_post_commit_hook.py --repo .
 ```
 
-After that, invalid commit messages are rejected before a commit is created. Each valid local commit then triggers a fresh readiness check. The post-commit hook pushes only a non-default feature branch when the repo reaches the existing safe `push` state; it never bypasses the required PR and Automatic Review steps. It will not auto-commit leftover changes, and it will skip pushes when the branch is behind upstream, detached, conflicted, on the default branch, when the default branch cannot be determined, or when a GitHub remote is missing.
+After that, invalid commit messages are rejected before a commit is created. Each valid local commit then triggers a fresh readiness check. The post-commit hook pushes only a non-default feature branch when the repo reaches the existing safe `push` state; it never treats a push as a complete delivery. It will not auto-commit leftover changes, and it will skip pushes when the branch is behind upstream, detached, conflicted, on the default branch, when the default branch cannot be determined, or when a GitHub remote is missing.
 
 ## Workflow
 
@@ -118,10 +90,8 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 5. Before any push, verify unpublished commit subjects follow Conventional Commits 1.0.0 and check/complete the GitHub repository About description. The guarded scripts do this automatically when executed.
 6. Treat `push` as eligible only when the working tree is clean, the local branch is ahead of its upstream or has no upstream yet, and About verification succeeds.
 7. Use `push_if_ready.py --execute` with explicit `--pathspec` values for the standard guarded commit-and-push flow. If one file mixes multiple functional units, stage only the intended hunks manually after assessment, then use the equivalent guarded commit and push commands.
-8. After the push succeeds, check for an existing PR and create or update it with `gh pr create`/`gh pr edit` as needed. Record the PR URL or blocker, then run the recoverable review runner immediately as Automatic Review without waiting for confirmation. The first run is full; later bounded runs select the last assessed head by default.
-9. If review finds blocking issues, batch them, repeat the affected Test, Redaction when applicable, Commit, and Push steps, then run the review runner again. Use `--force-full` for the documented high-impact, changed-base/history, or uncertain cases; otherwise the updated PR receives incremental coverage.
-10. When the PR passes review, merge it, verify the exact `MERGED` state, base branch, head branch, and merge commit, delete the remote and local source branches, synchronize the base branch, and then hand off to State / Docs.
-11. For another functional unit, re-inspect the remaining diff and restart this workflow from the readiness assessment.
+8. After the push succeeds, check for an existing PR and create or update it with `gh pr create`/`gh pr edit` as needed. Record the PR URL or blocker and return `PR ready` when the PR is available for the separate `pr-review` gate.
+9. For another functional unit, re-inspect the remaining diff and restart this workflow from the readiness assessment.
 
 ## Push Rules
 
@@ -136,7 +106,6 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 - Prefer `git push -u <remote> <branch>` when the branch has no upstream yet.
 - Prefer clear commit messages tied to the completed task boundary.
 - Require one PR per coherent feature, fix, documentation, configuration, test, dependency, or CI/CD change; keep related tests and documentation in that PR.
-- Delete a source branch only after its PR is verified as `MERGED`; retain the default branch and any branch with unmerged work.
 - Do not treat a successful commit or push as a successful PR. Report each stage separately.
 
 ## Resources
@@ -166,7 +135,7 @@ Behavior:
 - Enforce the configured repository identity and verified GitHub account before committing or pushing; the post-commit hook uses the same guard.
 - Push with `git push` when upstream exists.
 - Push with `git push -u <remote> <branch>` when upstream is missing.
-- It does not create or merge a pull request. After it succeeds, check for an existing PR and run `gh pr create --fill --base <default-branch> --head <feature-branch>` when needed, then run the recoverable review runner as Automatic Review. After the selected review passes and the PR is merged, follow the verified remote/local source-branch cleanup procedure above.
+- It does not create a pull request. After it succeeds, check for an existing PR and run `gh pr create --fill --base <default-branch> --head <feature-branch>` when needed, then return the canonical PR as `PR ready`.
 
 ### `scripts/install_post_commit_hook.py`
 
@@ -176,7 +145,7 @@ Use `--force` only when you intentionally want to replace an existing unmanaged 
 
 ### `scripts/auto_push_post_commit.py`
 
-Runs the same readiness assessment after each valid commit, enforces the configured commit and GitHub identities, completes/verifies GitHub About metadata, and pushes only when `recommended_action` is `push` on a non-default feature branch. It does not open PRs because a post-commit hook lacks the review title/body and branch intent; use the explicit Create / Update PR step after the push, followed immediately by Automatic Review. This keeps the automatic mode conservative: partial commits, unresolved conflicts, missing GitHub remotes, missing About metadata, unverified identities, default-branch work, and branches that are behind upstream are all skipped instead of being forced through.
+Runs the same readiness assessment after each valid commit, enforces the configured commit and GitHub identities, completes/verifies GitHub About metadata, and pushes only when `recommended_action` is `push` on a non-default feature branch. It does not open PRs because a post-commit hook lacks the review title/body and branch intent; use the explicit Create / Update PR step after the push. This keeps the automatic mode conservative: partial commits, unresolved conflicts, missing GitHub remotes, missing About metadata, unverified identities, default-branch work, and branches that are behind upstream are all skipped instead of being forced through.
 
 ### `scripts/publish_identity.py`
 

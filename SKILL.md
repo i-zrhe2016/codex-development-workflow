@@ -1,6 +1,6 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Record every requirement as a GitHub Issue Ticket, then route it through a feature branch, tests, applicable redaction, commit, push, PR, automatic review, merge, cleanup, state update, and post-delivery process evaluation."
+description: "Entry point for repository-wide Codex development. Record every requirement as a GitHub Issue Ticket, then route it through a feature branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
 ---
 
 # Codex Development Workflow
@@ -27,10 +27,9 @@ Requirement
     -> Commit
     -> Push branch
     -> Create / Update PR
-    -> Automatic Review
-    -> Blocking findings?
-       -> yes: Fix -> Test -> Redaction -> Commit -> Push -> Automatic Review again
-       -> no: Merge PR -> Delete branch -> Update main -> Close Ticket
+    -> pr-review
+    -> PASS: Merge PR -> Delete branch -> Update main -> Close Ticket
+    -> BLOCKED: Fix -> Test -> Redaction -> Commit -> Push -> pr-review again
     -> Update State / Docs
     -> Deploy if needed
     -> Evaluate workflow
@@ -50,12 +49,12 @@ updates, and CI/CD changes all use the same path:
 3. Stage the intended files and run the redaction scan; continue on `pass`, or
    on a recorded skip when the staged change carries no sensitive surface.
 4. Commit and push the branch, then create or update its PR.
-5. Start Automatic Review immediately after the PR is created or updated; do
-   not wait for user confirmation.
-6. If review finds a blocking issue, fix it and repeat Test, applicable
-   Redaction, Commit, Push, and Automatic Review.
-7. Merge only after review passes, delete the source branch, update the base
-   branch, close the Ticket, and then update State / Docs.
+5. Invoke `pr-review` immediately after the PR is created or updated; do not
+   wait for user confirmation.
+6. If `pr-review` returns `BLOCKED`, fix the findings and repeat Test, applicable
+   Redaction, Commit, Push, and `pr-review`.
+7. Merge only after `pr-review` returns `PASS`, delete the source branch, update
+   the base branch, close the Ticket, and then update State / Docs.
 8. After delivery and any requested deployment, evaluate the workflow and start
    at most one bounded follow-up improvement when the evidence is reusable.
 
@@ -185,8 +184,8 @@ subagents unless explicitly required.
   verified merge, set `Status: done` and close the Issue.
 - Track implementation readiness separately from merge status. A passing
   change is ready to open or update a PR; it is delivered only after merging.
-- After Automatic Review passes, merge the PR, delete the source branch, update
-  the default branch, close the Ticket, and then update State / Docs.
+- After `pr-review` returns `PASS`, merge the PR, delete the source branch,
+  update the default branch, close the Ticket, and then update State / Docs.
 - If a ticket needs to be abandoned, preserve its work and re-plan.
   Do not automatically delete unmerged branches or reset user changes.
 
@@ -231,72 +230,16 @@ broader checks unless the acceptance criteria, a failure, an affected boundary,
 release requirements, or the user justifies escalation. The report should name
 the level used, commands, result, evidence, and any escalation reason.
 
-## Automatic Review policy
+## Pull-request review gate
 
-Automatic Review is mandatory after every change's PR is created or updated and
-before merge. It is not performed inside a Slice or before the branch is
-published. Use the selected PR range (complete for the first or escalated full
-review, bounded for an eligible follow-up), branch boundary, and available CI
-results as the review context. Start the selected review path immediately
-without waiting for user confirmation.
+After `github-push-when-ready` reports the PR ready, invoke `pr-review`
+immediately. `PASS` permits merge. `BLOCKED` requires the main agent to batch
+the findings, fix them, run affected tests and applicable redaction, commit,
+push, and invoke `pr-review` again.
 
-- Before committing and pushing, run the change's acceptance checks and
-  relevant integration or regression checks.
-- Commit and push the feature branch, then create or update its PR before
-  Automatic Review.
-- The first review covers the complete PR diff, including every Slice in the
-  Ticket.
-- After a completed, assessed `pass` or `blocking` review, the normal fix loop
-  reviews only the new commits from the last assessed head on the same named
-  feature branch. The runner persists and checks that branch identity; an
-  unbound legacy state or a state from another branch falls back to full. It
-  must include every intervening commit and verify that the original findings
-  are resolved.
-- Before selecting incremental coverage, classify the fix batch. Architecture,
-  public API or interface, security or authentication, database or schema,
-  cross-module behavior, base/history changes, rewrites or rebases, and
-  uncertain impact require a new full review.
-- A passing incremental review plus current CI and affected tests is enough to
-  merge; do not add another full AI review solely because the PR head changed.
-- If findings block merge, fix them and repeat Test, applicable Redaction,
-  Commit, Push, and Automatic Review on the updated PR.
-- When multiple Tickets come together, add broader integration or regression
-  checks across them in addition to each Ticket's own checks.
-- For the PR-stage gate, use the recoverable runner against the actual base
-  ref:
-
-  ```bash
-  python3 <skill-dir>/scripts/run_review.py --base <actual-base-ref>
-  ```
-
-  The runner invokes `ocr review --from <scope> --to <reviewed-head-sha>` with
-  the complete range for the first review. After a completed, assessed review
-  on the same named feature branch, it uses the previous assessed head as the
-  `--from` scope for bounded fixes and includes all intervening commits;
-  the main agent must verify the original findings are resolved. Base changes,
-  rewritten history, architecture, public API or interface, security or
-  authentication, database or schema, cross-module behavior, or uncertain
-  impact require full PR coverage. Batch one round's findings into one
-  fix/test/push cycle. Preserve review logs and conclusions; use the runner
-  documented in `skills/github-push-when-ready/references/review-execution.md`.
-  Direct `ocr review` invocations are only supplemental checks; they do not
-  replace the runner's initial complete PR coverage. These commands do not
-  select the optional supplemental `.codex/agents/reviewer.toml`.
-
-  The project-scoped reviewer may be run separately for additional read-only
-  findings, but it never replaces `ocr review`:
-
-  ```text
-  Use the project-scoped `reviewer` subagent to inspect the current PR diff and
-  branch boundary. Return only actionable supplemental findings with file
-  references.
-  ```
-
-- If Automatic Review finds a blocking problem, fix it, rerun affected tests
-  and the applicable redaction scan, then update the PR and run Automatic
-  Review again. If the finding changes scope or design, return to Plan.
-- Automatic Review never replaces tests, compiler diagnostics, linting, or
-  static analysis.
+`pr-review` is the sole owner of review scope, execution, assessment, and the
+decision about whether the PR can merge. Do not merge before it returns
+`PASS`.
 
 This workflow supports optional bounded delegation. It does not require
 multiple agents, parallel implementations, or agent handoffs for every task.
@@ -328,7 +271,7 @@ Action: none | follow-up change | report for later
 
 When the user explicitly asks for timing, capture monotonic wall-clock duration
 for each externally observable gate: Ticket and branch setup, implementation,
-validation, redaction, commit/push, PR and Automatic Review, merge/cleanup, and
+validation, redaction, commit/push, PR and `pr-review`, merge/cleanup, and
 any requested Skill installation or synchronization. Use the measured command
 boundaries rather than estimates, report the total separately, and identify
 whether network or reviewer latency dominated the run. Timing is observational
@@ -341,7 +284,7 @@ Self-improvement is bounded by these rules:
    supported by concrete evidence. Task-specific preference is not enough.
 2. Prefer simplifying, merging, or removing redundant steps before adding a new
    stage, agent, skill, document, or persistent record.
-3. Never weaken branch/PR, Automatic Review, redaction, security, permission,
+3. Never weaken branch/PR, `pr-review`, redaction, security, permission,
    or release gates merely to reduce friction.
 4. A concrete, low-risk improvement that stays within the current workflow's
    intent may start automatically as one new follow-up change. Changes to
@@ -349,7 +292,7 @@ Self-improvement is bounded by these rules:
    scope are reported instead of self-applied.
 5. A follow-up improvement is a normal repository change: start from the
    updated default branch and repeat Plan -> Branch -> Test -> applicable
-   Redaction -> Commit -> Push -> PR -> Automatic Review -> Merge. Never edit
+   Redaction -> Commit -> Push -> PR -> `pr-review` -> Merge. Never edit
    the completed branch, installed skill, or default branch as a side effect of
    evaluation.
 6. Start at most one automatic follow-up improvement per delivered user
@@ -382,8 +325,9 @@ do not duplicate its detailed procedure here.
 - `data-document-redaction`: scan the files staged for the next commit before
   publishing, and again after a blocking review fix that changes staged
   content.
-- `github-push-when-ready`: before branch publication, commit, push, PR,
-  merge, or branch cleanup.
+- `github-push-when-ready`: before branch publication, commit, push, or PR
+  readiness.
+- `pr-review`: after a PR is created or updated; the single merge decision gate.
 - `auto-deploy`: when deployment, release automation, rollout verification, or
   authorized rollback is in scope.
 
@@ -400,12 +344,12 @@ For every change, regardless of its file type or size:
 3. Stage the intended change and run `data-document-redaction`; continue only
    on `pass`, `noop`, or a recorded no-sensitive-surface skip.
 4. Invoke `github-push-when-ready`, commit, push the branch, and create or
-   update the PR.
-5. Start Automatic Review immediately after the PR is created or updated.
-6. On blocking findings, repeat Fix -> Test -> Redaction if applicable ->
-   Commit -> Push -> Automatic Review until the findings are resolved.
-7. Merge only after Automatic Review passes, delete the source branch, update
-   the default branch, and close the linked Ticket.
+   update the PR until it is ready for review.
+5. Invoke `pr-review` immediately. Merge only after it returns `PASS`.
+6. On `BLOCKED`, repeat Fix -> Test -> Redaction if applicable -> Commit -> Push
+   -> `pr-review` until it returns `PASS`.
+7. After `PASS`, merge, delete the source branch, update the default branch,
+   and close the linked Ticket.
 8. Update `docs/Repo_Current_State.md` and other State / Docs after the merge
    and default-branch update when verified project state changed.
 9. When deployment is requested, invoke `auto-deploy` for target-specific

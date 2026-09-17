@@ -22,15 +22,15 @@ state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression 
 state "Staged redaction scan\nbefore commit\n[data-document-redaction]" as redact
 state "Publication readiness + Commit\n[github-push-when-ready]\nIdentity / clean boundaries / Conventional Commits" as commit
 state "Push branch\n[github-push-when-ready]" as push
-state "Create / Update PR\n[github-push-when-ready]" as pr
-state "Automatic Review\nrun_review.py -> ocr review\nFull first; bounded incremental fixes\nPersist logs + explicit assessment" as review
+state "Create / Update PR\n[github-push-when-ready]\nPR ready" as pr
+state "pr-review\nSingle merge decision gate\nReturn PASS or BLOCKED" as review
 state "Blocking findings?" as blocking #FFF4CC
 state "Batch confirmed findings\nFix affected behavior" as fix
 state "Test again\n[test-workflow]" as test_again
 state "Redaction scan again\nafter review fix" as redact_again
 state "Commit fix" as commit_fix
 state "Push branch" as push_fix
-state "Merge PR\nRequired checks + reviewed head verified\n[github-push-when-ready]" as merge
+state "Merge PR\nRequired checks + PASS verified" as merge
 state "Delete source branch" as delete_branch
 state "Synchronize actual PR base\nFast-forward + prune" as update_main
 state "Close Ticket" as close_ticket
@@ -79,12 +79,11 @@ branch or PR gate.
 end note
 
 note right of review
-Start Automatic Review immediately after the PR
-is created or updated; do not wait for confirmation.
-Blocking findings repeat Fix -> Test -> Redaction
-when applicable -> Commit -> Push -> Review.
-Interrupted / missing conclusion != pass.
-See review-execution.svg for scope and recovery.
+Invoke immediately after the PR is ready.
+Only PASS permits merge. BLOCKED returns to
+Fix -> Test -> Redaction when applicable ->
+Commit -> Push -> pr-review.
+Review execution recovery is an implementation detail.
 end note
 
 note right of implement

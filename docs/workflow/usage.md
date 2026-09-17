@@ -18,9 +18,9 @@ Requirement
   -> Commit
   -> Push branch
   -> Create / Update PR
-  -> Automatic Review
-  -> Fix / Test / Redaction / Commit / Push / Review loop when blocked
-  -> Merge PR
+  -> pr-review
+  -> PASS: Merge PR
+  -> BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review loop
   -> Delete branch
   -> Update main
   -> Close Ticket
@@ -103,11 +103,12 @@ unrelated or uncommitted work. Parallel ticket workers use separate Git
 worktrees and branches; never switch branches in a working directory shared by
 active workers. Before committing and pushing, complete the change's
 acceptance and relevant integration checks. After creating or updating its PR,
-start Automatic Review without waiting for user confirmation. A passing change
-is ready for merge, not delivered; fix findings and repeat Test, applicable
-Redaction, Commit, Push, and Automatic Review before merging. For every Ticket,
-the Issue and implementation branch are a one-to-one pair: record and verify
-the Issue's `Branch`/`Base` values, and require the PR head/base to match them.
+invoke `pr-review` without waiting for user confirmation. A passing change is
+ready for merge, not delivered; on `BLOCKED`, fix findings and repeat Test,
+applicable Redaction, Commit, Push, and `pr-review` before merging. For every
+Ticket, the Issue and implementation branch are a one-to-one pair: record and
+verify the Issue's `Branch`/`Base` values, and require the PR head/base to match
+them.
 
 ## Optional delegation gate
 
@@ -150,31 +151,16 @@ level passes unless acceptance criteria, failure evidence, affected boundaries,
 release requirements, or the user justify escalation. Report the level,
 commands, result, evidence, and escalation reason.
 
-## Review and recovery
+## Pull-request review
 
-The first Automatic Review covers the full PR. After a completed, assessed
-`pass` or `blocking` result, batch the blocking fixes, run the affected tests
-and applicable redaction, commit, and push; the next review covers only the new
-commits from the last assessed head by default on the same feature branch. The
-runner persists and checks that branch identity; an unbound legacy state or a
-state from another branch falls back to full. It must include every intervening
-commit and verify the original findings are resolved.
+After the publication Skill reports `PR ready`, invoke the
+[`pr-review`](../../skills/pr-review/SKILL.md) Skill. It is the single merge
+decision gate and returns `PASS` or `BLOCKED`; its runtime instructions own the
+blocking criteria, review scope, and fix loop. The recoverable runner and its
+execution reference are implementation details of that Skill.
 
-Use full coverage again for architecture, public API or interface, security or
-authentication, database or schema, cross-module behavior, base/history
-changes, rewrites or rebases, or uncertain impact. Before merge, CI and tests
-must still pass, but a passing incremental review does not require another full
-AI review. The recoverable runner persists the selected range and accepts
-`--force-full` for the explicit escalation; see its execution reference for
-recovery and assessment rules.
-Use the [recoverable review runner](../../skills/github-push-when-ready/references/review-execution.md)
-to stream and retain logs, reuse matching results, and avoid duplicate
-processes. Pass the remote-tracking base (`origin/<base>`); the runner blocks a
-stale local base branch instead of reviewing the wrong range.
-
-The project-scoped `.codex/agents/reviewer.toml` is optional supplemental
-read-only analysis. It may be invoked from an interactive Codex session, but it
-never replaces the mandatory `ocr review` gate.
+An optional project-scoped supplemental reviewer is outside the default path
+and may be used only when an explicitly high-risk change calls for it.
 
 Read `docs/Repo_Current_State.md` at the start of planning. After merge, source
 branch deletion, and default-branch synchronization, update it when verified
@@ -207,13 +193,13 @@ Action: none | follow-up change | report for later
 
 Apply self-improvement only when the lesson is reusable and evidence-backed.
 Prefer simplifying or removing redundant steps before adding new process. Never
-weaken branch/PR, Automatic Review, redaction, security, permission, or release
+weaken branch/PR, `pr-review`, redaction, security, permission, or release
 gates for convenience.
 
 A low-risk improvement that stays within the existing workflow intent may start
 automatically as one separate follow-up repository change. It must begin from
 the updated default branch and repeat the normal branch, validation, redaction,
-PR, Automatic Review, and merge lifecycle. Policy, permission, security,
+PR, `pr-review`, and merge lifecycle. Policy, permission, security,
 release behavior, and broad project-scope changes are reported instead of
 self-applied.
 
@@ -239,7 +225,7 @@ project-specific tooling and review.
 
 ## Completion order
 
-`Understand -> Plan -> Record Ticket + Slices -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> Automatic Review -> Fix/Test/Redaction/Commit/Push/Review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed -> Evaluate workflow -> optional one bounded follow-up improvement`
+`Understand -> Plan -> Record Ticket + Slices -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed -> Evaluate workflow -> optional one bounded follow-up improvement`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

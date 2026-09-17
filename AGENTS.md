@@ -30,7 +30,7 @@ Use the lightest workflow that preserves correctness.
 
 For non-trivial work:
 
-`Requirement -> Understand repo -> Plan -> Record Ticket + Slices -> Create branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update PR -> Automatic Review -> Fix / Test / Redaction / Commit / Push / Review loop -> Merge PR -> Delete branch -> Update main -> Close Ticket -> Update State/Docs -> Deploy if needed`
+`Requirement -> Understand repo -> Plan -> Record Ticket + Slices -> Create branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update PR -> pr-review -> PASS: Merge PR | BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review again -> Delete branch -> Update main -> Close Ticket -> Update State/Docs -> Deploy if needed`
 
 Use `codex-development-workflow` to orchestrate the lifecycle.
 
@@ -46,7 +46,7 @@ For each slice:
 * Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
 * Do not force strict TDD or multi-Slice decomposition onto trivial changes; a tiny request is one Ticket with one implicit Slice, and it still requires a branch and PR.
 * When the user explicitly requests workflow timing, record measured monotonic wall-clock duration for each externally observable gate and the total run; report whether network or reviewer latency dominated. Timing is observational, does not add a delivery gate, and must not persist session-specific timing logs.
-* After the PR is created, run the automatic review without waiting for user confirmation. Blocking findings repeat the fix, test, redaction, commit, push, and review steps.
+* After the PR is created, invoke `pr-review` without waiting for user confirmation. `BLOCKED` findings repeat the fix, test, redaction, commit, push, and `pr-review` steps.
 * If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.
 * Do not mix unrelated features, refactors, formatting, or dependency upgrades.
 
@@ -105,7 +105,8 @@ Prefer a single delegation level. Subagents should not create further subagents 
 | Verified repository state materially changed                           | `repo-current-state`         |
 | Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
 | Deployment, release automation, rollout verification, or rollback      | `auto-deploy`                |
-| Branch publication, Commit, Push, PR, Merge, or branch cleanup is required | `github-push-when-ready`     |
+| PR creation or update requires the merge decision gate                 | `pr-review`                  |
+| Branch publication, Commit, Push, or PR readiness is required           | `github-push-when-ready`     |
 | Implementation and required validation are complete                    | `bark-finish-notify`         |
 
 ## Skill Rules
