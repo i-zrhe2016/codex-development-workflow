@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-17 @ 374d4b8
+Last verified: 2026-09-17 @ daec771d65b13db6421fc45d43d73e538e246679
 
 ## Current Focus
 
@@ -9,24 +9,17 @@ Last verified: 2026-09-17 @ 374d4b8
 ## Implemented
 
 - Repository changes follow the Issue -> feature branch -> test -> redaction ->
-  PR -> Automatic Review -> merge and cleanup gates defined by `AGENTS.md`.
+  commit -> push -> PR -> `pr-review` -> merge and cleanup gates defined by
+  `AGENTS.md`.
+- `pr-review` is the single merge decision gate. The first review covers the
+  complete PR; bounded fixes may use incremental runner coverage, while
+  high-impact or uncertain changes require full coverage.
+- `github-push-when-ready` owns branch, commit, push, and PR readiness. The
+  recoverable review runner is packaged with `pr-review` as an implementation
+  detail.
 - `auto-deploy` provides a provider-neutral deployment contract with immutable
   artifacts, bounded health and smoke checks, authorized rollback, and a
   Tailscale-only hardening gate for publishing targets.
-- Publishing targets require an approved immutable Tailscale identity and
-  path, an actual hostname containing `deploy`, SSH restricted to Tailscale,
-  public inbound denial, preserved outbound policy, and fenced recovery.
-- The access catalog updater maintains the local Tailscale IP, service names,
-  and deployment addresses in JSON and escaped HTML. The Skill requires a
-  post-health refresh and Tailscale-only TCP/80 verification through the
-  existing HTTP service; it does not install a server or change firewall state.
-- Catalog writes use validation, atomic replacement, fenced durable recovery,
-  authenticated transaction journals, and focused unit tests.
-- Automatic Review uses Alibaba Open Code Review through the recoverable `ocr`
-  runner: the first PR review is full,
-  bounded fixes default to incremental coverage from the last assessed head
-  when base/history and named feature-branch identity match, and unbound or
-  high-impact/uncertain changes fall back to full coverage.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold plans and Tickets, while `docs/skills/` documents the managed skills.
 - The installer records per-bundle ownership markers, protects unmarked paths,
@@ -38,14 +31,14 @@ Last verified: 2026-09-17 @ 374d4b8
 
 ## Known Issues / Failing Checks
 
-- Targeted redaction scans report existing identity email examples and SSH URL
-  literals; these require classification when publishing. This is not a clean
-  repository-wide redaction result.
+- Pre-existing identity and SSH test fixtures remain under
+  `skills/github-push-when-ready/`; the staged redaction scan for PR #69
+  passed, but this is not a repository-wide redaction classification.
 
 ## Constraints
 
-- Automatic Review requires an installed and configured Alibaba Open Code Review
-  CLI (`ocr`) and a reachable provider endpoint with a supported model.
+- `pr-review` requires an installed and configured Alibaba Open Code Review CLI
+  (`ocr`) and a reachable provider endpoint with a supported model.
 - Shell commands use the available native tools through `context-efficiency`;
   exact evidence and publication gates preserve raw output and exit status.
 - `auto-deploy` does not own target infrastructure or production approval and
@@ -56,12 +49,12 @@ Last verified: 2026-09-17 @ 374d4b8
 ## Architecture Snapshot
 
 - The root workflow owns lifecycle routing, Ticket and Slice gates, delegation,
-  verification, publication, review, merge, and recovery guidance.
+  verification, and merge/cleanup guidance.
+- `github-push-when-ready` owns publication through PR readiness; `pr-review`
+  owns the single PASS/BLOCKED merge decision and its recoverable runner.
 - Runtime skills remain under `skills/`; explanatory documentation is under
-  `docs/skills/`; the installer packages the local skill bundles.
-- `auto-deploy/SKILL.md` owns deployment-boundary behavior, while
-  `update_access_catalog.py` owns catalog validation, rendering, and durable
-  file reconciliation. See `docs/architecture/overview.md` for the topology.
+  `docs/skills/`; the installer packages the local skill bundles. See
+  `docs/architecture/overview.md` for the topology.
 
 ## Next
 
