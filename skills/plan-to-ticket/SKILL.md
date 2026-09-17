@@ -37,10 +37,10 @@ truth. Issue persistence is always required once this skill produces a Ticket.
   connector, authentication, or write permission is unavailable, stop with a
   blocked result. Do not fall back to chat-only output, local Markdown plans,
   `docs/plans/`, `docs/tickets/`, or an unapproved ad-hoc API client.
-- Before creating anything, search for the plan marker and each ticket ID in
-  the target repository. Reuse and update one existing matching Issue; do not
-  create duplicates. If more than one candidate matches, stop and request
-  resolution.
+- Before creating anything, search for the exact plan marker and each exact
+  ticket marker in the target repository. Reuse and update one existing
+  matching Issue; do not create duplicates. If more than one candidate matches,
+  stop and request resolution.
 - Create or update every required Ticket Issue, plus the parent plan Issue when
   the work spans multiple Tickets, before creating implementation branches.
   Use the repository's default branch as the base unless the request
@@ -102,11 +102,39 @@ evidence, but they do not replace the structured fields in the Issue body. A
 single-Ticket requirement records one child Issue and omits the parent plan
 Issue.
 
+## Naming contract
+
+Use separate stable identifiers for plans, Tickets, and Slices, and keep the
+human-readable Issue titles aligned with those identifiers:
+
+- A plan ID is a stable lowercase kebab-case slug, such as
+  `persist-plan-to-ticket-github-issues`. It is written only in the
+  `codex-plan-id` marker and must be unique within the target repository.
+- A parent plan Issue title is exactly `[PLAN] <short plan title>`. A parent
+  plan Issue exists only when the work spans multiple Tickets.
+- A Ticket ID is an uppercase `T` followed by exactly four zero-padded decimal
+  digits, such as `T0016`. Allocate IDs in repository scope: scan open and
+  closed Issue bodies for exact `codex-ticket-id` markers, then choose a value
+  greater than every existing valid ID. Never reuse an ID. Historical duplicate
+  IDs remain legacy records and are not renumbered by this contract.
+- A Ticket Issue title is exactly `[T0016] <short behavior/capability title>`,
+  replacing the example ID and title with the Ticket's values. The title must
+  describe a reviewable behavior or capability, not an implementation step.
+- A Slice ID is `S` plus the parent Ticket's four digits, a dot, and a
+  one-based ordinal, such as `S0016.1`. A Ticket branch uses the lowercase
+  Ticket ID in `<type>/t0016-<short-description>`.
+- The GitHub Issue number is a link target, not a plan or Ticket identifier.
+
+When reusing a matching Issue, normalize its title to the canonical format
+while retaining its stable marker and identifier. Resolve legacy duplicate IDs
+by their exact marker and plan association; if that still identifies more than
+one Issue, stop rather than guessing.
+
 Use stable markers so retries and later sessions can find the same records:
 
 ```text
 <!-- codex-plan-id: <stable-plan-slug> -->
-<!-- codex-ticket-id: T0001 -->
+<!-- codex-ticket-id: T0016 -->
 ```
 
 When present, the parent plan Issue should contain:
@@ -139,7 +167,8 @@ Persist in this order:
 
 1. Resolve the target repository and base branch.
 2. Generate the plan and dependency-ordered tickets in memory.
-3. Search for the stable plan/ticket markers and resolve any existing Issues.
+3. Search for the exact stable plan/ticket markers, check ID collisions, and
+   resolve any existing Issues.
 4. Create or update the parent plan Issue when the work spans multiple
    Tickets.
 5. Create or update every initial ticket Issue sequentially, preserving the
@@ -371,6 +400,8 @@ Issue, branch, and base metadata.
 
 # Plan
 
+Parent Issue title: `[PLAN] <Short plan title>` when a parent Issue exists
+
 Parent Issue: <Canonical GitHub plan Issue URL, when one exists>
 
 1. <Milestone>
@@ -380,6 +411,10 @@ Parent Issue: <Canonical GitHub plan Issue URL, when one exists>
 # Tickets
 
 ### T0001 - <Short behavior/capability title>
+
+**Issue title**
+
+`[T0001] <Short behavior/capability title>`
 
 **Issue**
 

@@ -37,8 +37,9 @@ application infrastructure topology.
    verification.
 4. The skill decomposes each Ticket into dependency-ordered execution Slices
    with their own acceptance and validation contract.
-5. The skill resolves the repository's GitHub target, searches stable markers,
-   and creates or updates the Ticket Issues, plus the parent plan Issue for
+5. The skill resolves the repository's GitHub target, searches exact stable
+   markers and Ticket ID collisions, normalizes matching Issue titles, and
+   creates or updates the Ticket Issues, plus the parent plan Issue for
    multi-Ticket work, before implementation branches start.
 6. The skill assigns or resumes one branch and base branch per Ticket, records
    those values on the same Issue, and uses the updated default branch for new
@@ -61,6 +62,10 @@ application infrastructure topology.
   parent workflow decides whether an independent Slice is safe to delegate.
 - Each ticket Issue maps to one implementation branch; internal Slices share
   that branch, and the PR head/base must match its Issue metadata.
+- Parent plan Issue titles use `[PLAN] <short plan title>`; Ticket Issue titles
+  use `[T####] <short behavior/capability title>`. New `T####` identifiers are
+  repository-scoped, four-digit, monotonically allocated, and never reused;
+  historical duplicate IDs remain legacy records.
 - Every requirement has a Ticket Issue; a single-behavior requirement is one
   Ticket with one Slice, and the parent workflow's feature-branch, PR,
   `pr-review`, merge, and cleanup gates remain mandatory.
