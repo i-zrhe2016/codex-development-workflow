@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-18 @ 51fd158
+Last verified: 2026-09-18 @ 652280b
 
 ## Current Focus
 
@@ -19,8 +19,10 @@ Last verified: 2026-09-18 @ 51fd158
   recoverable review runner is packaged with `pr-review` as an implementation
   detail.
 - `auto-deploy` provides a provider-neutral deployment contract with immutable
-  artifacts, bounded health and smoke checks, authorized rollback, and a
-  Tailscale-only hardening gate for publishing targets.
+  artifacts, bounded health and smoke checks, authorized rollback, a
+  Tailscale-only hardening gate for publishing targets, and approved immutable
+  target identity/expected-hostname mapping without requiring a `deploy`
+  hostname substring.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
