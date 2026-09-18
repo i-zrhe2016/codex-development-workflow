@@ -25,7 +25,7 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> Deploy if needed
+  -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
@@ -35,6 +35,16 @@ Feature, Dependency, and CI/CD changes. Every requirement is recorded as
 exactly one Plan Issue with one or more child Ticket Issues before the Plan
 branch starts; only planning depth and test level vary, and no category may
 direct-push around the PR gate.
+
+## External deployment handoff
+
+Deployment is outside this repository's workflow and does not invoke a bundled
+deployment Skill. When separately authorized, the Plan owner hands the target
+project's release owner the immutable artifact and source commit, target
+environment and authorization, and documented deployment, health-check, and
+rollback instructions. The external release owner performs and verifies the
+rollout or rollback; record the external release result or incident link as
+completion evidence with the delivery.
 
 ## Ticket-to-Slice hierarchy
 
@@ -235,7 +245,7 @@ project-specific tooling and review.
 
 ## Completion order
 
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> Deploy if needed -> Evaluate workflow -> optional one bounded follow-up improvement`
+`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

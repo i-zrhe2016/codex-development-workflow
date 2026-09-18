@@ -24,7 +24,6 @@ package "Delivery and recovery" #FFF7ED {
   component "github-push-when-ready\nReadiness / identity / actual push targets\nCommit / push / PR ready" as publish
   component "run_review.py\nImplementation detail: lock / scope / streaming\nSaved execution and local logs" as runner
   component "repo-current-state\nVerified post-merge snapshot\nTracked edits use a follow-up PR" as state
-  component "auto-deploy (conditional)\nExisting deployment contract\nHealth verification / rollback" as deploy
 }
 package "Tools and durable evidence" #F8FAFC {
   database "GitHub Issues\nPlan + child Ticket records\nPlan Status / Branch / Base / PR\nTickets: behavior / acceptance" as issues
@@ -32,7 +31,6 @@ package "Tools and durable evidence" #F8FAFC {
   component "Alibaba Open Code Review CLI\nocr review --from <ref> --to <head>\nInvoked by pr-review" as cli
   database "Local Git metadata\nocr-review/\nState / run history / logs\nNever committed" as logs
   artifact "docs/Repo_Current_State.md\nCompact recovery index\nNot a ticket database" as snapshot
-  node "Target project's existing CI/CD\nNot provisioned by this package" as cicd
 }
 
 user --> main
@@ -44,14 +42,12 @@ main --> redact : staged scan
 main --> publish : deliver
 main --> review : PR ready
 main --> state : reconcile after merge
-main --> deploy : when requested
 plan --> issues : persist before branch work
 publish --> github : branch / PR lifecycle
 review --> runner : execute
 runner --> cli : execute review
 runner --> logs : stream + preserve evidence
 state --> snapshot : verified update
-deploy --> cicd : rollout / verify / rollback
 legend bottom
 Skills guide the main agent; they are not autonomous background services.
 The main agent consumes evidence and decides whether workflow gates pass.

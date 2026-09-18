@@ -31,12 +31,20 @@ Requirement
     -> PASS: Merge the Plan PR once -> Delete branch -> Update main -> Close Plan + Tickets
     -> BLOCKED: Fix -> Test -> Redaction -> Commit -> Push -> pr-review again
     -> Update State / Docs
-    -> Deploy if needed
+    -> If separately authorized: external release handoff (outside this workflow)
     -> Evaluate workflow
     -> Reusable improvement?
        -> yes: Start one follow-up improvement through this same workflow
-       -> no: Finish
+    -> no: Finish
 ```
+
+An external deployment handoff is outside this workflow and does not invoke a
+bundled deployment Skill. When separately authorized, hand off the immutable
+artifact and source commit, target environment and authorization, and the
+documented deployment, health-check, and rollback instructions to the target
+project's release owner. That owner performs and verifies the rollout or
+rollback; completion evidence is the external release result or incident link
+recorded with the delivery.
 
 ## One delivery path for every change
 
@@ -56,7 +64,7 @@ updates, and CI/CD changes all use the same path:
 7. Merge the Plan PR only after `pr-review` returns `PASS`, delete the source
    branch, update the base branch, close the Plan and its child Tickets, and
    then update State / Docs.
-8. After delivery and any requested deployment, evaluate the workflow and start
+8. After delivery, evaluate the workflow and start
    at most one bounded follow-up improvement when the evidence is reusable.
 
 The delivery path never has a direct-push exception for documentation, small
@@ -252,8 +260,8 @@ multiple agents, parallel implementations, or agent handoffs for every task.
 
 ## Post-delivery evaluation and bounded self-improvement
 
-Run one lightweight process evaluation after the change is delivered and after
-any requested deployment result is known. This is not a merge gate and must not
+Run one lightweight process evaluation after the change is delivered. This is
+not a merge gate and must not
 delay an otherwise complete delivery.
 
 Evaluate only evidence from the completed work:
@@ -332,8 +340,6 @@ do not duplicate its detailed procedure here.
 - `github-push-when-ready`: before branch publication, commit, push, or PR
   readiness.
 - `pr-review`: after a PR is created or updated; the single merge decision gate.
-- `auto-deploy`: when deployment, release automation, rollout verification, or
-  authorized rollback is in scope.
 
 If a required specialist is unavailable locally, report it instead of silently
 replacing its workflow.
@@ -356,9 +362,7 @@ For every change, regardless of its file type or size:
    default branch, and close the Plan and its linked Tickets.
 8. Update `docs/Repo_Current_State.md` and other State / Docs after the merge
    and default-branch update when verified project state changed.
-9. When deployment is requested, invoke `auto-deploy` for target-specific
-   preflight, execution, verification, and rollback handling.
-10. Run the post-delivery workflow evaluation. If one bounded, evidence-backed
+9. Run the post-delivery workflow evaluation. If one bounded, evidence-backed
     reusable improvement qualifies for automatic self-improvement, start it as
     a separate follow-up change through the same branch/PR lifecycle.
 

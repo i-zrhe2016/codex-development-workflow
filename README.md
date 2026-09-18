@@ -23,10 +23,18 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> Deploy if needed
+  -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
+
+An external deployment handoff is outside this repository's workflow and does
+not invoke a bundled deployment Skill. When separately authorized, the Plan
+owner hands the target project's release owner the immutable artifact and
+source commit, target environment and authorization, and the documented
+deployment, health-check, and rollback instructions. The external release
+owner performs and verifies the rollout or rollback. Completion evidence is
+the external release result or incident link recorded with the delivery.
 
 The macro workflow controls architecture and scope. Every requirement is
 recorded as exactly one GitHub Issue Plan with one or more child Ticket Issues
@@ -117,7 +125,6 @@ Restart Codex after installation.
 - `data-document-redaction`
 - `github-push-when-ready`
 - `pr-review`
-- `auto-deploy`
 
 `plan-to-ticket` persists exactly one Plan and every child Ticket to GitHub
 Issues before the Plan branch starts. GitHub Issues are the sole durable
@@ -144,7 +151,6 @@ relevant bundle.
 | `data-document-redaction` | [`skills/data-document-redaction/`](skills/data-document-redaction/) | [Skill documentation](docs/skills/data-document-redaction/README.md) |
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 | `pr-review` | [`skills/pr-review/`](skills/pr-review/) | [Skill documentation](docs/skills/pr-review/README.md) |
-| `auto-deploy` | [`skills/auto-deploy/`](skills/auto-deploy/) | [Skill documentation](docs/skills/auto-deploy/README.md) |
 
 ## Pull-request review
 

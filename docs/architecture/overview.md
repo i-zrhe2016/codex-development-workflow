@@ -21,7 +21,6 @@ remain inside their own `SKILL.md` files.
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
-| `auto-deploy` | Discovers the deployment contract, gates automatic releases, verifies health, and coordinates safe rollback. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
 | `references/skill-map.md` | Maps each managed bundle to its local source and Codex destination. |
@@ -73,7 +72,7 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> Deploy if needed
+  -> If separately authorized: external release handoff (outside this workflow)
 ```
 
 All change types—Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
@@ -206,7 +205,7 @@ logs and state local. The first review covers the complete PR, while eligible
 bounded fixes may use the runner's incremental execution. Current tests and CI
 remain separate evidence and must pass before merge.
 
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop when blocked -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> Deploy if needed`
+`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop when blocked -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow)`
 
 ### Project-scoped Codex configuration
 
