@@ -106,7 +106,6 @@ Prefer a single delegation level. Subagents should not create further subagents 
 | Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
 | PR creation or update requires the merge decision gate                 | `pr-review`                  |
 | Branch publication, Commit, Push, or PR readiness is required           | `github-push-when-ready`     |
-| Implementation and required validation are complete                    | `bark-finish-notify`         |
 
 ## Skill Rules
 
@@ -127,5 +126,3 @@ Prefer a single delegation level. Subagents should not create further subagents 
 ## Completion
 
 A change is complete only after all applicable workflow gates have passed.
-
-After implementation and required validation are complete, invoke `bark-finish-notify` once before the final response.
