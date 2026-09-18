@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-17 @ 9b942cbc08918a97a60aff56876fc40717ea2740
+Last verified: 2026-09-18 @ 1dd7a095cecb273b1ed823ec41495a66c1a1b067
 
 ## Current Focus
 
@@ -21,9 +21,11 @@ Last verified: 2026-09-17 @ 9b942cbc08918a97a60aff56876fc40717ea2740
   artifacts, bounded health and smoke checks, authorized rollback, and a
   Tailscale-only hardening gate for publishing targets.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
-  hold plans and Tickets, while `docs/skills/` documents the managed skills.
-- `plan-to-ticket` uses canonical `[PLAN]` and `[T####]` Issue titles,
-  repository-scoped non-reused Ticket IDs, and linked Slice/branch identifiers.
+  hold Plans and child Tickets, while `docs/skills/` documents the managed
+  skills.
+- `plan-to-ticket` uses one canonical `[PLAN]` Issue per feature, `[T####]`
+  child Issue titles, repository-scoped non-reused Ticket IDs, and one shared
+  Plan branch/PR/merge for all Tickets and Slices in that feature.
 - The installer records per-bundle ownership markers, protects unmarked paths,
   and offers recoverable `--adopt-legacy` migration for pre-marker installs.
 
@@ -45,13 +47,14 @@ Last verified: 2026-09-17 @ 9b942cbc08918a97a60aff56876fc40717ea2740
   exact evidence and publication gates preserve raw output and exit status.
 - `auto-deploy` does not own target infrastructure or production approval and
   does not change an unspecified live host.
-- Persisted plans and Tickets require an available, authorized GitHub Issues
-  target; GitHub Issues are the durable authority for future work.
+- Persisted Plans and child Tickets require an available, authorized GitHub
+  Issues target; GitHub Issues are the durable authority for future work.
 
 ## Architecture Snapshot
 
-- The root workflow owns lifecycle routing, Ticket and Slice gates, delegation,
-  verification, and merge/cleanup guidance.
+- The root workflow owns lifecycle routing, Plan/Ticket/Slice gates, delegation,
+  verification, and merge/cleanup guidance; each Plan owns one branch, PR, and
+  merge for its child Tickets.
 - `github-push-when-ready` owns publication through PR readiness; `pr-review`
   owns the single PASS/BLOCKED merge decision and its recoverable runner.
 - Runtime skills remain under `skills/`; explanatory documentation is under
@@ -60,4 +63,4 @@ Last verified: 2026-09-17 @ 9b942cbc08918a97a60aff56876fc40717ea2740
 
 ## Next
 
-- Start the next authorized Ticket from the updated default branch.
+- Start the next authorized Plan from the updated default branch.
