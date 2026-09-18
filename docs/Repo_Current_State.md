@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-18 @ 652280b
+Last verified: 2026-09-18 @ 9e453b1
 
 ## Current Focus
 
@@ -22,7 +22,9 @@ Last verified: 2026-09-18 @ 652280b
   artifacts, bounded health and smoke checks, authorized rollback, a
   Tailscale-only hardening gate for publishing targets, and approved immutable
   target identity/expected-hostname mapping without requiring a `deploy`
-  hostname substring.
+  hostname substring. It does not require a release-wide target lock,
+  observation lease, or deployment fencing handoff; the access catalog retains
+  its own catalog-local lock, fence, and journal for registry/page integrity.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
