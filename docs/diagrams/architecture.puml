@@ -15,9 +15,9 @@ title Codex Development Workflow - Unified PR-Gated Lifecycle
 state "Requirement" as requirement
 state "Understand repo\nRead current state + architecture + relevant code\n[context-efficiency when context-heavy]" as understand
 state "Plan\nScope / exclusions / acceptance / dependencies" as plan
-state "Record Ticket + Slices\n[GitHub Issue before branch]\nOne behavior -> one Ticket;\n[plan-to-ticket] for multiple Tickets" as decompose
-state "Create feature branch\n(all change types)" as branch
-state "Implement\n(main agent; optional bounded delegation)" as implement
+state "Record Plan + Tickets + Slices\n[GitHub Issues before branch]\nOne feature -> one Plan;\nPlan contains one or more Tickets" as decompose
+state "Create Plan feature branch\n(all change types)" as branch
+state "Implement all Plan Tickets\n(main agent; optional bounded delegation)" as implement
 state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression / full" as test
 state "Staged redaction scan\nbefore commit\n[data-document-redaction]" as redact
 state "Publication readiness + Commit\n[github-push-when-ready]\nIdentity / clean boundaries / Conventional Commits" as commit
@@ -30,10 +30,10 @@ state "Test again\n[test-workflow]" as test_again
 state "Redaction scan again\nafter review fix" as redact_again
 state "Commit fix" as commit_fix
 state "Push branch" as push_fix
-state "Merge PR\nRequired checks + PASS verified" as merge
+state "Merge the Plan PR once\nRequired checks + PASS verified" as merge
 state "Delete source branch" as delete_branch
 state "Synchronize actual PR base\nFast-forward + prune" as update_main
-state "Close Ticket" as close_ticket
+state "Close Plan + child Tickets" as close_ticket
 state "Update State / Docs\n[repo-current-state]" as state_docs
 state "Deploy if needed\n[auto-deploy]" as deploy
 state "Verify / Rollback" as verify #EAF2F8
@@ -69,13 +69,13 @@ verify --> [*] : pass
 verify --> [*] : fail / rollback or escalate
 
 note right of decompose
-Persist Ticket Issues before branching; add the
-parent plan Issue for multi-Ticket work.
-One Ticket owns one branch and PR; its Slices share it.
-Dependent Tickets start after prerequisites merge.
-Every requirement gets a Ticket; one behavior uses
-one Ticket with one Slice. This never removes the
-branch or PR gate.
+Persist one Plan Issue and all child Ticket Issues
+before the Plan branch. The Plan owns one branch,
+one PR, and one merge; all Tickets and Slices share it.
+Ticket dependencies order work on that branch and
+never create a Ticket-level merge.
+Every feature has at least one Ticket; a small feature
+uses one Ticket with one Slice.
 end note
 
 note right of review
@@ -93,7 +93,7 @@ No overlapping files or shared interfaces in parallel.
 Wrong design assumption -> re-plan.
 Failed validation -> fix and rerun affected checks.
 More Slices -> repeat implementation and validation.
-Publication waits for the whole unit's acceptance.
+  Publication waits for the whole Plan's acceptance.
 Unresolved failures stop delivery.
 end note
 

@@ -8,37 +8,33 @@ required specialist skills managed in this repository.
 Requirement
   -> Understand repo
   -> Plan
-  -> Record Ticket + Slices
-  -> Create branch
-  -> Implement
+  -> Record Plan + Tickets + Slices
+  -> Create Plan branch
+  -> Implement all Plan Tickets
   -> Test
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
   -> Create / Update PR
   -> pr-review
-  -> PASS: Merge PR
+  -> PASS: Merge the Plan PR once
   -> BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review loop
   -> Delete branch
   -> Update main
-  -> Close Ticket
+  -> Close Plan + Tickets
   -> Update State / Docs
   -> Deploy if needed
   -> Evaluate workflow
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
 
-The macro workflow controls architecture and scope. Every requirement is
-recorded as a GitHub Issue Ticket before branch work starts, so a
-single-behavior request is one Ticket with one implicit Slice while larger work
-defines behavior Tickets first and then splits each Ticket into Slices. Every
-change still uses a feature branch and the same PR gate, and each Slice carries
-its own acceptance criteria, relevant context, test strategy, and validation
-command.
-A Ticket keeps its implementation, tests, and related documentation on one
-branch created from the updated default branch; the Ticket Issue records the
-exact branch and base branch. Ticket dependencies remain separate from Slice
-dependencies, and the PR head and base must match the Ticket metadata.
+The macro workflow controls architecture and scope. Every feature is recorded
+as one GitHub Issue Plan with one or more child Ticket Issues before branch work
+starts, so a single-behavior feature is one Plan with one Ticket and one
+implicit Slice while larger features add Tickets and Slices under that Plan.
+The Plan owns the one feature branch, PR, review, and merge. All Tickets and
+Slices share that branch; Ticket dependencies remain separate from Slice
+dependencies, and the PR head and base must match the Plan metadata.
 Test level may vary with risk, but delivery does not: Docs, Code, Tests,
 Config, Refactor, Bugfix, Feature, Dependency, and CI/CD changes all require a
 branch, commit, push, PR, `pr-review`, and merge. Blocking review findings start
@@ -82,7 +78,7 @@ dependent, overlapping, or shared-interface work sequential.
 ![Codex Development Workflow development process](docs/diagrams/architecture.svg)
 
 Detailed views: [component responsibilities](docs/diagrams/components.svg),
-[Ticket lifecycle and nested loops](docs/architecture/overview.md#ticket-to-slice-hierarchy),
+[Plan/Ticket lifecycle and nested loops](docs/architecture/overview.md#ticket-to-slice-hierarchy),
 [PR review gate](docs/architecture/overview.md#pull-request-review-gate), and the
 [architecture guide](docs/architecture/overview.md).
 
@@ -123,12 +119,12 @@ Restart Codex after installation.
 - `pr-review`
 - `auto-deploy`
 
-`plan-to-ticket` persists every generated plan and Ticket to GitHub Issues
-before implementation branches start. GitHub Issues are the sole durable
-Ticket authority; chat output and `Repo_Current_State.md` provide links and
-recovery context, not a parallel backlog. Every requirement has a Ticket, and a
-single-behavior requirement records one Ticket Issue without a parent plan
-Issue; the branch/PR gate is mandatory for every Ticket.
+`plan-to-ticket` persists one Plan and every child Ticket to GitHub Issues before
+the Plan branch starts. GitHub Issues are the sole durable Plan/Ticket
+authority; chat output and `Repo_Current_State.md` provide links and recovery
+context, not a parallel backlog. Every feature has one Plan, and a Plan may
+contain one or more Tickets; the branch/PR/merge gate is mandatory once per
+Plan, never once per Ticket.
 
 ## Skill documentation
 

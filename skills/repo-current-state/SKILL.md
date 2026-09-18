@@ -17,7 +17,7 @@ Treat the repository as the system of record and this file as a compact index in
 - Keep the file small enough to read at the beginning of an agent session.
 - Record uncertainty explicitly. Never fill gaps with guesses.
 - Keep implementation history in Git/changelog, architecture rationale in ADRs or architecture docs, and future work in GitHub Issues.
-- When `plan-to-ticket` is used, GitHub Issues are the sole durable authority for the plan and tickets. This file may link to the active Issue, but must not duplicate its backlog, metadata, or progress record.
+- When `plan-to-ticket` is used, GitHub Issues are the sole durable authority for the Plan and child Tickets. This file may link to the active Plan or Ticket, but must not duplicate their backlog, metadata, or progress record.
 
 ## When Reading State
 
@@ -33,15 +33,15 @@ Do not scan the entire repository just to validate every line. Validate progress
 
 ## When Updating State
 
-Update the file after a Ticket or coherent work unit has passed its required
-tests, its PR has merged, the source branch has been cleaned up, and the default
-branch has been synchronized, when the change materially affects repository
-capabilities, constraints, active work, or known failures. State / Docs is a
-post-merge recovery step, not a pre-PR shortcut.
+Update the file after a Plan or coherent work unit has passed its required
+tests, its single PR has merged, the source branch has been cleaned up, and the
+default branch has been synchronized, when the change materially affects
+repository capabilities, constraints, active work, or known failures. State /
+Docs is a post-merge recovery step, not a pre-PR shortcut.
 
 Prefer this order:
 
-`Implement -> Test -> Redaction -> Commit/Push -> Create/Update PR -> Automatic Review -> Fix loop if needed -> Merge -> Cleanup -> Update Repo_Current_State.md`
+`Implement Plan -> Test -> Redaction -> Commit/Push -> Create/Update Plan PR -> Automatic Review -> Fix loop if needed -> Merge once -> Cleanup -> Update Repo_Current_State.md`
 
 If updating the state file changes tracked content after the merge, make that
 update through a new feature branch and the same mandatory PR gate; never commit
@@ -72,7 +72,7 @@ Create or maintain this compact structure:
 Last verified: <YYYY-MM-DD> @ <commit-or-working-tree>
 
 ## Current Focus
-- <current milestone, ticket, or "None">
+- <current Plan milestone, Ticket, or "None">
 
 ## Implemented
 - <important capability that exists now>
@@ -137,7 +137,7 @@ Keep only a few orientation-level facts. Link to `docs/ARCHITECTURE.md`, ADRs, o
 
 ### Next
 
-Point to the immediate next ticket/issue when known. Do not duplicate the full backlog or plan.
+Point to the immediate next Plan/Ticket Issue when known. Do not duplicate the full backlog or Plan.
 
 ## Freshness and Drift Control
 
