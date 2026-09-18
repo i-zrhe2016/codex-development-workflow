@@ -39,12 +39,12 @@ For each slice:
 `Acceptance Criteria -> Test Strategy -> Minimal Change -> Focused Validation -> Complete`
 
 * Work on one clear functional unit per agent at a time; independent Slices may run in parallel only through the delegation gate.
-* Record one GitHub Issue Plan for each feature before creating its Plan branch. A Plan may contain one or more behavior Ticket Issues; split each Ticket into independently verifiable Slices.
-* Every change type uses the same feature-branch and PR gate: docs, code, tests, configuration, refactors, bug fixes, features, dependencies, and CI/CD changes must not bypass the PR.
+* Record exactly one GitHub Issue Plan for each requirement before creating its Plan branch, regardless of whether the change is Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, or CI/CD. A Plan may contain one or more behavior Ticket Issues; split each Ticket into independently verifiable Slices.
+* Every change type uses the same Plan-branch and PR gate: docs, code, tests, configuration, refactors, bug fixes, features, dependencies, and CI/CD changes must not bypass the PR.
 * Split complex or dependency-driven work into small, independently verifiable slices.
 * Run the smallest validation set that provides sufficient evidence.
 * Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
-* Do not force strict TDD or multi-Slice decomposition onto trivial changes; a tiny feature is one Plan with one Ticket and one implicit Slice, and it still requires one branch and PR.
+* Do not force strict TDD or multi-Slice decomposition onto trivial changes; a tiny requirement is one Plan with one Ticket and one implicit Slice, and it still requires one branch and PR.
 * When the user explicitly requests workflow timing, record measured monotonic wall-clock duration for each externally observable gate and the total run; report whether network or reviewer latency dominated. Timing is observational, does not add a delivery gate, and must not persist session-specific timing logs.
 * After the PR is created, invoke `pr-review` without waiting for user confirmation. `BLOCKED` findings repeat the fix, test, redaction, commit, push, and `pr-review` steps.
 * If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.

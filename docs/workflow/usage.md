@@ -31,18 +31,19 @@ Requirement
 ```
 
 The pipeline is identical for Docs, Code, Tests, Config, Refactor, Bugfix,
-Feature, Dependency, and CI/CD changes. Every feature is recorded as one Plan
-Issue with one or more child Ticket Issues before the Plan branch starts; only
-planning depth and test level vary, and no category may direct-push around the
-PR gate.
+Feature, Dependency, and CI/CD changes. Every requirement is recorded as
+exactly one Plan Issue with one or more child Ticket Issues before the Plan
+branch starts; only planning depth and test level vary, and no category may
+direct-push around the PR gate.
 
 ## Ticket-to-Slice hierarchy
 
-Every feature gets a Plan Issue and at least one Ticket Issue. When a feature
-crosses multiple behaviors or has dependencies, use this order:
+Every requirement gets exactly one Plan Issue and at least one Ticket Issue.
+When a requirement crosses multiple behaviors or has dependencies, use this
+order:
 
-1. Define the single feature boundary and create its Plan Issue.
-2. Split the feature into independently reviewable behavior Tickets.
+1. Define the single requirement boundary and create its Plan Issue.
+2. Split the requirement into independently reviewable behavior Tickets.
 3. Define each Ticket's scope, dependencies, acceptance boundary, and Issue.
 4. Split each Ticket into dependency-ordered, independently verifiable
    Slices.
@@ -50,8 +51,8 @@ crosses multiple behaviors or has dependencies, use this order:
 All Tickets and Slices for one Plan share the Plan's implementation branch.
 Ticket dependencies determine execution order within the Plan; Slice
 dependencies determine the execution order within a Ticket. A
-single-behavior feature is one Ticket containing one Slice, and it still
-requires one feature branch and PR.
+single-behavior requirement is one Ticket containing one Slice, and it still
+requires the Plan branch and one PR.
 
 For every Slice, define:
 
@@ -71,17 +72,17 @@ Slice instead of growing the patch.
 When `plan-to-ticket` creates a plan or ticket, GitHub Issues are the mandatory
 durable source of truth. Create or update one Plan Issue and every required
 child Ticket Issue before the Plan branch starts. The Plan Issue always exists,
-including for a one-Ticket feature. The Plan Issue retains:
+including for a one-Ticket requirement. The Plan Issue retains:
 
 - `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
 - `Branch`, `Base`, `PR`, and child Ticket index metadata;
-- the feature goal, milestones, completion rule, and delivery contract.
+  - the requirement goal, milestones, completion rule, and delivery contract.
 
 Each child Ticket Issue retains its Plan link, `Status`, `Dependencies`, goal,
 scope, acceptance criteria, Slice plan, and validation contract. It does not
 own `Branch`, `Base`, `PR`, or a separate merge.
 
-The Plan Issue contains the overall feature plan and links to every Ticket
+The Plan Issue contains the overall requirement plan and links to every Ticket
 Issue. Chat output contains convenience links only.
 `docs/Repo_Current_State.md` may link to the active Issue but must not become a
 duplicate plan or backlog.
@@ -100,7 +101,7 @@ merge.
 
 ## Branch per plan
 
-Before implementation, create or resume one feature branch for every Plan.
+Before implementation, create or resume one Plan branch for every requirement.
 Use `<type>/<plan-id>-<short-description>` and create it from the updated
 default branch. Ticket dependencies are completed and validated on this branch;
 they do not require prerequisite Ticket merges. Keep the Plan's implementation,
@@ -121,7 +122,7 @@ to match them.
 
 ## Optional delegation gate
 
-After the feature branch exists and before or during implementation, the main
+After the Plan branch exists and before or during implementation, the main
 agent may use bounded delegation when it materially improves speed, context
 isolation, or review quality. A single-agent execution remains the default.
 Delegation does not create a second delivery path or bypass any PR gate.

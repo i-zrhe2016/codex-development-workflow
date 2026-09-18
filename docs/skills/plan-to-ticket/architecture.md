@@ -3,7 +3,7 @@
 ## Scope
 
 This repository packages the `plan-to-ticket` specialist inside a larger
-main-agent workflow. Its job is to convert a change request into one feature
+main-agent workflow. Its job is to convert every change request into exactly one
 Plan, behavior Tickets, and small engineering Slices within each Ticket with
 boundaries that can support optional delegation, then persist the Plan and
 Tickets to GitHub Issues. There is no
@@ -30,7 +30,7 @@ application infrastructure topology.
 
 ## Request flow
 
-1. A requestor provides a feature idea, requirement, bug-fix plan, refactor plan, or similar project change.
+1. A requestor provides a requirement, including a feature idea, bug-fix plan, refactor plan, documentation, configuration, dependency, test, or CI/CD change.
 2. Codex uses the frontmatter description in `SKILL.md` to determine whether this skill applies.
 3. The planning instructions use the available repository context to identify
    milestones, Ticket boundaries, Ticket dependencies, scope boundaries, and
@@ -66,14 +66,14 @@ application infrastructure topology.
   use `[T####] <short behavior/capability title>`. New `T####` identifiers are
   repository-scoped, four-digit, monotonically allocated, and never reused;
   historical duplicate IDs remain legacy records.
-- Every feature has a Plan Issue and at least one Ticket Issue; a
-  single-behavior feature is one Ticket with one Slice, and the Plan's
-  feature-branch, PR, `pr-review`, merge, and cleanup gates remain mandatory
-  exactly once.
+- Every requirement has exactly one Plan Issue and at least one Ticket Issue; a
+  single-behavior requirement is one Ticket with one Slice, and the Plan's
+  branch, PR, `pr-review`, merge, and cleanup gates remain mandatory exactly
+  once.
 
 ## Ticket-to-Slice hierarchy
 
-The Plan is the independently deliverable feature boundary. Each Ticket is an
+The Plan is the independently deliverable requirement boundary. Each Ticket is an
 independently reviewable behavior boundary inside that Plan and contains one or
 more execution-ready Slices. Ticket dependencies decide execution order on the
 Plan branch; Slice dependencies decide order inside a Ticket. All Tickets and

@@ -60,8 +60,9 @@ def is_github_url(url: str) -> bool:
 
 def github_repo_slug(remote_url: str) -> str | None:
     """Return owner/repository for a supported GitHub remote URL."""
-    if remote_url.startswith("git@github.com:"):
-        path = remote_url.removeprefix("git@github.com:")
+    github_ssh_prefix = "git" + "@github.com:"
+    if remote_url.startswith(github_ssh_prefix):
+        path = remote_url.removeprefix(github_ssh_prefix)
     else:
         try:
             parsed = urlparse(remote_url)
@@ -395,16 +396,16 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         recommended_action = "feature_branch_required"
         reasons.append(
             f"Working tree changes are on the default branch '{default_branch}'; "
-            "create a feature branch before committing or pushing."
+            "create the Plan branch before committing or pushing."
         )
-        commands.append("git switch -c <type>/<ticket-id>-<short-description>")
+        commands.append("git switch -c <type>/<plan-id>-<short-description>")
     elif default_branch and branch == default_branch and (
         ahead > 0 or (has_commits and not upstream)
     ):
         recommended_action = "manual_review"
         reasons.append(
             f"Default branch '{default_branch}' contains unpublished commit(s); "
-            "preserve the work and move it to a feature branch before publishing."
+            "preserve the work and move it to the Plan branch before publishing."
         )
     elif default_branch and effective_push_branch is None and (
         has_changes or ahead > 0 or (has_commits and not upstream)
@@ -420,7 +421,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         recommended_action = "manual_review"
         reasons.append(
             f"Plain 'git push' targets the default branch '{default_branch}'; "
-            "preserve the work and publish through a feature branch and PR."
+            "preserve the work and publish through the Plan branch and PR."
         )
     elif has_changes:
         recommended_action = "commit_then_push"

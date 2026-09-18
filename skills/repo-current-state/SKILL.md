@@ -44,7 +44,7 @@ Prefer this order:
 `Implement Plan -> Test -> Redaction -> Commit/Push -> Create/Update Plan PR -> Automatic Review -> Fix loop if needed -> Merge once -> Cleanup -> Update Repo_Current_State.md`
 
 If updating the state file changes tracked content after the merge, make that
-update through a new feature branch and the same mandatory PR gate; never commit
+update through a new Plan branch and the same mandatory PR gate; never commit
 the post-merge state update directly to the default branch.
 
 Do not update the file for trivial formatting-only edits or changes that do not affect the project state represented here.
@@ -150,7 +150,7 @@ Always maintain a `Last verified` line.
   carrying the state-file update: replacing it with that commit's own SHA would
   be self-referential. A later clean-tree verification may replace it with the
   actual SHA.
-- For a post-merge refresh performed on its own feature branch, the state-only
+- For a post-merge refresh performed on its own Plan branch, the state-only
   commit may retain `working tree` or record the already-verified base/parent
   SHA. Never use that state-only commit's own SHA.
 - Use the current date only when actually updating or validating the file.

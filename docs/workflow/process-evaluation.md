@@ -39,7 +39,7 @@ smaller change solves the same problem.
 
 | Area | Question | Typical redundancy signal |
 |---|---|---|
-| Planning | Was Plan/Ticket/Slice planning proportional to the feature? | A tiny Plan required extra Tickets, repeated planning, or unnecessary re-decomposition |
+| Planning | Was Plan/Ticket/Slice planning proportional to the requirement? | A tiny Plan required extra Tickets, repeated planning, or unnecessary re-decomposition |
 | Context | Was the same repository context loaded repeatedly? | Re-reading large files because no compact recovery state existed |
 | Delegation | Did another agent reduce work or add coordination? | Main agent repeated delegated exploration or integration cost exceeded benefit |
 | Implementation | Was work expanded beyond acceptance criteria? | Unrelated refactor or future-slice work appeared |
@@ -118,7 +118,7 @@ Use future real runs to confirm or reject them.
 | Post-delivery evaluation can itself create a documentation-only PR every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
 | `pr-review` after every PR update | Necessary single merge gate; full-range repetition after bounded fixes is wasteful | Keep one mandatory gate; let its runner default to incremental coverage after an assessed review and require explicit full escalation for high-impact or uncertain changes |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
-| Plan/Ticket/Slice/delegation machinery | Every feature has one Plan; delegation remains optional | Keep the Plan mandatory and scale only its shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |
+| Plan/Ticket/Slice/delegation machinery | Every requirement has exactly one Plan; delegation remains optional | Keep the Plan mandatory for every change type and scale only its shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |
 
 ## Improvement backlog discipline
 
