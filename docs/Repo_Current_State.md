@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-18 @ 1dd7a095cecb273b1ed823ec41495a66c1a1b067
+Last verified: 2026-09-18 @ 51fd158
 
 ## Current Focus
 
@@ -8,9 +8,10 @@ Last verified: 2026-09-18 @ 1dd7a095cecb273b1ed823ec41495a66c1a1b067
 
 ## Implemented
 
-- Repository changes follow the Issue -> feature branch -> test -> redaction ->
-  commit -> push -> PR -> `pr-review` -> merge and cleanup gates defined by
-  `AGENTS.md`.
+- Every requirement is recorded as exactly one Plan Issue with at least one
+  child Ticket before its Plan branch starts; all change types follow the Plan
+  branch -> test -> redaction -> commit -> push -> PR -> `pr-review` -> merge
+  and cleanup gates defined by `AGENTS.md`.
 - `pr-review` is the single merge decision gate. The first review covers the
   complete PR; bounded fixes may use incremental runner coverage, while
   high-impact or uncertain changes require full coverage.
@@ -23,9 +24,10 @@ Last verified: 2026-09-18 @ 1dd7a095cecb273b1ed823ec41495a66c1a1b067
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
-- `plan-to-ticket` uses one canonical `[PLAN]` Issue per feature, `[T####]`
-  child Issue titles, repository-scoped non-reused Ticket IDs, and one shared
-  Plan branch/PR/merge for all Tickets and Slices in that feature.
+- `plan-to-ticket` uses exactly one canonical `[PLAN]` Issue per requirement,
+  `[T####]` child Issue titles, repository-scoped non-reused Ticket IDs, and
+  one shared Plan branch/PR/merge for all Tickets and Slices in that
+  requirement.
 - The installer records per-bundle ownership markers, protects unmarked paths,
   and offers recoverable `--adopt-legacy` migration for pre-marker installs.
 
@@ -53,8 +55,8 @@ Last verified: 2026-09-18 @ 1dd7a095cecb273b1ed823ec41495a66c1a1b067
 ## Architecture Snapshot
 
 - The root workflow owns lifecycle routing, Plan/Ticket/Slice gates, delegation,
-  verification, and merge/cleanup guidance; each Plan owns one branch, PR, and
-  merge for its child Tickets.
+  verification, and merge/cleanup guidance; each requirement has exactly one
+  Plan, and each Plan owns one branch, PR, and merge for its child Tickets.
 - `github-push-when-ready` owns publication through PR readiness; `pr-review`
   owns the single PASS/BLOCKED merge decision and its recoverable runner.
 - Runtime skills remain under `skills/`; explanatory documentation is under
