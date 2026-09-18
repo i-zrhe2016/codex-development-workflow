@@ -11,10 +11,10 @@ It does not assume a cloud provider, create infrastructure without an explicit
 request, or treat a successful trigger command as proof of a healthy release.
 
 For a service-publishing target explicitly designated `tailscale-hardened`, the
-runtime Skill performs a read-only gate that requires the target hostname to
-contain `deploy` (case-insensitive), the approved Tailscale node identity, a
-live local Tailscale address, and an authorized Tailscale SSH or non-SSH access
-path. A separate authorized hardening phase then limits SSH to Tailscale,
+runtime Skill performs a read-only gate that requires the approved Tailscale
+node identity and expected-hostname mapping, a live local Tailscale address,
+and an authorized Tailscale SSH or non-SSH access path. A separate authorized
+hardening phase then limits SSH to Tailscale,
 denies every public inbound port, preserves the existing outbound policy,
 scopes the catalog and declared service ports to approved Tailscale sources,
 and serializes the complete release with independent recovery. The firewall is
