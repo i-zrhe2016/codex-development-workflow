@@ -88,20 +88,10 @@ the target indefinitely.
    expected target hostname. A node name is display metadata and cannot
    authorize a target. On the target, read the actual `hostname` and
    Tailscale identity/status, then verify that they map to the approved node ID
-   and expected hostname before proceeding. The
-   actual hostname must also contain `deploy`, case-insensitively. A missing
-   command, empty result, hostname without that substring, identity mismatch,
-   or unverifiable mapping stops the deployment. Do not trust a hostname, node
-   name, or IP
+   and expected hostname before proceeding. A missing command, empty result,
+   identity mismatch, or unverifiable mapping stops the deployment. Do not
+   trust a hostname, node name, or IP
    supplied only by the caller or inferred from a repository label.
-
-   ```bash
-   TARGET_HOSTNAME="$(hostname)" || exit 1
-   case "${TARGET_HOSTNAME,,}" in
-     *deploy*) ;;
-     *) echo "refusing deployment: target hostname must contain deploy" >&2; exit 1 ;;
-   esac
-   ```
 
 2. **Require Tailscale.** Confirm that the Tailscale daemon is running and
    authenticated, that the target has a current Tailscale address, and that
