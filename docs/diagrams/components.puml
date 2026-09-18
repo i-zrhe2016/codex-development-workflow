@@ -15,7 +15,7 @@ package "Main-agent ownership" #EFF6FF {
 }
 package "Specialist procedures (invoked when applicable)" #F0FDF4 {
   component "context-efficiency\nLoad relevant context" as context
-  component "plan-to-ticket\nRequirement -> behavior Tickets\nEach Ticket -> ordered Slices" as plan
+  component "plan-to-ticket\nFeature Plan -> behavior Tickets\nEach Ticket -> ordered Slices" as plan
   component "test-workflow\nAcceptance -> selected checks\nEvidence + failures" as tests
   component "data-document-redaction\nScan staged files\nBlock publication on findings" as redact
   component "pr-review\nSingle PR merge gate\nPASS or BLOCKED decision" as review
@@ -27,8 +27,8 @@ package "Delivery and recovery" #FFF7ED {
   component "auto-deploy (conditional)\nExisting deployment contract\nHealth verification / rollback" as deploy
 }
 package "Tools and durable evidence" #F8FAFC {
-  database "GitHub Issues\nTicket records; parent plan for\nmulti-Ticket work\nStatus / Branch / Base / PR\nAuthoritative for every Ticket" as issues
-  database "Git + GitHub PR\nFeature commits / checks / merged status\nDefault branch protected by workflow" as github
+  database "GitHub Issues\nPlan + child Ticket records\nPlan Status / Branch / Base / PR\nTickets: behavior / acceptance" as issues
+  database "Git + GitHub PR\nOne Plan branch / PR / merge\nFeature commits / checks / merged status\nDefault branch protected by workflow" as github
   component "Alibaba Open Code Review CLI\nocr review --from <ref> --to <head>\nInvoked by pr-review" as cli
   database "Local Git metadata\nocr-review/\nState / run history / logs\nNever committed" as logs
   artifact "docs/Repo_Current_State.md\nCompact recovery index\nNot a ticket database" as snapshot
@@ -38,7 +38,7 @@ package "Tools and durable evidence" #F8FAFC {
 user --> main
 main --> delegates : bounded tasks
 main --> context : understand
-main --> plan : decompose multi-Ticket work
+main --> plan : define Plan + Tickets
 main --> tests : validate / integrate
 main --> redact : staged scan
 main --> publish : deliver

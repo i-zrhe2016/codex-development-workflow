@@ -2,9 +2,8 @@
 
 `plan-to-ticket` is the planning specialist for the main-agent workflow. It
 turns a feature idea, requirement, bug-fix plan, refactor plan, or other
-project change into a concise implementation plan, behavior Tickets, and
-dependency-ordered Slices within each Ticket, then persists the plan and
-Tickets to GitHub Issues.
+project change into one feature Plan, behavior Tickets, and dependency-ordered
+Slices within each Ticket, then persists the Plan and Tickets to GitHub Issues.
 
 The executable skill source is maintained at
 [`skills/plan-to-ticket/`](../../../skills/plan-to-ticket/). This document and
@@ -31,12 +30,10 @@ When the skill is selected for a planning request, it:
    execute sequentially or pass through the optional delegation gate.
 4. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
-5. Creates or updates one Issue per Ticket before implementation branches
-   start, plus a parent plan Issue for multi-Ticket work, reusing stable
-   markers to avoid duplicates.
-6. Assigns or resumes one implementation branch and base branch for each
-   Ticket, using the updated default branch for new dependency-ready Tickets;
-   each Ticket Issue and branch remain a one-to-one pair.
+5. Creates or updates one Plan Issue and one Issue per Ticket before the Plan
+   branch starts, reusing stable markers to avoid duplicates.
+6. Assigns or resumes one implementation branch and base branch for the Plan;
+   every Ticket and Slice on that Plan shares the branch.
 7. Returns the `Plan` and `Tickets` sections defined by the skill contract,
    including canonical Issue links, nested Slices, and current execution
    metadata.
@@ -54,57 +51,57 @@ The skill uses stable, distinct names for every planning record:
 
 | Record | Identifier | GitHub Issue or output title |
 | --- | --- | --- |
-| Parent plan | lowercase kebab-case `codex-plan-id` slug | `[PLAN] <short plan title>` |
+| Plan | lowercase kebab-case `codex-plan-id` slug | `[PLAN] <short plan title>` |
 | Ticket | repository-scoped `T` plus four digits, such as `T0016` | `[T0016] <short behavior/capability title>` |
 | Slice | parent Ticket digits plus a one-based ordinal, such as `S0016.1` | Nested Slice heading `S0016.1 - <slice title>` |
-| Branch | lowercase Ticket ID plus a short description | `<type>/t0016-<short-description>` |
+| Branch | lowercase Plan ID plus a short description | `<type>/<plan-id>-<short-description>` |
 
 New Ticket IDs are selected by scanning both open and closed Issue bodies and
 must be greater than every existing valid ID; IDs are never reused. Duplicate
 IDs in closed historical Issues are legacy records and are not renumbered.
 When a matching Issue is reused, its title is normalized without changing its
-stable marker or identifier. A single-Ticket request has no parent plan Issue,
-but its Ticket still uses the canonical Ticket title.
+stable marker or identifier. A one-Ticket feature still has a Plan Issue and a
+child Ticket Issue, both using their canonical titles.
 
 ## Ticket-to-Slice hierarchy
 
-Ticket decomposition comes before Slice decomposition. A Ticket is the
-behavior/capability boundary represented by one GitHub Issue and one branch. A
-Slice is a smaller execution-ready unit inside that Ticket and inherits the
-Ticket's Issue and branch. Keep Ticket dependencies at the branch-readiness
-level and Slice dependencies inside the Ticket. Every requirement is recorded
-as a Ticket Issue; tiny work is one Ticket containing one implicit Slice, and
-the parent workflow still creates a feature branch and sends the change through
-the mandatory PR gate.
+Plan decomposition comes before Ticket decomposition, and Ticket decomposition
+comes before Slice decomposition. A Plan is the feature and delivery boundary
+represented by one GitHub Issue, one branch, one PR, and one merge. A Ticket is
+the behavior/capability boundary represented by one child Issue and no
+independent delivery branch. A Slice is a smaller execution-ready unit inside
+that Ticket and inherits the Plan branch. Keep Ticket dependencies at the
+execution-order level within the Plan and Slice dependencies inside the Ticket.
+Every feature is recorded as a Plan plus at least one Ticket; tiny work is one
+Plan containing one Ticket with one implicit Slice.
 
 ## Usage
 
 Make the skill available in a Codex skills environment, then provide a change
 request or implementation idea in a repository with a resolvable GitHub
 remote. The frontmatter description in `SKILL.md` is used for skill selection.
-The skill creates/updates the Ticket Issues, plus a parent plan Issue for
-multi-Ticket work, before returning a successful plan with execution-ready
-Tickets and nested Slices. If the connector or required permission is
+The skill creates/updates one Plan Issue and its Ticket Issues before returning
+a successful Plan with execution-ready Tickets and nested Slices. If the connector or required permission is
 unavailable, the result is blocked rather than an unpersisted plan.
 
 For repository-aware planning, include the relevant repository in the working
 context. The skill will reuse existing architecture and conventions where they
 are documented and available.
 
-Every ticket output includes the branch handoff:
+Every Plan output includes the branch handoff:
 
 **Branch**
 
-- feature/t0001-short-description
+- feature/plan-slug-short-description
 
 **Base branch**
 
 - main
 
-Ticket planning is complete before implementation begins. The parent workflow
-then runs the same Test -> applicable Redaction -> Commit -> Push -> Create /
-Update PR -> `pr-review` -> Merge lifecycle for every Ticket and its
-Slices.
+Plan planning is complete before implementation begins. The parent workflow
+then runs the Test -> applicable Redaction -> Commit -> Push -> Create / Update
+Plan PR -> `pr-review` -> Merge lifecycle once for the Plan, while its Tickets
+and Slices share that delivery boundary.
 
 ## Repository layout
 

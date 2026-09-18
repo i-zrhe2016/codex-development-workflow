@@ -3,16 +3,16 @@
 skinparam defaultFontName Arial
 skinparam shadowing false
 skinparam ArrowColor #475569
-title Ticket PR Loop - Fixes, Rechecks and Merge Conditions
+title Plan PR Loop - Fixes, Rechecks and One Merge Condition
 
-state "Ticket validated\nFeature branch; selected checks passed" as ready
+state "Plan validated\nPlan branch; all Ticket checks passed" as ready
 state "Applicable redaction + publication readiness\nIdentity / scope / actual push target\nConventional Commit -> push branch" as publish
-state "Create/update existing PR\nVerify PR head/base match Ticket Branch/Base\nStatus: in_review; persist canonical PR link" as pr
+state "Create/update the single Plan PR\nVerify PR head/base match Plan Branch/Base\nPlan Status: in_review; persist canonical PR link" as pr
 state "pr-review\nSingle merge decision gate\nReturn PASS or BLOCKED" as review
-state "Batch confirmed blocking findings\nFix -> affected tests -> applicable redaction\nKeep same Ticket branch and PR" as fix
+state "Batch confirmed blocking findings\nFix -> affected tests -> applicable redaction\nKeep same Plan branch and PR" as fix
 state "Blocked / incomplete\nRecord cause + logs + resume stage; Issue stays open\nNever treat timeout, exit 0 or missing output as pass" as blocked #FFF4CC
 state "Merge gate\nRecorded review pass + required checks passed\nPR head still equals reviewed head" as gate
-state "Merge PR; verify MERGED and exact refs\nThen cleanup / sync / close Ticket\nReturn to outer Ticket loop" as merged #DCFCE7
+state "Merge Plan PR once; verify MERGED and exact refs\nThen cleanup / sync / close Plan + Tickets" as merged #DCFCE7
 state "Re-plan\nUpdate same Ticket / Slice contracts\nReturn to Slice loop before publishing" as replan
 
 [*] --> ready
@@ -40,8 +40,8 @@ merged --> [*]
 note right of blocked
 Arrows resume only the recorded failed stage;
 they are not interchangeable shortcuts.
-Environment/dependency blockers set Status: blocked.
-Restore in_review when the existing PR is ready for review.
-No Issue is closed merely because code was pushed.
+Environment/dependency blockers set Plan/Ticket Status: blocked.
+Restore Plan in_review when the existing PR is ready for review.
+No Plan or Ticket is closed merely because code was pushed.
 end note
 @enduml

@@ -3,19 +3,19 @@
 skinparam defaultFontName Arial
 skinparam shadowing false
 skinparam ArrowColor #475569
-title Slice Loop - Implement, Validate, Diagnose and Re-plan
+title Plan Ticket/Slice Loop - Implement, Validate, Diagnose and Re-plan
 
-state "Select next dependency-ready Slice\nRead Ticket Issue + branch + relevant evidence" as select
+state "Select next dependency-ready Ticket/Slice\nRead Plan + Ticket + shared branch evidence" as select
 state "Define Slice contract\nGoal / exclusions / ownership / dependencies\nAcceptance / concrete cases / validation command\nLevel: minimal / focused / regression / full" as contract
-state "Minimal implementation\nTest-first when useful; bounded delegation optional\nKeep all Slices on the Ticket branch" as implement
+state "Minimal implementation\nTest-first when useful; bounded delegation optional\nKeep all Tickets/Slices on the Plan branch" as implement
 state "Run selected focused checks\nCapture real exit status + failure evidence" as test
 state "Classify failure\nDo not weaken assertions or retry blindly" as diagnose #FFF4CC
 state "Fix implementation or test defect\nOnly evidence-backed, in-scope changes" as fix
-state "Environment / dependency blocked\nIssue open; Status: blocked\nRecord cause + exact resume point" as blocked #FFF4CC
+state "Environment / dependency blocked\nPlan/Ticket Issue open; Status: blocked\nRecord cause + exact resume point" as blocked #FFF4CC
 state "Re-plan Ticket / Slice\nUpdate boundaries, dependencies and acceptance\nPreserve completed valid work; stop widening patch" as replan
-state "Slice validated\nRecord concise evidence in authoritative Ticket\nTicket is not done yet" as slice_done #DCFCE7
-state "Ticket acceptance + integration checks\nEscalate test level only for evidenced risk" as integrate
-state "Ticket ready for publication\nContinue to PR review loop" as ready #DCFCE7
+state "Slice validated\nRecord concise evidence in authoritative Ticket\nTicket is not done until Plan merge" as slice_done #DCFCE7
+state "Plan acceptance + integration checks\nEscalate test level only for evidenced risk" as integrate
+state "Plan ready for one PR\nContinue to Plan PR review loop" as ready #DCFCE7
 
 [*] --> select
 select --> contract : next Slice
@@ -37,7 +37,7 @@ integrate --> diagnose : integration regression / gap\nidentify affected Slice
 ready --> [*]
 
 note right of select
-Slice execution and Ticket delivery are different loops.
+Slice execution and Plan delivery are different loops.
 Do not commit unrelated changes or start dependent Slices early.
 Optional parallel work requires disjoint ownership;
 main agent integrates and makes the final judgment.

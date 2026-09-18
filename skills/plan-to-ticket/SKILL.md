@@ -1,26 +1,27 @@
 ---
 name: plan-to-ticket
-description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into a concise implementation plan, behavior Tickets, and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Use for complex or multi-step work that benefits from execution-ready Slices; every requirement still records its GitHub Issue Ticket before implementation. Persist every generated Ticket, and any parent plan, to GitHub Issues before implementation branches start; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
+description: Convert a feature idea, requirement, implementation plan, bug-fix plan, refactor plan, or project change into one feature Plan, one or more behavior Tickets, and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Persist the Plan and every Ticket to GitHub Issues before the single Plan branch starts; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
 ---
 
 # Plan to Ticket
 
-Convert a requirement into the smallest useful set of behavior Tickets, then
-into execution-ready Slices within each Ticket. Every requirement gets at
-least one Ticket; complex or dependency-driven work adds more.
+Convert a feature requirement into one Plan, the smallest useful set of behavior
+Tickets within that Plan, and execution-ready Slices within each Ticket. Every
+Plan gets at least one Ticket; complex or dependency-driven work adds more
+Tickets and Slices without adding another delivery branch or merge.
 
 ## Core principle
 
-Every requirement is recorded as a GitHub Issue Ticket before implementation
-branch work starts. Ticket count scales with the requirement: a single-behavior
-requirement is one Ticket with one Slice, while larger or dependency-driven
-work adds more Tickets and Slices.
+Every feature is recorded as one Plan Issue and at least one child Ticket Issue
+before the Plan branch starts. Ticket count scales with the feature: a
+single-behavior feature is one Ticket with one Slice, while larger or
+dependency-driven work adds more Tickets and Slices under the same Plan.
 
-Create additional tickets only when they reduce implementation complexity more
-than they add workflow overhead. Never remove the mandatory Ticket itself; a
-smaller Ticket changes planning overhead only, and the parent workflow still
-requires a feature branch, tests, applicable redaction, commit, push, PR,
-Automatic Review, and merge.
+Create additional Tickets only when they reduce implementation complexity more
+than they add planning overhead. Never create a second Plan for behavior that
+belongs to the same feature; a smaller Ticket changes planning detail only,
+and the parent workflow still requires one Plan branch, tests, applicable
+redaction, commit, push, one PR, Automatic Review, and one merge.
 
 When this skill creates a plan or ticket, GitHub Issues are the mandatory
 durable store. Persistence is not an optional output mode. Chat output is only
@@ -41,43 +42,44 @@ truth. Issue persistence is always required once this skill produces a Ticket.
   ticket marker in the target repository. Reuse and update one existing
   matching Issue; do not create duplicates. If more than one candidate matches,
   stop and request resolution.
-- Create or update every required Ticket Issue, plus the parent plan Issue when
-  the work spans multiple Tickets, before creating implementation branches.
-  Use the repository's default branch as the base unless the request
-  explicitly establishes another base.
-- A single-Ticket requirement records one Ticket Issue and does not require a
-  parent plan Issue; multi-Ticket work always includes the parent plan Issue.
-- Assign every ticket an implementation branch and base branch before branch
-  work starts. Use `<type>/<ticket-id>-<short-description>` and keep the same
-  branch for the ticket's implementation, tests, and related documentation.
-- Treat each ticket Issue and implementation branch as a one-to-one pair. Write
-  the exact `Branch` and `Base` metadata to the Issue before the first edit,
-  set `Status: in_progress` when branch work starts, and verify those values
-  when resuming a branch.
-- Keep all internal Slices for one ticket on its branch. Do not share a branch
-  across tickets or create separate branches for individual Slices.
-- Create or resume each ticket branch from the updated default branch. Do not
-  start a dependent ticket until its prerequisite ticket is merged; then use
-  the updated default branch as its base.
+- Create or update one Plan Issue and every required child Ticket Issue before
+  creating the Plan branch. Use the repository's default branch as the base
+  unless the request explicitly establishes another base.
+- A Plan Issue is always required, including when the Plan contains one Ticket.
+- Assign the Plan one implementation branch and base branch before branch work
+  starts. Use `<type>/<plan-id>-<short-description>` and keep the same branch
+  for every Ticket, Slice, test, and related document in the feature.
+- Treat the Plan Issue and implementation branch as a one-to-one pair. Write
+  the exact `Branch` and `Base` metadata to the Plan Issue before the first
+  edit, set Plan `Status: in_progress` when branch work starts, and verify
+  those values when resuming the branch.
+- Keep all Tickets and their internal Slices on the Plan branch. Do not share a
+  branch across Plans or create separate branches for Tickets or Slices.
+- Ticket dependencies describe execution order within the Plan branch. Do not
+  wait for or create a Ticket-level merge before starting a dependent Ticket;
+  validate the prerequisite Ticket/Slices on the same Plan branch first.
 - Create one GitHub Issue per behavior ticket. Every ticket Issue must retain
   its goal, scope, dependencies, acceptance criteria, validation, and the
   execution metadata block defined below.
-- Update the same ticket Issue as work progresses. The allowed status values
-  are `planned`, `in_progress`, `blocked`, `in_review`, and `done`.
-- `planned`, `in_progress`, `blocked`, and `in_review` Issues remain open.
-  Set `done` and close the Issue only after its pull request is verified
-  merged; never mark a ticket done merely because its branch or PR exists.
-- Keep branch, base, dependency, and PR references current in the ticket
-  Issue. Use `PR: null` until a pull request exists, then record its canonical
-  URL or number. The PR head/base must match the Issue's `Branch`/`Base`; set
-  `Status: in_review` when it opens and set `Status: done`/close the Issue only
-  after the verified merge.
+- Update the Plan Issue and each child Ticket Issue as work progresses. The
+  allowed status values are `planned`, `in_progress`, `blocked`, `in_review`,
+  and `done`.
+- `planned`, `in_progress`, `blocked`, and `in_review` Issues remain open. Set
+  the Plan and all child Tickets to `done` and close them only after the single
+  Plan PR is verified merged; never mark a Plan done merely because its branch
+  or PR exists.
+- Keep the Plan's branch, base, and PR references current in the Plan Issue.
+  Use `PR: null` until the one Plan PR exists, then record its canonical URL or
+  number. The PR head/base must match the Plan's `Branch`/`Base`; set the Plan
+  to `in_review` when it opens. Child Tickets keep only their Plan link,
+  status, dependencies, acceptance, and Slice metadata.
 - Keep `docs/Repo_Current_State.md` as a compact pointer to the active Issue
   when repository state is updated; do not copy the plan or backlog into it.
 - Keep tickets small, focused, independently understandable, and independently verifiable.
 - Prefer one behavior or capability per ticket, not one file or one coding step per ticket.
-- Do not use Ticket and Slice as synonyms: a Ticket is the Issue/branch-level
-  behavior boundary; a Slice is an execution unit inside that Ticket.
+- Do not use Plan, Ticket, and Slice as synonyms: a Plan is the feature and
+  delivery boundary; a Ticket is the child behavior boundary; a Slice is an
+  execution unit inside that Ticket.
 - Keep tests with the behavior they validate; do not create separate "write tests" tickets unless test infrastructure itself is the deliverable.
 - First establish the Ticket boundaries and ticket-level dependencies, then
   order each Ticket's Slices by real implementation dependency and clear
@@ -92,15 +94,15 @@ truth. Issue persistence is always required once this skill produces a Ticket.
 
 ## GitHub Issues persistence contract
 
-When work spans multiple Tickets, use a parent plan Issue for the overall plan
-and Ticket index, plus one child Issue for each Ticket. The parent Issue
-contains the overall milestones and links to child Issues; it must not
-duplicate mutable Ticket status or progress fields. The child Issue is the
-authoritative record for that Ticket's current metadata, boundaries, nested
-Slice plan, and acceptance state. Comments may hold append-only progress
-evidence, but they do not replace the structured fields in the Issue body. A
-single-Ticket requirement records one child Issue and omits the parent plan
-Issue.
+Every feature uses one Plan Issue for the overall plan, delivery metadata, and
+Ticket index, plus one child Issue for each Ticket. The Plan Issue contains the
+overall goal, milestones, Plan `Status`/`Branch`/`Base`/`PR`, and links to child
+Issues; it must not duplicate mutable Ticket acceptance or Slice progress. The
+child Issue is the authoritative record for that Ticket's current status,
+Plan link, boundaries, dependencies, nested Slice plan, and acceptance state.
+Comments may hold append-only progress evidence, but they do not replace the
+structured fields in the Issue body. A one-Ticket feature still has both the
+Plan Issue and its child Ticket Issue.
 
 ## Naming contract
 
@@ -110,8 +112,8 @@ human-readable Issue titles aligned with those identifiers:
 - A plan ID is a stable lowercase kebab-case slug, such as
   `persist-plan-to-ticket-github-issues`. It is written only in the
   `codex-plan-id` marker and must be unique within the target repository.
-- A parent plan Issue title is exactly `[PLAN] <short plan title>`. A parent
-  plan Issue exists only when the work spans multiple Tickets.
+- A Plan Issue title is exactly `[PLAN] <short plan title>`. A Plan Issue exists
+  for every feature, including a Plan with one Ticket.
 - A Ticket ID is an uppercase `T` followed by exactly four zero-padded decimal
   digits, such as `T0016`. Allocate IDs in repository scope: scan open and
   closed Issue bodies for exact `codex-ticket-id` markers, then choose a value
@@ -121,8 +123,8 @@ human-readable Issue titles aligned with those identifiers:
   replacing the example ID and title with the Ticket's values. The title must
   describe a reviewable behavior or capability, not an implementation step.
 - A Slice ID is `S` plus the parent Ticket's four digits, a dot, and a
-  one-based ordinal, such as `S0016.1`. A Ticket branch uses the lowercase
-  Ticket ID in `<type>/t0016-<short-description>`.
+  one-based ordinal, such as `S0016.1`. A Plan branch uses the lowercase Plan
+  slug in `<type>/<plan-id>-<short-description>`.
 - The GitHub Issue number is a link target, not a plan or Ticket identifier.
 
 When reusing a matching Issue, normalize its title to the canonical format
@@ -137,22 +139,32 @@ Use stable markers so retries and later sessions can find the same records:
 <!-- codex-ticket-id: T0016 -->
 ```
 
-When present, the parent plan Issue should contain:
+The Plan Issue should contain:
 
 - the stable plan marker;
 - the overall goal and milestones;
-- a ticket index linking each ticket ID to its GitHub Issue; and
-- the dependency order and completion rule.
+- `Status`, `Branch`, `Base`, and `PR` metadata;
+- a Ticket index linking each Ticket ID to its GitHub Issue; and
+- the Ticket dependency order and one-merge completion rule.
 
-Each ticket Issue should begin with this metadata block, replacing values with
-the actual ticket data:
+The Plan Issue should begin with this metadata block, replacing values with the
+actual Plan data:
 
 ```yaml
 Status: planned
-Branch: feature/t0001-short-description
+Branch: feature/plan-slug-short-description
 Base: main
-Dependencies: []
 PR: null
+Tickets: [T0001]
+```
+
+Each Ticket Issue should begin with this metadata block, replacing values with
+the actual Ticket data:
+
+```yaml
+Plan: <canonical Plan Issue URL>
+Status: planned
+Dependencies: []
 ```
 
 The Ticket Issue body uses the Ticket structure in this skill, including Goal,
@@ -160,8 +172,9 @@ Dependencies, Scope, Out of scope, Function Checklist, Requirements,
 Non-goals, and Ticket Acceptance Criteria, followed by one or more nested Slice
 sections. Each Slice section includes its own Goal, Scope, Dependencies,
 Acceptance Criteria, Test Cases, Relevant Context / Files, Test Strategy, Test
-Level, and Validation Command. Keep the body current when a branch,
-dependency, acceptance boundary, or PR changes.
+Level, and Validation Command. Keep the Plan body current when its branch, base,
+Ticket index, or PR changes; keep each Ticket body current when its dependency,
+acceptance boundary, or Slice plan changes.
 
 Persist in this order:
 
@@ -169,58 +182,61 @@ Persist in this order:
 2. Generate the plan and dependency-ordered tickets in memory.
 3. Search for the exact stable plan/ticket markers, check ID collisions, and
    resolve any existing Issues.
-4. Create or update the parent plan Issue when the work spans multiple
-   Tickets.
-5. Create or update every initial ticket Issue sequentially, preserving the
-   required metadata and linking dependencies to Issue numbers or URLs.
-6. Update the parent ticket index when a parent plan Issue exists.
-7. Only after all required writes succeed, return the plan/ticket links and
-   allow implementation branches to start.
+4. Create or update the Plan Issue with its delivery metadata and Ticket index.
+5. Create or update every initial Ticket Issue sequentially, preserving the
+   required metadata and linking the Plan and dependencies to Issue URLs.
+6. Verify the Plan Ticket index points to every child Issue.
+7. Only after all required writes succeed, return the Plan/Ticket links and
+   allow the single Plan branch to start.
 
 If a write fails after some Issues were created, report the created Issue URLs
 and the failed operation, mark the affected Issue `blocked` when that update is
 still possible, and do not claim the plan is persisted or ready for
 implementation. Never create a local mirror to compensate for a failed write.
 
-During implementation, update the ticket Issue on its own branch at these
-boundaries:
+During implementation, update the Plan Issue and child Ticket Issues on the
+shared Plan branch at these boundaries:
 
-- branch work starts: `Status: in_progress`;
-- a blocking dependency or environment problem appears: `Status: blocked`;
-- a pull request is opened: `Status: in_review` and set `PR`;
-- the pull request is merged: `Status: done`, close the Issue, and retain the
-  merged PR reference.
+- Plan branch work starts: Plan `Status: in_progress`;
+- a blocking dependency or environment problem appears: affected Plan/Ticket
+  `Status: blocked`;
+- the single Plan pull request is opened: Plan `Status: in_review` and set
+  `PR`; child Tickets may also be set to `in_review`;
+- the Plan pull request is merged: set Plan and all child Tickets to `done`,
+  close them, and retain the merged PR reference on the Plan Issue.
 
-Do not start a dependency-blocked Ticket merely to fill its branch field. A
-dependent Ticket becomes ready only when its dependencies are merged into the
-updated default branch or the main workflow explicitly re-plans the
-dependency. A passing Ticket is ready to open or update a pull request. The
-parent workflow starts Automatic Review immediately after the PR is created or
-updated, fixes blocking findings through the Test/Redaction/Commit/Push loop,
-and delivers the Ticket only after its pull request is merged.
+Do not start a dependency-blocked Ticket merely to fill metadata. A dependent
+Ticket becomes ready when its prerequisite Ticket/Slices are complete and
+validated on the same Plan branch; no prerequisite merge is needed. When every
+Ticket acceptance boundary passes, the Plan is ready to open or update its one
+pull request. The parent workflow starts Automatic Review immediately after
+that PR is created or updated, fixes blocking findings through the
+Test/Redaction/Commit/Push loop, and delivers the feature only after the Plan
+pull request is merged.
 
 ## Planning Process
 
 Before writing the output, determine internally:
 
-1. The final desired outcome.
-2. How many Tickets the requirement needs; never whether a Ticket exists.
+1. The one feature and final desired outcome represented by the Plan.
+2. How many Tickets the feature needs.
 3. The minimum foundations required first.
-4. The smallest independently reviewable behavior Tickets.
-5. The dependency order between Tickets.
+4. The smallest independently reviewable behavior Tickets within the Plan.
+5. The dependency order between Tickets on the shared Plan branch.
 6. The smallest independently verifiable Slices within each Ticket.
 7. The dependency order between Slices and any safe delegation boundaries.
-8. The scope boundaries that prevent drift.
+8. The scope boundaries that prevent drift into another Plan/feature.
 9. The observable acceptance criteria for each Slice.
-10. The test cases and validation evidence needed to prove each Slice.
+10. The test cases and validation evidence needed to prove each Slice and the
+    final Plan.
 
 Do not expose internal reasoning.
 
 ## Ticket Sizing
 
-A good ticket is a unit a coding agent can implement and test before opening a
-pull request, then review at the PR merge boundary without needing to re-plan
-midway.
+A good ticket is a behavior unit a coding agent can implement and test on the
+shared Plan branch before the Plan PR opens, without needing to re-plan the
+feature midway.
 
 Split a ticket when:
 
@@ -257,7 +273,9 @@ T0005 - Write tests
 
 A useful heuristic:
 
-> If the ticket cannot be reviewed and verified independently, split it. If splitting produces only mechanical steps, merge it back into the behavior ticket.
+> If the ticket cannot be reviewed and verified as a behavior boundary inside
+> the Plan, split it. If splitting produces only mechanical steps, merge it
+> back into the behavior ticket.
 
 After the Ticket boundaries are fixed, split each Ticket into one or more
 execution-ready Slices. A Slice may be delegated or run sequentially, but it
@@ -334,7 +352,7 @@ Do not invent framework-specific test commands or fixture details when the repos
 
 ## Validation
 
-Specify the smallest reliable validation path for the ticket.
+Specify the smallest reliable validation path for the Ticket and the final Plan.
 
 When repository context provides exact commands, use them. Otherwise describe the expected validation layer, for example:
 
@@ -349,12 +367,12 @@ Do not default every ticket to a full test suite or browser E2E run.
 
 Use explicit ticket IDs.
 
-Ticket dependencies describe the order in which the main agent can start
-Ticket branches. Slice dependencies describe the order in which the main agent
-or a delegated worker can execute Slices inside a ready Ticket. They are not an
-instruction to delegate: independent Slices may be considered by the parent
-workflow's delegation gate, while dependent or overlapping Slices remain
-sequential.
+Ticket dependencies describe the order in which the main agent can execute
+Tickets on the shared Plan branch. They never create a Ticket branch or merge.
+Slice dependencies describe the order in which the main agent or a delegated
+worker can execute Slices inside a ready Ticket. They are not an instruction to
+delegate: independent Slices may be considered by the parent workflow's
+delegation gate, while dependent or overlapping Slices remain sequential.
 
 Example:
 
@@ -379,13 +397,15 @@ delegation.
 
 ## Re-planning Boundary
 
-Tickets are plans, not contracts with reality.
+Tickets are behavior boundaries inside a Plan, not contracts with reality.
 
 If implementation reveals that a ticket requires a materially different design, new subsystem, or unrelated behavior:
 
-- stop expanding the current ticket;
+- stop expanding the current Ticket;
 - preserve completed valid work;
 - split or re-plan the newly discovered work;
+- add a Ticket under the same Plan when the behavior is still part of the same
+  feature, or create a new Plan when it requires a separate feature and merge;
 - update dependencies rather than silently widening scope.
 
 Do not pre-split speculative edge cases before evidence shows they need independent treatment.
@@ -393,16 +413,32 @@ Do not pre-split speculative edge cases before evidence shows they need independ
 ## Output Format
 
 After the persistence contract succeeds, use this structure. Include the
-canonical Issue URL for every Ticket and, when a parent plan Issue exists, its
-URL; these links are the durable handoff for later sessions and agents. List
-the Slices nested under their parent Ticket; a Slice inherits that Ticket's
-Issue, branch, and base metadata.
+canonical Plan Issue URL and the canonical Issue URL for every child Ticket;
+these links are the durable handoff for later sessions and agents. List the
+Slices nested under their parent Ticket. A Slice inherits its Ticket Issue and
+the Plan's branch and base metadata; it does not create delivery metadata.
 
 # Plan
 
-Parent Issue title: `[PLAN] <Short plan title>` when a parent Issue exists
+Plan Issue title: `[PLAN] <Short plan title>`
 
-Parent Issue: <Canonical GitHub plan Issue URL, when one exists>
+Plan Issue: <Canonical GitHub plan Issue URL>
+
+**Plan branch**
+
+- feature/plan-slug-short-description
+
+**Base branch**
+
+- main
+
+```yaml
+Status: planned
+Branch: feature/plan-slug-short-description
+Base: main
+PR: null
+Tickets: [T0001]
+```
 
 1. <Milestone>
 2. <Milestone>
@@ -420,20 +456,10 @@ Parent Issue: <Canonical GitHub plan Issue URL, when one exists>
 
 <Canonical GitHub Issue URL>
 
-**Branch**
-
-- feature/t0001-short-description
-
-**Base branch**
-
-- main
-
 ```yaml
+Plan: <Canonical GitHub Plan Issue URL>
 Status: planned
-Branch: feature/t0001-short-description
-Base: main
 Dependencies: []
-PR: null
 ```
 
 **Ticket Goal**

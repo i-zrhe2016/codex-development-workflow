@@ -10,20 +10,20 @@ every change type.
 Requirement
   -> Understand repo
   -> Plan
-  -> Record Ticket + Slices
-  -> Create branch
-  -> Implement
+  -> Record Plan + Tickets + Slices
+  -> Create Plan branch
+  -> Implement all Plan Tickets
   -> Test
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
   -> Create / Update PR
   -> pr-review
-  -> PASS: Merge PR
+  -> PASS: Merge the Plan PR once
   -> BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review loop
   -> Delete branch
   -> Update main
-  -> Close Ticket
+  -> Close Plan + Tickets
   -> Update State / Docs
   -> Deploy if needed
   -> Evaluate workflow
@@ -31,24 +31,27 @@ Requirement
 ```
 
 The pipeline is identical for Docs, Code, Tests, Config, Refactor, Bugfix,
-Feature, Dependency, and CI/CD changes. Every requirement is recorded as a
-GitHub Issue Ticket before branch work starts; only planning depth and test
-level vary, and no category may direct-push around the PR gate.
+Feature, Dependency, and CI/CD changes. Every feature is recorded as one Plan
+Issue with one or more child Ticket Issues before the Plan branch starts; only
+planning depth and test level vary, and no category may direct-push around the
+PR gate.
 
 ## Ticket-to-Slice hierarchy
 
-Every requirement gets a Ticket Issue. When a request is large, crosses
-multiple behaviors, or has dependencies, use this order:
+Every feature gets a Plan Issue and at least one Ticket Issue. When a feature
+crosses multiple behaviors or has dependencies, use this order:
 
-1. Split the requirements into independently reviewable behavior Tickets.
-2. Define each Ticket's scope, dependencies, acceptance boundary, and Issue.
-3. Split each Ticket into dependency-ordered, independently verifiable
+1. Define the single feature boundary and create its Plan Issue.
+2. Split the feature into independently reviewable behavior Tickets.
+3. Define each Ticket's scope, dependencies, acceptance boundary, and Issue.
+4. Split each Ticket into dependency-ordered, independently verifiable
    Slices.
 
-All Slices for one Ticket share that Ticket's implementation branch. Ticket
-dependencies determine branch readiness; Slice dependencies determine the
-execution order within the branch. A single-behavior request is one Ticket
-containing one Slice, and it still requires a feature branch and PR.
+All Tickets and Slices for one Plan share the Plan's implementation branch.
+Ticket dependencies determine execution order within the Plan; Slice
+dependencies determine the execution order within a Ticket. A
+single-behavior feature is one Ticket containing one Slice, and it still
+requires one feature branch and PR.
 
 For every Slice, define:
 
@@ -66,17 +69,20 @@ Slice instead of growing the patch.
 ## Persistent plan and ticket handoff
 
 When `plan-to-ticket` creates a plan or ticket, GitHub Issues are the mandatory
-durable source of truth. Create or update every required Ticket Issue before
-implementation branches start, plus a parent plan Issue for multi-Ticket work.
-A single-Ticket requirement records one Ticket Issue without a parent plan
-Issue. Each ticket Issue retains:
+durable source of truth. Create or update one Plan Issue and every required
+child Ticket Issue before the Plan branch starts. The Plan Issue always exists,
+including for a one-Ticket feature. The Plan Issue retains:
 
 - `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
-- `Branch`, `Base`, `Dependencies`, and `PR` metadata;
-- the goal, scope, acceptance criteria, and validation contract.
+- `Branch`, `Base`, `PR`, and child Ticket index metadata;
+- the feature goal, milestones, completion rule, and delivery contract.
 
-For multi-Ticket work, the plan Issue contains the overall plan and links to
-the ticket Issues. Chat output contains convenience links only.
+Each child Ticket Issue retains its Plan link, `Status`, `Dependencies`, goal,
+scope, acceptance criteria, Slice plan, and validation contract. It does not
+own `Branch`, `Base`, `PR`, or a separate merge.
+
+The Plan Issue contains the overall feature plan and links to every Ticket
+Issue. Chat output contains convenience links only.
 `docs/Repo_Current_State.md` may link to the active Issue but must not become a
 duplicate plan or backlog.
 
@@ -85,30 +91,33 @@ existing records. If the GitHub connector, repository target, authentication,
 or required write fails, mark the operation blocked and stop; do not fall back
 to local Markdown or an unpersisted chat response.
 
-Update each Issue as work progresses: `in_progress` when branch work starts,
-`blocked` for a blocking dependency or environment problem, `in_review` when a
-PR is opened, and `done`/closed only after the PR is verified merged.
+Update the Plan as work progresses: `in_progress` when its branch starts,
+`blocked` for a blocking dependency or environment problem, `in_review` when
+the single Plan PR is opened, and `done`/closed only after that PR is verified
+merged. Update child Ticket status and acceptance evidence during execution;
+set all child Tickets to `done` and close them with the Plan after the one
+merge.
 
-## Branch per ticket
+## Branch per plan
 
-Before implementation, create or resume a feature branch for every change.
-Every Ticket uses one branch named `<type>/<ticket-id>-<short-description>`.
-Create branches from the updated default branch, and start dependent Ticket
-branches only after their prerequisites are merged. Keep a Ticket's
-implementation, tests, and related documentation on its branch; internal
+Before implementation, create or resume one feature branch for every Plan.
+Use `<type>/<plan-id>-<short-description>` and create it from the updated
+default branch. Ticket dependencies are completed and validated on this branch;
+they do not require prerequisite Ticket merges. Keep the Plan's implementation,
+tests, and related documentation on this branch; all Tickets and internal
 Slices share it.
 
 Verify the current branch and working tree before editing and preserve
-unrelated or uncommitted work. Parallel ticket workers use separate Git
-worktrees and branches; never switch branches in a working directory shared by
-active workers. Before committing and pushing, complete the change's
-acceptance and relevant integration checks. After creating or updating its PR,
-invoke `pr-review` without waiting for user confirmation. A passing change is
-ready for merge, not delivered; on `BLOCKED`, fix findings and repeat Test,
-applicable Redaction, Commit, Push, and `pr-review` before merging. For every
-Ticket, the Issue and implementation branch are a one-to-one pair: record and
-verify the Issue's `Branch`/`Base` values, and require the PR head/base to match
-them.
+unrelated or uncommitted work. Parallel workers use isolated worktrees or
+return patches/findings for integration on the Plan branch; never create a
+second delivery branch for a Ticket. Before committing and pushing, complete
+the Plan's acceptance and relevant integration checks. After creating or
+updating the Plan PR, invoke `pr-review` without waiting for user confirmation.
+A passing Plan is ready for merge, not delivered; on `BLOCKED`, fix findings and
+repeat Test, applicable Redaction, Commit, Push, and `pr-review` before the one
+merge. The Plan Issue and implementation branch are a one-to-one pair; record
+and verify the Plan's `Branch`/`Base` values, and require the Plan PR head/base
+to match them.
 
 ## Optional delegation gate
 
@@ -225,7 +234,7 @@ project-specific tooling and review.
 
 ## Completion order
 
-`Understand -> Plan -> Record Ticket + Slices -> Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop -> Merge -> Delete branch -> Update main -> Close Ticket -> State/Docs -> Deploy if needed -> Evaluate workflow -> optional one bounded follow-up improvement`
+`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> Deploy if needed -> Evaluate workflow -> optional one bounded follow-up improvement`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).
