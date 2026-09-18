@@ -23,7 +23,7 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> Deploy if needed
+  -> External deployment handoff if separately authorized
   -> Evaluate workflow
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
@@ -117,7 +117,6 @@ Restart Codex after installation.
 - `data-document-redaction`
 - `github-push-when-ready`
 - `pr-review`
-- `auto-deploy`
 
 `plan-to-ticket` persists exactly one Plan and every child Ticket to GitHub
 Issues before the Plan branch starts. GitHub Issues are the sole durable
@@ -144,7 +143,6 @@ relevant bundle.
 | `data-document-redaction` | [`skills/data-document-redaction/`](skills/data-document-redaction/) | [Skill documentation](docs/skills/data-document-redaction/README.md) |
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 | `pr-review` | [`skills/pr-review/`](skills/pr-review/) | [Skill documentation](docs/skills/pr-review/README.md) |
-| `auto-deploy` | [`skills/auto-deploy/`](skills/auto-deploy/) | [Skill documentation](docs/skills/auto-deploy/README.md) |
 
 ## Pull-request review
 

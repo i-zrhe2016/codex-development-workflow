@@ -69,7 +69,6 @@ SKILLS=(
   "skills/data-document-redaction|data-document-redaction"
   "skills/github-push-when-ready|github-push-when-ready"
   "skills/pr-review|pr-review"
-  "skills/auto-deploy|auto-deploy"
 )
 
 # Destinations from bundles retired by the workflow. These are removed only
@@ -81,6 +80,7 @@ OBSOLETE_SKILLS=(
   "ponytail-debt"
   "ponytail-gain"
   "ponytail-help"
+  "auto-deploy"
 )
 
 destination_is_managed() {

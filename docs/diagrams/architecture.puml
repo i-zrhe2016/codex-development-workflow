@@ -35,8 +35,6 @@ state "Delete source branch" as delete_branch
 state "Synchronize actual PR base\nFast-forward + prune" as update_main
 state "Close Plan + child Tickets" as close_ticket
 state "Update State / Docs\n[repo-current-state]" as state_docs
-state "Deploy if needed\n[auto-deploy]" as deploy
-state "Verify / Rollback" as verify #EAF2F8
 
 [*] --> requirement
 requirement --> understand
@@ -62,11 +60,7 @@ merge --> delete_branch
 delete_branch --> update_main
 update_main --> close_ticket
 close_ticket --> state_docs
-state_docs --> deploy : requested
-state_docs --> [*] : not requested
-deploy --> verify
-verify --> [*] : pass
-verify --> [*] : fail / rollback or escalate
+state_docs --> [*] : complete
 
 note right of decompose
 Persist one Plan Issue and all child Ticket Issues

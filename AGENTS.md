@@ -30,7 +30,7 @@ Use the lightest workflow that preserves correctness.
 
 For non-trivial work:
 
-`Requirement -> Understand repo -> Plan -> Record Plan + Tickets + Slices -> Create Plan branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update Plan PR -> pr-review -> PASS: Merge once | BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review again -> Delete branch -> Update main -> Close Plan + Tickets -> Update State/Docs -> Deploy if needed`
+`Requirement -> Understand repo -> Plan -> Record Plan + Tickets + Slices -> Create Plan branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update Plan PR -> pr-review -> PASS: Merge once | BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review again -> Delete branch -> Update main -> Close Plan + Tickets -> Update State/Docs -> External deployment handoff if separately authorized`
 
 Use `codex-development-workflow` to orchestrate the lifecycle.
 
@@ -104,7 +104,6 @@ Prefer a single delegation level. Subagents should not create further subagents 
 | Architecture or flow visualization materially improves understanding   | `plantuml-skill`             |
 | Verified repository state materially changed                           | `repo-current-state`         |
 | Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
-| Deployment, release automation, rollout verification, or rollback      | `auto-deploy`                |
 | PR creation or update requires the merge decision gate                 | `pr-review`                  |
 | Branch publication, Commit, Push, or PR readiness is required           | `github-push-when-ready`     |
 | Implementation and required validation are complete                    | `bark-finish-notify`         |

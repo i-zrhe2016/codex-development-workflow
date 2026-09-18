@@ -19,7 +19,6 @@ bundle's `agents/openai.yaml`.
 | `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` |
 | `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` |
 | `pr-review` | `skills/pr-review/` with its runner and execution reference | `docs/skills/pr-review/` | `pr-review` |
-| `auto-deploy` | `skills/auto-deploy/` | `docs/skills/auto-deploy/` | `auto-deploy` |
 
 Each managed source is an independently installable Codex skill folder
 containing `SKILL.md`. The root package remains at the repository root for
