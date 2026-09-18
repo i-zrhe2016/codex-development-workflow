@@ -28,11 +28,11 @@ Requirement
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
 
-The macro workflow controls architecture and scope. Every feature is recorded
-as one GitHub Issue Plan with one or more child Ticket Issues before branch work
-starts, so a single-behavior feature is one Plan with one Ticket and one
-implicit Slice while larger features add Tickets and Slices under that Plan.
-The Plan owns the one feature branch, PR, review, and merge. All Tickets and
+The macro workflow controls architecture and scope. Every requirement is
+recorded as exactly one GitHub Issue Plan with one or more child Ticket Issues
+before branch work starts, so a single-behavior requirement is one Plan with one
+Ticket and one implicit Slice while larger requirements add Tickets and Slices
+under that Plan. The Plan owns the one branch, PR, review, and merge. All Tickets and
 Slices share that branch; Ticket dependencies remain separate from Slice
 dependencies, and the PR head and base must match the Plan metadata.
 Test level may vary with risk, but delivery does not: Docs, Code, Tests,
@@ -119,12 +119,12 @@ Restart Codex after installation.
 - `pr-review`
 - `auto-deploy`
 
-`plan-to-ticket` persists one Plan and every child Ticket to GitHub Issues before
-the Plan branch starts. GitHub Issues are the sole durable Plan/Ticket
-authority; chat output and `Repo_Current_State.md` provide links and recovery
-context, not a parallel backlog. Every feature has one Plan, and a Plan may
-contain one or more Tickets; the branch/PR/merge gate is mandatory once per
-Plan, never once per Ticket.
+`plan-to-ticket` persists exactly one Plan and every child Ticket to GitHub
+Issues before the Plan branch starts. GitHub Issues are the sole durable
+Plan/Ticket authority; chat output and `Repo_Current_State.md` provide links and
+recovery context, not a parallel backlog. Every requirement has one Plan, and a
+Plan may contain one or more Tickets; the branch/PR/merge gate is mandatory once
+per Plan, never once per Ticket.
 
 ## Skill documentation
 

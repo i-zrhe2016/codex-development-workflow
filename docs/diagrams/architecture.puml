@@ -15,8 +15,8 @@ title Codex Development Workflow - Unified PR-Gated Lifecycle
 state "Requirement" as requirement
 state "Understand repo\nRead current state + architecture + relevant code\n[context-efficiency when context-heavy]" as understand
 state "Plan\nScope / exclusions / acceptance / dependencies" as plan
-state "Record Plan + Tickets + Slices\n[GitHub Issues before branch]\nOne feature -> one Plan;\nPlan contains one or more Tickets" as decompose
-state "Create Plan feature branch\n(all change types)" as branch
+state "Record Plan + Tickets + Slices\n[GitHub Issues before branch]\nEvery requirement -> one Plan;\nPlan contains one or more Tickets" as decompose
+state "Create Plan branch\n(all change types)" as branch
 state "Implement all Plan Tickets\n(main agent; optional bounded delegation)" as implement
 state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression / full" as test
 state "Staged redaction scan\nbefore commit\n[data-document-redaction]" as redact
@@ -74,7 +74,7 @@ before the Plan branch. The Plan owns one branch,
 one PR, and one merge; all Tickets and Slices share it.
 Ticket dependencies order work on that branch and
 never create a Ticket-level merge.
-Every feature has at least one Ticket; a small feature
+Every requirement has exactly one Plan and at least one Ticket; a small requirement
 uses one Ticket with one Slice.
 end note
 
@@ -107,7 +107,7 @@ note right of state_docs
 Update the recovery snapshot only after merge,
 source-branch deletion, and default-branch sync.
 If tracked State / Docs change, use the same
-feature-branch and PR gate for that follow-up change.
+  Plan-branch and PR gate for that follow-up change.
 end note
 
 note left of requirement

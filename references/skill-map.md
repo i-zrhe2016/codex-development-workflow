@@ -26,8 +26,9 @@ containing `SKILL.md`. The root package remains at the repository root for
 backward compatibility; its installer entry copies only the files needed by
 the orchestrator rather than the whole repository.
 
-`plan-to-ticket` owns Plan-first decomposition, Ticket/Slice generation, and
-mandatory persistence of one Plan Issue plus its child Ticket Issues; each
+`plan-to-ticket` owns Plan-first decomposition for every requirement,
+Ticket/Slice generation, and mandatory persistence of exactly one Plan Issue plus
+its child Ticket Issues; each
 Slice should provide boundaries, acceptance criteria, relevant context, test
 strategy, test level, test cases, and a validation command. The Plan owns the
 single branch, PR, and merge for all of its Tickets.

@@ -1,9 +1,10 @@
 # Plan to Ticket
 
 `plan-to-ticket` is the planning specialist for the main-agent workflow. It
-turns a feature idea, requirement, bug-fix plan, refactor plan, or other
-project change into one feature Plan, behavior Tickets, and dependency-ordered
-Slices within each Ticket, then persists the Plan and Tickets to GitHub Issues.
+turns any requirement, including a feature, bug fix, refactor, documentation,
+configuration, dependency, test, or CI/CD change, into exactly one Plan,
+behavior Tickets, and dependency-ordered Slices within each Ticket, then
+persists the Plan and Tickets to GitHub Issues.
 
 The executable skill source is maintained at
 [`skills/plan-to-ticket/`](../../../skills/plan-to-ticket/). This document and
@@ -60,20 +61,20 @@ New Ticket IDs are selected by scanning both open and closed Issue bodies and
 must be greater than every existing valid ID; IDs are never reused. Duplicate
 IDs in closed historical Issues are legacy records and are not renumbered.
 When a matching Issue is reused, its title is normalized without changing its
-stable marker or identifier. A one-Ticket feature still has a Plan Issue and a
+stable marker or identifier. A one-Ticket requirement still has a Plan Issue and a
 child Ticket Issue, both using their canonical titles.
 
 ## Ticket-to-Slice hierarchy
 
 Plan decomposition comes before Ticket decomposition, and Ticket decomposition
-comes before Slice decomposition. A Plan is the feature and delivery boundary
+comes before Slice decomposition. A Plan is the requirement delivery boundary
 represented by one GitHub Issue, one branch, one PR, and one merge. A Ticket is
 the behavior/capability boundary represented by one child Issue and no
 independent delivery branch. A Slice is a smaller execution-ready unit inside
 that Ticket and inherits the Plan branch. Keep Ticket dependencies at the
 execution-order level within the Plan and Slice dependencies inside the Ticket.
-Every feature is recorded as a Plan plus at least one Ticket; tiny work is one
-Plan containing one Ticket with one implicit Slice.
+Every requirement is recorded as exactly one Plan plus at least one Ticket; tiny
+work is one Plan containing one Ticket with one implicit Slice.
 
 ## Usage
 
@@ -92,7 +93,7 @@ Every Plan output includes the branch handoff:
 
 **Branch**
 
-- feature/plan-slug-short-description
+- <type>/plan-slug-short-description
 
 **Base branch**
 

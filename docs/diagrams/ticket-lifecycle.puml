@@ -5,7 +5,7 @@ skinparam shadowing false
 skinparam ArrowColor #475569
 title Plan/Ticket Loop - Planning, Dependencies and One Merge
 
-state "Define one feature Plan\nThen behavior Tickets and ordered Slices\nAcceptance / scope / dependencies / validation" as plan
+state "Define one requirement Plan\nThen behavior Tickets and ordered Slices\nAcceptance / scope / dependencies / validation" as plan
 state "Resolve repository + base + Issue access\nSearch stable plan/Ticket markers" as lookup
 state "Reuse unique matches or create Issues\nOne Plan + all child Tickets\nPersist Plan Status / Branch / Base / PR\nPersist Ticket status / dependencies / acceptance" as persist
 state "Planning blocked\nReport ambiguity or failed persistence\nKeep created Issue links; no local ticket mirror" as plan_blocked #FFF4CC
@@ -41,7 +41,7 @@ state_docs --> complete : Plan delivered
 complete --> [*]
 
 note right of persist
-Plan Issue: feature milestones + delivery metadata + Ticket links.
+Plan Issue: requirement milestones + delivery metadata + Ticket links.
 Ticket Issue: behavior + nested Slice plan + current state.
 One Plan = one Issue = one implementation branch / PR / merge.
 Tickets and Slices do not create separate delivery branches.

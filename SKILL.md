@@ -1,6 +1,6 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Record one Plan per feature with one or more Tickets, then route the Plan through one feature branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
+description: "Entry point for repository-wide Codex development. Record exactly one Plan per requirement with one or more Tickets, then route the Plan through one branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
 ---
 
 # Codex Development Workflow
@@ -8,10 +8,10 @@ description: "Entry point for repository-wide Codex development. Record one Plan
 Use this skill as the entry point for repository development. The main agent
 owns requirements, architecture, planning, Plan/Ticket/Slice decomposition,
 integration, delivery gates, process evaluation, and final judgment. Every
-feature has one Plan Issue, and each Plan contains one or more Ticket Issues
-before implementation starts. The Plan owns the single feature branch, PR, and
-merge; only planning depth and test level may vary. Specialist skills provide
-procedures for the work they own.
+requirement has exactly one Plan Issue, and each Plan contains one or more
+Ticket Issues before implementation starts. The Plan owns the single branch,
+PR, and merge; only planning depth and test level may vary. Specialist skills
+provide procedures for the work they own.
 
 ## Core workflow
 
@@ -43,8 +43,8 @@ Requirement
 Docs, code, tests, configuration, refactors, bug fixes, features, dependency
 updates, and CI/CD changes all use the same path:
 
-1. Record the Plan Issue and all required child Ticket Issues, then create or
-   resume the Plan's feature branch before editing.
+1. Record exactly one Plan Issue and all required child Ticket Issues for the
+   requirement, then create or resume the Plan branch before editing.
 2. Implement the planned Tickets and run the selected tests.
 3. Stage the intended files and run the redaction scan; continue on `pass`, or
    on a recorded skip when the staged change carries no sensitive surface.
@@ -60,31 +60,31 @@ updates, and CI/CD changes all use the same path:
    at most one bounded follow-up improvement when the evidence is reusable.
 
 The delivery path never has a direct-push exception for documentation, small
-fixes, configuration, or other change categories. Every feature, however
-small, has one Plan containing at least one Ticket; a single-behavior feature
-is one Ticket containing one implicit Slice, and it still requires one branch,
-one PR, and one merge.
+fixes, configuration, or other change categories. Every requirement, however
+small, has exactly one Plan containing at least one Ticket; a single-behavior
+requirement is one Ticket containing one implicit Slice, and it still requires
+one branch, one PR, and one merge.
 
 ## Ticket-to-Slice hierarchy
 
-- A **Plan** is one feature delivery boundary. It owns one Plan Issue, one
-  implementation branch, one PR, and one merge.
+- A **Plan** is one coherent requirement or feature delivery boundary. It owns
+  one Plan Issue, one implementation branch, one PR, and one merge.
 - A **Ticket** is a behavior or capability boundary inside a Plan. It owns one
   child Issue, its related tests and documentation, and no independent branch,
   PR, or merge.
 - A **Slice** is an execution-ready unit inside a Ticket. It carries its own
   scope, dependencies, acceptance criteria, test strategy, test level, test
   cases, and validation command.
-- Every feature has a Plan Issue and at least one Ticket Issue before branch
-  work starts. A single-behavior feature is one Ticket with a single Slice;
-  larger work adds more Tickets and Slices under the same Plan.
-- Establish the Plan boundary, split the feature into Tickets, and then split
+- Every requirement has exactly one Plan Issue and at least one Ticket Issue
+  before branch work starts. A single-behavior requirement is one Ticket with a
+  single Slice; larger work adds more Tickets and Slices under the same Plan.
+- Establish the Plan boundary, split the requirement into Tickets, and then split
   each Ticket into dependency-ordered Slices. Do not create Slices before the
   Ticket boundaries are clear.
 - Keep all Tickets and their Slices on the Plan branch. Ticket dependencies
   control execution order within the Plan; Slice dependencies control order
   inside a Ticket. Neither creates a separate branch or merge.
-- Planning depth scales with the feature. Smaller Tickets reduce planning
+- Planning depth scales with the requirement. Smaller Tickets reduce planning
   detail, never the Plan's single branch, PR, or merge gate.
 
 Planning controls architecture and scope. Testing controls implementation
@@ -111,7 +111,7 @@ The Plan carries its canonical GitHub Issue link and execution metadata
 (`Status`/`Branch`/`Base`/`PR`); every Ticket carries its child Issue link, Plan
 link, `Status`, dependencies, acceptance contract, and Slice plan. Ticket and
 Slice work inherit the Plan's branch and base while carrying their own execution
-contracts. Every feature records a Plan Issue and at least one Ticket Issue;
+contracts. Every requirement records exactly one Plan Issue and at least one Ticket Issue;
 all required Issues must exist before the Plan branch is created. A failed
 Issue operation blocks the workflow and has no Markdown or chat-only fallback.
 
@@ -158,7 +158,7 @@ subagents unless explicitly required.
 
 ## Branch before implementation
 
-- Create or resume a feature branch before editing for every change, regardless
+- Create or resume the Plan branch before editing for every change, regardless
   of whether the change is documentation, code, configuration, a refactor, a
   bug fix, a feature, a dependency update, or CI/CD work.
 - Record the Plan Issue and child Ticket Issues before branching, then use one
@@ -317,11 +317,11 @@ do not duplicate its detailed procedure here.
 
 - `context-efficiency`: large, unfamiliar, or context-heavy repository
   exploration; it is an optional context-loading aid, not a workflow stage.
-- `plan-to-ticket`: any feature that needs a Plan/Ticket/Slice breakdown; create
-  one Plan Issue and one or more child Ticket Issues before generating their
-  Slices. Generated Slices must satisfy the Slice contract above, persist the
-  Plan and Tickets to GitHub Issues before branch work, and expose enough
-  boundaries for the delegation gate to make a safe decision.
+- `plan-to-ticket`: every requirement receives a Plan/Ticket/Slice breakdown;
+  create exactly one Plan Issue and one or more child Ticket Issues before
+  generating their Slices. Generated Slices must satisfy the Slice contract
+  above, persist the Plan and Tickets to GitHub Issues before branch work, and
+  expose enough boundaries for the delegation gate to make a safe decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
@@ -342,8 +342,8 @@ replacing its workflow.
 
 For every change, regardless of its file type or size:
 
-1. Record the Plan Issue and all child Ticket Issues, then create or resume the
-   Plan feature branch before editing.
+1. Record exactly one Plan Issue and all child Ticket Issues, then create or
+   resume the Plan branch before editing.
 2. Implement the change and run its selected tests.
 3. Stage the intended change and run `data-document-redaction`; continue only
    on `pass`, `noop`, or a recorded no-sensitive-surface skip.
