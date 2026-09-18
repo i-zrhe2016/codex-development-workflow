@@ -17,8 +17,10 @@ and an authorized Tailscale SSH or non-SSH access path. A separate authorized
 hardening phase then limits SSH to Tailscale,
 denies every public inbound port, preserves the existing outbound policy,
 scopes the catalog and declared service ports to approved Tailscale sources,
-and serializes the complete release with independent recovery. The firewall is
-verified again after service and catalog changes before recovery is retired.
+and keeps independent recovery armed through hardening and final-boundary
+verification. The workflow does not require a release-wide target lock or
+fencing handoff. The firewall is verified again after service and catalog
+changes before recovery is retired.
 An explicitly non-publishing local/development target may skip this gate when
 the contract records that no shared service is exposed.
 
@@ -30,9 +32,11 @@ through the existing HTTP service at
 `http://<local-tailscale-ip>/` on TCP/80. The page shows the host's Tailscale
 IP plus each verified service name and deployment address. The updater accepts
 only HTTP(S) addresses on that exact Tailscale IP, updates rows idempotently by
-service name, serializes concurrent updates behind the deployment mutation
-fence, and uses a durable journal to reconcile the registry/page pair after an
-interrupted write. It preserves the existing page mode and preserves the
+service name, serializes registry/page updates behind a catalog-local
+transaction fence, and uses a durable journal to reconcile the registry/page
+pair after an interrupted write. This catalog fence protects file integrity
+only; it does not serialize container deployments. It preserves the existing
+page mode and preserves the
 serving group or exact page owner when the writer has that capability; otherwise
 the shared-readable group or other-readable owner contract is required. The
 HTML document-root directory must be pre-provisioned with safe real directory
@@ -54,31 +58,33 @@ python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
   --fence-file /run/auto-deploy/catalog-fence.json \
-  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
-  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
+  --fence-owner "$CATALOG_LOCK_OWNER" \
+  --fence-generation "$CATALOG_FENCE_GENERATION" \
   --initialize
 
 python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
   --fence-file /run/auto-deploy/catalog-fence.json \
-  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
-  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
+  --fence-owner "$CATALOG_LOCK_OWNER" \
+  --fence-generation "$CATALOG_FENCE_GENERATION" \
   --service-name <service-name> \
   --deployment-address http://<local-tailscale-ip>:<declared-port>/
 ```
 
-The mutation authority must provide an owner-only active fence record and a
-stable owner-only sibling `.lock` file. Deployment and recovery acquire that
-same lock before changing the fence record. A missing lock is an error: the
-updater never recreates it, never replaces its inode while an operation is
-active, and rejects a fence with hard-link aliases. The record contains the
-current owner, positive generation, future `expires_at`, and `role` set to
-`deployment` (or `recovery` for authorized pending-transaction rollback). It
-also carries a target-scoped 32-byte hexadecimal `catalog_hmac_key` that only
-the mutation authority can read; keep that key unchanged across deployment and
-recovery generations and never log it. A recovery fence must use a newly issued
-generation different from the pending transaction's deployment generation.
+The catalog mutation authority must provide an owner-only active fence record
+and a stable owner-only sibling `.lock` file. Catalog publication and catalog
+recovery acquire that same lock before changing the fence record. A missing
+lock is an error: the updater never recreates it, never replaces its inode
+while a catalog operation is active, and rejects a fence with hard-link
+aliases. The record contains the current owner, positive generation, future
+`expires_at`, and `role` set to `deployment` for normal catalog publication (or
+`recovery` for authorized pending-transaction rollback). It also carries a
+target-scoped 32-byte hexadecimal `catalog_hmac_key` that only the catalog
+mutation authority can read; keep that key unchanged across catalog
+publication and recovery generations and never log it. A recovery fence must
+use a newly issued generation different from the pending transaction's catalog
+generation.
 Each staged file uses a private same-filesystem `0700` staging directory with
 pinned parent and directory descriptors. The file is created and renamed
 relative to those descriptors, and its creation-time descriptor stays open
@@ -92,8 +98,9 @@ modify the firewall. The pre-provisioned registry directory must be a real,
 non-world-writable path accessible to the deployment writer and recovery
 authority; for a sticky group-writable path, both mutation paths must use the
 same catalog-writer UID or an ownership-capable privileged authority. The
-updater does not create it and its lock, transaction journal, cleanup marker,
-and mode `0660` registry use their shared group. The cleanup marker is rewritten to a durable `cleared` tombstone after
+updater does not create it and its catalog lock, transaction journal, cleanup
+marker, and mode `0660` registry use their shared group. The cleanup marker is
+rewritten to a durable `cleared` tombstone after
 successful cleanup and remains available if marker retirement is uncertain.
 World permissions are rejected. The page writer must preserve its
 owner or satisfy the documented shared-readable owner contract. The versioned
@@ -101,7 +108,7 @@ transaction journal carries an HMAC over its state, target paths, and old/new
 snapshots. Recovery verifies it before accepting any snapshot, so a shared-group
 edit cannot publish arbitrary registry or HTML content. Malformed JSON, nested
 parser failures, and UID/GID values outside the platform range fail closed.
-Lock waits are bounded at five seconds, and `--recover-pending` uses the
+Catalog lock waits are bounded at five seconds, and `--recover-pending` uses the
 authenticated journal and recovery fence without requiring Tailscale discovery.
 
 The runtime instructions are in

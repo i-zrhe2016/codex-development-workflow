@@ -21,13 +21,10 @@ shared service will be exposed.
 The security preflight is read-only. Run it on the target before any SSH,
 firewall, HTTP listener, access-catalog, or deployment mutation. A failed or
 ambiguous check is a refusal; do not continue with a best-effort deployment.
-For `verify` on a `tailscale-hardened` target, after the approved immutable
-node ID is known and before resolving or using the target address or making
-the first target read, acquire the read-only observation lease through the
-independent lock authority. Hold it through target identity, release, catalog,
-health, smoke, and final-boundary reads, and release it on every success,
-refusal, timeout, or failure path. If acquisition or retirement cannot be
-verified, mark verification `blocked` and do not inspect or mutate the target.
+For `verify` on a `tailscale-hardened` target, keep every check read-only. Do
+not acquire a deployment lock or observation lease. If the target changes
+during verification, or a concurrent executor makes the evidence ambiguous,
+mark verification `unverified` or `blocked` and do not alter the target.
 Before opening the bootstrap session, resolve the approved immutable node ID
 through an authenticated Tailscale control-plane status/API lookup or the
 approved tailnet DNS name. Use only the resulting Tailscale address; never use
@@ -40,48 +37,19 @@ route uses the approved Tailscale interface and peer policy. If the peer or
 route cannot be verified, stop before connecting. Connect only to the resolved
 address for the read-only bootstrap. After connecting, verify that the
 target's local Tailscale status maps back to the same node ID and attests the
-resolved address. If that attestation fails, stop immediately, make no
-mutation, and use the lock cleanup path below. An initial session to the
+resolved address. If that attestation fails, stop immediately and make no
+mutation. An initial session to the
 approved Tailscale address is allowed solely as a read-only bootstrap for this
 preflight. It may inspect status and listeners but must not change SSH,
 firewall, HTTP, catalog, or deployment state. If that session is unavailable,
 use a concrete approved non-SSH management channel; a public SSH bootstrap is
 never permitted.
-For `execute` or an explicitly authorized `rollback`, acquire an exclusive
-target-scoped lock keyed by the approved immutable Tailscale node ID before
-that bootstrap. Hold it through target hardening, deployment, catalog
-publication, final boundary verification, and recovery. For `verify`, use only
-a read-only observation lease that cannot authorize mutation, release it after
-the checks, and never acquire or reuse the mutating target lock or hardening
-restore. The observation authority must atomically refuse the lease while a
-mutating target lock, deployment generation, or hardening restore is active,
-and must prevent a mutating lease from being acquired until observation ends.
-If that mutual exclusion cannot be verified, mark verification `blocked` and
-do not inspect or mutate the target.
-The lock must be a bounded renewable lease with a heartbeat and a fencing
-token or generation. Every hardening, deployment, catalog, and recovery
-mutation must go through a mutation authority that atomically verifies the
-current owner, unexpired lease, and fencing value as part of accepting the
-mutation and rejects an old or revoked generation. A separate pre-check before
-a normal command is insufficient. If the mutation authority cannot enforce
-that atomic check, refuse the deployment. If the heartbeat, renewal, or
-fencing check fails, stop new mutations and invoke the armed recovery before
-its lease expires; never continue under an uncertain lock. The independent
-recovery owner must use the independent lock authority
-to revoke the lost generation, obtain a new recovery-only fencing generation,
-and verify that the old generation is rejected before any restore mutation.
-If that handoff cannot be issued and verified while recovery is valid, mark
-the target `blocked` and hand it to the out-of-band owner; never mutate with a
-stale token. Refuse the deployment when the mechanism cannot provide this
-fencing.
-If the lock is unavailable, its owner or lease is stale, or the mechanism
-cannot prevent a second actor from mutating the target, refuse the deployment;
-never steal a stale lock without independent recovery authorization.
-If any later read-only preflight check refuses before mutation, release the
-current owner's lock in a cleanup path and verify that it was released. If the
-lock cannot be released, mark the operation `blocked` and hand it to the
-independent recovery owner; do not leave an ordinary preflight refusal holding
-the target indefinitely.
+The deployment workflow does not acquire, renew, release, or pass a separate
+target-scoped deployment lock or fencing token. Use the repository's existing
+deployment entry point and record any concurrency behavior it already provides;
+do not invent a release-wide lock as an auto-deploy prerequisite. A catalog
+update may still use its own short-lived catalog transaction lock as described
+below, but that lock must not authorize or serialize container mutations.
 
 1. **Require a deployment host and approved identity.** The deployment
    contract must contain the exact approved immutable Tailscale node ID and
@@ -137,19 +105,18 @@ not an implicit side effect of connecting over SSH.
    those surfaces and arm a tested time-bounded restore through an independent
    channel such as a provider console, separate management plane, or an
    already-authorized recovery operator. The restore lease must have an
-   end-to-end TTL that covers hardening, deployment, observation, catalog
-   publication, rollback, and final verification. Renew it with a heartbeat
-   under the target lock before expiry; if renewal is lost or the TTL cannot
-   cover the bounded operation, stop new mutations and invoke recovery before
-   the restore expires. Do not mutate any boundary when independent recovery
+   end-to-end TTL that covers hardening, deployment, catalog publication,
+   rollback, and final verification. Renew it with its own heartbeat before
+   expiry; if renewal is lost or the TTL cannot cover the bounded operation,
+   stop new mutations and invoke recovery before the restore expires. Do not
+   mutate any boundary when independent recovery
    is unavailable. Treat any snapshot, restore-command, arming, lease, or
    heartbeat setup failure as a recovery-setup failure: stop before boundary
    mutation, cancel or disarm every recovery artifact that may have been
    partially created through the independent channel, and independently verify
-   that it is disarmed. Only then release the current owner's target lock and
-   verify that its lease and fencing token are retired. If disarming or release
-   cannot be verified, keep the target `blocked` with the recovery owner in
-   control; do not leave a restore or lease waiting for its TTL. A restore must
+   that it is disarmed. If disarming cannot be verified, keep the target
+   `blocked` with the recovery owner in control; do not leave a restore or
+   lease waiting for its TTL. A restore must
    also cover a catalog initialization or HTTP-service change that fails before
    firewall verification.
 
@@ -168,7 +135,7 @@ not an implicit side effect of connecting over SSH.
    Before activating this policy, verify that the approved peer has a usable
    Tailscale transport. For a direct underlay, preserve the currently
    required Tailscale underlay interface and port rule in the same atomic
-   fenced mutation and verify reachability after activation. If that cannot be
+   mutation and verify reachability after activation. If that cannot be
    preserved, require a verified relay-only path before applying the public
    default deny. A Tailscale underlay exception carries encrypted Tailscale
    transport only; it is not a public login or application-port exception. If
@@ -177,10 +144,9 @@ not an implicit side effect of connecting over SSH.
 
    A broad allow rule for SSH, port 80, or a service port is a refusal. For a
    UFW target, preserve the current outgoing default and have the target's
-   atomic mutation authority apply `ufw default deny incoming` plus
-   interface- and approved-source-scoped rules for the allowed ports. Carry
-   the current fencing value into that authority for every rule change; never
-   run raw `ufw` commands outside it. Omit the TCP/22 rule when the approved
+   authorized mutation path apply `ufw default deny incoming` plus interface-
+   and approved-source-scoped rules for the allowed ports; never run raw
+   `ufw` commands outside that path. Omit the TCP/22 rule when the approved
    access path is non-SSH. Add declared service ports with the same interface
    and approved-source scope. Inspect and remove conflicting wildcard allow
    rules only under the recovery plan; do not run a blind firewall reset or
@@ -188,10 +154,10 @@ not an implicit side effect of connecting over SSH.
    the allowlist is staged, then reload it as required and verify that the
    `ufw status` output is active and the effective kernel rules enforce the
    policy. Activation and reload are also mutations and must use the same
-   atomic fencing authority. A saved UFW policy is not evidence of filtering.
+   authorized mutation path. A saved UFW policy is not evidence of filtering.
    For nftables or another provider,
    validate, activate, and inspect the effective ruleset through the same
-   atomic mutation authority; preserve egress policy and drop all public input.
+   authorized mutation path; preserve egress policy and drop all public input.
    Immediately after the firewall is active and before
    reloading any listener or starting/reloading the HTTP service, inspect the
    connection-tracking and socket/session state and drain every existing
@@ -245,19 +211,17 @@ not an implicit side effect of connecting over SSH.
    verify the restored SSH, firewall, HTTP, and catalog boundary. If restore
    also fails, mark the target `blocked`, stop deployment, and hand the
    recovery action to the out-of-band owner. After a successful hardening
-   verification, keep the time-bounded restore armed and retain the target
-   lock through deployment and catalog publication; the final post-deployment
-   boundary check retires it. After a completed restore, cancel and retire the
+   verification, keep the time-bounded restore armed through deployment and
+   catalog publication; the final post-deployment boundary check retires it.
+   After a completed restore, cancel and retire the
    time-bounded restore, then verify through the independent channel that it is
    disarmed before ending the failed operation. If disarming cannot be
    confirmed, keep the target `blocked` and do not continue. Never declare
    success while a boundary or recovery result is unknown. Record only safe
    status and addresses; never print credentials or secret-bearing command
    arguments.
-   After the restore is verified disarmed, release the current owner's target
-   lock and verify that its lease and fencing token are no longer active. If
-   the lock cannot be released or its retirement cannot be verified, keep the
-   target `blocked` and hand it to the independent recovery owner.
+   If the restore cannot be verified disarmed, keep the target `blocked` and
+   hand it to the independent recovery owner.
 
 ## Tailscale access catalog
 
@@ -273,20 +237,23 @@ Use `scripts/update_access_catalog.py` on the target to maintain the registry
 and page. Initialize an empty baseline before the first publication, then run
 the updater after the service revision, health, and smoke checks pass:
 
-The deployment mutation authority must first create a target-scoped, owner-only
-fence file and its stable sibling `.lock` authority file. Deployment and
-recovery must acquire that same sibling lock before changing the fence record;
-the updater refuses a missing lock and never recreates it, and the lock inode
-must never be replaced while an operation is active. The fence must have one
+The catalog updater uses a short-lived, catalog-scoped owner-only fence file
+and its stable sibling `.lock` authority file solely to protect the registry
+and page pair. This is not a deployment-wide lock and must not authorize or
+serialize container mutations. The catalog mutation authority must create the
+fence and acquire that sibling lock before changing the fence record; the
+updater refuses a missing lock and never recreates it, and the lock inode must
+never be replaced while a catalog operation is active. The fence must have one
 hard-link; aliases are rejected. Its active JSON record contains
-`state: "active"`, `role` set to `deployment` or `recovery`, the current
+`state: "active"`, `role` set to `deployment` for a normal catalog
+publication or `recovery` for a pending catalog transaction, the current
 `owner`, positive `generation`, a future timezone-aware `expires_at`, and a
-target-scoped 32-byte hexadecimal `catalog_hmac_key` held only by the mutation
-authority. Keep that key unchanged when issuing the recovery generation and
-never log it. Pass the exact owner and generation to the updater. Recovery must
-use a newly issued generation that differs from the pending transaction's
-deployment generation.
-The updater holds the fence while it stages and publishes both files. Each
+target-scoped 32-byte hexadecimal `catalog_hmac_key` held only by the catalog
+mutation authority. Keep that key unchanged when issuing the recovery
+generation and never log it. Pass the exact catalog owner and generation to
+the updater. Recovery must use a newly issued generation that differs from the
+pending transaction's catalog generation.
+The updater holds the catalog fence while it stages and publishes both files. Each
 staged file is created in a private same-filesystem `0700` staging directory
 whose parent and directory descriptors are pinned and validated. The file is
 created and renamed relative to those descriptors, and its creation-time
@@ -298,11 +265,11 @@ directory or existing-file owner, so deployment and recovery mutations must
 use the same catalog-writer UID or an ownership-capable privileged authority;
 recovery authorization may remain independent. The descriptor-pinned private
 staging also protects replacement paths.
-Each replacement, unlink, or metadata repair is performed through the fenced
-mutation authority while that exact fence is current; the updater rejects a
-missing, expired, replaced, or revoked fence. A stale pending transaction is
-left for the independent recovery owner; that owner may use a `recovery` fence
-with `--recover-pending` to restore the prior pair.
+Each replacement, unlink, or metadata repair is performed through the catalog
+fence authority while that exact fence is current; the updater rejects a
+missing, expired, replaced, or revoked catalog fence. A stale pending
+transaction is left for the independent recovery owner; that owner may use a
+`recovery` fence with `--recover-pending` to restore the prior pair.
 The registry parent must be pre-provisioned as a real, non-world-writable
 directory accessible to the deployment writer and recovery authority; for a
 sticky group-writable directory, both mutation paths must use the same
@@ -324,16 +291,16 @@ python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
   --fence-file /run/auto-deploy/catalog-fence.json \
-  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
-  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
+  --fence-owner "$CATALOG_LOCK_OWNER" \
+  --fence-generation "$CATALOG_FENCE_GENERATION" \
   --initialize
 
 python3 <skill-dir>/scripts/update_access_catalog.py \
   --registry /var/lib/auto-deploy/access-catalog.json \
   --output /var/www/auto-deploy/index.html \
   --fence-file /run/auto-deploy/catalog-fence.json \
-  --fence-owner "$DEPLOYMENT_LOCK_OWNER" \
-  --fence-generation "$DEPLOYMENT_FENCE_GENERATION" \
+  --fence-owner "$CATALOG_LOCK_OWNER" \
+  --fence-generation "$CATALOG_FENCE_GENERATION" \
   --service-name <service-name> \
   --deployment-address http://<local-tailscale-ip>:<declared-port>/
 ```
@@ -342,8 +309,9 @@ The updater always discovers the local Tailscale IPv4 and treats
 `--tailscale-ip`, when supplied, only as an assertion against that fresh
 discovery. It accepts only `http` or `https` addresses whose host is that exact
 Tailscale IP, escapes all HTML values, replaces a matching service name without
-duplicates, and retains unrelated rows. It serializes updates with the fence
-authority and a registry-side lock. A durable transaction journal records both
+duplicates, and retains unrelated rows. It serializes catalog updates with the
+catalog fence authority and a registry-side lock. A durable transaction journal
+records both
 snapshots before replacement, records rollback intent until both replacements
 are complete, and reconciles an interrupted pair before a later update. If
 journal removal or its directory sync cannot be confirmed, a durable cleanup
@@ -352,16 +320,16 @@ rewritten to a durable `cleared` tombstone after successful cleanup so an
 uncertain marker sync never removes the last recovery metadata; generated files
 are size-limited. A missing registry with an existing page,
 non-regular path, malformed metadata, different host, unsafe address, stale
-fence, unsafe document root, incompatible or world-writable page owner, lock
-timeout, or failed write is an error. The transaction journal is versioned and
+catalog fence, unsafe document root, incompatible or world-writable page owner,
+catalog lock timeout, or failed write is an error. The transaction journal is versioned and
 carries an HMAC over its state, target paths, and all old/new snapshots, using
 the owner-only `catalog_hmac_key` from
-the active fence. Recovery verifies that authentication before it accepts any
+the active catalog fence. Recovery verifies that authentication before it accepts any
 snapshot, so a shared-group edit cannot publish arbitrary registry or HTML
 content. Malformed JSON, nested parser failures, and UID/GID values outside the
 platform range fail closed through the normal catalog error path. The
 `--recover-pending` path uses the authenticated durable snapshots and an
-authorized recovery fence; it does not require the Tailscale CLI. The updater
+authorized catalog recovery fence; it does not require the Tailscale CLI. The updater
 never starts an HTTP server or changes firewall rules. After each update,
 request the page through the approved Tailscale path and run the public-denial probe before marking the
 deployment verified. A failed update or probe leaves the release unverified
@@ -388,12 +356,10 @@ Before any mutating deployment action, identify and record:
   platform command, or operator runbook);
 - required approvals, environment protections, permissions, and maintenance
   window;
-- for a `tailscale-hardened` target, the target-lock mechanism and owner/lease
-  policy that serialize hardening, deployment, catalog, and recovery, including
-  lease expiry, heartbeat renewal, and fencing-token or generation checks;
-- for a `tailscale-hardened` target, an authenticated handoff by which the
-  existing deployment entry point receives and validates that target fence
-  before each mutation, or an explicit refusal to use that entry point;
+- for a `tailscale-hardened` target, the existing authorized mutation and
+  recovery entry points, including any concurrency behavior they already
+  provide; `auto-deploy` does not require a separate deployment-wide lock or
+  fencing handoff;
 - for a `tailscale-hardened` target, the access-catalog registry/page paths,
   HTTP serving entry point, and all declared service ports. Each catalog
   deployment address must be target-local or resolve and route through the
@@ -458,13 +424,13 @@ build or from a request to deploy to a different environment.
    applicable and do not expose a shared service. An unknown designation is a
    refusal. In `plan` mode, collect the contract, target requirements, release
    metadata, approvals, and selected checks as read-only evidence. Do not
-   acquire a mutating lease, harden the target, trigger automation, write the
-   catalog, or recover; after step 4, go to step 12 with status `planned`.
+   harden the target, trigger automation, write the catalog, or recover; after
+   step 4, go to step 12 with status `planned`.
    In `verify` mode, collect only read-only target and release
    evidence. Skip only mutating hardening and release actions: steps 5-7, the
    catalog write in step 9, and recovery step 11. Continue with the read-only
-   observation in step 8 and the read-only final-boundary checks in step 10,
-   then go to step 12. A verify result is successful only when those checks
+   checks in steps 8 and 10, then go to step 12. A verify result is successful
+   only when those checks
    establish the intended running revision, health, smoke flow, and, for a
    `tailscale-hardened` target, its access boundary and catalog state; an
    unknown or failed check is unverified. A
@@ -497,38 +463,26 @@ build or from a request to deploy to a different environment.
    Tailscale, the approved non-SSH path is verified when SSH is disabled, the
    baseline catalog is served on Tailscale TCP/80, public inbound ports are
    denied, the catalog and declared service ports are limited to approved
-   Tailscale sources, and the recovery verification passes. Keep the target
-   lock lease, heartbeat, fencing checks, and hardening restore armed through
-   the later deployment and catalog steps; the final boundary check retires
-   the restore. Skip this phase only for the explicitly non-publishing
-   local/development designation.
+   Tailscale sources, and the recovery verification passes. Keep the hardening
+   restore armed through the later deployment and catalog steps; the final
+   boundary check retires the restore. Skip this phase only for the explicitly
+   non-publishing local/development designation.
 6. **Prepare the release.** Produce or select the immutable artifact, record
    its digest/checksum/build ID, and ensure the deployment configuration is
    reviewed. If automation must be added or changed, make the smallest
    reviewable change, use least-broad triggers, protect production environments,
    and keep secrets outside the repository.
 7. **Trigger the existing automation.** Use the documented interface and pass
-   only non-secret ordinary inputs; transfer any fencing value through the
-   authenticated, protected handoff defined by the target contract. For a
-   `tailscale-hardened` target, before triggering bind the run to the current
-   target-lock owner, renewable lease, and exact fencing token or generation.
-   The workflow or platform job must validate that
-   same authenticated fence immediately before every target mutation and stop
-   on expiry, owner change, or generation mismatch. Verify that scheduled and
-   concurrent runs use the same target serialization and cannot bypass this
-   handshake. For GitHub Actions, a typical controlled trigger is `gh workflow
-   run <workflow> --ref <immutable-ref>` followed by bounded run monitoring;
-   adapt to the repository's actual workflow and required inputs. If the
-   existing entry point cannot carry and enforce the current target fence,
-   refuse to trigger it, cancel and retire the hardening restore through the
-   independent channel, and verify it is disarmed. Only then release the current
-   owner's target lock and verify its lease and fencing token are retired. If
-   either retirement cannot be verified, keep the lock state under the
-   independent recovery owner and mark the target `blocked`. Record the
-   workflow/run ID or platform deployment ID. An explicitly non-publishing
-   local/development target may use its existing local automation without the
-   hardened target lock or restore only after verifying that it exposes no
-   shared service; otherwise refuse it.
+   only non-secret ordinary inputs. Do not add a separate target-scoped lock or
+   fencing handoff. If the existing workflow or platform job declares its own
+   concurrency behavior, record that behavior as deployment evidence without
+   treating it as an `auto-deploy` prerequisite. For GitHub Actions, a typical
+   controlled trigger is `gh workflow run <workflow> --ref <immutable-ref>`
+   followed by bounded run monitoring; adapt to the repository's actual
+   workflow and required inputs. Record the workflow/run ID or platform
+   deployment ID. An explicitly non-publishing local/development target may
+   use its existing local automation without the hardening restore only after
+   verifying that it exposes no shared service; otherwise refuse it.
 8. **Observe and verify.** Follow the rollout state until completion or a
    bounded timeout. Check deployment status, logs, health endpoints, error
    rates, and readiness. For an `execute` or authorized `rollback`, run the
@@ -558,9 +512,8 @@ build or from a request to deploy to a different environment.
    mutation. Do not publish a shared service or update a catalog for the
    explicitly non-publishing local/development designation.
 10. **Recheck the final boundary and retire recovery.** For an `execute` or
-   authorized `rollback` on a `tailscale-hardened` target, while the target
-   lock lease and hardening restore remain active, continue the lock heartbeat
-   and validate its fencing value before each check or mutation. Repeat the
+   authorized `rollback` on a `tailscale-hardened` target, keep the hardening
+   restore active through the final checks. Repeat the
    connection-tracking and
    socket/session inspection at this final boundary and drain every existing
    inbound session whose source or route is public or outside the approved
@@ -572,23 +525,17 @@ build or from a request to deploy to a different environment.
    set (exactly TCP/22 when SSH is enabled, or empty when it is disabled),
    active and effective firewall rules, catalog access, listener bindings, and
    public denial for every declared port. Compare the effective outbound
-   policy with the recorded baseline. If sessions cannot be drained, the
-   outbound policy
-   differs from baseline, or the lock cannot be renewed or fenced, stop and
-   enter recovery. If all checks pass,
-   cancel and retire the hardening restore, verify through the independent
-   channel that it is disarmed, release the target lock, and independently
-   verify that its lease and fencing generation are inactive. If any
-   retirement or verification is uncertain, keep the target `blocked` under
-   the independent recovery owner. If a check fails, keep both active and
-   enter recovery. For `verify` mode on a `tailscale-hardened` target, continue
-   holding only the read-only observation lease acquired before the first
-   target read. If acquisition was refused or a mutating target lock,
-   deployment generation, or hardening restore is active or appears during
-   verification, mark the result `blocked`/unverified, release only an
-   observation lease owned by this verify run, and do not cancel, retire,
-   release, or alter the mutating resources. While the observation lease is
-   held, perform the same final checks without
+   policy with the recorded baseline. If sessions cannot be drained or the
+   outbound policy differs from baseline, stop and enter recovery. If all
+   checks pass, cancel and retire the hardening restore and verify through the
+   independent channel that it is disarmed. If retirement or verification is
+   uncertain, keep the target `blocked` under the independent recovery owner.
+   If a check fails, keep the restore active and enter recovery. For `verify`
+   mode on a `tailscale-hardened` target, perform the final checks read-only.
+   If the target changes, a concurrent executor is observed, or a hardening
+   restore is active during verification, mark the result `blocked`/unverified
+   and do not cancel, retire, or alter the mutating resources. Perform the same
+   final checks without
    changing listeners, firewall rules,
    catalog files, or sessions: approved target identity and hostname,
    Tailscale path and transport policy, the effective SSH port set, firewall
@@ -596,23 +543,16 @@ build or from a request to deploy to a different environment.
    public denial for every declared port, and the running revision, health,
    and smoke results from step 8. Do not drain or terminate sessions in this
    mode; any public or outside-policy session, unknown state, or failed check
-   is unverified. Release the observation lease and verify that it is
-   inactive. For an explicitly non-publishing
+   is unverified. For an explicitly non-publishing
    local/development target, verify that no shared service is exposed and close
-   the release without requiring a hardened lock, restore, or access catalog.
+   the release without requiring a hardening restore or access catalog.
 11. **Recover on failure.** Stop or pause further rollout, capture safe failure
    evidence, and compare the running state with the last known-good release.
-   For a `tailscale-hardened` target, the independent recovery owner must
-   first revoke the current deployment generation through the independent
-   mutation authority, even if its lease still appears valid. Then cancel or
-   pause the deployment run and verify that no active, queued, or retrying
-   executor can issue another target mutation. Acquire the target lock under
-   a new recovery-only fencing generation and verify that the old generation
-   is rejected before any restore mutation. If run quiescence or this fencing
-   handoff cannot be verified, keep the target `blocked` and do not roll back.
-   Keep that fenced target lock and the
-   hardening restore active while rolling back through the documented immutable
-   artifact or platform mechanism. Atomically
+   For a `tailscale-hardened` target, cancel or pause the deployment run and
+   verify that no active, queued, or retrying executor can issue another target
+   mutation. If run quiescence cannot be verified, keep the target `blocked`
+   and do not roll back. Keep the hardening restore active while rolling back
+   through the documented immutable artifact or platform mechanism. Atomically
    reconcile the access catalog at the same time: restore the prior page or
    remove/update the
    affected row to the last known-good deployment address. Before retiring
@@ -620,16 +560,14 @@ build or from a request to deploy to a different environment.
    that the running revision or digest matches the intended last-known-good
    artifact. Request the restored page through the approved Tailscale path,
    repeat the final session drain, and rerun the full final boundary checks,
-   including the current lock fencing value and an exact comparison of the
-   effective outbound policy with the recorded baseline. Only then cancel and
-   retire the restore and independently verify that it is disarmed. Release
-   the lock and independently verify that its lease and fencing generation are
-   inactive.
-   If either retirement cannot be verified, keep the target `blocked` and hand
-   it to the out-of-band recovery owner. For an explicitly non-publishing
+   including an exact comparison of the effective outbound policy with the
+   recorded baseline. Only then cancel and retire the restore and
+   independently verify that it is disarmed. If retirement cannot be verified,
+   keep the target `blocked` and hand it to the out-of-band recovery owner. For
+   an explicitly non-publishing
    local/development target, use its documented local rollback, rerun its
    applicable health and smoke checks, and verify that no shared service was
-   exposed; do not require or retain the hardened lock, restore, or catalog. If
+   exposed; do not require or retain the hardening restore or catalog. If
    rollback is unsafe, unavailable, partially applied, or cannot retire
    recovery safely, stop and report the concrete recovery action needed.
 12. **Close the release.** Report the target, source revision, artifact ID,
