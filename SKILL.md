@@ -31,12 +31,20 @@ Requirement
     -> PASS: Merge the Plan PR once -> Delete branch -> Update main -> Close Plan + Tickets
     -> BLOCKED: Fix -> Test -> Redaction -> Commit -> Push -> pr-review again
     -> Update State / Docs
-    -> External deployment handoff if separately authorized
+    -> Optional external release handoff (outside this workflow)
     -> Evaluate workflow
     -> Reusable improvement?
        -> yes: Start one follow-up improvement through this same workflow
-       -> no: Finish
+    -> no: Finish
 ```
+
+An external deployment handoff is outside this workflow and does not invoke a
+bundled deployment Skill. When separately authorized, hand off the immutable
+artifact and source commit, target environment and authorization, and the
+documented deployment, health-check, and rollback instructions to the target
+project's release owner. That owner performs and verifies the rollout or
+rollback; completion evidence is the external release result or incident link
+recorded with the delivery.
 
 ## One delivery path for every change
 

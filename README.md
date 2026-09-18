@@ -23,10 +23,18 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> External deployment handoff if separately authorized
+  -> Optional external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
+
+An external deployment handoff is outside this repository's workflow and does
+not invoke a bundled deployment Skill. When separately authorized, the Plan
+owner hands the target project's release owner the immutable artifact and
+source commit, target environment and authorization, and the documented
+deployment, health-check, and rollback instructions. The external release
+owner performs and verifies the rollout or rollback. Completion evidence is
+the external release result or incident link recorded with the delivery.
 
 The macro workflow controls architecture and scope. Every requirement is
 recorded as exactly one GitHub Issue Plan with one or more child Ticket Issues

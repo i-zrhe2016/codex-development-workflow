@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-18 @ 0490eb3
+Last verified: 2026-09-18 @ working tree
 
 ## Current Focus
 
@@ -21,13 +21,6 @@ Last verified: 2026-09-18 @ 0490eb3
 - `pr-review` detects changed Markdown files and passes a trusted bundled
   document rule to the same OpenCode Review execution; documentation remains
   under the single `PASS`/`BLOCKED` merge gate.
-- `auto-deploy` provides a provider-neutral deployment contract with immutable
-  artifacts, bounded health and smoke checks, authorized rollback, a
-  Tailscale-only hardening gate for publishing targets, and approved immutable
-  target identity/expected-hostname mapping without requiring a `deploy`
-  hostname substring. It does not require a release-wide target lock,
-  observation lease, or deployment fencing handoff; the access catalog retains
-  its own catalog-local lock, fence, and journal for registry/page integrity.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
@@ -54,8 +47,6 @@ Last verified: 2026-09-18 @ 0490eb3
   (`ocr`) and a reachable provider endpoint with a supported model.
 - Shell commands use the available native tools through `context-efficiency`;
   exact evidence and publication gates preserve raw output and exit status.
-- `auto-deploy` does not own target infrastructure or production approval and
-  does not change an unspecified live host.
 - Persisted Plans and child Tickets require an available, authorized GitHub
   Issues target; GitHub Issues are the durable authority for future work.
 
