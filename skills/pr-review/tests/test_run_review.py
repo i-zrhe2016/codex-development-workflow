@@ -49,6 +49,16 @@ class ReviewTests(unittest.TestCase):
                 review.changed_document_paths("base", "head"),
                 ["README.md", "docs/guide.MARKDOWN"])
 
+    def test_document_rule_matches_both_extensions_and_case(self):
+        rule = json.loads(review.document_rule_path().read_text())
+        self.assertEqual(rule["include"], [
+            "**/*.[mM][dD]",
+            "**/*.[mM][aA][rR][kK][dD][oO][wW][nN]"])
+        self.assertEqual(
+            [entry["path"] for entry in rule["rules"]],
+            ["**/*.[mM][dD]",
+             "**/*.[mM][aA][rR][kK][dD][oO][wW][nN]"])
+
     def test_code_only_execution_does_not_add_document_rule(self):
         with tempfile.TemporaryDirectory() as temporary:
             _, runner, state, _ = self.run_main(Path(temporary), [])
