@@ -16,9 +16,30 @@ import sys
 import time
 import uuid
 
+DOCUMENT_EXTENSIONS = frozenset((".md", ".markdown"))
+
 
 def git(*args):
     return subprocess.check_output(["git", *args], text=True).strip()
+
+
+def changed_document_paths(base, head):
+    changed = git("diff", "--name-only", "--diff-filter=ACMRD", f"{base}..{head}")
+    return sorted({
+        path for path in changed.splitlines()
+        if Path(path).suffix.lower() in DOCUMENT_EXTENSIONS
+    })
+
+
+def document_rule_path():
+    return Path(__file__).resolve().parents[1] / "rules" / "document-review.json"
+
+
+def review_command(scope, head, document_rule=None):
+    command = ["ocr", "review", "--from", scope, "--to", head]
+    if document_rule is not None:
+        command.extend(["--rule", str(document_rule)])
+    return command
 
 
 def try_git(*args):
@@ -180,6 +201,10 @@ def main():
         incremental = (args.incremental or is_assessed(previous, branch)) and not args.force_full
         scope = choose_scope(base, head, previous, incremental, branch)
         coverage = "incremental" if scope != base else "full"
+        document_paths = changed_document_paths(scope, head)
+        document_rule = document_rule_path() if document_paths else None
+        if document_rule is not None and not document_rule.is_file():
+            parser.error(f"Trusted document review rule is missing: {document_rule}")
         run_id = uuid.uuid4().hex
         log_path = directory / (run_id + ".log")
         if previous:
@@ -187,12 +212,18 @@ def main():
         state = dict(run_id=run_id, branch=branch, base=base, head=head, scope=scope,
                      coverage=coverage,
                      previous_run=previous.get("run_id") if scope != base else None,
+                     document_review=bool(document_paths),
+                     document_paths=document_paths,
+                     document_rule=str(document_rule) if document_rule else None,
                      status="running", assessment="pending", log=str(log_path),
                      started_at=time.time(), pid=os.getpid())
         save(state_path, state)
         print(f"Review ({coverage}) {scope}..{head}; log={log_path}", flush=True)
+        if document_paths:
+            print(f"Document review enabled for {len(document_paths)} changed "
+                  f"Markdown path(s); trusted rule={document_rule}", flush=True)
         try:
-            code = stream(["ocr", "review", "--from", scope, "--to", head],
+            code = stream(review_command(scope, head, document_rule),
                           log_path, state, state_path)
             unchanged = git("rev-parse", "HEAD") == head and not git("status", "--porcelain")
             state.update(exit_code=code, status="completed" if code == 0 and unchanged else "incomplete")
