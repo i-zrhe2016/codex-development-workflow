@@ -25,7 +25,7 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> Optional external release handoff (outside this workflow)
+  -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
@@ -245,7 +245,7 @@ project-specific tooling and review.
 
 ## Completion order
 
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> Optional external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
+`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

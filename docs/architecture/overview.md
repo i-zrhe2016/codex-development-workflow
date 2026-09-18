@@ -72,7 +72,7 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> Optional external release handoff (outside this workflow)
+  -> If separately authorized: external release handoff (outside this workflow)
 ```
 
 All change types—Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
@@ -205,7 +205,7 @@ logs and state local. The first review covers the complete PR, while eligible
 bounded fixes may use the runner's incremental execution. Current tests and CI
 remain separate evidence and must pass before merge.
 
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop when blocked -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> Optional external release handoff (outside this workflow)`
+`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop when blocked -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow)`
 
 ### Project-scoped Codex configuration
 

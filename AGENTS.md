@@ -30,7 +30,7 @@ Use the lightest workflow that preserves correctness.
 
 For non-trivial work:
 
-`Requirement -> Understand repo -> Plan -> Record Plan + Tickets + Slices -> Create Plan branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update Plan PR -> pr-review -> PASS: Merge once | BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review again -> Delete branch -> Update main -> Close Plan + Tickets -> Update State/Docs -> Optional external release handoff (outside this workflow)`
+`Requirement -> Understand repo -> Plan -> Record Plan + Tickets + Slices -> Create Plan branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update Plan PR -> pr-review -> PASS: Merge once | BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review again -> Delete branch -> Update main -> Close Plan + Tickets -> Update State/Docs -> If separately authorized: external release handoff (outside this workflow)`
 
 Use `codex-development-workflow` to orchestrate the lifecycle.
 

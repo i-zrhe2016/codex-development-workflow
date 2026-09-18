@@ -23,7 +23,7 @@ Requirement
   -> Update main
   -> Close Plan + Tickets
   -> Update State / Docs
-  -> Optional external release handoff (outside this workflow)
+  -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```

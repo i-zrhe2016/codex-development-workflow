@@ -31,7 +31,7 @@ Requirement
     -> PASS: Merge the Plan PR once -> Delete branch -> Update main -> Close Plan + Tickets
     -> BLOCKED: Fix -> Test -> Redaction -> Commit -> Push -> pr-review again
     -> Update State / Docs
-    -> Optional external release handoff (outside this workflow)
+    -> If separately authorized: external release handoff (outside this workflow)
     -> Evaluate workflow
     -> Reusable improvement?
        -> yes: Start one follow-up improvement through this same workflow
