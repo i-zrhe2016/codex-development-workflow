@@ -14,7 +14,7 @@ SPEC.loader.exec_module(review)
 
 class ReviewTests(unittest.TestCase):
     def run_main(self, root, arguments, prior=None, stream_result=0,
-                 ancestor=True, branch="branch"):
+                 ancestor=True, branch="branch", document_paths=None):
         directory = root / "ocr-review"
         directory.mkdir(exist_ok=True)
         if prior is not None:
@@ -33,12 +33,44 @@ class ReviewTests(unittest.TestCase):
             return "base"
         with patch.object(review, "git", side_effect=fake_git), patch.object(
                 review, "try_git", side_effect=fake_try_git), patch.object(
+                review, "changed_document_paths",
+                return_value=[] if document_paths is None else document_paths), patch.object(
                 review.subprocess, "run", return_value=subprocess.CompletedProcess(
                     [], 0 if ancestor else 1)) as merge_base, patch.object(
                 review, "stream", return_value=stream_result) as runner, patch.object(
                 review.sys, "argv", ["run_review", "--base", "main", *arguments]):
             result = review.main()
         return result, runner, json.loads((directory / "state.json").read_text()), merge_base
+
+    def test_changed_document_paths_are_case_insensitive(self):
+        with patch.object(review, "git", return_value=(
+                "README.md\ndocs/guide.MARKDOWN\nsrc/app.py\n")):
+            self.assertEqual(
+                review.changed_document_paths("base", "head"),
+                ["README.md", "docs/guide.MARKDOWN"])
+
+    def test_code_only_execution_does_not_add_document_rule(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _, runner, state, _ = self.run_main(Path(temporary), [])
+            self.assertEqual(
+                runner.call_args.args[0],
+                ["ocr", "review", "--from", "base", "--to", "head"])
+            self.assertFalse(state["document_review"])
+            self.assertEqual(state["document_paths"], [])
+
+    def test_document_execution_adds_trusted_rule_and_records_lane(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _, runner, state, _ = self.run_main(
+                Path(temporary), [],
+                document_paths=["README.md", "docs/guide.markdown"])
+            self.assertEqual(
+                runner.call_args.args[0][:6],
+                ["ocr", "review", "--from", "base", "--to", "head",])
+            self.assertEqual(runner.call_args.args[0][6:], [
+                "--rule", str(review.document_rule_path())])
+            self.assertTrue(state["document_review"])
+            self.assertEqual(
+                state["document_paths"], ["README.md", "docs/guide.markdown"])
 
     def test_completed_execution_is_pending_and_reused(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -14,9 +14,16 @@ skills/pr-review/
 ├── SKILL.md
 ├── agents/openai.yaml
 ├── references/review-execution.md
+├── rules/document-review.json
 ├── scripts/run_review.py
 └── tests/test_run_review.py
 ```
+
+When the selected PR range contains Markdown, `run_review.py` uses the bundled
+document rule to route `.md` and `.markdown` files through the same OpenCode
+Review execution. The rule is trusted Skill content, not a rule loaded from
+the reviewed branch; documentation remains under the single `PASS`/`BLOCKED`
+merge decision.
 
 `github-push-when-ready` stops at a PR-ready state. Tests and redaction remain
 separate workflow gates, and merge/cleanup remain owned by the root workflow.

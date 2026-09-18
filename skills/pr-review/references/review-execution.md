@@ -10,9 +10,18 @@ python3 <skill-dir>/scripts/run_review.py --base origin/main
 
 The runner invokes `ocr review --from <scope> --to <head>`, streams the output,
 and stores state and logs under the worktree Git metadata directory
-`ocr-review/`. The state records the base, head, named feature branch, selected
-scope, execution status, and assessment. A worktree lock prevents concurrent
-runs; matching completed executions can be reused.
+`ocr-review/`. For a range containing `.md` or `.markdown` files, it adds the
+trusted rule at `rules/document-review.json` from the installed Skill bundle.
+That rule uses OpenCode Review's include mechanism to admit Markdown and adds
+checks for factual consistency, links, commands, contradictions, operational
+prerequisites, and sensitive data. Code-only ranges keep the original command
+unchanged. A worktree lock prevents concurrent runs; matching completed
+executions can be reused.
+
+The saved state records `document_review`, the detected `document_paths`, and
+the trusted rule path. A successful process with no supported files, a missing
+conclusion, or an empty output is still pending assessment and is never a
+review pass by itself.
 
 The first or unbound run uses the complete base-to-head range. When the saved
 state is a completed, assessed result for the same branch and base and the

@@ -14,6 +14,14 @@ Review the complete PR after it is created or updated.
 
    `python3 <skill-dir>/scripts/run_review.py --base origin/<base>`
 
+   The runner detects `.md` and `.markdown` files in the selected review
+   range. When documentation is present, it passes the trusted rule bundled
+   at `rules/document-review.json` to the same `ocr review` execution so
+   OpenCode Review's extension filter admits the documents and applies
+   documentation-specific checks. This is a review lane inside the existing
+   execution, not a second merge gate. The rule is resolved from the managed
+   Skill bundle and never loaded from the PR branch.
+
 3. Read the complete conclusion and assess the findings.
 
 Return `BLOCKED` when a finding can cause:

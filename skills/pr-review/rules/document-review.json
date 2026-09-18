@@ -1,0 +1,13 @@
+{
+  "include": [
+    "**/*.md",
+    "**/*.markdown"
+  ],
+  "rules": [
+    {
+      "path": "**/*.{md,markdown}",
+      "rule": "Review this documentation as a user-facing and operational interface. Check factual consistency with the repository, stale or broken links, incorrect commands and configuration examples, contradictions between documents, missing prerequisites or rollback details, ambiguous acceptance criteria, and credentials or sensitive infrastructure data accidentally exposed in prose. Report only actionable findings with concrete file and line references; do not report stylistic preferences or rewrite suggestions.",
+      "merge_system_rule": false
+    }
+  ]
+}
