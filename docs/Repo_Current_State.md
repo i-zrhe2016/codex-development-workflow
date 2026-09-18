@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-18 @ 9e453b1
+Last verified: 2026-09-18 @ 0490eb3
 
 ## Current Focus
 
@@ -18,6 +18,9 @@ Last verified: 2026-09-18 @ 9e453b1
 - `github-push-when-ready` owns branch, commit, push, and PR readiness. The
   recoverable review runner is packaged with `pr-review` as an implementation
   detail.
+- `pr-review` detects changed Markdown files and passes a trusted bundled
+  document rule to the same OpenCode Review execution; documentation remains
+  under the single `PASS`/`BLOCKED` merge gate.
 - `auto-deploy` provides a provider-neutral deployment contract with immutable
   artifacts, bounded health and smoke checks, authorized rollback, a
   Tailscale-only hardening gate for publishing targets, and approved immutable
