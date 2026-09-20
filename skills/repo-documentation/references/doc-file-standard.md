@@ -57,14 +57,20 @@ snapshot of what is true now and therefore keeps `Last verified`.
 A diagram's editable source and its rendered image are files, not documents, so
 they do not carry a title or a header.
 
-- Keep them in a `diagrams/` directory beside the document they illustrate:
-  `docs/architecture/diagrams/` for a document in `docs/architecture/`, and
-  `docs/skills/<skill>/diagrams/` for a specialist page.
+- Keep new diagrams in a `diagrams/` directory beside the document they
+  illustrate: `docs/architecture/diagrams/` for a document in
+  `docs/architecture/`, and `docs/skills/<skill>/diagrams/` for a specialist
+  page. An existing diagram keeps its current location until its owning document
+  is migrated or next modified, so the repository's shared `docs/diagrams/`
+  directory stays valid meanwhile; report the mismatch rather than moving files
+  as a side effect of an unrelated change.
 - Name the source after the fact it draws, with a `.puml` extension, and give
   the rendered file the same basename: `installer-decision-flow.puml` and
   `installer-decision-flow.svg`.
 - Commit the source and the rendered image together. The source is the
-  editable artifact; the image is what a reader sees.
+  editable artifact; the image is what a reader sees. When no renderer is
+  available, commit the source alone and report the diagram as unrendered; never
+  commit a hand-made image.
 - Reference the image from the document, and link the source beside it, so a
   reader can find the editable file from the page.
 - A diagram that exists in no document is an orphan: embed it or delete it.

@@ -95,9 +95,9 @@ embedding block is in
 Rendering is owned by the skill `AGENTS.md` routes diagram work to. That skill
 is installed on the host, not bundled in this repository, so its procedure is
 neither restated nor assumed here: load it before drawing. When no renderer is
-available, still write the `.puml` source, commit it, and report the diagram as
-unrendered — never commit a hand-made image or claim a diagram you could not
-render.
+available, still write the `.puml` source and report the diagram as unrendered;
+the source-only exception to the commit-together rule is defined in
+[`references/doc-file-standard.md`](references/doc-file-standard.md).
 
 A diagram is stale when the flow it draws no longer matches the system: a
 changed component, a changed order, a changed decision, or a changed boundary.
