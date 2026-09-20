@@ -1,9 +1,9 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Record exactly one Plan per requirement with one or more Tickets, then route the Plan through one branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
+description: "Entry point for repository-wide development. Record exactly one Plan per requirement with one or more Tickets, then route the Plan through one branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
 ---
 
-# Codex Development Workflow
+# Development Workflow
 
 Use this skill as the entry point for repository development. The main agent
 owns requirements, architecture, planning, Plan/Ticket/Slice decomposition,

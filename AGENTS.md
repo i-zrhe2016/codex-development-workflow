@@ -98,6 +98,13 @@ Write an agent's `description` so that it states the exact trigger the agent
 serves. An agent that must not run on ordinary work has to say so in its
 description, because the host has no other rule to consult.
 
+Each host also ships its own built-in agent types, and those remain available
+for ordinary delegation. This repository defines only the optional
+high-risk reviewer; it declares no agent for exploration, testing, or isolated
+implementation, so that work is delegated to a host built-in when the host
+selects one. Delegation is therefore available for every bounded task the
+workflow permits, not only for the reviewer.
+
 This section owns the delegation policy. Other documents link to it rather than
 restating it.
 
