@@ -66,6 +66,7 @@ SKILLS=(
   "skills/plan-to-ticket|plan-to-ticket"
   "skills/test-workflow|test-workflow"
   "skills/repo-current-state|repo-current-state"
+  "skills/repo-documentation|repo-documentation"
   "skills/data-document-redaction|data-document-redaction"
   "skills/github-push-when-ready|github-push-when-ready"
   "skills/pr-review|pr-review"

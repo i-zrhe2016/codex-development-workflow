@@ -103,6 +103,7 @@ Prefer a single delegation level. Subagents should not create further subagents 
 | Feature, bug fix, regression, integration, or browser validation       | `test-workflow`              |
 | Architecture or flow visualization materially improves understanding   | `plantuml-skill`             |
 | Verified repository state materially changed                           | `repo-current-state`         |
+| Change affects documented behavior, or docs need normalizing           | `repo-documentation`         |
 | Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
 | PR creation or update requires the merge decision gate                 | `pr-review`                  |
 | Branch publication, Commit, Push, or PR readiness is required           | `github-push-when-ready`     |

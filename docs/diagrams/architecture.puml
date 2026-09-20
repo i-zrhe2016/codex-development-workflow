@@ -19,6 +19,7 @@ state "Record Plan + Tickets + Slices\n[GitHub Issues before branch]\nEvery requ
 state "Create Plan branch\n(all change types)" as branch
 state "Implement all Plan Tickets\n(main agent; optional bounded delegation)" as implement
 state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression / full" as test
+state "Documentation impact check\n[repo-documentation when documented behavior changed]\nUpdate canonical owner + docs index; skip when nothing changed" as docs
 state "Staged redaction scan\nbefore commit\n[data-document-redaction]" as redact
 state "Publication readiness + Commit\n[github-push-when-ready]\nIdentity / clean boundaries / Conventional Commits" as commit
 state "Push branch\n[github-push-when-ready]" as push
@@ -43,7 +44,8 @@ plan --> decompose
 decompose --> branch
 branch --> implement
 implement --> test
-test --> redact
+test --> docs
+docs --> redact
 redact --> commit
 commit --> push
 push --> pr
@@ -75,8 +77,8 @@ end note
 note right of review
 Invoke immediately after the PR is ready.
 Only PASS permits merge. BLOCKED returns to
-Fix -> Test -> Redaction when applicable ->
-Commit -> Push -> pr-review.
+Fix -> Test -> Documentation impact when applicable
+-> Redaction when applicable -> Commit -> Push -> pr-review.
 Review execution recovery is an implementation detail.
 end note
 
