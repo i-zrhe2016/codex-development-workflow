@@ -23,8 +23,11 @@ exists.
 
 ## Transitions
 
-- Update: change the content in place and keep `Status: Active`. Do not add a
+- Update a non-ADR document in place and keep `Status: Active`. Do not add a
   change log; Git holds history.
+- Update an ADR only to correct a factual error in the record, keeping its
+  status. Never edit an `Accepted` ADR to describe a later decision: write a new
+  ADR and mark the earlier one `Superseded`.
 - Deprecate: set `Status: Deprecated`, say what replaced it or why nothing did,
   and keep the document while anything still references it.
 - Supersede: set `Status: Superseded`, add `> Superseded by: <path>`, and update

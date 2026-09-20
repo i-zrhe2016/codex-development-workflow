@@ -36,7 +36,8 @@ runtime source is
 1. Run the documentation impact check before publication for any change.
 2. Route each fact to the document type that owns it, and update the canonical
    document instead of creating a parallel one.
-3. Update the documentation index in the same change.
+3. When the check requires documentation work, update the documentation router
+   in the same change.
 4. When the user asks to normalize, organize, audit, or check project
    documentation, scan `docs/`, classify, detect duplicates, orphans,
    misplacement, naming violations, missing index links, and stale claims, then
@@ -45,9 +46,10 @@ runtime source is
    document's state changes; ADRs use `Proposed`, `Accepted`, `Deprecated`, or
    `Superseded` instead and are never deleted.
 
-The impact check is a step inside the existing Test -> Redaction -> Commit path.
-It adds no workflow stage, no second merge gate, and no documentation work when
-the change touches nothing documented.
+The impact check runs between Test and Redaction, inside the existing
+`Test -> Documentation impact -> Redaction -> Commit` path. It is a required
+workflow step, not an additional merge gate, and it requires no documentation
+work when the change touches nothing documented.
 
 ## Boundary with repo-current-state
 
