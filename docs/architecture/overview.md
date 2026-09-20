@@ -19,7 +19,7 @@ procedures remain inside their own `SKILL.md` files.
 | Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
 | Subagent selection | The host picks the subagent from each agent definition's `description`; no document maps a task class to an agent. |
 | `.codex/agents/reviewer.toml` | Optional project-scoped supplemental reviewer for explicitly high-risk changes; it is outside the default path. |
-| `.claude/agents/reviewer.md` | The same optional reviewer for Claude Code, in Markdown + YAML frontmatter format. |
+| `.claude/agents/reviewer.md` | The same optional reviewer for Claude Code. It requires the task prompt to carry the diff and the acceptance criteria, because it has no shell and cannot run `git diff` itself. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). |
 | `plan-to-ticket` | Creates exactly one Plan for every requirement, splits it into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the Plan and child Ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |

@@ -90,8 +90,13 @@ bash scripts/install-all.sh
 Use `--update` to replace already-installed workflow skills:
 
 ```bash
-bash scripts/install-all.sh --update
+bash scripts/install-all.sh --update                  # Codex destination
+bash scripts/install-all.sh --target claude --update  # Claude Code destination
 ```
+
+`--update` acts on the destination selected by `--target` (or `--dest`), so an
+update without `--target` always targets the Codex default. Repeat the target
+you installed with.
 
 Without `--update`, an existing skill directory is reported as `skip` and is
 left unchanged. With `--update`, an existing destination is replaced only when
@@ -129,16 +134,16 @@ bash scripts/install-all.sh --target claude --dest /path/to/skills
 
 ## Verify the result
 
-After the command completes, verify the reported destination contains the
-expected skill folders and each folder contains `SKILL.md`:
+After the command completes, verify the destination the installer printed
+contains the expected skill folders and each folder contains `SKILL.md`:
 
 ```bash
-SKILLS_DIR="$HOME/.claude/skills"   # or ${CODEX_HOME:-$HOME/.codex}/skills
+SKILLS_DIR="<the Location printed by install-all.sh>"
 find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 ```
 
-The installer prints the number of installed and skipped skills and names the
-host to restart.
+The installer prints the number of installed and skipped skills, the resolved
+destination, and the host to restart.
 
 ## Host-specific configuration
 
@@ -149,7 +154,7 @@ is not installed into another repository, and each host reads its own:
 |---|---|---|
 | `.codex/config.toml` | Codex | Enables subagents and caps concurrent spawned-agent threads at three, excluding the main thread. |
 | `.codex/agents/reviewer.toml` | Codex | The optional supplemental reviewer, made read-only by `sandbox_mode`. |
-| `.claude/agents/reviewer.md` | Claude Code | The same reviewer, in Claude Code's Markdown + YAML format; it grants no write tool and no shell, so it is read-only by construction. |
+| `.claude/agents/reviewer.md` | Claude Code | The same reviewer, in Claude Code's Markdown + YAML format. It grants no write tool and no shell, so it is read-only by construction; the task prompt must therefore carry the diff and the acceptance criteria. |
 | `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The installer requires the file for both targets, but Claude Code never reads it. |
 
 Claude Code does **not** read `.codex/` and does not read `agents/openai.yaml`;

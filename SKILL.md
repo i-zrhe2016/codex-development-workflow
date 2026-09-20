@@ -433,6 +433,8 @@ bash scripts/install-all.sh --update
 
 The installer copies the root skill and `skills/` bundles from this checkout;
 it does not clone specialist repositories. Select the host with `--target`
-(`codex` is the default; `claude` installs for Claude Code). See the
+(`codex` is the default; `claude` installs for Claude Code), and repeat that
+target when updating — `--update` without `--target` always updates the Codex
+destination. See the
 [installation and update guide](docs/deployment/installation.md) for each
 destination. Restart the host after installation.

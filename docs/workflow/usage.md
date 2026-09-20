@@ -152,8 +152,8 @@ summary. Subagents return findings, changes, test results, and unresolved
 risks, not raw logs. Prefer one delegation level and keep integration and final
 judgment with the main agent.
 
-The host selects the subagent by `description`. The delegation policy is owned
-by [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
+Subagent selection is host-specific; follow the delegation policy in
+[`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
 
 ## Slice execution and verification
 

@@ -112,7 +112,8 @@ bash scripts/install-all.sh
 
 The installer copies the local bundles under `skills/`; it does not clone
 specialist repositories. Select the host with `--target codex` (the default) or
-`--target claude`; see the
+`--target claude`, and repeat that target when updating — `--update` without
+`--target` always updates the Codex destination. See the
 [installation and update guide](docs/deployment/installation.md) for the
 destination of each target.
 
