@@ -86,9 +86,9 @@ truth. Issue persistence is always required once this skill produces a Ticket.
   order each Ticket's Slices by real implementation dependency and clear
   ownership boundaries.
 - Do not require delegation. When the parent workflow delegates, identify
-  independent Slices that are safe to delegate and keep dependent or
-  overlapping Slices sequential. Never name the agent that should run a Slice;
-  the host selects it.
+  bounded Slices with disjoint ownership that are independently executable;
+  keep dependent, overlapping, or shared-interface/configuration Slices
+  sequential. Never name the agent that should run a Slice; the host selects it.
 - Avoid unrelated refactors, dependency upgrades, formatting changes, speculative abstractions, or future features.
 - If repository context exists, respect its architecture, conventions, constraints, and current state.
 - If exact commands or implementation details are unknown, describe validation behavior instead of inventing commands.
