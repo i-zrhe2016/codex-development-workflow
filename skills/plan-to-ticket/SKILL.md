@@ -1,6 +1,6 @@
 ---
 name: plan-to-ticket
-description: Convert any requirement, including feature, bug-fix, refactor, documentation, configuration, dependency, test, or CI/CD work, into exactly one Plan, one or more behavior Tickets, and small, dependency-ordered Slices for a main Codex agent and optional bounded workers. Persist the Plan and every Ticket to GitHub Issues before the single Plan branch starts; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
+description: Convert any requirement, including feature, bug-fix, refactor, documentation, configuration, dependency, test, or CI/CD work, into exactly one Plan, one or more behavior Tickets, and small, dependency-ordered Slices for a main agent and optional bounded delegation. Persist the Plan and every Ticket to GitHub Issues before the single Plan branch starts; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
 ---
 
 # Plan to Ticket
@@ -85,9 +85,10 @@ truth. Issue persistence is always required once this skill produces a Ticket.
 - First establish the Ticket boundaries and ticket-level dependencies, then
   order each Ticket's Slices by real implementation dependency and clear
   ownership boundaries.
-- Do not require delegation. When the parent workflow enables its delegation
-  gate, identify independent Slices that are safe to delegate and keep
-  dependent or overlapping Slices sequential.
+- Do not require delegation. When the parent workflow delegates, identify
+  bounded Slices with disjoint ownership that are independently executable;
+  keep dependent, overlapping, or shared-interface/configuration Slices
+  sequential. Never name the agent that should run a Slice; the host selects it.
 - Avoid unrelated refactors, dependency upgrades, formatting changes, speculative abstractions, or future features.
 - If repository context exists, respect its architecture, conventions, constraints, and current state.
 - If exact commands or implementation details are unknown, describe validation behavior instead of inventing commands.
@@ -370,10 +371,10 @@ Use explicit ticket IDs.
 
 Ticket dependencies describe the order in which the main agent can execute
 Tickets on the shared Plan branch. They never create a Ticket branch or merge.
-Slice dependencies describe the order in which the main agent or a delegated
-worker can execute Slices inside a ready Ticket. They are not an instruction to
-delegate: independent Slices may be considered by the parent workflow's
-delegation gate, while dependent or overlapping Slices remain sequential.
+Slice dependencies describe the order in which Slices inside a ready Ticket can
+be executed. They are not an instruction to delegate: independent Slices are
+candidates for the parent workflow's delegation decision, while dependent or
+overlapping Slices remain sequential.
 
 Example:
 

@@ -1,6 +1,6 @@
 ---
 name: test-workflow
-description: "General repository testing workflow for Codex. Use when validating feature work, bug fixes, refactors, or ticket acceptance criteria across backend, frontend, APIs, libraries, and CLI projects. Select the cheapest relevant checks first, support test-first RED/GREEN loops for complex or risky behavior, run focused tests before broader regression suites, use real-browser Playwright verification only for browser-visible behavior, and return actionable failure evidence without masking failures with retries or weak assertions."
+description: "General repository testing workflow. Use when validating feature work, bug fixes, refactors, or ticket acceptance criteria across backend, frontend, APIs, libraries, and CLI projects. Select the cheapest relevant checks first, support test-first RED/GREEN loops for complex or risky behavior, run focused tests before broader regression suites, use real-browser Playwright verification only for browser-visible behavior, and return actionable failure evidence without masking failures with retries or weak assertions."
 ---
 
 # Test Workflow

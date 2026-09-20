@@ -28,7 +28,8 @@ When the skill is selected for a planning request, it:
 2. Splits complex or multi-behavior requirements into focused, independently
    reviewable behavior Tickets.
 3. Splits each Ticket into dependency-ordered Slices that the main agent can
-   execute sequentially or pass through the optional delegation gate.
+   execute sequentially or delegate when they are independent, bounded, and
+   have disjoint ownership.
 4. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
 5. Creates or updates one Plan Issue and one Issue per Ticket before the Plan

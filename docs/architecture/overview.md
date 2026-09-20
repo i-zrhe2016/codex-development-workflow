@@ -6,10 +6,10 @@
 
 ## Scope
 
-This repository packages a main-agent-led Codex development-workflow
-orchestrator with optional bounded delegation and its specialist skills. The
-orchestrator owns stage routing and quality gates; specialist procedures
-remain inside their own `SKILL.md` files.
+This repository packages a main-agent-led development-workflow orchestrator for
+Codex and Claude Code with optional bounded delegation and its specialist
+skills. The orchestrator owns stage routing and quality gates; specialist
+procedures remain inside their own `SKILL.md` files.
 
 ## Components
 
@@ -17,9 +17,10 @@ remain inside their own `SKILL.md` files.
 |---|---|
 | `codex-development-workflow` | Coordinates the single Requirement-to-Plan-to-PR-to-Merge lifecycle, Plan/Ticket/Slice decomposition, bounded verification, and delivery gates. |
 | Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
-| `explorer` / `worker` | Built-in read-heavy exploration and execution roles used only for delegated, bounded tasks. |
+| Subagent selection | The host picks the subagent from each agent definition's `description`; no document maps a task class to an agent. |
 | `.codex/agents/reviewer.toml` | Optional project-scoped supplemental reviewer for explicitly high-risk changes; it is outside the default path. |
-| `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project. |
+| `.claude/agents/reviewer.md` | The same optional reviewer for Claude Code. It requires the task prompt to carry the diff and the acceptance criteria, because it has no shell and cannot run `git diff` itself. |
+| `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). |
 | `plan-to-ticket` | Creates exactly one Plan for every requirement, splits it into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the Plan and child Ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
@@ -28,17 +29,18 @@ remain inside their own `SKILL.md` files.
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
-| `references/skill-map.md` | Maps each managed bundle to its local source and Codex destination. |
+| `references/skill-map.md` | Maps each managed bundle to its local source and both host destinations. |
 | `data-document-redaction` | Scans the files staged for the next commit before publication and repeats the scan after blocking review fixes that change staged content. |
 | `github-push-when-ready` | Guards feature-branch publication through Commit, Push, and PR readiness. |
 | `pr-review` | Owns the single PR merge decision and returns `PASS` or `BLOCKED`. |
 
 The main agent centrally owns requirements, architecture, planning, dependency
-ordering, integration, and final judgment. The optional Delegation Gate may
-route independent exploration, testing, or isolated implementation to bounded
-workers. Supplemental review is outside the default path and requires explicit
-high-risk scope. Dependent or overlapping work remains sequential, and the
-main agent must not duplicate active delegated work.
+ordering, integration, and final judgment. Bounded delegation may route
+independent exploration, testing, or isolated implementation to subagents; the
+host selects which one, and [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation)
+owns the policy. Supplemental review is outside the default path and requires
+explicit high-risk scope. Dependent or overlapping work remains sequential, and
+the main agent must not duplicate active delegated work.
 
 ## Development process
 
@@ -156,7 +158,7 @@ of its branch: record `Branch` and `Base` before editing, set Plan
 `Status: in_progress` when work starts, and require the Plan PR head/base to
 match those fields.
 
-### Delegation gate
+### Delegation
 
 Delegation is optional and may occur after branch creation during
 implementation. The main agent delegates only tasks with a clear goal, scope
@@ -164,7 +166,9 @@ and exclusions, ownership boundary, dependencies, acceptance criteria,
 validation, and expected result summary. Parallel write tasks must not share
 files, interfaces, schemas, migrations, or configuration. Delegation never
 bypasses Test, Redaction when applicable, Commit, Push, PR, `pr-review`, or
-Merge. Prefer a single delegation level.
+Merge. Prefer a single delegation level. The host selects the subagent by
+`description`; the policy lives in
+[`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
 
 ### Slice execution
 
@@ -213,14 +217,20 @@ remain separate evidence and must pass before merge.
 
 `Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop when blocked -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow)`
 
-### Project-scoped Codex configuration
+### Host-specific project configuration
 
-`.codex/config.toml` enables subagents and limits this project to three
-concurrently open spawned-agent threads, excluding the main thread.
-`.codex/agents/reviewer.toml` provides an optional supplemental reviewer only
-for explicitly high-risk changes; it is not part of the default PR path. The
-installer copies managed skills only; these project-scoped files remain in the
-checkout where Codex runs.
+Each host reads its own agent definitions. Codex uses `.codex/config.toml`
+(subagents enabled, three concurrent spawned-agent threads excluding the main
+thread) and `.codex/agents/reviewer.toml`; Claude Code uses
+`.claude/agents/reviewer.md`. Both are optional supplemental reviewers for
+explicitly high-risk changes and stay outside the default PR path, but their
+input and tool contracts are host-specific: the Codex definition reads the open
+PR diff itself under a read-only sandbox, while the Claude definition has no
+shell and requires the task prompt to carry the patch text and the acceptance
+criteria. The installer copies managed skills only; these project-scoped
+files remain in the checkout where the host runs. See the
+[installation and update guide](../deployment/installation.md) for the full
+mapping.
 
 ### Staged-output redaction gate
 
@@ -236,15 +246,17 @@ and need project-specific tooling and review.
 
 ## Installation flow
 
-1. Obtain a checkout of this repository and run `scripts/install-all.sh`.
-2. The installer validates each local `SKILL.md` and copies the configured bundle into `${CODEX_HOME:-$HOME/.codex}/skills` or `--dest PATH`.
+1. Obtain a checkout of this repository and run `scripts/install-all.sh` with `--target codex` (default) or `--target claude`.
+2. The installer validates each local `SKILL.md` and copies the configured bundle into the target destination (`${CODEX_HOME:-$HOME/.codex}/skills` or `$HOME/.claude/skills`) or `--dest PATH`.
 3. Existing marked skills are skipped unless `--update` is used; unmarked paths
    are preserved unless `--update --adopt-legacy` explicitly moves them to a
    recoverable backup first.
-4. Restart Codex to discover installed skills.
+4. Restart the host to discover installed skills.
 
 The installer and [`references/skill-map.md`](../../references/skill-map.md)
-must remain aligned.
+must remain aligned. The
+[installation and update guide](../deployment/installation.md) owns the
+procedure.
 
 ## Boundaries
 

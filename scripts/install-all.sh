@@ -3,24 +3,29 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
-DEST_ROOT="${CODEX_HOME:-$HOME/.codex}/skills"
+TARGET="codex"
+DEST_ROOT=""
+DEST_EXPLICIT=0
 UPDATE=0
 ADOPT_LEGACY=0
 MANAGED_MARKER=".codex-development-workflow-managed"
 
 usage() {
   cat <<'USAGE'
-Install the complete Codex development workflow skill set bundled in this
-repository.
+Install the complete development workflow skill set bundled in this repository
+into a Codex or Claude Code skills directory.
 
 Usage:
-  install-all.sh [--update] [--adopt-legacy] [--dest PATH]
+  install-all.sh [--target codex|claude] [--update] [--adopt-legacy] [--dest PATH]
 
 Options:
+  --target NAME  Host to install for: codex (default) or claude.
+                 codex  -> ${CODEX_HOME:-$HOME/.codex}/skills
+                 claude -> $HOME/.claude/skills
   --update       Replace already-installed workflow skills.
   --adopt-legacy Adopt pre-marker destinations during --update, moving them
                  to a recoverable backup first.
-  --dest PATH    Install into PATH instead of $CODEX_HOME/skills.
+  --dest PATH    Install into PATH instead of the --target destination.
   -h, --help     Show this help.
 USAGE
 }
@@ -29,13 +34,31 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --update) UPDATE=1; shift ;;
     --adopt-legacy) ADOPT_LEGACY=1; shift ;;
+    --target)
+      [ "$#" -ge 2 ] || { echo "error: --target requires a name" >&2; exit 2; }
+      TARGET="$2"; shift 2 ;;
     --dest)
       [ "$#" -ge 2 ] || { echo "error: --dest requires a path" >&2; exit 2; }
-      DEST_ROOT="$2"; shift 2 ;;
+      DEST_ROOT="$2"; DEST_EXPLICIT=1; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "error: unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+case "$TARGET" in
+  codex)
+    TARGET_LABEL="Codex"
+    [ "$DEST_EXPLICIT" -eq 1 ] || DEST_ROOT="${CODEX_HOME:-$HOME/.codex}/skills"
+    ;;
+  claude)
+    TARGET_LABEL="Claude Code"
+    [ "$DEST_EXPLICIT" -eq 1 ] || DEST_ROOT="$HOME/.claude/skills"
+    ;;
+  *)
+    echo "error: unknown target: $TARGET (expected codex or claude)" >&2
+    exit 2
+    ;;
+esac
 
 if [ "$ADOPT_LEGACY" -eq 1 ] && [ "$UPDATE" -eq 0 ]; then
   echo "error: --adopt-legacy requires --update" >&2
@@ -112,6 +135,14 @@ backup_legacy_destination() {
   migrated=$((migrated + 1))
 }
 
+# agents/openai.yaml is Codex-only skill interface metadata. The Claude target
+# leaves it out of the archive so the destination holds only files Claude Code
+# reads; the Codex target keeps it.
+TAR_EXCLUDES=()
+if [ "$TARGET" = "claude" ]; then
+  TAR_EXCLUDES+=(--exclude='agents/openai.yaml')
+fi
+
 installed=0
 skipped=0
 migrated=0
@@ -147,7 +178,10 @@ for spec in "${SKILLS[@]}"; do
     echo "error: bundled source $subpath does not contain SKILL.md" >&2
     exit 1
   fi
-  if [ ! -f "$src/agents/openai.yaml" ]; then
+  # agents/openai.yaml is Codex-only skill interface metadata. Require it for
+  # the Codex target, and leave it out of the Claude archive so the Claude
+  # destination contains only files Claude Code actually reads.
+  if [ "$TARGET" = "codex" ] && [ ! -f "$src/agents/openai.yaml" ]; then
     echo "error: bundled source $subpath does not contain agents/openai.yaml" >&2
     exit 1
   fi
@@ -175,12 +209,22 @@ for spec in "${SKILLS[@]}"; do
   if [ "$subpath" = "." ]; then
     (
       cd "$REPO_ROOT"
-      tar -cf - SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+      if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
+        tar "${TAR_EXCLUDES[@]}" -cf - \
+          SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+      else
+        tar -cf - SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+      fi
     ) | (cd "$dest" && tar -xf -)
   else
     (
       cd "$src"
-      tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
+      if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
+        tar "${TAR_EXCLUDES[@]}" --exclude='.git' --exclude='__pycache__' \
+          --exclude='*.pyc' -cf - .
+      else
+        tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
+      fi
     ) | (cd "$dest" && tar -xf -)
   fi
   printf '%s\n' "codex-development-workflow:$name" > "$dest/$MANAGED_MARKER"
@@ -195,4 +239,4 @@ echo "Location:  $DEST_ROOT"
 if [ -n "$LEGACY_BACKUP" ]; then
   echo "Backup:    $LEGACY_BACKUP"
 fi
-echo "Restart Codex to discover newly installed skills."
+echo "Restart $TARGET_LABEL to discover newly installed skills."

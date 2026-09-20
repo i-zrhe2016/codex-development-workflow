@@ -4,25 +4,34 @@ This repository is the source of truth for every skill installed by
 `scripts/install-all.sh`. The installer copies these local paths; it does not
 clone specialist repositories at installation time.
 
-Project-scoped runtime configuration lives separately under `.codex/`: custom
-agent files such as `.codex/agents/reviewer.toml` are not Skill metadata and are
-not copied by the installer. Skill interface metadata remains in each managed
-bundle's `agents/openai.yaml`.
+Project-scoped runtime configuration lives separately under `.codex/` and
+`.claude/`: custom agent files such as `.codex/agents/reviewer.toml` and
+`.claude/agents/reviewer.md` are not Skill metadata and are not copied by the
+installer. Skill interface metadata remains in each managed bundle's
+`agents/openai.yaml`. Codex requires that file: the Codex target fails when a
+bundle omits it, and installs it. The Claude target installs the same bundle
+without it, because Claude Code never reads it.
 
-| Skill | Managed source in this repository | Documentation | Codex destination |
-|---|---|---|---|
-| `codex-development-workflow` | Root package: `SKILL.md`, `agents/`, selected workflow references | `docs/workflow/`, `docs/architecture/` | `codex-development-workflow` |
-| `context-efficiency` | `skills/context-efficiency/` | `docs/skills/context-efficiency/` | `context-efficiency` |
-| `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` | `plan-to-ticket` |
-| `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` | `test-workflow` |
-| `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` |
-| `repo-documentation` | `skills/repo-documentation/` | `docs/skills/repo-documentation/` | `repo-documentation` |
-| `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` |
-| `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` |
-| `pr-review` | `skills/pr-review/` with its runner and execution reference | `docs/skills/pr-review/` | `pr-review` |
+| Skill | Managed source in this repository | Documentation | Codex destination | Claude Code destination |
+|---|---|---|---|---|
+| `codex-development-workflow` | Root package: `SKILL.md`, `agents/`, selected workflow references | `docs/workflow/`, `docs/architecture/` | `codex-development-workflow` | `codex-development-workflow` |
+| `context-efficiency` | `skills/context-efficiency/` | `docs/skills/context-efficiency/` | `context-efficiency` | `context-efficiency` |
+| `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` | `plan-to-ticket` | `plan-to-ticket` |
+| `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` | `test-workflow` | `test-workflow` |
+| `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` | `repo-current-state` |
+| `repo-documentation` | `skills/repo-documentation/` | `docs/skills/repo-documentation/` | `repo-documentation` | `repo-documentation` |
+| `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` | `data-document-redaction` |
+| `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` | `github-push-when-ready` |
+| `pr-review` | `skills/pr-review/` with its runner and execution reference | `docs/skills/pr-review/` | `pr-review` | `pr-review` |
 
-Each managed source is an independently installable Codex skill folder
-containing `SKILL.md`. The root package remains at the repository root for
+Both destinations are the bare skill name; only the root differs, selected by
+`--target` (`${CODEX_HOME:-$HOME/.codex}/skills` for Codex, `$HOME/.claude/skills`
+for Claude Code) or overridden with `--dest`. This file ships inside the
+installed root bundle, so the link below resolves only in the repository
+checkout.
+
+Each managed source is an independently installable skill folder containing
+`SKILL.md`. The root package remains at the repository root for
 backward compatibility; its installer entry copies only the files needed by
 the orchestrator rather than the whole repository.
 

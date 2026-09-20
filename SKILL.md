@@ -1,9 +1,9 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide Codex development. Record exactly one Plan per requirement with one or more Tickets, then route the Plan through one branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
+description: "Entry point for repository-wide development. Record exactly one Plan per requirement with one or more Tickets, then route the Plan through one branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
 ---
 
-# Codex Development Workflow
+# Development Workflow
 
 Use this skill as the entry point for repository development. The main agent
 owns requirements, architecture, planning, Plan/Ticket/Slice decomposition,
@@ -128,8 +128,8 @@ all required Issues must exist before the Plan branch is created. A failed
 Issue operation blocks the workflow and has no Markdown or chat-only fallback.
 
 Only start dependency-ready Slices. The main agent may execute one Slice
-itself, or the delegation gate may start multiple independent Slices with
-disjoint ownership boundaries. Load only the files, documentation, and state
+itself, or run several independent Slices with disjoint ownership boundaries.
+Load only the files, documentation, and state
 needed for each Slice. Do not implement future-slice features or unrelated
 refactors. Record each result before selecting the next Slice.
 
@@ -141,12 +141,14 @@ the default path remains a single agent executing the Slice itself. Delegation
 does not create a second delivery path or bypass the branch, test, redaction,
 commit, push, PR, review, and merge gates.
 
-Use delegation only for a bounded, independently executable task. Suitable
-targets include repository exploration, independent research, test or
-regression analysis, or an isolated implementation Slice. Prefer the built-in
-`explorer` for read-heavy investigation and
-`worker` for an isolated implementation Slice. Keep dependent or overlapping
-work sequential.
+Use delegation only for a bounded, independently executable task. Keep
+dependent or overlapping work sequential.
+
+The host selects the subagent; this skill does not name one for a task class.
+A host may select either an agent this repository defines or one of its own
+built-in agent types. Codex reads project agents from `.codex/agents/`; Claude
+Code reads them from `.claude/agents/` and selects by each definition's
+`description`. See `AGENTS.md` for the delegation policy this workflow follows.
 
 Parallel write tasks require clearly separated ownership boundaries. They must
 not modify the same files, interfaces, schemas, migrations, or shared
@@ -225,7 +227,7 @@ For each self-executed or delegated Slice:
    clear.
 7. Refactor only within the slice and only after its acceptance criteria pass.
 8. Mark the Slice complete only when its acceptance criteria and selected
-   validation pass. A delegated worker then returns changed files, commands,
+   validation pass. A delegated agent then returns changed files, commands,
    results, risks, and follow-up work as its expected result summary for the
    main agent.
 9. If a design assumption is wrong, stop expanding the patch and return to
@@ -333,7 +335,7 @@ do not duplicate its detailed procedure here.
   create exactly one Plan Issue and one or more child Ticket Issues before
   generating their Slices. Generated Slices must satisfy the Slice contract
   above, persist the Plan and Tickets to GitHub Issues before branch work, and
-  expose enough boundaries for the delegation gate to make a safe decision.
+  expose enough boundaries for a safe delegation decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
@@ -431,6 +433,9 @@ bash scripts/install-all.sh --update
 ```
 
 The installer copies the root skill and `skills/` bundles from this checkout;
-it does not clone specialist repositories. Codex uses
-`${CODEX_HOME:-$HOME/.codex}/skills` by default. Restart Codex after
-installation.
+it does not clone specialist repositories. Select the host with `--target`
+(`codex` is the default; `claude` installs for Claude Code), and repeat that
+target when updating — `--update` without `--target` always updates the Codex
+destination. Restart the host after installation. The repository's own
+`docs/deployment/installation.md` carries the destinations and the full
+procedure; that guide is not part of this installed bundle.
