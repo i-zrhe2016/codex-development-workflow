@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-18 @ fc8664e
+Last verified: 2026-09-20 @ 0a79755
 
 ## Current Focus
 
@@ -21,6 +21,14 @@ Last verified: 2026-09-18 @ fc8664e
 - `pr-review` detects changed Markdown files and passes a trusted bundled
   document rule to the same OpenCode Review execution; documentation remains
   under the single `PASS`/`BLOCKED` merge gate.
+- `repo-documentation` governs documentation as one canonical document per
+  fact. Its impact check runs inside the existing Test -> Redaction path, and it
+  routes each fact to its owning document type, keeps exactly one documentation
+  router, and detects duplicates, orphans, and stale claims.
+- The documentation file standard requires a `Type`/`Status`/`Scope` header on
+  content documents. README pages, `Repo_Current_State.md`, and the ADR filename
+  and status values are the documented exceptions, and existing documents are
+  brought into compliance as they are modified.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
@@ -57,6 +65,9 @@ Last verified: 2026-09-18 @ fc8664e
   Plan, and each Plan owns one branch, PR, and merge for its child Tickets.
 - `github-push-when-ready` owns publication through PR readiness; `pr-review`
   owns the single PASS/BLOCKED merge decision and its recoverable runner.
+- `repo-documentation` owns documentation governance and `repo-current-state`
+  owns only the recovery snapshot. This repository routes its documentation from
+  the root `README.md` instead of `docs/README.md`.
 - Runtime skills remain under `skills/`; explanatory documentation is under
   `docs/skills/`; the installer packages the local skill bundles. See
   `docs/architecture/overview.md` for the topology.
