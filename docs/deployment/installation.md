@@ -73,8 +73,10 @@ Select the host with `--target`. Codex is the default:
 bash scripts/install-all.sh --target claude
 ```
 
-Both targets install the same nine bundles under the bare skill name; only the
-destination root differs. `--dest PATH` overrides either destination.
+Both targets install the same nine bundles under the bare skill name; the
+Claude target omits the Codex-only `agents/openai.yaml` metadata, so the two
+installations are not byte-for-byte identical. The destination root and that
+metadata are the only differences. `--dest PATH` overrides either destination.
 
 For an auditable installation, inspect the checkout and the managed source map
 before running the local installer:
@@ -135,10 +137,11 @@ bash scripts/install-all.sh --target claude --dest /path/to/skills
 ## Verify the result
 
 After the command completes, verify the destination the installer printed
-contains the expected skill folders and each folder contains `SKILL.md`:
+contains the expected skill folders and each folder contains `SKILL.md`. Set
+`SKILLS_DIR` to that printed location first:
 
 ```bash
-SKILLS_DIR="<the Location printed by install-all.sh>"
+SKILLS_DIR="$HOME/.claude/skills"   # or ${CODEX_HOME:-$HOME/.codex}/skills
 find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 ```
 
