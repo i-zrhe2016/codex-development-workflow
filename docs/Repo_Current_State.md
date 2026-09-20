@@ -36,7 +36,9 @@ Last verified: 2026-09-20 @ 829c87b
 - `repo-documentation` governs documentation as one canonical document per
   fact. Its impact check runs inside the existing Test -> Redaction path, and it
   routes each fact to its owning document type, keeps exactly one documentation
-  router, and detects duplicates, orphans, and stale claims.
+  router, and detects duplicates, orphans, and stale claims. It also owns the
+  diagram policy: when a document carries a diagram, where the `.puml` source
+  and rendered image live, and when an existing diagram is stale.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.

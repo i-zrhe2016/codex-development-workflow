@@ -25,7 +25,7 @@ procedures remain inside their own `SKILL.md` files.
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
-| `repo-documentation` | Governs documentation as one canonical document per fact: the documentation impact check, canonical ownership, the documentation index, duplicate and orphan detection, and document lifecycle. |
+| `repo-documentation` | Governs documentation as one canonical document per fact: the documentation impact check, canonical ownership, the documentation index, duplicate and orphan detection, document lifecycle, and the diagram policy. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |

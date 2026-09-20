@@ -107,6 +107,10 @@ preserved and reported as `ownership unverified`. Retired skill destinations
 are removed under the same ownership check. Back up any local edits before
 using this option.
 
+![Installer decision flow: destination resolution, the ownership-marker check, and the install, skip, preserve, and remove outcomes](diagrams/installer-decision-flow.svg)
+
+Source: [`diagrams/installer-decision-flow.puml`](diagrams/installer-decision-flow.puml)
+
 The marker is stored as the hidden file
 `.codex-development-workflow-managed` inside each installed bundle. This
 prevents an update from recursively deleting an unrelated skill that happens

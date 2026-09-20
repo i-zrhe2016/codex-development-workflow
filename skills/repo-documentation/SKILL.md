@@ -40,6 +40,8 @@ whether documentation needs updating. Ask only:
 5. Did this change or add a design decision worth an ADR? Reversing or
    constraining a previous choice counts.
 6. Did this make an existing document wrong or stale?
+7. Does any existing diagram affected by this change still show the flow it
+   claims to show? A changed component, order, decision, or boundary counts.
 
 Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
 finds nothing costs one search; a skipped check leaves a wrong document behind.
@@ -71,6 +73,37 @@ decide which document owns a fact.
 
 README pages, `docs/Repo_Current_State.md`, and the ADR filename and status
 values are the documented exceptions in that reference.
+
+## Diagrams
+
+A diagram is part of the document it illustrates, not a separate document. It
+follows the same rules: one canonical owner, no restated fact, and the same
+update obligations as the prose around it.
+
+Draw one when the fact is materially clearer as a picture than as prose: a
+decision path, a request or data flow, a state machine, or the boundary between
+components. Do not add a diagram for a list of values, a single step, or
+symmetry with a neighbouring page; a document that reads clearly without one
+does not need one.
+
+Placement and naming are defined in
+[`references/doc-file-standard.md`](references/doc-file-standard.md); the
+embedding block, including the unrendered case, is in
+[`references/templates.md`](references/templates.md).
+
+Rendering is done by `plantuml-skill`, the skill `AGENTS.md` routes diagram work
+to. Load it before drawing; it is installed on the host rather than bundled in
+this repository, so its procedure is not restated here. When it is unavailable,
+keep the `.puml` source and report the diagram as unrendered — the required
+markup for that case is defined in
+[`references/doc-file-standard.md`](references/doc-file-standard.md).
+
+A diagram is stale when the flow it draws no longer matches the system: a
+changed component, a changed order, a changed decision, or a changed boundary.
+The impact check above covers it. Update the `.puml` source, re-render through
+that skill, and commit both files in the same change that changed the behavior —
+never edit a rendered image by hand, and never leave a diagram that contradicts
+the prose beside it.
 
 ## Update before create
 
