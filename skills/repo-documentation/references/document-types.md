@@ -47,6 +47,10 @@ docs/
 └── Repo_Current_State.md
 ```
 
+This mapping applies to documents a change creates. An existing document keeps
+its location until a normalization pass moves it, so a legacy directory is
+reported as a finding rather than corrected automatically.
+
 ## Boundaries between types
 
 - Architecture says what is; an ADR says why. Do not explain alternatives or

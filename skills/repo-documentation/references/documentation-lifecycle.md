@@ -52,6 +52,7 @@ A document is stale when the repository contradicts it, not when it looks old.
 - Orphan: a document that the documentation router does not reach. Link it from
   the router, or delete it under the deletion rule above.
 - Misplaced: a document whose content does not match its directory or `Type`.
-  Move it or correct the type, then fix the links.
+  Report it, then move it or correct the type and fix the links. A legacy
+  directory is not moved automatically.
 - Mixed: a document that owns two unrelated topics. Split it into two canonical
   documents and link them.

@@ -44,10 +44,11 @@ whether documentation needs updating. Ask only:
 Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
 finds nothing costs one search; a skipped check leaves a wrong document behind.
 
-Report the result in the change's workflow output; the check creates no
-separate artifact. A yes answer names the canonical document that changed and
-the fact it now owns. A no answer is one line stating that nothing documented
-changed. Do not write documents to look thorough.
+Report the result in the change's existing delivery record: the pull-request
+description, or the Plan Issue's delivery evidence when the workflow uses one.
+The check creates no separate artifact. A yes answer names the canonical
+document that changed and the fact it now owns. A no answer is one line stating
+that nothing documented changed. Do not write documents to look thorough.
 
 ## Canonical owner
 

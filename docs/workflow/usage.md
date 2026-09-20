@@ -1,5 +1,9 @@
 # Workflow Usage Guide
 
+> Type: Guide
+> Status: Active
+> Scope: Running the Codex development workflow: stages, Plan/Ticket handoff, delegation, verification, review, and completion order
+
 Use `codex-development-workflow` as the entry point for repository work. It
 keeps planning at the Plan/Ticket/Slice levels, but uses one delivery path for
 every change type.

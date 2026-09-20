@@ -1,5 +1,9 @@
 # Architecture Overview
 
+> Type: Architecture
+> Status: Active
+> Scope: Component responsibilities, development lifecycle, and installation flow of this repository's workflow package
+
 ## Scope
 
 This repository packages a main-agent-led Codex development-workflow

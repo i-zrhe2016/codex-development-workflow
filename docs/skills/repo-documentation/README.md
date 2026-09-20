@@ -33,7 +33,8 @@ runtime source is
 
 ## Usage
 
-1. Run the documentation impact check before publication for any change.
+1. Run the documentation impact check before publication for any change, and
+   report the result in the change's delivery record.
 2. Route each fact to the document type that owns it, and update the canonical
    document instead of creating a parallel one.
 3. When the check requires documentation work, update the documentation router
