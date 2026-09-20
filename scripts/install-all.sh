@@ -135,6 +135,14 @@ backup_legacy_destination() {
   migrated=$((migrated + 1))
 }
 
+# agents/openai.yaml is Codex-only skill interface metadata. The Claude target
+# leaves it out of the archive so the destination holds only files Claude Code
+# reads; the Codex target keeps it.
+TAR_EXCLUDES=()
+if [ "$TARGET" = "claude" ]; then
+  TAR_EXCLUDES+=(--exclude='agents/openai.yaml')
+fi
+
 installed=0
 skipped=0
 migrated=0
@@ -170,9 +178,9 @@ for spec in "${SKILLS[@]}"; do
     echo "error: bundled source $subpath does not contain SKILL.md" >&2
     exit 1
   fi
-  # agents/openai.yaml is Codex-only skill interface metadata. It is required
-  # for the Codex target and never read by Claude Code, so a Claude-only bundle
-  # is not rejected for omitting it.
+  # agents/openai.yaml is Codex-only skill interface metadata. Require it for
+  # the Codex target, and leave it out of the Claude archive so the Claude
+  # destination contains only files Claude Code actually reads.
   if [ "$TARGET" = "codex" ] && [ ! -f "$src/agents/openai.yaml" ]; then
     echo "error: bundled source $subpath does not contain agents/openai.yaml" >&2
     exit 1
@@ -201,12 +209,22 @@ for spec in "${SKILLS[@]}"; do
   if [ "$subpath" = "." ]; then
     (
       cd "$REPO_ROOT"
-      tar -cf - SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+      if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
+        tar "${TAR_EXCLUDES[@]}" -cf - \
+          SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+      else
+        tar -cf - SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+      fi
     ) | (cd "$dest" && tar -xf -)
   else
     (
       cd "$src"
-      tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
+      if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
+        tar "${TAR_EXCLUDES[@]}" --exclude='.git' --exclude='__pycache__' \
+          --exclude='*.pyc' -cf - .
+      else
+        tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
+      fi
     ) | (cd "$dest" && tar -xf -)
   fi
   printf '%s\n' "codex-development-workflow:$name" > "$dest/$MANAGED_MARKER"

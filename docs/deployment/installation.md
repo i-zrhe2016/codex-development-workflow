@@ -155,7 +155,7 @@ is not installed into another repository, and each host reads its own:
 | `.codex/config.toml` | Codex | Enables subagents and caps concurrent spawned-agent threads at three, excluding the main thread. |
 | `.codex/agents/reviewer.toml` | Codex | The optional supplemental reviewer, made read-only by `sandbox_mode`. It reviews the open PR diff directly. |
 | `.claude/agents/reviewer.md` | Claude Code | The optional supplemental reviewer in Claude Code's Markdown + YAML format. It grants no write tool and no shell, so the task prompt must carry the patch text and the acceptance criteria. |
-| `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The Codex target fails when a bundle omits it; the Claude target installs without it because Claude Code never reads it. |
+| `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The Codex target requires it and installs it; the Claude target installs the bundle without it, because Claude Code never reads it. |
 
 Claude Code does **not** read `.codex/` and does not read `agents/openai.yaml`;
 Codex does **not** read `.claude/agents/`. Neither host reads the other's file,

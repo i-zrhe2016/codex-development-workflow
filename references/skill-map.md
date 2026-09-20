@@ -8,9 +8,9 @@ Project-scoped runtime configuration lives separately under `.codex/` and
 `.claude/`: custom agent files such as `.codex/agents/reviewer.toml` and
 `.claude/agents/reviewer.md` are not Skill metadata and are not copied by the
 installer. Skill interface metadata remains in each managed bundle's
-`agents/openai.yaml`. Codex requires that file; the Codex target fails when a
-bundle omits it, while the Claude target installs the bundle without it because
-Claude Code never reads it.
+`agents/openai.yaml`. Codex requires that file: the Codex target fails when a
+bundle omits it, and installs it. The Claude target installs the same bundle
+without it, because Claude Code never reads it.
 
 | Skill | Managed source in this repository | Documentation | Codex destination | Claude Code destination |
 |---|---|---|---|---|
