@@ -81,7 +81,9 @@ agent's own `description`:
 - Claude Code reads `.claude/agents/`.
 - `.codex/agents/reviewer.toml` and `.claude/agents/reviewer.md` define the same
   optional supplemental reviewer for an explicitly high-risk change; it is not
-  part of the default PR path.
+  part of the default PR path. The Codex definition enforces read-only through
+  `sandbox_mode`; the Claude definition grants no write tool and no shell, so
+  it is read-only by construction.
 
 Delegation remains optional and the safety rules live in
 [`AGENTS.md`](AGENTS.md#multi-agent-delegation).

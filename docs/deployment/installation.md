@@ -148,14 +148,33 @@ is not installed into another repository, and each host reads its own:
 | File | Read by | Purpose |
 |---|---|---|
 | `.codex/config.toml` | Codex | Enables subagents and caps concurrent spawned-agent threads at three, excluding the main thread. |
-| `.codex/agents/reviewer.toml` | Codex | The optional supplemental reviewer. |
-| `.claude/agents/reviewer.md` | Claude Code | The same reviewer, in Claude Code's Markdown + YAML format. |
+| `.codex/agents/reviewer.toml` | Codex | The optional supplemental reviewer, made read-only by `sandbox_mode`. |
+| `.claude/agents/reviewer.md` | Claude Code | The same reviewer, in Claude Code's Markdown + YAML format; it grants no write tool and no shell, so it is read-only by construction. |
 | `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. Inert under Claude Code. |
 
-Both hosts read [`AGENTS.md`](../../AGENTS.md) as project instructions when no
-`CLAUDE.md` is present, so the delegation policy it owns applies to either.
-Copy or adapt the host-specific files into another project only when that
-project has the same delegation boundaries and review needs.
+Claude Code does **not** read `.codex/` and does not read `agents/openai.yaml`;
+Codex does **not** read `.claude/agents/`. Neither host reads the other's file,
+so a change to the reviewer must be applied to both definitions.
+
+Neither file is installed by `scripts/install-all.sh`; they stay in this
+checkout. Copy or adapt them into another project only when that project has the
+same delegation boundaries and review needs.
+
+### Project instructions for each host
+
+The delegation policy is owned by [`AGENTS.md`](../../AGENTS.md), and the two
+hosts reach it differently:
+
+- **Codex** reads `AGENTS.md` directly as its project instruction file.
+- **Claude Code** reads `AGENTS.md` as project instructions only when no
+  `CLAUDE.md` exists in the working directory or above it (v2.1.277+). This
+  repository intentionally versions `AGENTS.md` and no `CLAUDE.md`, so the
+  fallback applies here.
+
+When a target project already has its own `CLAUDE.md`, Claude Code will not fall
+back to that project's `AGENTS.md`. That project must then carry the delegation
+policy itself — copy the "Multi-Agent Delegation" section into its `CLAUDE.md`,
+or add a `CLAUDE.md` that links to it.
 
 ## Installation behavior and trust boundary
 
