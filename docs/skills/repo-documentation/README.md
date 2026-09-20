@@ -19,8 +19,8 @@ runtime source is
 
 ## First-version capabilities
 
-1. `docs/README.md` is the documentation index, and the repository `README.md`
-   links to it.
+1. `docs/README.md` is the documentation index for a repository's `docs/` tree,
+   reached from that repository's root `README.md`.
 2. The Markdown file standard: `kebab-case` names, one `#` title, and no
    `Last updated` field on content documents.
 3. The `Type` / `Status` / `Scope` header on every document under `docs/`.
@@ -40,7 +40,8 @@ runtime source is
    misplacement, naming violations, missing index links, and stale claims, then
    normalize while preserving meaning.
 5. Record `Draft`, `Active`, `Deprecated`, or `Superseded` in the header as the
-   document's state changes. ADRs are never deleted.
+   document's state changes; ADRs use `Proposed`, `Accepted`, `Deprecated`, or
+   `Superseded` instead and are never deleted.
 
 The impact check is a step inside the existing Test -> Redaction -> Commit path.
 It adds no workflow stage, no second merge gate, and no documentation work when
@@ -55,8 +56,9 @@ links to it. Plans and Tickets stay in GitHub Issues, and change history stays
 in Git.
 
 This repository keeps its documentation index in the root
-[`README.md`](../../../README.md); `docs/README.md` is the standard this skill
-applies to a target repository's `docs/` tree.
+[`README.md`](../../../README.md), and `docs/Repo_Current_State.md` keeps its
+`Last verified` field: index files, the state snapshot, and ADRs are the three
+documented exceptions to the file standard.
 
 ## Repository layout
 

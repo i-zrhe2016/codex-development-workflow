@@ -14,7 +14,7 @@ Requirement
   -> Create Plan branch
   -> Implement all Plan Tickets
   -> Test
-  -> Documentation impact check if documented behavior changed
+  -> Documentation impact check
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
@@ -246,7 +246,7 @@ project-specific tooling and review.
 
 ## Completion order
 
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Documentation impact check when documented behavior changed -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Documentation impact/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
+`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Documentation impact check -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Documentation impact/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

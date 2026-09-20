@@ -14,6 +14,10 @@ type decides the directory, the allowed status values, and the template.
 | Reference | `docs/reference/` | exact facts: options, defaults, endpoints, commands | tutorials and rationale | Draft, Active, Deprecated, Superseded |
 | State | `docs/Repo_Current_State.md` | what is true now | history, plans, architecture detail | owned by `repo-current-state` |
 
+`State` is the one type that does not use this Skill's file header.
+`docs/Repo_Current_State.md` keeps its `Last verified` field and is maintained by
+`repo-current-state`; this Skill only routes to it.
+
 ## Canonical owner routing
 
 | Fact | Owner |
@@ -53,5 +57,7 @@ docs/
   handling, and rollback.
 - `Repo_Current_State.md` summarizes. It never becomes the detailed
   architecture, decision, or procedure document.
+- `docs/README.md` is an index, not a content document. It carries links and
+  grouping, never the facts themselves.
 - A choice that affects no architecture, interface, deployment, or operation is
   an implementation detail. Do not write an ADR for it.

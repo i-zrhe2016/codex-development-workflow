@@ -12,7 +12,7 @@ Requirement
   -> Create Plan branch
   -> Implement all Plan Tickets
   -> Test
-  -> Documentation impact check if documented behavior changed
+  -> Documentation impact check
   -> Redaction scan if applicable
   -> Commit
   -> Push branch

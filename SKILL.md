@@ -23,7 +23,7 @@ Requirement
     -> Create Plan branch
     -> Implement all Plan Tickets
     -> Test
-    -> Documentation impact check if documented behavior changed
+    -> Documentation impact check
     -> Redaction scan if applicable
     -> Commit
     -> Push branch
@@ -55,9 +55,9 @@ updates, and CI/CD changes all use the same path:
 1. Record exactly one Plan Issue and all required child Ticket Issues for the
    requirement, then create or resume the Plan branch before editing.
 2. Implement the planned Tickets and run the selected tests.
-3. Run the documentation impact check when the change may affect documented
-   behavior, then update the canonical owner document and the documentation
-   index or record that no documentation change is needed.
+3. Run the documentation impact check, then update the canonical owner document
+   and the documentation index, or record that no documentation change is
+   needed.
 4. Stage the intended files and run the redaction scan; continue on `pass`, or
    on a recorded skip when the staged change carries no sensitive surface.
 5. Commit and push the branch, then create or update its PR.
@@ -338,10 +338,10 @@ do not duplicate its detailed procedure here.
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
   and default-branch synchronization.
-- `repo-documentation`: when a change may affect documented behavior, or the
-  user asks to normalize, audit, or organize documentation; run its
-  documentation impact check, update the canonical owner document, and keep the
-  documentation index current.
+- `repo-documentation`: run its documentation impact check for every change,
+  and whenever the user asks to normalize, audit, or organize documentation;
+  update the canonical owner document and the documentation index, or record
+  that no documentation change is needed.
 - `data-document-redaction`: scan the files staged for the next commit before
   publishing, and again after a blocking review fix that changes staged
   content.
@@ -359,9 +359,9 @@ For every change, regardless of its file type or size:
 1. Record exactly one Plan Issue and all child Ticket Issues, then create or
    resume the Plan branch before editing.
 2. Implement the change and run its selected tests.
-3. Run the `repo-documentation` impact check when the change may affect
-   documented behavior. Update the canonical owner document and the
-   documentation index, or record that no documentation change is needed.
+3. Run the `repo-documentation` impact check. Update the canonical owner
+   document and the documentation index, or record that no documentation change
+   is needed.
 4. Stage the intended change and run `data-document-redaction`; continue only
    on `pass`, `noop`, or a recorded no-sensitive-surface skip.
 5. Invoke `github-push-when-ready`, commit, push the Plan branch, and create or

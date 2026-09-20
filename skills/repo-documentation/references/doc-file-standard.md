@@ -1,10 +1,11 @@
 # Documentation File Standard
 
-Rules for any Markdown document under `docs/`.
+Rules for content documents under `docs/`. Index files, the state snapshot, and
+ADRs follow the exceptions at the end of this file.
 
 ## Naming
 
-- Use lowercase `kebab-case.md`.
+- Use lowercase `kebab-case.md` for content documents.
 - Name the fact, not the format: `deployment-process.md`,
   `database-migration.md`, `authentication-flow.md`.
 - Do not use `DeploymentProcess.md`, `deployment_process.md`, `doc1.md`, or
@@ -21,7 +22,7 @@ Rules for any Markdown document under `docs/`.
 ## Header
 
 Immediately after the title, add a blockquote header with the three required
-fields:
+fields. Index files and `docs/Repo_Current_State.md` are exempt; see Exceptions.
 
 ```markdown
 # Authentication Architecture
@@ -71,3 +72,16 @@ orphan: index it or delete it.
 - Treat roughly 300 lines, or two unrelated topics in one file, as a signal to
   split.
 - Move detail that only one reader group needs into a linked document.
+
+## Exceptions
+
+Three files are exempt from parts of this standard:
+
+- A `README.md` index keeps its conventional name and is a router, not a content
+  document. It does not carry the `Type`/`Status`/`Scope` header.
+- `docs/Repo_Current_State.md` keeps its name and its `Last verified` field, and
+  follows `repo-current-state` instead of the header defined here.
+- ADRs use the numbered filename and the ADR status values defined above.
+
+Everything else under `docs/` is a content document and follows every rule in
+this file.
