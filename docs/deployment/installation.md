@@ -1,5 +1,9 @@
 # Installation and Update Guide
 
+> Type: Guide
+> Status: Active
+> Scope: Installing, updating, and verifying this repository's skill bundles for Codex and Claude Code, and the host-specific configuration each host reads
+
 ## Prerequisites
 
 The installer requires:
@@ -8,7 +12,7 @@ The installer requires:
 - `tar`; and
 - a complete checkout of this repository.
 
-Codex should be restarted after installation so the new skill directories are
+Restart the host after installation so the new skill directories are
 discovered.
 
 ## Configure pull-request review
@@ -41,9 +45,11 @@ for installation, configuration, and CLI details.
 
 ## Optional supplemental review
 
-The project-scoped `.codex/agents/reviewer.toml` is outside the default PR path.
-Use it only when an explicitly high-risk change needs a second independent
-read-only review; it never replaces `pr-review`.
+The project-scoped `.codex/agents/reviewer.toml` (Codex) and
+`.claude/agents/reviewer.md` (Claude Code) define the same optional reviewer,
+which sits outside the default PR path. Use it only when an explicitly
+high-risk change needs a second independent read-only review; it never replaces
+`pr-review`.
 
 ## Install the workflow
 
@@ -56,11 +62,19 @@ cd codex-development-workflow
 bash scripts/install-all.sh
 ```
 
-By default, skills are installed under:
+Select the host with `--target`. Codex is the default:
 
-```text
-${CODEX_HOME:-$HOME/.codex}/skills
+| `--target` | Destination | Reads agent definitions from |
+|---|---|---|
+| `codex` (default) | `${CODEX_HOME:-$HOME/.codex}/skills` | `.codex/agents/` |
+| `claude` | `$HOME/.claude/skills` | `.claude/agents/` |
+
+```bash
+bash scripts/install-all.sh --target claude
 ```
+
+Both targets install the same nine bundles under the bare skill name; only the
+destination root differs. `--dest PATH` overrides either destination.
 
 For an auditable installation, inspect the checkout and the managed source map
 before running the local installer:
@@ -104,13 +118,14 @@ it manually.
 
 ## Choose another destination
 
-Use `--dest PATH` when Codex uses a non-default skills directory:
+Use `--dest PATH` when the host uses a non-default skills directory:
 
 ```bash
-bash scripts/install-all.sh --dest /path/to/codex/skills
+bash scripts/install-all.sh --target claude --dest /path/to/skills
 ```
 
-`--dest` can be combined with `--update`.
+`--dest` overrides the `--target` destination and can be combined with
+`--update`.
 
 ## Verify the result
 
@@ -118,26 +133,29 @@ After the command completes, verify the reported destination contains the
 expected skill folders and each folder contains `SKILL.md`:
 
 ```bash
-SKILLS_DIR="${CODEX_HOME:-$HOME/.codex}/skills"
+SKILLS_DIR="$HOME/.claude/skills"   # or ${CODEX_HOME:-$HOME/.codex}/skills
 find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 ```
 
-The installer prints the number of installed and skipped skills. Restart Codex
-after checking the output.
+The installer prints the number of installed and skipped skills and names the
+host to restart.
 
-## Project-scoped subagent configuration
+## Host-specific configuration
 
-This checkout also contains the optional project-scoped Codex configuration:
+The installer copies managed skills only. Project-scoped runtime configuration
+is not installed into another repository, and each host reads its own:
 
-- `.codex/config.toml` enables subagents and caps concurrent spawned-agent
-  threads at three, excluding the main thread.
-- `.codex/agents/reviewer.toml` defines an optional supplemental reviewer for
-  explicitly high-risk changes; it is not part of the default PR path.
+| File | Read by | Purpose |
+|---|---|---|
+| `.codex/config.toml` | Codex | Enables subagents and caps concurrent spawned-agent threads at three, excluding the main thread. |
+| `.codex/agents/reviewer.toml` | Codex | The optional supplemental reviewer. |
+| `.claude/agents/reviewer.md` | Claude Code | The same reviewer, in Claude Code's Markdown + YAML format. |
+| `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. Inert under Claude Code. |
 
-The installer copies managed skills only; it does not install or overwrite
-project-scoped `.codex/` files in another repository. Copy or adapt these files
-there only when that project has the same delegation boundaries and review
-needs.
+Both hosts read [`AGENTS.md`](../../AGENTS.md) as project instructions when no
+`CLAUDE.md` is present, so the delegation policy it owns applies to either.
+Copy or adapt the host-specific files into another project only when that
+project has the same delegation boundaries and review needs.
 
 ## Installation behavior and trust boundary
 

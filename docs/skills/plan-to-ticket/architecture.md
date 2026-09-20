@@ -47,8 +47,7 @@ application infrastructure topology.
    followed by Ticket sections containing nested Slices and canonical Issue
    links, with the Plan branch handoff fields on the Plan section.
 8. The main agent uses the Slices as implementation input, either executing
-   them sequentially or passing independent, bounded work through the
-   workflow's delegation gate.
+   them sequentially or delegating independent, bounded work.
 
 ## Design boundaries
 

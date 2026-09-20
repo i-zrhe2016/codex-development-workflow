@@ -2,7 +2,7 @@
 
 > Type: Guide
 > Status: Active
-> Scope: Running the Codex development workflow: stages, Plan/Ticket handoff, delegation, verification, review, and completion order
+> Scope: Running the development workflow: stages, Plan/Ticket handoff, delegation, verification, review, and completion order
 
 Use `codex-development-workflow` as the entry point for repository work. It
 keeps planning at the Plan/Ticket/Slice levels, but uses one delivery path for
@@ -135,24 +135,25 @@ merge. The Plan Issue and implementation branch are a one-to-one pair; record
 and verify the Plan's `Branch`/`Base` values, and require the Plan PR head/base
 to match them.
 
-## Optional delegation gate
+## Optional delegation
 
 After the Plan branch exists and before or during implementation, the main
 agent may use bounded delegation when it materially improves speed, context
 isolation, or review quality. A single-agent execution remains the default.
 Delegation does not create a second delivery path or bypass any PR gate.
 
-Delegate only a bounded, independently executable task. Good candidates are
-repository exploration, independent research, test or regression analysis, or
-an isolated implementation Slice. Keep dependent or
+Delegate only a bounded, independently executable task. Keep dependent or
 overlapping work sequential; parallel write tasks must not touch the same
 files, interfaces, schemas, migrations, or shared configuration.
 
 Every delegated task includes its goal, scope and exclusions, ownership
 boundary, dependencies, acceptance criteria, validation, and expected result
-summary. Workers return findings, changes, test results, and unresolved risks,
-not raw logs. Prefer one delegation level and keep integration and final
+summary. Subagents return findings, changes, test results, and unresolved
+risks, not raw logs. Prefer one delegation level and keep integration and final
 judgment with the main agent.
+
+The host selects the subagent by `description`. The delegation policy is owned
+by [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
 
 ## Slice execution and verification
 

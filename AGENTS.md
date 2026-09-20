@@ -38,7 +38,7 @@ For each slice:
 
 `Acceptance Criteria -> Test Strategy -> Minimal Change -> Focused Validation -> Complete`
 
-* Work on one clear functional unit per agent at a time; independent Slices may run in parallel only through the delegation gate.
+* Work on one clear functional unit per agent at a time; independent Slices may run in parallel only when their ownership boundaries are disjoint.
 * Record exactly one GitHub Issue Plan for each requirement before creating its Plan branch, regardless of whether the change is Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, or CI/CD. A Plan may contain one or more behavior Ticket Issues; split each Ticket into independently verifiable Slices.
 * Every change type uses the same Plan-branch and PR gate: docs, code, tests, configuration, refactors, bug fixes, features, dependencies, and CI/CD changes must not bypass the PR.
 * Split complex or dependency-driven work into small, independently verifiable slices.
@@ -65,14 +65,6 @@ The main agent owns:
 
 Delegate work only when the task is bounded and independently executable.
 
-Good delegation targets include:
-
-* repository exploration;
-* independent research;
-* independent test or regression analysis;
-* isolated implementation slices;
-* independent review.
-
 Keep dependent or overlapping work sequential.
 
 Parallel write tasks must have clearly separated scope and should not modify the same files, interfaces, schemas, migrations, or shared configuration.
@@ -92,6 +84,22 @@ Subagents should return material findings, changes, test results, and unresolved
 The main agent must not duplicate work already delegated to an active subagent.
 
 Prefer a single delegation level. Subagents should not create further subagents unless explicitly required.
+
+### Who chooses the subagent
+
+The host selects the subagent, not this document. Do not map a task class to a
+named agent here or anywhere else in the repository.
+
+* Codex selects from the agent definitions under `.codex/agents/`.
+* Claude Code selects from the agent definitions under `.claude/agents/`,
+  using each definition's `description` as the only selection signal.
+
+Write an agent's `description` so that it states the exact trigger the agent
+serves. An agent that must not run on ordinary work has to say so in its
+description, because the host has no other rule to consult.
+
+This section owns the delegation policy. Other documents link to it rather than
+restating it.
 
 ## Skill Routing
 

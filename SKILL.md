@@ -128,8 +128,8 @@ all required Issues must exist before the Plan branch is created. A failed
 Issue operation blocks the workflow and has no Markdown or chat-only fallback.
 
 Only start dependency-ready Slices. The main agent may execute one Slice
-itself, or the delegation gate may start multiple independent Slices with
-disjoint ownership boundaries. Load only the files, documentation, and state
+itself, or run several independent Slices with disjoint ownership boundaries.
+Load only the files, documentation, and state
 needed for each Slice. Do not implement future-slice features or unrelated
 refactors. Record each result before selecting the next Slice.
 
@@ -141,12 +141,13 @@ the default path remains a single agent executing the Slice itself. Delegation
 does not create a second delivery path or bypass the branch, test, redaction,
 commit, push, PR, review, and merge gates.
 
-Use delegation only for a bounded, independently executable task. Suitable
-targets include repository exploration, independent research, test or
-regression analysis, or an isolated implementation Slice. Prefer the built-in
-`explorer` for read-heavy investigation and
-`worker` for an isolated implementation Slice. Keep dependent or overlapping
-work sequential.
+Use delegation only for a bounded, independently executable task. Keep
+dependent or overlapping work sequential.
+
+The host selects the subagent; this skill does not name one for a task class.
+Codex selects from `.codex/agents/`, Claude Code selects from `.claude/agents/`
+using each definition's `description`. See `AGENTS.md` for the delegation
+policy this workflow follows.
 
 Parallel write tasks require clearly separated ownership boundaries. They must
 not modify the same files, interfaces, schemas, migrations, or shared
@@ -225,7 +226,7 @@ For each self-executed or delegated Slice:
    clear.
 7. Refactor only within the slice and only after its acceptance criteria pass.
 8. Mark the Slice complete only when its acceptance criteria and selected
-   validation pass. A delegated worker then returns changed files, commands,
+   validation pass. A delegated agent then returns changed files, commands,
    results, risks, and follow-up work as its expected result summary for the
    main agent.
 9. If a design assumption is wrong, stop expanding the patch and return to
@@ -333,7 +334,7 @@ do not duplicate its detailed procedure here.
   create exactly one Plan Issue and one or more child Ticket Issues before
   generating their Slices. Generated Slices must satisfy the Slice contract
   above, persist the Plan and Tickets to GitHub Issues before branch work, and
-  expose enough boundaries for the delegation gate to make a safe decision.
+  expose enough boundaries for a safe delegation decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
@@ -431,6 +432,7 @@ bash scripts/install-all.sh --update
 ```
 
 The installer copies the root skill and `skills/` bundles from this checkout;
-it does not clone specialist repositories. Codex uses
-`${CODEX_HOME:-$HOME/.codex}/skills` by default. Restart Codex after
-installation.
+it does not clone specialist repositories. Select the host with `--target`
+(`codex` is the default; `claude` installs for Claude Code). See the
+[installation and update guide](docs/deployment/installation.md) for each
+destination. Restart the host after installation.

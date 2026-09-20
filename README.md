@@ -1,8 +1,8 @@
 # Codex Development Workflow
 
-An adaptive, main-agent-led Codex development workflow with optional bounded
-delegation, post-delivery process evaluation, bounded self-improvement, and all
-required specialist skills managed in this repository.
+An adaptive, main-agent-led development workflow for Codex and Claude Code with
+optional bounded delegation, post-delivery process evaluation, bounded
+self-improvement, and all required specialist skills managed in this repository.
 
 ```text
 Requirement
@@ -65,22 +65,26 @@ Verification is bounded by an explicit level (`minimal`, `focused`,
 level stops the test expansion unless evidence or an explicit requirement
 justifies escalation. The main agent owns requirements, architecture,
 decomposition, integration, evaluation, and final judgment; bounded exploration,
-Slice implementation, and testing may be delegated when useful. `pr-review`
+Slice implementation, and testing may be delegated when useful, with the host
+selecting the subagent. `pr-review`
 starts after the PR is opened or updated, without waiting for user confirmation,
 and is the only review decision gate.
 
 ## Optional project-scoped delegation
 
-The project configuration keeps multi-agent support deliberately small:
+The project configuration keeps multi-agent support deliberately small. Each
+host reads its own agent directory, and each host selects the subagent from the
+agent's own `description`:
 
-- `.codex/config.toml` enables subagents and caps concurrent spawned-agent
-  threads at three, excluding the main thread.
-- `.codex/agents/reviewer.toml` is an optional supplemental reviewer for an
-  explicitly high-risk change; it is not part of the default PR path.
+- Codex reads `.codex/config.toml` (subagents enabled, spawned-agent threads
+  capped at three excluding the main thread) and `.codex/agents/`.
+- Claude Code reads `.claude/agents/`.
+- `.codex/agents/reviewer.toml` and `.claude/agents/reviewer.md` define the same
+  optional supplemental reviewer for an explicitly high-risk change; it is not
+  part of the default PR path.
 
-The built-in `explorer` and `worker` roles cover read-heavy exploration and
-isolated implementation Slices. The delegation gate remains optional; keep
-dependent, overlapping, or shared-interface work sequential.
+Delegation remains optional and the safety rules live in
+[`AGENTS.md`](AGENTS.md#multi-agent-delegation).
 
 ## Architecture
 
@@ -105,8 +109,10 @@ bash scripts/install-all.sh
 ```
 
 The installer copies the local bundles under `skills/`; it does not clone
-specialist repositories. This installs all workflow skills into
-`${CODEX_HOME:-$HOME/.codex}/skills`.
+specialist repositories. Select the host with `--target codex` (the default) or
+`--target claude`; see the
+[installation and update guide](docs/deployment/installation.md) for the
+destination of each target.
 
 Update existing installations:
 
@@ -114,7 +120,7 @@ Update existing installations:
 bash scripts/install-all.sh --update
 ```
 
-Restart Codex after installation.
+Restart the host after installation so it discovers the new skill directories.
 
 ## Installed skills
 
