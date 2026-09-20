@@ -64,7 +64,9 @@ snapshot of what is true now and therefore keeps `Last verified`.
 
 Every document is reachable from the repository's documentation router, or from
 a parent index that the router links to. A document that the router does not
-reach is an orphan: index it or delete it.
+reach is an orphan: link it from the router, or delete it only when it is no
+longer authoritative, nothing references it, and it holds no historical or
+decision value.
 
 ## Size
 

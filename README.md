@@ -168,4 +168,5 @@ implementation details of that Skill.
 - [Installation and update guide](docs/deployment/installation.md)
 - [Workflow usage guide](docs/workflow/usage.md)
 - [Redaction workflow](docs/workflow/redaction.md)
+- [Workflow process evaluation](docs/workflow/process-evaluation.md)
 - [Managed skill source map](references/skill-map.md)

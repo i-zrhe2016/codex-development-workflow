@@ -43,9 +43,11 @@ whether documentation needs updating. Ask only:
 
 Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
 finds nothing costs one search; a skipped check leaves a wrong document behind.
-When every answer is clearly no, skip documentation work and report the
-negative result in the workflow output. Do not write documents to look
-thorough.
+
+Report the result in the change's workflow output; the check creates no
+separate artifact. A yes answer names the canonical document that changed and
+the fact it now owns. A no answer is one line stating that nothing documented
+changed. Do not write documents to look thorough.
 
 ## Canonical owner
 
@@ -95,7 +97,13 @@ reachable from it.
 
 The router groups links by type or topic. It carries links and grouping, never
 the facts themselves. A document that the router does not reach is an orphan:
-index it or delete it.
+link it from the router, or delete it only when it is no longer authoritative,
+nothing references it, and it holds no historical or decision value.
+
+A router may keep the short entry-point facts it needs to be usable, such as
+how to install the project or which components exist. Keep them brief and link
+to the canonical document for detail; never let the router become the detailed
+owner of a fact that a content document owns.
 
 ## Normalization
 
