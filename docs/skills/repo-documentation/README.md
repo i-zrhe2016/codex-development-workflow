@@ -5,6 +5,10 @@ one fact, one canonical document, and other documents link to it. The managed
 runtime source is
 [`skills/repo-documentation/`](../../../skills/repo-documentation/).
 
+![repo-documentation flow: impact check, canonical owner, router update, and the diagram step](diagrams/repo-documentation-flow.svg)
+
+Source: [`diagrams/repo-documentation-flow.puml`](diagrams/repo-documentation-flow.puml)
+
 ## What it provides
 
 - A governance contract in
@@ -29,7 +33,11 @@ runtime source is
 4. Canonical owner routing with duplicate detection before any new file is
    created.
 5. The documentation impact check that decides whether a change needs
-   documentation work at all.
+   documentation work at all, including whether an existing diagram still shows
+   the flow it claims to show.
+6. The documentation diagram policy: when a document carries a diagram, where
+   its `.puml` source and rendered image live, and how they are embedded and
+   kept current.
 
 ## Usage
 
@@ -81,5 +89,8 @@ modified.
 │       ├── documentation-lifecycle.md
 │       └── templates.md
 └── docs/skills/repo-documentation/
-    └── README.md
+    ├── README.md
+    └── diagrams/
+        ├── repo-documentation-flow.puml
+        └── repo-documentation-flow.svg
 ```

@@ -101,6 +101,26 @@ succeeded, what to do when it fails, and how to undo it.
 
 Facts before explanation. Keep values exact and verifiable.
 
+## Diagrams
+
+Embed a diagram directly under the section it illustrates, using the image as
+the figure and the `.puml` source as the link:
+
+```markdown
+![<what the diagram shows>](diagrams/<name>.svg)
+
+Source: [`diagrams/<name>.puml`](diagrams/<name>.puml)
+```
+
+- Write alt text that states the fact the diagram carries, not the file name. A
+  reader who cannot see the image must still get the point.
+- Use a path relative to the document, so the image resolves on GitHub and in a
+  local checkout alike.
+- Keep the diagram in the document's own `diagrams/` directory; placement and
+  naming are defined in `doc-file-standard.md`.
+- Do not paste the PlantUML source into the document. The `.puml` file is the
+  editable artifact; the document carries the image and the link.
+
 ## State
 
 `docs/Repo_Current_State.md` follows `repo-current-state`, not this file.

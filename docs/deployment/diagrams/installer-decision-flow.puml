@@ -1,0 +1,48 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam ArrowColor #4A5568
+skinparam activityBackgroundColor #F8F9FA
+skinparam activityBorderColor #4A5568
+skinparam activityFontColor #1A202C
+
+title install-all.sh — destination resolution and ownership decisions
+
+start
+
+:Parse --target / --update / --adopt-legacy / --dest;
+if (--dest given?) then (yes)
+  :Use the explicit destination;
+else (no)
+  :Resolve the --target default\ncodex: CODEX_HOME/skills\nclaude: HOME/.claude/skills;
+endif
+if (Destination is inside\nthis repository?) then (yes)
+  :error: refuse to install;
+  stop
+else (no)
+endif
+
+:For each configured bundle;
+if (Destination already exists?) then (no)
+  :install: copy the bundle\nand write the ownership marker;
+else (yes)
+  if (--update given?) then (no)
+    :skip: leave it unchanged;
+  else (yes)
+    if (Ownership marker matches?) then (yes)
+      :remove: replace the bundle\n(and prune retired names);
+    else (no)
+      if (--adopt-legacy given?) then (yes)
+        :adopt: move to a recoverable backup,\nthen install;
+      else (no)
+        :preserve: report\n"ownership unverified";
+      endif
+    endif
+  endif
+endif
+
+:Report installed / skipped / migrated\nand the resolved destination;
+stop
+
+@enduml

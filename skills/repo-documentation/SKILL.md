@@ -40,6 +40,8 @@ whether documentation needs updating. Ask only:
 5. Did this change or add a design decision worth an ADR? Reversing or
    constraining a previous choice counts.
 6. Did this make an existing document wrong or stale?
+7. Does an existing diagram in a document you touched still show the flow it
+   claims to show? A changed component, order, decision, or boundary counts.
 
 Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
 finds nothing costs one search; a skipped check leaves a wrong document behind.
@@ -71,6 +73,33 @@ decide which document owns a fact.
 
 README pages, `docs/Repo_Current_State.md`, and the ADR filename and status
 values are the documented exceptions in that reference.
+
+## Diagrams
+
+A diagram is part of the document it illustrates, not a separate document. It
+follows the same rules: one canonical owner, no restated fact, and the same
+update obligations as the prose around it.
+
+Draw one when the fact is a flow, a sequence, a lifecycle, or a set of
+relationships that prose describes less clearly than a picture — a decision
+path, a request or data flow, a state machine, or the boundary between
+components. A document that explains such a flow and carries no diagram is a
+gap worth closing. Do not add a diagram for a list of values, a single step, or
+symmetry with a neighbouring page.
+
+Placement and naming are defined in
+[`references/doc-file-standard.md`](references/doc-file-standard.md); the
+embedding block is in
+[`references/templates.md`](references/templates.md). Which skill renders a
+diagram, and how it is exported and validated, is routed by `AGENTS.md`; follow
+that skill rather than a procedure restated here.
+
+A diagram is stale when the flow it draws no longer matches the system: a
+changed component, a changed order, a changed decision, or a changed boundary.
+The impact check above covers it. Update the `.puml` source, re-render, and
+commit both files in the same change that changed the behavior — never edit a
+rendered image by hand, and never leave a diagram that contradicts the prose
+beside it.
 
 ## Update before create
 

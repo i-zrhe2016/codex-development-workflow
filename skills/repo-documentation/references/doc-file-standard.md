@@ -52,6 +52,23 @@ Verify a document against code, configuration, and tests rather than against its
 date. `docs/Repo_Current_State.md` is the only exception, because it is a
 snapshot of what is true now and therefore keeps `Last verified`.
 
+## Diagrams
+
+A diagram's editable source and its rendered image are files, not documents, so
+they do not carry a title or a header.
+
+- Keep them in a `diagrams/` directory beside the document they illustrate:
+  `docs/architecture/diagrams/` for a document in `docs/architecture/`, and
+  `docs/skills/<skill>/diagrams/` for a specialist page.
+- Name the source after the fact it draws, with a `.puml` extension, and give
+  the rendered file the same basename: `installer-decision-flow.puml` and
+  `installer-decision-flow.svg`.
+- Commit the source and the rendered image together. The source is the
+  editable artifact; the image is what a reader sees.
+- Reference the image from the document, and link the source beside it, so a
+  reader can find the editable file from the page.
+- A diagram that exists in no document is an orphan: embed it or delete it.
+
 ## Links
 
 - Link to the owning document instead of repeating its fact.
