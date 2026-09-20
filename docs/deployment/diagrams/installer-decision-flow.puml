@@ -15,7 +15,7 @@ start
 if (--dest given?) then (yes)
   :Use the explicit destination;
 else (no)
-  :Resolve the --target default\ncodex: CODEX_HOME/skills\nclaude: HOME/.claude/skills;
+  :Resolve the --target default\ncodex: CODEX_HOME if set, else HOME/.codex\nclaude: HOME/.claude\n(each followed by /skills);
 endif
 if (Destination is inside\nthis repository?) then (yes)
   :error: refuse to install;

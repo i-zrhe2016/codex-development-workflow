@@ -40,7 +40,7 @@ whether documentation needs updating. Ask only:
 5. Did this change or add a design decision worth an ADR? Reversing or
    constraining a previous choice counts.
 6. Did this make an existing document wrong or stale?
-7. Does an existing diagram in a document you touched still show the flow it
+7. Does any existing diagram affected by this change still show the flow it
    claims to show? A changed component, order, decision, or boundary counts.
 
 Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
