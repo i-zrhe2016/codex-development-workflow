@@ -62,6 +62,41 @@ class InstallerTargetTests(unittest.TestCase):
             for p in root.glob("*/SKILL.md")
         )
 
+    def openai_metadata(self, root: Path) -> list[Path]:
+        return sorted(root.rglob("openai.yaml"))
+
+    def test_claude_target_omits_codex_metadata_from_every_bundle(self) -> None:
+        """agents/openai.yaml is Codex-only; the Claude archive must not ship it.
+
+        This covers both archive branches: the root package copies an explicit
+        file list that includes `agents/`, and each specialist bundle copies `.`
+        wholesale.
+        """
+        dest = self.tmp / "dest"
+        result = self.run_installer("--target", "claude", "--dest", str(dest))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.openai_metadata(dest), [])
+
+        # The root package still ships its other managed paths.
+        root_bundle = dest / "codex-development-workflow"
+        self.assertTrue((root_bundle / "SKILL.md").is_file())
+        self.assertTrue((root_bundle / "agents").is_dir())
+        self.assertTrue((root_bundle / "docs" / "workflow" / "redaction.md").is_file())
+        self.assertTrue((root_bundle / "references" / "skill-map.md").is_file())
+
+    def test_codex_target_installs_codex_metadata_for_every_bundle(self) -> None:
+        codex_home = self.tmp / "codex-home"
+        home = self.tmp / "home"
+        home.mkdir()
+        result = self.run_installer(home=home, codex_home=codex_home)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        found = self.openai_metadata(codex_home / "skills")
+        self.assertEqual(len(found), len(EXPECTED_SKILLS))
+        self.assertEqual(
+            sorted(p.parent.parent.name for p in found),
+            sorted(EXPECTED_SKILLS),
+        )
+
     def test_default_target_installs_into_codex_home(self) -> None:
         codex_home = self.tmp / "codex-home"
         home = self.tmp / "home"

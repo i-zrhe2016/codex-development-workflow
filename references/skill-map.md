@@ -26,9 +26,9 @@ without it, because Claude Code never reads it.
 
 Both destinations are the bare skill name; only the root differs, selected by
 `--target` (`${CODEX_HOME:-$HOME/.codex}/skills` for Codex, `$HOME/.claude/skills`
-for Claude Code) or overridden with `--dest`. See the
-[installation and update guide](../docs/deployment/installation.md) for the
-procedure.
+for Claude Code) or overridden with `--dest`. This file ships inside the
+installed root bundle, so the link below resolves only in the repository
+checkout.
 
 Each managed source is an independently installable skill folder containing
 `SKILL.md`. The root package remains at the repository root for

@@ -145,9 +145,10 @@ Use delegation only for a bounded, independently executable task. Keep
 dependent or overlapping work sequential.
 
 The host selects the subagent; this skill does not name one for a task class.
-Codex selects from `.codex/agents/`, Claude Code selects from `.claude/agents/`
-using each definition's `description`. See `AGENTS.md` for the delegation
-policy this workflow follows.
+A host may select either an agent this repository defines or one of its own
+built-in agent types. Codex reads project agents from `.codex/agents/`; Claude
+Code reads them from `.claude/agents/` and selects by each definition's
+`description`. See `AGENTS.md` for the delegation policy this workflow follows.
 
 Parallel write tasks require clearly separated ownership boundaries. They must
 not modify the same files, interfaces, schemas, migrations, or shared
@@ -435,6 +436,6 @@ The installer copies the root skill and `skills/` bundles from this checkout;
 it does not clone specialist repositories. Select the host with `--target`
 (`codex` is the default; `claude` installs for Claude Code), and repeat that
 target when updating — `--update` without `--target` always updates the Codex
-destination. See the
-[installation and update guide](docs/deployment/installation.md) for each
-destination. Restart the host after installation.
+destination. Restart the host after installation. The repository's own
+`docs/deployment/installation.md` carries the destinations and the full
+procedure; that guide is not part of this installed bundle.
