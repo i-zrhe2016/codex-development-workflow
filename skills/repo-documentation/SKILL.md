@@ -90,16 +90,21 @@ symmetry with a neighbouring page.
 Placement and naming are defined in
 [`references/doc-file-standard.md`](references/doc-file-standard.md); the
 embedding block is in
-[`references/templates.md`](references/templates.md). Which skill renders a
-diagram, and how it is exported and validated, is routed by `AGENTS.md`; follow
-that skill rather than a procedure restated here.
+[`references/templates.md`](references/templates.md).
+
+Rendering is owned by the skill `AGENTS.md` routes diagram work to. That skill
+is installed on the host, not bundled in this repository, so its procedure is
+neither restated nor assumed here: load it before drawing. When no renderer is
+available, still write the `.puml` source, commit it, and report the diagram as
+unrendered — never commit a hand-made image or claim a diagram you could not
+render.
 
 A diagram is stale when the flow it draws no longer matches the system: a
 changed component, a changed order, a changed decision, or a changed boundary.
-The impact check above covers it. Update the `.puml` source, re-render, and
-commit both files in the same change that changed the behavior — never edit a
-rendered image by hand, and never leave a diagram that contradicts the prose
-beside it.
+The impact check above covers it. Update the `.puml` source, re-render through
+that skill, and commit both files in the same change that changed the behavior —
+never edit a rendered image by hand, and never leave a diagram that contradicts
+the prose beside it.
 
 ## Update before create
 
