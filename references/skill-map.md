@@ -45,6 +45,6 @@ Alibaba Open Code Review's `ocr review` command through its recoverable runner.
 The runner is packaged with `pr-review` rather than installed separately.
 
 `repo-documentation` owns documentation governance: the documentation impact
-check, canonical ownership per fact, the `docs/README.md` index, the Markdown
+check, canonical ownership per fact, the documentation router, the Markdown
 file standard, duplicate and orphan detection, and document lifecycle. It stays
 separate from `repo-current-state`, which owns only the current-state snapshot.

@@ -57,7 +57,7 @@ docs/
   handling, and rollback.
 - `Repo_Current_State.md` summarizes. It never becomes the detailed
   architecture, decision, or procedure document.
-- `docs/README.md` is an index, not a content document. It carries links and
-  grouping, never the facts themselves.
+- The documentation router is an index, not a content document. It carries
+  links and grouping, never the facts themselves.
 - A choice that affects no architecture, interface, deployment, or operation is
   an implementation detail. Do not write an ADR for it.

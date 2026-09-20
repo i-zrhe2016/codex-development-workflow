@@ -24,7 +24,8 @@ runtime source is
    repository already routes documentation from there.
 2. The Markdown file standard: `kebab-case` names, one `#` title, and no
    `Last updated` field on content documents.
-3. The `Type` / `Status` / `Scope` header on every document under `docs/`.
+3. The `Type` / `Status` / `Scope` header on every content document under
+   `docs/`, with the documented exceptions.
 4. Canonical owner routing with duplicate detection before any new file is
    created.
 5. The documentation impact check that decides whether a change needs
@@ -59,9 +60,10 @@ in Git.
 This repository routes its documentation from the root
 [`README.md`](../../../README.md), which the skill's index contract allows
 instead of `docs/README.md`. `docs/Repo_Current_State.md` keeps its
-`Last verified` field. README pages, the state snapshot, and ADRs are the three
-documented exceptions to the file standard, and existing documents are brought
-into compliance as they are modified.
+`Last verified` field. README pages and the state snapshot are exempt from the
+filename and header rules, and an ADR is exempt only from the ordinary filename
+and status values. Existing documents are brought into compliance as they are
+modified.
 
 ## Repository layout
 

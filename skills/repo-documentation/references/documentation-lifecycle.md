@@ -46,8 +46,8 @@ A document is stale when the repository contradicts it, not when it looks old.
 
 - Duplicate: two documents state the same fact. Choose the canonical owner, keep
   the fact there, and reduce the other document to a link.
-- Orphan: a document that no index references. Add it to `docs/README.md` or
-  delete it.
+- Orphan: a document that the documentation router does not reach. Link it from
+  the router or delete it.
 - Misplaced: a document whose content does not match its directory or `Type`.
   Move it or correct the type, then fix the links.
 - Mixed: a document that owns two unrelated topics. Split it into two canonical

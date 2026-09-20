@@ -1,6 +1,6 @@
 ---
 name: repo-documentation
-description: Govern repository documentation as one canonical source of truth per fact. Use when a change may affect documented behavior, when creating or updating a Markdown document under `docs/`, or when the user asks to normalize, audit, organize, or check project documentation. Route each fact to the document type that owns it, prefer updating the canonical document over creating a new one, keep `docs/README.md` as the documentation index, and detect duplicates, orphans, and stale claims.
+description: Govern repository documentation as one canonical source of truth per fact. Use when a change may affect documented behavior, when creating or updating a Markdown document under `docs/`, or when the user asks to normalize, audit, organize, or check project documentation. Route each fact to the document type that owns it, prefer updating the canonical document over creating a new one, keep exactly one documentation router reachable from the repository entry point, and detect duplicates, orphans, and stale claims.
 ---
 
 # Repo Documentation
@@ -43,8 +43,9 @@ whether documentation needs updating. Ask only:
 
 Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
 finds nothing costs one search; a skipped check leaves a wrong document behind.
-When every answer is clearly no, skip documentation work and record the reason
-in one line. Do not write documents to look thorough.
+When every answer is clearly no, skip documentation work and report the
+negative result in the workflow output. Do not write documents to look
+thorough.
 
 ## Canonical owner
 
@@ -59,11 +60,14 @@ GitHub Issues, and change history in Git.
 
 ## Document standard
 
-Every document under `docs/` follows
+Every content document under `docs/` follows
 [`references/doc-file-standard.md`](references/doc-file-standard.md): a
 `kebab-case` filename, a single `#` title, and a header block of `Type`,
 `Status`, and `Scope` fields. The header is what lets a reader or an agent
 decide which document owns a fact.
+
+README pages, `docs/Repo_Current_State.md`, and the ADR filename and status
+values are the documented exceptions in that reference.
 
 ## Update before create
 
@@ -101,7 +105,7 @@ documentation:
 ```text
 Scan docs/ -> classify by type -> detect duplicates, orphans, misplacement,
 naming violations, missing index links, stale claims, mixed-topic documents
--> normalize -> update docs/README.md
+-> normalize -> update the documentation router
 ```
 
 Preserve meaning. Do not rewrite documents to make the tree look tidy, and do

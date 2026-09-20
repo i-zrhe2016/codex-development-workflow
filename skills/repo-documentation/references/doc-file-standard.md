@@ -62,9 +62,9 @@ snapshot of what is true now and therefore keeps `Last verified`.
 
 ## Index
 
-Every document is reachable from `docs/README.md`, or from a parent index that
-the documentation router links to. A document that no index references is an
-orphan: index it or delete it.
+Every document is reachable from the repository's documentation router, or from
+a parent index that the router links to. A document that the router does not
+reach is an orphan: index it or delete it.
 
 ## Size
 
@@ -80,7 +80,9 @@ orphan: index it or delete it.
   documentation area.
 - `docs/Repo_Current_State.md` keeps its name and its `Last verified` field, and
   follows `repo-current-state` instead of the header defined here.
-- ADRs use the numbered filename and the ADR status values defined above.
+- An ADR is exempt only from the ordinary filename rule and the ordinary status
+  values. It still uses a single `#` title and the header, with the numbered
+  filename and the ADR status values defined above.
 
 Everything else under `docs/` is a content document and follows every rule in
 this file.
