@@ -222,9 +222,12 @@ remain separate evidence and must pass before merge.
 Each host reads its own agent definitions. Codex uses `.codex/config.toml`
 (subagents enabled, three concurrent spawned-agent threads excluding the main
 thread) and `.codex/agents/reviewer.toml`; Claude Code uses
-`.claude/agents/reviewer.md`. Both define the same optional supplemental
-reviewer, used only for explicitly high-risk changes and never part of the
-default PR path. The installer copies managed skills only; these project-scoped
+`.claude/agents/reviewer.md`. Both are optional supplemental reviewers for
+explicitly high-risk changes and stay outside the default PR path, but their
+input and tool contracts are host-specific: the Codex definition reads the open
+PR diff itself under a read-only sandbox, while the Claude definition has no
+shell and requires the task prompt to carry the patch text and the acceptance
+criteria. The installer copies managed skills only; these project-scoped
 files remain in the checkout where the host runs. See the
 [installation and update guide](../deployment/installation.md) for the full
 mapping.

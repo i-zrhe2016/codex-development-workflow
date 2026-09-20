@@ -170,7 +170,10 @@ for spec in "${SKILLS[@]}"; do
     echo "error: bundled source $subpath does not contain SKILL.md" >&2
     exit 1
   fi
-  if [ ! -f "$src/agents/openai.yaml" ]; then
+  # agents/openai.yaml is Codex-only skill interface metadata. It is required
+  # for the Codex target and never read by Claude Code, so a Claude-only bundle
+  # is not rejected for omitting it.
+  if [ "$TARGET" = "codex" ] && [ ! -f "$src/agents/openai.yaml" ]; then
     echo "error: bundled source $subpath does not contain agents/openai.yaml" >&2
     exit 1
   fi
