@@ -80,23 +80,22 @@ A diagram is part of the document it illustrates, not a separate document. It
 follows the same rules: one canonical owner, no restated fact, and the same
 update obligations as the prose around it.
 
-Draw one when the fact is a flow, a sequence, a lifecycle, or a set of
-relationships that prose describes less clearly than a picture — a decision
-path, a request or data flow, a state machine, or the boundary between
-components. A document that explains such a flow and carries no diagram is a
-gap worth closing. Do not add a diagram for a list of values, a single step, or
-symmetry with a neighbouring page.
+Draw one when the fact is materially clearer as a picture than as prose: a
+decision path, a request or data flow, a state machine, or the boundary between
+components. Do not add a diagram for a list of values, a single step, or
+symmetry with a neighbouring page; a document that reads clearly without one
+does not need one.
 
 Placement and naming are defined in
 [`references/doc-file-standard.md`](references/doc-file-standard.md); the
-embedding block is in
+embedding block, including the unrendered case, is in
 [`references/templates.md`](references/templates.md).
 
-Rendering is owned by the skill `AGENTS.md` routes diagram work to. That skill
-is installed on the host, not bundled in this repository, so its procedure is
-neither restated nor assumed here: load it before drawing. When no renderer is
-available, still write the `.puml` source and report the diagram as unrendered;
-the source-only exception to the commit-together rule is defined in
+Rendering is done by `plantuml-skill`, the skill `AGENTS.md` routes diagram work
+to. Load it before drawing; it is installed on the host rather than bundled in
+this repository, so its procedure is not restated here. When it is unavailable,
+keep the `.puml` source and report the diagram as unrendered — the required
+markup for that case is defined in
 [`references/doc-file-standard.md`](references/doc-file-standard.md).
 
 A diagram is stale when the flow it draws no longer matches the system: a

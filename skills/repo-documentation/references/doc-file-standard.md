@@ -69,8 +69,9 @@ they do not carry a title or a header.
   `installer-decision-flow.svg`.
 - Commit the source and the rendered image together. The source is the
   editable artifact; the image is what a reader sees. When no renderer is
-  available, commit the source alone and report the diagram as unrendered; never
-  commit a hand-made image.
+  available, commit the source alone, link it from the document in place of the
+  image, and mark it as unrendered there, so the document stays truthful and the
+  source is not an orphan. Never commit a hand-made image.
 - Reference the image from the document, and link the source beside it, so a
   reader can find the editable file from the page.
 - A diagram that exists in no document is an orphan: embed it or delete it.

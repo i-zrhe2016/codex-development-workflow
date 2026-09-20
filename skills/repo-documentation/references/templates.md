@@ -112,6 +112,13 @@ the figure and the `.puml` source as the link:
 Source: [`diagrams/<name>.puml`](diagrams/<name>.puml)
 ```
 
+When the diagram could not be rendered, link the source instead of the image and
+say so, so no reader mistakes a missing figure for a broken link:
+
+```markdown
+Diagram (not yet rendered): [`diagrams/<name>.puml`](diagrams/<name>.puml)
+```
+
 - Write alt text that states the fact the diagram carries, not the file name. A
   reader who cannot see the image must still get the point.
 - Use a path relative to the document, so the image resolves on GitHub and in a
