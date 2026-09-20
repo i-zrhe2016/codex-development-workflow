@@ -12,6 +12,7 @@ Requirement
   -> Create Plan branch
   -> Implement all Plan Tickets
   -> Test
+  -> Documentation impact check
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
@@ -122,6 +123,7 @@ Restart Codex after installation.
 - `plan-to-ticket`
 - `test-workflow`
 - `repo-current-state`
+- `repo-documentation`
 - `data-document-redaction`
 - `github-push-when-ready`
 - `pr-review`
@@ -148,6 +150,7 @@ relevant bundle.
 | `plan-to-ticket` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
 | `test-workflow` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
 | `repo-current-state` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |
+| `repo-documentation` | [`skills/repo-documentation/`](skills/repo-documentation/) | [Skill documentation](docs/skills/repo-documentation/README.md) |
 | `data-document-redaction` | [`skills/data-document-redaction/`](skills/data-document-redaction/) | [Skill documentation](docs/skills/data-document-redaction/README.md) |
 | `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 | `pr-review` | [`skills/pr-review/`](skills/pr-review/) | [Skill documentation](docs/skills/pr-review/README.md) |
@@ -165,4 +168,5 @@ implementation details of that Skill.
 - [Installation and update guide](docs/deployment/installation.md)
 - [Workflow usage guide](docs/workflow/usage.md)
 - [Redaction workflow](docs/workflow/redaction.md)
+- [Workflow process evaluation](docs/workflow/process-evaluation.md)
 - [Managed skill source map](references/skill-map.md)

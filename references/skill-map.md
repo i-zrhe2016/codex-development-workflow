@@ -16,6 +16,7 @@ bundle's `agents/openai.yaml`.
 | `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` | `plan-to-ticket` |
 | `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` | `test-workflow` |
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` |
+| `repo-documentation` | `skills/repo-documentation/` | `docs/skills/repo-documentation/` | `repo-documentation` |
 | `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` |
 | `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` |
 | `pr-review` | `skills/pr-review/` with its runner and execution reference | `docs/skills/pr-review/` | `pr-review` |
@@ -42,3 +43,8 @@ owns the feature-branch publication path through Commit, Push, and Create/Update
 PR readiness. `pr-review` owns the single merge decision gate and invokes
 Alibaba Open Code Review's `ocr review` command through its recoverable runner.
 The runner is packaged with `pr-review` rather than installed separately.
+
+`repo-documentation` owns documentation governance: the documentation impact
+check, canonical ownership per fact, the documentation router, the Markdown
+file standard, duplicate and orphan detection, and document lifecycle. It stays
+separate from `repo-current-state`, which owns only the current-state snapshot.

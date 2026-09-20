@@ -23,6 +23,7 @@ Requirement
     -> Create Plan branch
     -> Implement all Plan Tickets
     -> Test
+    -> Documentation impact check
     -> Redaction scan if applicable
     -> Commit
     -> Push branch
@@ -54,17 +55,20 @@ updates, and CI/CD changes all use the same path:
 1. Record exactly one Plan Issue and all required child Ticket Issues for the
    requirement, then create or resume the Plan branch before editing.
 2. Implement the planned Tickets and run the selected tests.
-3. Stage the intended files and run the redaction scan; continue on `pass`, or
+3. Run the documentation impact check, then update the canonical owner document
+   and the documentation index, or record that no documentation change is
+   needed.
+4. Stage the intended files and run the redaction scan; continue on `pass`, or
    on a recorded skip when the staged change carries no sensitive surface.
-4. Commit and push the branch, then create or update its PR.
-5. Invoke `pr-review` immediately after the PR is created or updated; do not
+5. Commit and push the branch, then create or update its PR.
+6. Invoke `pr-review` immediately after the PR is created or updated; do not
    wait for user confirmation.
-6. If `pr-review` returns `BLOCKED`, fix the findings and repeat Test, applicable
-   Redaction, Commit, Push, and `pr-review`.
-7. Merge the Plan PR only after `pr-review` returns `PASS`, delete the source
+7. If `pr-review` returns `BLOCKED`, fix the findings and repeat Test,
+   Documentation impact, applicable Redaction, Commit, Push, and `pr-review`.
+8. Merge the Plan PR only after `pr-review` returns `PASS`, delete the source
    branch, update the base branch, close the Plan and its child Tickets, and
    then update State / Docs.
-8. After delivery, evaluate the workflow and start
+9. After delivery, evaluate the workflow and start
    at most one bounded follow-up improvement when the evidence is reusable.
 
 The delivery path never has a direct-push exception for documentation, small
@@ -334,6 +338,10 @@ do not duplicate its detailed procedure here.
   evidence.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
   and default-branch synchronization.
+- `repo-documentation`: run its documentation impact check for every change,
+  and whenever the user asks to normalize, audit, or organize documentation;
+  update the canonical owner document and the documentation index, or record
+  that no documentation change is needed.
 - `data-document-redaction`: scan the files staged for the next commit before
   publishing, and again after a blocking review fix that changes staged
   content.
@@ -351,18 +359,21 @@ For every change, regardless of its file type or size:
 1. Record exactly one Plan Issue and all child Ticket Issues, then create or
    resume the Plan branch before editing.
 2. Implement the change and run its selected tests.
-3. Stage the intended change and run `data-document-redaction`; continue only
+3. Run the `repo-documentation` impact check. Update the canonical owner
+   document and the documentation index, or record that no documentation change
+   is needed.
+4. Stage the intended change and run `data-document-redaction`; continue only
    on `pass`, `noop`, or a recorded no-sensitive-surface skip.
-4. Invoke `github-push-when-ready`, commit, push the Plan branch, and create or
+5. Invoke `github-push-when-ready`, commit, push the Plan branch, and create or
    update the single Plan PR until it is ready for review.
-5. Invoke `pr-review` immediately. Merge only after it returns `PASS`.
-6. On `BLOCKED`, repeat Fix -> Test -> Redaction if applicable -> Commit -> Push
-   -> `pr-review` until it returns `PASS`.
-7. After `PASS`, merge the Plan PR once, delete the source branch, update the
+6. Invoke `pr-review` immediately. Merge only after it returns `PASS`.
+7. On `BLOCKED`, repeat Fix -> Test -> Documentation impact -> Redaction if
+   applicable -> Commit -> Push -> `pr-review` until it returns `PASS`.
+8. After `PASS`, merge the Plan PR once, delete the source branch, update the
    default branch, and close the Plan and its linked Tickets.
-8. Update `docs/Repo_Current_State.md` and other State / Docs after the merge
+9. Update `docs/Repo_Current_State.md` and other State / Docs after the merge
    and default-branch update when verified project state changed.
-9. Run the post-delivery workflow evaluation. If one bounded, evidence-backed
+10. Run the post-delivery workflow evaluation. If one bounded, evidence-backed
     reusable improvement qualifies for automatic self-improvement, start it as
     a separate follow-up change through the same branch/PR lifecycle.
 

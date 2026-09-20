@@ -1,5 +1,9 @@
 # Architecture Overview
 
+> Type: Architecture
+> Status: Active
+> Scope: Component responsibilities, development lifecycle, and installation flow of this repository's workflow package
+
 ## Scope
 
 This repository packages a main-agent-led Codex development-workflow
@@ -20,6 +24,7 @@ remain inside their own `SKILL.md` files.
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Runs the selected verification level and reports bounded evidence. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
+| `repo-documentation` | Governs documentation as one canonical document per fact: the documentation impact check, canonical ownership, the documentation index, duplicate and orphan detection, and document lifecycle. |
 | `context-efficiency` | Optional context-loading aid for large or unfamiliar repositories; not a workflow stage. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
@@ -61,6 +66,7 @@ Requirement
   -> Create Plan branch
   -> Implement all Plan Tickets
   -> Test
+  -> Documentation impact check
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
@@ -246,6 +252,8 @@ must remain aligned.
 - Every requirement has exactly one Plan with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and every Plan uses one branch and PR.
 - Tests provide evidence inside a Slice; `pr-review` is the mandatory PR-stage merge gate after the branch is published.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
+- `repo-documentation` owns documentation governance; `repo-current-state` owns
+  only the recovery snapshot.
 - Redaction is conditional and scoped to the staged commit set; it is not a mandatory transformation of every artifact.
 - State / Docs are updated after merge, source-branch deletion, and default-branch synchronization.
 - The package does not own target-project source code, application data, or deployment infrastructure.
