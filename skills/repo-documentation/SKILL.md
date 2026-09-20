@@ -26,18 +26,25 @@ One fact -> one canonical document -> other documents link to it
 
 ## Documentation impact check
 
-Run this check before publication for any change, and whenever the user asks
+Run this check before publication for every change, and whenever the user asks
 whether documentation needs updating. Ask only:
 
-1. Did this change architecture, components, or their boundaries?
+1. Did this change architecture, components, or their boundaries? A module,
+   service, dependency, or data-flow change counts.
 2. Did this change an interface, contract, API, CLI, or configuration surface?
-3. Did this change deployment, operations, or recovery?
-4. Did this change the developer workflow or local setup?
-5. Did this change or add a significant design decision?
+   A flag, key, default, schema, or error code counts.
+3. Did this change deployment, operations, or recovery? A step, command, health
+   check, or rollback path counts.
+4. Did this change the developer workflow or local setup? A tool, command, or
+   prerequisite counts.
+5. Did this change or add a design decision worth an ADR? Reversing or
+   constraining a previous choice counts.
 6. Did this make an existing document wrong or stale?
 
-If every answer is no, skip documentation work and say so. Do not write
-documents to look thorough.
+Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
+finds nothing costs one search; a skipped check leaves a wrong document behind.
+When every answer is clearly no, skip documentation work and record the reason
+in one line. Do not write documents to look thorough.
 
 ## Canonical owner
 
@@ -74,9 +81,17 @@ two near-identical names coexist. Duplicate and orphan handling is defined in
 
 ## Documentation index
 
-`docs/README.md` is the documentation router, not a content document. It groups
-links to every document by type or topic, and the repository `README.md` links
-to it. A document that no index references is an orphan: index it or delete it.
+A repository has exactly one documentation router, and every document is
+reachable from it.
+
+- Default: `docs/README.md` is the router, and the repository `README.md` links
+  to it.
+- A repository that already routes documentation from its root `README.md` may
+  keep that file as the router instead of adding `docs/README.md`.
+
+The router groups links by type or topic. It carries links and grouping, never
+the facts themselves. A document that the router does not reach is an orphan:
+index it or delete it.
 
 ## Normalization
 

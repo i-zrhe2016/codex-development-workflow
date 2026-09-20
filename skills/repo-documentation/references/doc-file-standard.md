@@ -75,13 +75,20 @@ orphan: index it or delete it.
 
 ## Exceptions
 
-Three files are exempt from parts of this standard:
-
-- A `README.md` index keeps its conventional name and is a router, not a content
-  document. It does not carry the `Type`/`Status`/`Scope` header.
+- A `README.md` page keeps its conventional name and does not carry the header.
+  README pages are entry or index pages for the repository, a directory, or a
+  documentation area.
 - `docs/Repo_Current_State.md` keeps its name and its `Last verified` field, and
   follows `repo-current-state` instead of the header defined here.
 - ADRs use the numbered filename and the ADR status values defined above.
 
 Everything else under `docs/` is a content document and follows every rule in
 this file.
+
+## Adoption
+
+The standard applies to every content document a change creates or modifies.
+An existing document that predates the standard is brought into compliance when
+it is next modified, or during an explicit normalization pass. A normalization
+audit reports existing noncompliance and fixes what it can without rewriting
+meaning; it does not silently rename or restructure the tree.

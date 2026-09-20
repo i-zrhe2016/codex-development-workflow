@@ -19,8 +19,9 @@ runtime source is
 
 ## First-version capabilities
 
-1. `docs/README.md` is the documentation index for a repository's `docs/` tree,
-   reached from that repository's root `README.md`.
+1. Exactly one documentation router, reached from the repository entry point:
+   `docs/README.md` by default, or the existing root `README.md` when the
+   repository already routes documentation from there.
 2. The Markdown file standard: `kebab-case` names, one `#` title, and no
    `Last updated` field on content documents.
 3. The `Type` / `Status` / `Scope` header on every document under `docs/`.
@@ -55,10 +56,12 @@ right now. `docs/Repo_Current_State.md` stays with
 links to it. Plans and Tickets stay in GitHub Issues, and change history stays
 in Git.
 
-This repository keeps its documentation index in the root
-[`README.md`](../../../README.md), and `docs/Repo_Current_State.md` keeps its
-`Last verified` field: index files, the state snapshot, and ADRs are the three
-documented exceptions to the file standard.
+This repository routes its documentation from the root
+[`README.md`](../../../README.md), which the skill's index contract allows
+instead of `docs/README.md`. `docs/Repo_Current_State.md` keeps its
+`Last verified` field. README pages, the state snapshot, and ADRs are the three
+documented exceptions to the file standard, and existing documents are brought
+into compliance as they are modified.
 
 ## Repository layout
 
