@@ -57,9 +57,12 @@ self-applied. The follow-up cannot recursively create another automatic
 self-improvement change.
 
 Verification is bounded by an explicit level (`minimal`, `focused`,
-`regression`, or `full`). The default is focused validation, and a passing
-level stops the test expansion unless evidence or an explicit requirement
-justifies escalation. The main agent owns requirements, architecture,
+`regression`, or `full`), but PASS is controlled by a risk-aware Test
+Quality Gate. The default is focused validation; each acceptance criterion maps
+to executed evidence, and applicable boundary, negative, integration,
+regression, property/fuzz, mutation, browser, or isolation dimensions must pass
+or be explicitly N/A with reason. Coverage remains diagnostic rather than a
+quality target, and an unexplained flaky FAIL cannot become PASS through retry. The main agent owns requirements, architecture,
 decomposition, integration, evaluation, and final judgment; bounded exploration,
 Slice implementation, and testing may be delegated when useful, with the host
 selecting the subagent.
