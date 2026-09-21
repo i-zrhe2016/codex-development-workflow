@@ -6,9 +6,9 @@ description: "General repository verification and test-quality workflow. Use whe
 # Test Workflow
 
 Validate behavior with the lightest reliable test strategy. This skill owns the
-Test stage for every change; it does
-not choose a direct-push path. Prefer deterministic automated feedback over
-repeated agent inspection.
+verification procedure and returns its result; deciding when verification runs
+and how much of it a change warrants belongs to `verify-workflow`. Prefer
+deterministic automated feedback over repeated agent inspection.
 
 ## Core rules
 
@@ -40,9 +40,9 @@ risk profile requires it.
 
 ## Choose the testing mode
 
-Use task risk and complexity to choose the test strategy, not to choose a
-different delivery path. Every change still continues through the common branch,
-redaction when applicable, commit, push, PR and merge gates.
+Use task risk and complexity to choose the test strategy. This skill returns a
+verification result and stops; it does not commit, push, open a pull request, or
+merge.
 
 - **Tiny change:** run the closest existing checks after implementation. Add a regression test only when the change fixes behavior that could reasonably recur.
 - **Normal behavior change:** define or update focused tests around the changed contract, implement, then run focused tests and relevant regression checks.
@@ -237,7 +237,8 @@ A Ticket's Slices are test-complete only when the Test Quality Gate closes:
 
 For a multi-Ticket feature, keep inner-loop checks focused per Ticket, then run
 the appropriate integration/regression suite after all dependency-related
-Tickets are GREEN. When a later fix changes behavior, rerun the affected Test checks before the next redaction, commit, and push.
+Tickets are GREEN. When a later fix changes behavior, rerun the affected checks
+and return the updated verification result.
 
 ## Report
 

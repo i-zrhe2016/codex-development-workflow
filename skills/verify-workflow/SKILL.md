@@ -10,6 +10,20 @@ transition. It decides *when* verification runs and *how much* of it the change
 warrants; the verification procedure and its quality gate belong to the
 `test-workflow` capability.
 
+## Triggers
+
+Invoke this stage when:
+
+- a Slice or Ticket has reached Development Complete and its acceptance must be
+  proven before publication;
+- the user asks to verify, validate, or confirm a branch, a change, or an
+  acceptance criterion;
+- a regression, an incident, or a review finding needs confirmation;
+- a pull request is about to be declared ready.
+
+Do not invoke it for exploratory inspection during implementation; that local
+feedback belongs to `develop-workflow`.
+
 ## Responsibility
 
 - Decide whether verification is warranted, and record the reason when it is
