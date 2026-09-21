@@ -18,8 +18,7 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
 - If the default branch cannot be determined from the actual GitHub push target, guarded publication fails closed and requires manual review.
 - The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a Plan branch while still tracking an upstream default branch.
-- After the PR is created or updated, return `PR ready` and hand the merge
-  decision to the separate `pr-review` Skill.
+- After the PR is created or updated, return `PR ready`; the parent workflow may merge once the existing validation and publication gates are satisfied.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.
 - Check GitHub repository metadata when the task includes publishing or a pull
@@ -52,8 +51,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 skills/github-push-when-ready/scripts/assess_p
 ```
 
 Use the exact command and authorization appropriate to the current task before
-running any commit or push action. Once the PR is ready, invoke
-[`pr-review`](../pr-review/) for the merge decision.
+running any commit or push action. Once the PR is ready, return control to the parent workflow for merge.
 
 ## Maintenance
 

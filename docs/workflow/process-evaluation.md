@@ -25,11 +25,11 @@ smaller change solves the same problem.
 2. Separate required gates from their implementation. A gate may be necessary
    while its repeated execution, documentation, or context loading is not.
 3. Prefer one reusable improvement over a list of speculative improvements.
-4. Do not weaken branch/PR, review, security, redaction, permission, or release
+4. Do not weaken branch/PR, security, redaction, permission, or release
    controls merely to reduce friction.
 5. Do not update this file after every successful run. Persist a finding only
    when it is reusable, repeated, or high-impact.
-6. A self-improvement change follows the normal branch/PR/review lifecycle.
+6. A self-improvement change follows the normal branch/PR lifecycle.
    Never modify the completed branch or default branch as a retrospective side
    effect.
 7. A self-improvement run must not recursively create another automatic
@@ -46,7 +46,6 @@ smaller change solves the same problem.
 | Testing | Was verification proportional to risk? | Full/regression suites ran without evidence requiring escalation |
 | Redaction | Was scanning repeated without a changed sensitive surface? | Identical safe scope was reclassified unnecessarily |
 | Git / PR | Did branch and PR handling create avoidable cycles? | Multiple publication cycles for changes that could have been batched |
-| Review | Did review repeat already-assessed evidence? | Full review reran after a bounded non-impacting fix |
 | State / Docs | Is the same fact maintained in several places? | Workflow order or status copied across SKILL, README, usage, architecture, state |
 | Deployment | Did deployment checks match the requested target? | Release work ran when deployment was not in scope |
 | Human interaction | Did the workflow stop for unnecessary confirmation? | Agent asked permission for an already-authorized next gate |
@@ -62,7 +61,6 @@ Run / PR:
 Change type:
 Planning level: one-Ticket Plan | multi-Ticket Plan
 Verification level: minimal | focused | regression | full
-Review rounds:
 Repeated stages:
 Avoidable rework:
 Repeated context reads:
@@ -104,7 +102,7 @@ Action: none | follow-up change | report for later
 ```
 
 If `Action` is `follow-up change`, that change must use the same normal
-Requirement -> Plan -> Branch -> Test -> PR -> Review -> Merge lifecycle.
+Requirement -> Plan -> Branch -> Test -> PR -> Merge lifecycle.
 
 ## Current structural baseline
 
@@ -116,7 +114,6 @@ Use future real runs to confirm or reject them.
 | Macro workflow repeated across `SKILL.md`, `README.md`, usage, and architecture docs | Likely documentation redundancy and drift risk | Keep `SKILL.md` as control plane; make other docs explain details or link to one canonical flow instead of copying it |
 | Branch/PR rules appear in core path, branch section, review section, and completion gates | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
 | Post-delivery evaluation can itself create a documentation-only PR every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
-| `pr-review` after every PR update | Necessary single merge gate; full-range repetition after bounded fixes is wasteful | Keep one mandatory gate; let its runner default to incremental coverage after an assessed review and require explicit full escalation for high-impact or uncertain changes |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
 | Plan/Ticket/Slice/delegation machinery | Every requirement has exactly one Plan; delegation remains optional | Keep the Plan mandatory for every change type and scale only its shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |
 

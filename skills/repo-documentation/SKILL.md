@@ -173,7 +173,6 @@ This Skill does not own:
 - what is true right now -> `docs/Repo_Current_State.md` and `repo-current-state`
 - planned or in-progress work -> GitHub Issues and `plan-to-ticket`
 - change history -> Git
-- the merge decision -> `pr-review`
 
 Never copy the state snapshot, the Plan/Ticket backlog, or Git history into a
 content document.

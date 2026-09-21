@@ -102,7 +102,7 @@ Every Plan output includes the branch handoff:
 
 Plan planning is complete before implementation begins. The parent workflow
 then runs the Test -> applicable Redaction -> Commit -> Push -> Create / Update
-Plan PR -> `pr-review` -> Merge lifecycle once for the Plan, while its Tickets
+Plan PR -> Merge lifecycle once for the Plan, while its Tickets
 and Slices share that delivery boundary.
 
 ## Repository layout
