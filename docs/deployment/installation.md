@@ -38,7 +38,7 @@ Select the host with `--target`. Codex is the default:
 bash scripts/install-all.sh --target claude
 ```
 
-Both targets install the same nine bundles under the bare skill name; the
+Both targets install the same seven managed bundles under the bare skill name; the
 Claude target omits the Codex-only `agents/openai.yaml` metadata, so the two
 installations are not byte-for-byte identical. The destination root and that
 metadata are the only differences. `--dest PATH` overrides either destination.
@@ -68,7 +68,7 @@ you installed with.
 Without `--update`, an existing skill directory is reported as `skip` and is
 left unchanged. With `--update`, an existing destination is replaced only when
 it carries the matching marker written by this installer; an unmarked path is
-preserved and reported as `ownership unverified`. Retired skill destinations
+preserved and reported as `ownership unverified`. Retired skill destinations, including previously managed `context-efficiency`,
 are removed under the same ownership check. Back up any local edits before
 using this option.
 
