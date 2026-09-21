@@ -4,28 +4,25 @@ An adaptive, main-agent-led development workflow for Codex and Claude Code with
 optional bounded delegation, post-delivery process evaluation, bounded
 self-improvement, and all required specialist skills managed in this repository.
 
-```text
-Requirement
-  -> Understand repo
-  -> Plan
-  -> Record Plan + Tickets + Slices
-  -> Create Plan branch
-  -> Implement all Plan Tickets
-  -> Test
-  -> Documentation impact check
-  -> Redaction scan if applicable
-  -> Commit
-  -> Push branch
-  -> Create / Update PR
-  -> Merge the Plan PR once
-  -> Delete branch
-  -> Update main
-  -> Close Plan + Tickets
-  -> Update State / Docs
-  -> If separately authorized: external release handoff (outside this workflow)
-  -> Evaluate workflow
-  -> Reusable improvement? -> one bounded follow-up change or finish
-```
+## At a glance
+
+![Codex Development Workflow delivery lifecycle](docs/diagrams/drawio/workflow-overview.svg)
+
+Editable source: [`workflow-overview.drawio`](docs/diagrams/drawio/workflow-overview.drawio) ·
+Detailed diagrams-as-code: [`architecture.puml`](docs/diagrams/architecture.puml)
+
+Core invariants:
+
+- every requirement becomes exactly one **Plan Issue** with one or more child
+  **Ticket Issues** before implementation;
+- one Plan owns one implementation branch, one PR, and one merge;
+- Tickets decompose into dependency-ordered Slices that carry acceptance and
+  validation contracts;
+- PASS requires the risk-aware **Test Quality Gate**, not merely a green focused
+  test run;
+- documentation impact, applicable redaction, publication, merge cleanup, and
+  post-merge state reconciliation remain explicit lifecycle stages.
+
 
 An external deployment handoff is outside this repository's workflow and does
 not invoke a bundled deployment Skill. When separately authorized, the Plan
@@ -81,15 +78,34 @@ Delegation remains optional and the safety rules live in
 
 ## Architecture
 
-![Codex Development Workflow lifecycle](docs/diagrams/architecture.svg)
+The repository keeps two complementary diagram layers:
 
-Source: [`docs/diagrams/architecture.puml`](docs/diagrams/architecture.puml)
+- **Draw.io** for polished, editable, human-facing overview views.
+- **PlantUML** for detailed diagrams-as-code that are easy to diff and regenerate.
 
-See the [architecture overview](docs/architecture/overview.md) for the component
-map, Plan/Ticket/Slice lifecycle, risk-aware Test Quality Gate, recovery state,
-documentation governance, redaction, publication, post-delivery evaluation, and
-bounded self-improvement. The editable component source is
-[`docs/diagrams/components.puml`](docs/diagrams/components.puml).
+### Components
+
+![Workflow components and responsibilities](docs/diagrams/drawio/components-overview.svg)
+
+Editable source: [`components-overview.drawio`](docs/diagrams/drawio/components-overview.drawio) ·
+Detailed source: [`components.puml`](docs/diagrams/components.puml)
+
+### Work decomposition
+
+![Plan Ticket Slice decomposition model](docs/diagrams/drawio/plan-ticket-slice.svg)
+
+Editable source: [`plan-ticket-slice.drawio`](docs/diagrams/drawio/plan-ticket-slice.drawio)
+
+### Verification
+
+![Risk-aware Test Quality Gate](docs/diagrams/drawio/test-quality-gate.svg)
+
+Editable source: [`test-quality-gate.drawio`](docs/diagrams/drawio/test-quality-gate.drawio) ·
+Detailed test flow: [`test-workflow-flow.puml`](docs/skills/test-workflow/diagrams/test-workflow-flow.puml)
+
+See the [architecture overview](docs/architecture/overview.md) for the detailed
+lifecycle, Ticket/Slice loops, documentation governance, publication boundaries,
+state recovery, and installation flow.
 
 ## Install from this repository
 
