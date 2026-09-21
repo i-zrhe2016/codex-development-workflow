@@ -1,6 +1,6 @@
 # GitHub Push When Ready
 
-`github-push-when-ready` is the publication gate for Plan branches, commits,
+`github-push-when-ready` is the publication gate for feature branches, commits,
 pushes, and pull requests. It checks that the repository is ready to publish,
 that the change has one clear purpose, that the commit follows Conventional
 Commits 1.0.0, and that no secrets or unrelated changes are being shipped.
@@ -10,14 +10,15 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 ## Delivery principles
 
 - Inspect the branch, remote, diff, and repository checks before publishing.
-- Create or resume the non-default Plan branch after its Plan Issue exists;
-  every requirement and change type uses the branch and PR path.
+- Create or resume a non-default branch before publishing; every published
+  change uses the branch and PR path. When the branch carries Plan metadata, the
+  gate validates it; when it does not, publication proceeds normally.
 - Keep one coherent requirement or Plan per commit.
 - Use a Conventional Commit message with the correct scope and intent.
 - For this repository, configure the approved non-root local identity and GitHub account `i-zrhe2016`; other target repositories must configure their own non-root identity.
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
 - If the default branch cannot be determined from the actual GitHub push target, guarded publication fails closed and requires manual review.
-- The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a Plan branch while still tracking an upstream default branch.
+- The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a feature branch while still tracking an upstream default branch.
 - After the PR is created or updated, return `PR ready`; the parent workflow may merge once the existing validation and publication gates are satisfied.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.

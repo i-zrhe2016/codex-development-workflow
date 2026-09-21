@@ -396,16 +396,16 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         recommended_action = "feature_branch_required"
         reasons.append(
             f"Working tree changes are on the default branch '{default_branch}'; "
-            "create the Plan branch before committing or pushing."
+            "create a feature branch before committing or pushing."
         )
-        commands.append("git switch -c <type>/<plan-id>-<short-description>")
+        commands.append("git switch -c <type>/<short-description>")
     elif default_branch and branch == default_branch and (
         ahead > 0 or (has_commits and not upstream)
     ):
         recommended_action = "manual_review"
         reasons.append(
             f"Default branch '{default_branch}' contains unpublished commit(s); "
-            "preserve the work and move it to the Plan branch before publishing."
+            "preserve the work and move it to a feature branch before publishing."
         )
     elif default_branch and effective_push_branch is None and (
         has_changes or ahead > 0 or (has_commits and not upstream)
@@ -421,7 +421,7 @@ def assess_repo(repo_path: str | Path) -> dict[str, Any]:
         recommended_action = "manual_review"
         reasons.append(
             f"Plain 'git push' targets the default branch '{default_branch}'; "
-            "preserve the work and publish through the Plan branch and PR."
+            "preserve the work and publish through a feature branch and PR."
         )
     elif has_changes:
         recommended_action = "commit_then_push"
