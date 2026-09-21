@@ -1,48 +1,50 @@
 @startuml
 !theme plain
-skinparam backgroundColor #FFFFFF
+skinparam shadowing false
 skinparam defaultFontName Arial
-skinparam ArrowColor #4A5568
-skinparam activityBackgroundColor #F8F9FA
-skinparam activityBorderColor #4A5568
-skinparam activityFontColor #1A202C
 
-title install-all.sh — destination resolution and ownership decisions
+title install-all.sh — Destination, Ownership, Update and Retirement
 
 start
+:Parse target / dest / update / adopt-legacy options;
 
-:Parse --target / --update / --adopt-legacy / --dest;
-if (--dest given?) then (yes)
-  :Use the explicit destination;
+if (Explicit dest provided?) then (yes)
+  :Use explicit skills destination;
 else (no)
-  :Resolve the --target default\ncodex: CODEX_HOME if set, else HOME/.codex\nclaude: HOME/.claude\n(each followed by /skills);
+  :Resolve target default\nCodex: CODEX_HOME or HOME/.codex/skills\nClaude: HOME/.claude/skills;
 endif
-if (Destination is inside\nthis repository?) then (yes)
-  :error: refuse to install;
+
+if (Destination is inside repository?) then (yes)
+  :Refuse installation;
   stop
-else (no)
 endif
 
-:For each configured bundle;
-if (Destination already exists?) then (no)
-  :install: copy the bundle\nand write the ownership marker;
+:For each of 7 managed bundles;
+
+if (Destination exists?) then (no)
+  :Copy bundle;
+  :Write ownership marker;
 else (yes)
-  if (--update given?) then (no)
-    :skip: leave it unchanged;
+  if (Update enabled?) then (no)
+    :Skip existing bundle;
   else (yes)
     if (Ownership marker matches?) then (yes)
-      :remove: replace the bundle\n(and prune retired names);
+      :Replace managed bundle;
     else (no)
-      if (--adopt-legacy given?) then (yes)
-        :adopt: move to a recoverable backup,\nthen install;
+      if (Adopt legacy enabled?) then (yes)
+        :Move legacy bundle to recoverable backup;
+        :Install managed bundle;
       else (no)
-        :preserve: report\n"ownership unverified";
+        :Preserve path\nReport ownership unverified;
       endif
     endif
   endif
 endif
 
-:Report installed / skipped / migrated\nand the resolved destination;
-stop
+if (Update enabled?) then (yes)
+  :Prune owned retired skill destinations\nincluding context-efficiency and prior retired bundles;
+endif
 
+:Report installed / skipped / migrated\nand resolved destination;
+stop
 @enduml

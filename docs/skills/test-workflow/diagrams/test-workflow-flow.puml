@@ -1,56 +1,63 @@
 @startuml
 !theme plain
+skinparam shadowing false
+skinparam defaultFontName Arial
 
-title test-workflow — 通用测试验证梯度
-hide footbox
+title test-workflow — Risk-Aware Verification and Test Quality Gate
 
-actor "开发者 / Codex" as author
-participant "需求 / Slice" as requirement
-participant "test-workflow\n测试编排" as workflow
-participant "静态检查\n类型 / Lint / Schema" as static
-participant "Focused tests\n单元 / 组件 / API" as focused
-participant "Integration /\nAffected regression" as integration
-participant "Browser / E2E\n按需启用" as browser
-participant "证据与\nMarkdown 报告" as report
+start
+:Read requirement / Slice acceptance criteria / changed behavior;
+:Build Acceptance-to-Test Matrix;
+:Select mandatory risk dimensions;
 
-author -> requirement : 提供需求、验收标准、实际改动
-requirement -> workflow : 提炼验收点与测试清单
+:Static / type / lint / schema checks;
+if (Useful failure?) then (yes)
+  :Classify root cause;
+  stop
+endif
 
-alt 复杂 / 高风险行为
-  workflow -> focused : RED：确认缺失行为
-  focused --> workflow : 失败原因或已有行为
-else 微小 / 普通变更
-  workflow -> workflow : 选择最小相关检查
-end
+:Focused unit / component / API tests;
+if (Useful failure?) then (yes)
+  :Classify root cause;
+  stop
+endif
 
-workflow -> static : 运行静态检查
-static --> workflow : 通过 / 失败证据
-alt 静态检查失败
-  workflow -> workflow : 分类失败并停止扩大范围
-else 静态检查通过
-  workflow -> focused : 运行 focused tests
-  focused --> workflow : 通过 / 失败证据
-  alt focused tests 失败
-    workflow -> workflow : 分类根因并按需处理
-    workflow -> static : 修复后重跑相关检查
-    static --> workflow : 新证据
-    workflow -> focused : 复测原失败点
-  else focused tests 通过
-    workflow -> integration : 运行受影响的集成 / 回归
-    integration --> workflow : 通过 / 失败证据
-  end
-end
+:Boundary + negative-path checks;
 
-opt 浏览器可见行为或明确要求 E2E
-  workflow -> browser : 从已知状态执行最小用户流程
-  browser --> workflow : 页面状态与失败证据
-end
+if (Complex input space or strong invariant?) then (yes)
+  :Property / fuzz checks;
+endif
 
-workflow -> report : 汇总验收覆盖、实际结果与证据
-report --> author : pass / partial / fail / blocked
+if (External or multi-module boundary touched?) then (yes)
+  :Integration / contract checks;
+endif
 
-note over workflow
-  优先最低成本、可靠的测试层
-  不用放宽断言、盲目重试或固定 sleep 制造通过
+if (High-risk logic or weak-test suspicion?) then (yes)
+  :Targeted mutation / test-strength check;
+endif
+
+:Affected regression;
+
+if (Critical browser-visible flow?) then (yes)
+  :Browser / E2E;
+endif
+
+if (Nondeterminism risk or intermittent failure?) then (yes)
+  :Isolation / flaky diagnosis;
+endif
+
+:Evaluate Test Quality Gate;
+
+if (Every acceptance criterion and\nmandatory dimension satisfied?) then (yes)
+  :PASS;
+else (no)
+  :FAIL / PARTIAL / BLOCKED;
+endif
+stop
+
+note right
+Coverage is diagnostic only.
+N/A requires a concrete reason.
+FAIL then retry PASS without a verified external cause is flaky, not PASS.
 end note
 @enduml

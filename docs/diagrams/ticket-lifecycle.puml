@@ -1,23 +1,35 @@
 @startuml
-title Plan / Ticket Lifecycle
+!theme plain
+top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
 
-state "Plan + Ticket Issues persisted" as persisted
+title Plan / Ticket Lifecycle — One Branch, One PR, One Merge
+
+state "Plan Issue persisted\nChild Ticket Issues persisted" as persisted
 state "Plan branch active" as branch
 state "Select dependency-ready Ticket" as select
-state "Execute Ticket Slices" as slices
-state "Ticket acceptance passes" as accepted
+state "Execute dependency-ready Slices" as slices
+state "Ticket acceptance + evidence complete" as accepted
 state "More Tickets?" as more
-state "Publish Plan PR" as publish
+state "Plan integration + Test Quality Gate" as gate
+state "Create / Update Plan PR" as publish
 state "Merge Plan PR once" as merge
+state "Delete branch + Update main" as cleanup
 state "Close Plan + Tickets" as done
 
+[*] --> persisted
 persisted --> branch
 branch --> select
 select --> slices
 slices --> accepted
 accepted --> more
 more --> select : yes
-more --> publish : no
+more --> gate : no
+gate --> slices : gap / failed evidence
+gate --> publish : PASS
 publish --> merge
-merge --> done
+merge --> cleanup
+cleanup --> done
+done --> [*]
 @enduml

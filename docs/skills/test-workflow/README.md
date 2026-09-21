@@ -13,9 +13,10 @@
 
 ![test-workflow 通用测试验证梯度](diagrams/test-workflow-flow.svg)
 
-渲染产物：[SVG](diagrams/test-workflow-flow.svg) / [PNG](diagrams/test-workflow-flow.png)；
-图源：[test-workflow-flow.puml](diagrams/test-workflow-flow.puml)。该图使用
-`plantuml-skill` 通过公共 Kroki 渲染，内容仅包含公开的工作流信息。
+图源：[test-workflow-flow.puml](diagrams/test-workflow-flow.puml)。规范产物使用
+[SVG](diagrams/test-workflow-flow.svg)；已有 PNG 仅作为兼容产物保留，不作为
+文档主引用。该图按 `plantuml-skill` 的 safe-subset、render validation 和
+readability self-check 规则维护。
 
 ## Managed skill
 

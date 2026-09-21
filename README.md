@@ -81,13 +81,15 @@ Delegation remains optional and the safety rules live in
 
 ## Architecture
 
-Detailed views: [component responsibilities source](docs/diagrams/components.puml),
-[Plan/Ticket lifecycle and nested loops](docs/architecture/overview.md#ticket-to-slice-hierarchy), and the
-[architecture guide](docs/architecture/overview.md).
+![Codex Development Workflow lifecycle](docs/diagrams/architecture.svg)
 
-See the [architecture overview](docs/architecture/overview.md) for the unified
-branch/PR lifecycle, Ticket/Slice decomposition, bounded verification, recovery state, redaction, post-delivery evaluation, bounded
-self-improvement, and package boundaries.
+Source: [`docs/diagrams/architecture.puml`](docs/diagrams/architecture.puml)
+
+See the [architecture overview](docs/architecture/overview.md) for the component
+map, Plan/Ticket/Slice lifecycle, risk-aware Test Quality Gate, recovery state,
+documentation governance, redaction, publication, post-delivery evaluation, and
+bounded self-improvement. The editable component source is
+[`docs/diagrams/components.puml`](docs/diagrams/components.puml).
 
 ## Install from this repository
 

@@ -8,8 +8,9 @@ main-agent-led workflow. Its only runtime-like behavior is the guidance in
 an agent reads repository evidence, verifies task-relevant facts, and maintains
 a compact current-state document.
 
-There is no application runtime, service boundary, database, deployment
-configuration, or automated test suite in the current repository.
+There is no application runtime, service boundary, database, or deployment
+configuration in this documentation package. Repository-level contract and
+installer regression tests do exist and validate the workflow package itself.
 
 ## Components
 
@@ -23,7 +24,9 @@ configuration, or automated test suite in the current repository.
 
 ## Maintenance flow
 
-![Repository documentation flow](diagrams/repository-state.svg)
+![repo-current-state verified recovery snapshot flow](diagrams/repository-state.svg)
+
+Source: [`diagrams/repository-state.puml`](diagrams/repository-state.puml)
 
 1. The maintainer or main Codex agent reads the managed `SKILL.md` and the
    existing state snapshot.

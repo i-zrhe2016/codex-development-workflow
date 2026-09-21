@@ -67,14 +67,26 @@ they do not carry a title or a header.
 - Name the source after the fact it draws, with a `.puml` extension, and give
   the rendered file the same basename: `installer-decision-flow.puml` and
   `installer-decision-flow.svg`.
-- Commit the source and the rendered image together. The source is the
-  editable artifact; the image is what a reader sees. When no renderer is
-  available, commit the source alone, link it from the document in place of the
-  image, and mark it as unrendered there, so the document stays truthful and the
-  source is not an orphan. Never commit a hand-made image.
-- Reference the image from the document, and link the source beside it, so a
-  reader can find the editable file from the page.
+- Use PlantUML for managed workflow diagrams. Pick the diagram type that fits
+  the fact (activity for workflow, state for lifecycle, component for
+  responsibilities, sequence for message flow), prefer `!theme plain`, and
+  stay within the Kroki-safe PlantUML subset unless a more advanced feature is
+  necessary.
+- Commit the `.puml` source and same-basename SVG together. SVG is the primary
+  documentation render because text remains crisp; an existing PNG may remain
+  only as a compatibility artifact.
+- Render through the configured backend and validate the result before claiming
+  success: HTTP/render command success, non-empty output, real SVG/image bytes,
+  then a readability check for clipped labels, cramped layout, wrong aspect
+  ratio, edge spaghetti, and low contrast. Fix and re-render after each change.
+- Public Kroki uploads the diagram source to a third party. Use it only for
+  non-sensitive repository diagrams. Internal, secret, proprietary, or
+  unreleased architecture requires a local Kroki or local PlantUML backend.
+  Never silently fall back between backends.
+- Reference the rendered SVG from the owning document with descriptive alt
+  text, then link the editable `.puml` source immediately beside it.
 - A diagram that exists in no document is an orphan: embed it or delete it.
+  Never commit a hand-made replacement for a managed PlantUML render.
 
 ## Links
 

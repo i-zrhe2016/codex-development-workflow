@@ -1,36 +1,47 @@
 @startuml
-title Codex Development Workflow
+!theme plain
+top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
 
-state Requirement
-state "Understand repo" as Understand
-state Plan
-state "Record Plan + Tickets + Slices" as Issues
+title Codex Development Workflow — Plan to Delivery
+
+state "Requirement" as Requirement
+state "Understand repository" as Understand
+state "Plan" as Plan
+state "Persist Plan + Tickets + Slices\nGitHub Issues" as Issues
 state "Create Plan branch" as Branch
 state "Implement all Plan Tickets" as Implement
-state Test
+state "Test Quality Gate" as Test
 state "Documentation impact check" as Docs
-state "Redaction scan if applicable" as Redact
-state Commit
-state "Push branch" as Push
-state "Create / Update PR" as PR
+state "Redaction scan\nwhen applicable" as Redact
+state "Commit + Push branch" as Publish
+state "Create / Update Plan PR" as PR
 state "Merge Plan PR once" as Merge
-state "Delete branch / Update main" as Cleanup
+state "Delete branch + Update main" as Cleanup
 state "Close Plan + Tickets" as Close
 state "Update State / Docs" as State
+state "Evaluate workflow" as Evaluate
+state "Bounded follow-up improvement" as Improve
 
+[*] --> Requirement
 Requirement --> Understand
 Understand --> Plan
 Plan --> Issues
 Issues --> Branch
 Branch --> Implement
 Implement --> Test
-Test --> Docs
+Test --> Implement : BLOCKED / failed evidence
+Test --> Docs : PASS
 Docs --> Redact
-Redact --> Commit
-Commit --> Push
-Push --> PR
+Redact --> Publish
+Publish --> PR
 PR --> Merge
 Merge --> Cleanup
 Cleanup --> Close
 Close --> State
+State --> Evaluate
+Evaluate --> Improve : reusable low-risk improvement
+Improve --> [*] : run through the same workflow
+Evaluate --> [*] : no improvement
 @enduml

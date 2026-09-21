@@ -1,0 +1,37 @@
+name: Render PlantUML diagrams
+
+on:
+  pull_request:
+    paths:
+      - "docs/**/*.puml"
+      - "scripts/render-diagrams.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Render and validate SVGs via public Kroki
+        run: bash scripts/render-diagrams.sh render
+
+      - name: Commit regenerated diagrams
+        run: |
+          if git diff --quiet -- 'docs/**/*.svg' 'docs/**/*.png'; then
+            echo "All rendered SVGs are current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'docs/**/*.svg' 'docs/**/*.png'
+          git commit -m "docs(diagrams): render PlantUML SVGs"
+          git push

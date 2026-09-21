@@ -21,7 +21,7 @@ procedures remain inside their own `SKILL.md` files.
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). |
 | `plan-to-ticket` | Creates exactly one Plan for every requirement, splits it into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the Plan and child Ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
-| `test-workflow` | Runs the selected verification level and reports bounded evidence. |
+| `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
 | `repo-documentation` | Governs documentation as one canonical document per fact: the documentation impact check, canonical ownership, the documentation index, duplicate and orphan detection, document lifecycle, and the diagram policy. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
@@ -41,13 +41,20 @@ agent must not duplicate active delegated work.
 
 ### Component responsibilities and records
 
-Component diagram source: [`components.puml`](../diagrams/components.puml). Skills are
-main-agent procedures, not independently running services. Solid arrows show
-invocation or record ownership; the main agent retains integration and gate decisions.
+![Workflow components and authorities](../diagrams/components.svg)
+
+Source: [`components.puml`](../diagrams/components.puml)
+
+Skills are main-agent procedures, not independently running services. The
+diagram separates lifecycle orchestration, specialist responsibilities, GitHub
+Issues as Plan/Ticket authority, GitHub as publication surface, and repository
+documentation as persisted project knowledge.
 
 ### End-to-end lifecycle
 
-Lifecycle diagram source: [`architecture.puml`](../diagrams/architecture.puml).
+![End-to-end workflow lifecycle](../diagrams/architecture.svg)
+
+Source: [`architecture.puml`](../diagrams/architecture.puml)
 
 ### Macro stages
 
@@ -58,7 +65,7 @@ Requirement
   -> Record Plan + Tickets + Slices
   -> Create Plan branch
   -> Implement all Plan Tickets
-  -> Test
+  -> Test Quality Gate
   -> Documentation impact check
   -> Redaction scan if applicable
   -> Commit
@@ -70,6 +77,7 @@ Requirement
   -> Close Plan + Tickets
   -> Update State / Docs
   -> If separately authorized: external release handoff (outside this workflow)
+  -> Evaluate workflow
 ```
 
 All change types—Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
@@ -90,11 +98,13 @@ or causes a Slice split.
 The detailed Plan/Ticket lifecycle is split into three linked views so each
 return edge has a clear scope and exit condition:
 
-Ticket lifecycle diagram source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml).
+![Plan / Ticket lifecycle](../diagrams/ticket-lifecycle.svg)
+
+Source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml)
 
 ![Slice implementation and validation loop](../diagrams/ticket-slice-loop.svg)
 
-Source: [`ticket-slice-loop.puml`](../diagrams/ticket-slice-loop.puml).
+Source: [`ticket-slice-loop.puml`](../diagrams/ticket-slice-loop.puml)
 
 Dependency waits resume only after fresh evidence; a failed Slice returns to
 diagnosis and affected validation, while a design conflict returns to planning.
