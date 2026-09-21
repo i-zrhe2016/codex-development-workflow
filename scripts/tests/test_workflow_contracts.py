@@ -20,6 +20,11 @@ TEST_DOCS = (
 
 EXPECTED_SKILLS = {
     "codex-development-workflow",
+    "plan-workflow",
+    "develop-workflow",
+    "verify-workflow",
+    "publish-workflow",
+    "integrate-workflow",
     "plan-to-ticket",
     "test-workflow",
     "repo-current-state",

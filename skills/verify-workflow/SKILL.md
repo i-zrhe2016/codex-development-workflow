@@ -1,0 +1,43 @@
+---
+name: verify-workflow
+description: "Decide WHEN to verify. Select the verification scope and level for a change, invoke the test-workflow capability, and return its conclusion. Use when the request is to verify, validate, check acceptance criteria, or confirm a branch before publication. It does not modify code and does not restate the quality gate."
+---
+
+# Verify Workflow
+
+Thin stage workflow for the **trigger -> verification scope -> conclusion**
+transition. It decides *when* verification runs and *how much* of it the change
+warrants; the verification procedure and its quality gate belong to the
+`test-workflow` capability.
+
+## Responsibility
+
+- Decide whether verification is warranted, and record the reason when it is
+  skipped.
+- Establish what is being verified: a Slice, a Ticket, a branch, a Plan, or a
+  single acceptance criterion.
+- Choose one bounded level — `minimal`, `focused`, `regression`, or `full` —
+  from the change's behavior and risk, not from habit.
+- Invoke `test-workflow` and let it own the acceptance-to-test matrix, the
+  mandatory test dimensions, the RED/GREEN loop, the flaky and isolation
+  policy, and the Test Quality Gate.
+- Return the conclusion with its evidence. Escalate the level only when the
+  evidence, the acceptance criteria, or an explicit requirement justify it.
+
+## Result
+
+Return exactly one conclusion:
+
+- `PASS` — the selected level and every applicable mandatory dimension passed;
+- `FAIL` — a check failed, reported with the failing check and its evidence;
+- `BLOCKED` — verification could not run, reported with the reason.
+
+Return the result and stop.
+
+## Not responsible for
+
+- modifying code, tests, configuration, or documentation so a check passes —
+  return `FAIL` to `develop-workflow` instead;
+- duplicating, restating, or relaxing the quality gate;
+- committing, pushing, opening a pull request, or merging;
+- closing Issues or updating repository state.

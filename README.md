@@ -133,6 +133,11 @@ Restart the host after installation so it discovers the new skill directories.
 ## Installed skills
 
 - `codex-development-workflow`
+- `plan-workflow`
+- `develop-workflow`
+- `verify-workflow`
+- `publish-workflow`
+- `integrate-workflow`
 - `plan-to-ticket`
 - `test-workflow`
 - `repo-current-state`
@@ -158,6 +163,11 @@ relevant bundle.
 | Skill | Runtime source | Documentation |
 |---|---|---|
 | `codex-development-workflow` | [`SKILL.md`](SKILL.md) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `plan-workflow` | [`skills/plan-workflow/`](skills/plan-workflow/) | — |
+| `develop-workflow` | [`skills/develop-workflow/`](skills/develop-workflow/) | — |
+| `verify-workflow` | [`skills/verify-workflow/`](skills/verify-workflow/) | — |
+| `publish-workflow` | [`skills/publish-workflow/`](skills/publish-workflow/) | — |
+| `integrate-workflow` | [`skills/integrate-workflow/`](skills/integrate-workflow/) | — |
 | `plan-to-ticket` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
 | `test-workflow` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
 | `repo-current-state` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |

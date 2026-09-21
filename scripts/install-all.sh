@@ -85,6 +85,11 @@ esac
 # The root package is kept at the repository root for backward compatibility.
 SKILLS=(
   ".|codex-development-workflow"
+  "skills/plan-workflow|plan-workflow"
+  "skills/develop-workflow|develop-workflow"
+  "skills/verify-workflow|verify-workflow"
+  "skills/publish-workflow|publish-workflow"
+  "skills/integrate-workflow|integrate-workflow"
   "skills/plan-to-ticket|plan-to-ticket"
   "skills/test-workflow|test-workflow"
   "skills/repo-current-state|repo-current-state"

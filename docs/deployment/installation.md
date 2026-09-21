@@ -38,7 +38,7 @@ Select the host with `--target`. Codex is the default:
 bash scripts/install-all.sh --target claude
 ```
 
-Both targets install the same seven managed bundles under the bare skill name; the
+Both targets install the same twelve managed bundles under the bare skill name; the
 Claude target omits the Codex-only `agents/openai.yaml` metadata, so the two
 installations are not byte-for-byte identical. The destination root and that
 metadata are the only differences. `--dest PATH` overrides either destination.
