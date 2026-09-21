@@ -1,0 +1,33 @@
+name: Verify
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate shell syntax
+        run: bash -n scripts/install-all.sh
+
+      - name: Compile repository tests
+        run: python -m compileall -q scripts/tests
+
+      - name: Run regression and contract tests
+        run: python -m unittest discover -s scripts/tests -p 'test_*.py'
