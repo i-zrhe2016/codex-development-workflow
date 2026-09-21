@@ -33,7 +33,7 @@ EXPECTED_SKILLS = {
 class WorkflowContractTests(unittest.TestCase):
     def test_installer_managed_skills_match_repository_sources(self) -> None:
         installer = INSTALLER.read_text(encoding="utf-8")
-        managed = set(re.findall(r'^\\s*"[^|]+\\|([^\"]+)"\\s*$', installer, re.MULTILINE))
+        managed = set(re.findall(r'^\s*"[^|]+\|([^"]+)"\s*$', installer, re.MULTILINE))
         self.assertEqual(managed, EXPECTED_SKILLS)
 
         sources = {"codex-development-workflow"}
