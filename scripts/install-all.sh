@@ -85,7 +85,6 @@ esac
 # The root package is kept at the repository root for backward compatibility.
 SKILLS=(
   ".|codex-development-workflow"
-  "skills/context-efficiency|context-efficiency"
   "skills/plan-to-ticket|plan-to-ticket"
   "skills/test-workflow|test-workflow"
   "skills/repo-current-state|repo-current-state"
@@ -97,6 +96,7 @@ SKILLS=(
 # Destinations from bundles retired by the workflow. These are removed only
 # during an explicit update so old installations do not keep discovering them.
 OBSOLETE_SKILLS=(
+  "context-efficiency"
   "pr-review"
   "ponytail"
   "ponytail-review"
