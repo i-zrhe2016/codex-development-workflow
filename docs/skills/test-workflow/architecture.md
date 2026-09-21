@@ -11,10 +11,11 @@
 ## 核心数据流
 
 1. 从需求、Slice 验收标准和本次实际改动中确定行为契约。
-2. 选择 3–7 个高价值测试点，覆盖主要成功路径及直接相关的边界或失败路径。
-3. 依次尝试静态检查、focused tests、受影响的集成/回归检查，以及按需的 Browser / E2E。
-4. 每个验收点都关联实际执行过的检查或观察证据；未执行的检查不能标为通过。
-5. 汇总结果并按 `pass`、`partial`、`fail` 或 `blocked` 分类。
+2. 建立 Acceptance-to-Test Matrix，把每条验收标准映射到实际执行证据。
+3. 根据风险选择 mandatory dimensions：happy path、boundary、negative、state/invariant、integration/contract、regression，以及按需的 property/fuzz、mutation、browser/E2E、isolation/flaky。
+4. 从静态检查和 focused tests 开始，按成本逐级执行适用维度。
+5. 每个验收点和 mandatory dimension 都必须有 PASS 证据，或明确的 N/A 理由；未执行不能冒充通过。
+6. Test Quality Gate 汇总结果并按 `pass`、`partial`、`fail` 或 `blocked` 分类。
 
 ## 验证级别
 
@@ -25,8 +26,9 @@
 | `regression` | 缺陷修复、跨模块变更或已有回归风险。 |
 | `full` | 高风险、发布门禁或明确要求完整套件。 |
 
-选定级别通过后默认停止。只有验收标准、失败证据、受影响边界、发布要求
-或用户明确要求时才扩大检查范围。
+Level 只限制 suite 的广度。Stop condition 是 mandatory risk dimensions 已满足，
+而不是某一级测试已经 GREEN；验收标准、失败证据、受影响边界、发布要求或
+风险画像都可以触发扩大范围。
 
 ## 验证梯度
 
@@ -34,8 +36,13 @@
 |---|---|---|
 | 静态检查 | 尽早发现编译、类型、Lint、Schema 或配置问题 | 命令输出、错误位置和修复后的重新检查 |
 | Focused tests | 验证本次变更直接影响的单元、组件、API 或包契约 | 测试结果、断言和失败堆栈 |
-| Integration / regression | 覆盖数据库、文件系统、队列、网络或受影响模块边界 | 集成测试、受影响模块回归结果 |
-| Browser / E2E | 仅验证真实用户可见交互或明确要求的端到端流程 | 页面状态、URL、截图、控制台/请求或 trace |
+| Boundary / negative | 验证边界值、无效输入、失败路径和状态转换 | 明确输入、预期错误/状态和断言 |
+| Property / fuzz | 对复杂输入空间或强 invariant 做生成式验证 | property、seed、最小失败样例 |
+| Integration / contract | 覆盖数据库、文件系统、队列、网络、Schema、进程或多模块边界 | 集成/契约测试 |
+| Mutation / test-strength | 验证测试能否杀死高风险逻辑中的有意义错误 | surviving/killed mutation 与处置 |
+| Regression | 覆盖受影响模块和已知缺陷复发风险 | affected suite 或 targeted regression |
+| Browser / E2E | 仅验证真实用户可见关键流程 | 页面状态、URL、截图、控制台/请求或 trace |
+| Isolation / flaky | 验证时间、并发、共享状态或随机性不会产生不可解释不稳定 | deterministic rerun/seed/state evidence |
 
 优先使用能可靠证明行为的最低成本层，不把全量回归或浏览器 E2E 当作所有变更的默认反馈循环。
 
@@ -46,9 +53,20 @@
 - 复杂或高风险行为：实际可行时采用 RED -> GREEN，先确认测试能捕获缺失行为，再实施最小修复。
 - 浏览器可见行为：低层检查通过后，再使用最小真实用户流程补充浏览器验证。
 
+## Test Quality Gate
+
+最终 PASS 同时要求：所有 acceptance criteria 有执行证据；所有 mandatory
+dimensions 已通过或有具体 N/A 理由；不存在通过 retry 被掩盖的 unexplained
+flaky；没有为了 GREEN 而弱化断言；coverage 只作诊断，不作为质量证明。
+
+Property/fuzz 先定义 invariant/oracle，再生成输入；发现失败后应固化最小 seed
+为 deterministic regression。Mutation testing 优先针对 changed/high-risk module，
+surviving meaningful mutation 需要补强 assertion/case 或说明等价 mutation，
+不追求仓库统一 mutation score。
+
 ## 失败处理
 
-失败先分类，再决定是否修改：实现缺陷修产品代码，测试缺陷修测试，回归问题修复或停止，环境/数据不可用则标记阻塞，需求或设计冲突则重新规划。修复应保持范围最小，并重新运行原失败点和受影响检查；不得通过放宽断言、删除测试、盲目重试或固定等待制造通过。
+失败先分类，再决定是否修改：实现缺陷修产品代码，测试缺陷修测试，回归问题修复或停止，环境/数据不可用则标记阻塞，需求或设计冲突则重新规划；同一提交和状态出现无法解释的 FAIL -> PASS 时标记 flaky，不能因重跑成功改成 PASS。修复应保持范围最小，并重新运行原失败点和受影响检查；不得通过放宽断言、删除测试、盲目重试或固定等待制造通过。
 
 ## Browser / E2E 分支
 

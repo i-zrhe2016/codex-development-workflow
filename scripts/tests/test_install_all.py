@@ -142,26 +142,37 @@ class InstallerTargetTests(unittest.TestCase):
         dest = self.tmp / "dest"
         first = self.run_installer("--target", "claude", "--dest", str(dest))
         self.assertEqual(first.returncode, 0, first.stderr)
-        self.assertIn("Installed: 8", first.stdout)
+        self.assertIn(f"Installed: {len(EXPECTED_SKILLS)}", first.stdout)
 
         second = self.run_installer("--target", "claude", "--dest", str(dest))
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertIn("Skipped:   9", second.stdout)
+        self.assertIn(f"Skipped:   {len(EXPECTED_SKILLS)}", second.stdout)
 
         third = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
         self.assertEqual(third.returncode, 0, third.stderr)
-        self.assertIn("Installed: 8", third.stdout)
+        self.assertIn(f"Installed: {len(EXPECTED_SKILLS)}", third.stdout)
 
-    def test_update_preserves_unmanaged_destination(self) -> None:
+    def test_update_leaves_unrelated_destination_untouched(self) -> None:
         dest = self.tmp / "dest"
-        unmanaged = dest / "local-custom-skill"
-        unmanaged.mkdir(parents=True)
-        (unmanaged / "SKILL.md").write_text("local work\n", encoding="utf-8")
+        unrelated = dest / "local-custom-skill"
+        unrelated.mkdir(parents=True)
+        (unrelated / "SKILL.md").write_text("local work\n", encoding="utf-8")
 
         result = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("ownership unverified", result.stdout)
-        self.assertEqual((unmanaged / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
+        self.assertNotIn("local-custom-skill", result.stdout)
+        self.assertEqual((unrelated / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
+
+    def test_update_preserves_unverified_managed_destination(self) -> None:
+        dest = self.tmp / "dest"
+        unverified = dest / "test-workflow"
+        unverified.mkdir(parents=True)
+        (unverified / "SKILL.md").write_text("local work\n", encoding="utf-8")
+
+        result = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("preserve: test-workflow (ownership unverified)", result.stdout)
+        self.assertEqual((unverified / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
 
 
 if __name__ == "__main__":

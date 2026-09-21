@@ -237,11 +237,16 @@ Select one level per slice:
 | `regression` | Bug fixes, cross-module changes, or a demonstrated regression risk. |
 | `full` | High-risk changes, release gates, or an explicit requirement. |
 
-Run the smallest verification set that provides sufficient evidence. After the
-selected level passes, stop by default. Do not add suites, edge cases, or
-broader checks unless the acceptance criteria, a failure, an affected boundary,
-release requirements, or the user justifies escalation. The report should name
-the level used, commands, result, evidence, and any escalation reason.
+Run the smallest verification set that provides sufficient evidence, but do
+not equate a GREEN level with completion. Map every acceptance criterion to
+executed evidence and select mandatory test dimensions from the behavior and
+risk. Boundary, negative, integration/contract, regression, property/fuzz,
+mutation/test-strength, browser/E2E, and isolation/flaky checks are required
+when applicable; record a concrete N/A reason when a high-value dimension does
+not apply. Stop only when the Test Quality Gate is satisfied. Coverage is
+diagnostic only, and retry cannot convert an unexplained flaky failure to PASS.
+The report should name the level, matrix, quality-gate dimensions, commands,
+results, evidence, N/A reasons, and any escalation reason.
 
 
 ## Post-delivery evaluation and bounded self-improvement
