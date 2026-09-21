@@ -1,6 +1,5 @@
 @startuml
 !theme plain
-top to bottom direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 
