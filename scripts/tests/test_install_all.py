@@ -30,7 +30,6 @@ EXPECTED_SKILLS = (
     "repo-documentation",
     "data-document-redaction",
     "github-push-when-ready",
-    "pr-review",
 )
 
 
@@ -143,7 +142,7 @@ class InstallerTargetTests(unittest.TestCase):
         dest = self.tmp / "dest"
         first = self.run_installer("--target", "claude", "--dest", str(dest))
         self.assertEqual(first.returncode, 0, first.stderr)
-        self.assertIn("Installed: 9", first.stdout)
+        self.assertIn("Installed: 8", first.stdout)
 
         second = self.run_installer("--target", "claude", "--dest", str(dest))
         self.assertEqual(second.returncode, 0, second.stderr)
@@ -151,11 +150,11 @@ class InstallerTargetTests(unittest.TestCase):
 
         third = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
         self.assertEqual(third.returncode, 0, third.stderr)
-        self.assertIn("Installed: 9", third.stdout)
+        self.assertIn("Installed: 8", third.stdout)
 
     def test_update_preserves_unmanaged_destination(self) -> None:
         dest = self.tmp / "dest"
-        unmanaged = dest / "pr-review"
+        unmanaged = dest / "local-custom-skill"
         unmanaged.mkdir(parents=True)
         (unmanaged / "SKILL.md").write_text("local work\n", encoding="utf-8")
 

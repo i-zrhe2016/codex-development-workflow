@@ -1,58 +1,21 @@
 @startuml
-!theme plain
-top to bottom direction
-skinparam defaultFontName Arial
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam wrapWidth 210
-skinparam ArrowColor #475569
-title Codex Development Workflow - Responsibilities and Durable Records
+title Codex Development Workflow Components
 
-actor "User\nRequirement + constraints" as user
-package "Main-agent ownership" #EFF6FF {
-  component "codex-development-workflow\nRouting / design / dependency order\nIntegration / final judgment" as main
-  component "Optional bounded delegation\nExplore / implement / test\nIsolated ownership; main agent integrates" as delegates
-}
-package "Specialist procedures (invoked when applicable)" #F0FDF4 {
-  component "context-efficiency\nLoad relevant context" as context
-  component "plan-to-ticket\nRequirement Plan -> behavior Tickets\nEach Ticket -> ordered Slices" as plan
-  component "test-workflow\nAcceptance -> selected checks\nEvidence + failures" as tests
-  component "repo-documentation\nCanonical owner per fact\nImpact check / index / lifecycle" as docs
-  component "data-document-redaction\nScan staged files\nBlock publication on findings" as redact
-  component "pr-review\nSingle PR merge gate\nPASS or BLOCKED decision" as review
-}
-package "Delivery and recovery" #FFF7ED {
-  component "github-push-when-ready\nReadiness / identity / actual push targets\nCommit / push / PR ready" as publish
-  component "run_review.py\nImplementation detail: lock / scope / streaming\nSaved execution and local logs" as runner
-  component "repo-current-state\nVerified post-merge snapshot\nTracked edits use a follow-up PR" as state
-}
-package "Tools and durable evidence" #F8FAFC {
-  database "GitHub Issues\nPlan + child Ticket records\nPlan Status / Branch / Base / PR\nTickets: behavior / acceptance" as issues
-  database "Git + GitHub PR\nOne Plan branch / PR / merge\nRequirement commits / checks / merged status\nDefault branch protected by workflow" as github
-  component "Alibaba Open Code Review CLI\nocr review --from <ref> --to <head>\nInvoked by pr-review" as cli
-  database "Local Git metadata\nocr-review/\nState / run history / logs\nNever committed" as logs
-  artifact "docs/Repo_Current_State.md\nCompact recovery index\nNot a ticket database" as snapshot
-}
+component "codex-development-workflow\nLifecycle orchestrator" as main
+component "plan-to-ticket\nPlan / Ticket / Slice planning" as plan
+component "test-workflow\nBounded verification" as test
+component "repo-documentation\nDocumentation governance" as docs
+component "data-document-redaction\nStaged sensitive-data scan" as redact
+component "github-push-when-ready\nCommit / Push / PR readiness" as publish
+database "GitHub Issues\nPlan / Ticket authority" as issues
+cloud "GitHub\nBranch / PR / Merge" as github
 
-user --> main
-main --> delegates : bounded tasks
-main --> context : understand
-main --> plan : define Plan + Tickets
-main --> tests : validate / integrate
-main --> docs : document impact
-main --> redact : staged scan
-main --> publish : deliver
-main --> review : PR ready
-main --> state : reconcile after merge
-plan --> issues : persist before branch work
-publish --> github : branch / PR lifecycle
-review --> runner : execute
-runner --> cli : execute review
-runner --> logs : stream + preserve evidence
-state --> snapshot : verified update
-legend bottom
-Skills guide the main agent; they are not autonomous background services.
-The main agent consumes evidence and decides whether workflow gates pass.
-An optional second reviewer is outside the default path and requires explicit high-risk scope.
-endlegend
+main --> plan
+plan --> issues
+main --> test
+main --> docs
+main --> redact
+main --> publish
+publish --> github
+main --> github : merge Plan PR
 @enduml

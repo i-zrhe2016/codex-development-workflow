@@ -15,41 +15,6 @@ The installer requires:
 Restart the host after installation so the new skill directories are
 discovered.
 
-## Configure pull-request review
-
-The `pr-review` Skill is the single pull-request merge gate. It uses Alibaba
-Open Code Review's `ocr review` command through its bundled recoverable runner.
-Install and configure Open Code Review before using it:
-
-```bash
-npm install --global @alibaba-group/open-code-review
-ocr config provider
-ocr config model
-```
-
-From the project root, invoke `pr-review` immediately after each PR creation or
-update. Its runtime instructions select the actual base and review scope:
-
-```bash
-python3 <skill-dir>/scripts/run_review.py --base origin/<base>
-```
-
-Only `PASS` permits merge. Blocking findings return to the affected
-test/redaction/commit/push loop before `pr-review` runs again. See the
-[`pr-review` Skill](../../skills/pr-review/SKILL.md) for the authoritative
-review policy and the [runner reference](../../skills/pr-review/references/review-execution.md)
-for execution recovery details.
-
-See the [Open Code Review repository](https://github.com/alibaba/open-code-review)
-for installation, configuration, and CLI details.
-
-## Optional supplemental review
-
-The project-scoped `.codex/agents/reviewer.toml` (Codex) and
-`.claude/agents/reviewer.md` (Claude Code) define the same optional reviewer,
-which sits outside the default PR path. Use it only when an explicitly
-high-risk change needs a second independent read-only review; it never replaces
-`pr-review`.
 
 ## Install the workflow
 
@@ -160,17 +125,14 @@ is not installed into another repository, and each host reads its own:
 | File | Read by | Purpose |
 |---|---|---|
 | `.codex/config.toml` | Codex | Enables subagents and caps concurrent spawned-agent threads at three, excluding the main thread. |
-| `.codex/agents/reviewer.toml` | Codex | The optional supplemental reviewer, made read-only by `sandbox_mode`. It reviews the open PR diff directly. |
-| `.claude/agents/reviewer.md` | Claude Code | The optional supplemental reviewer in Claude Code's Markdown + YAML format. It grants no write tool and no shell, so the task prompt must carry the patch text and the acceptance criteria. |
 | `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The Codex target requires it and installs it; the Claude target installs the bundle without it, because Claude Code never reads it. |
 
 Claude Code does **not** read `.codex/` and does not read `agents/openai.yaml`;
-Codex does **not** read `.claude/agents/`. Neither host reads the other's file,
-so a change to the reviewer must be applied to both definitions.
+Codex does **not** read `.claude/agents/`. Neither host reads the other's
+project-scoped configuration.
 
-Neither file is installed by `scripts/install-all.sh`; they stay in this
-checkout. Copy or adapt them into another project only when that project has the
-same delegation boundaries and review needs.
+Project-scoped runtime configuration stays in this checkout and is not installed
+by `scripts/install-all.sh`.
 
 ### Project instructions for each host
 

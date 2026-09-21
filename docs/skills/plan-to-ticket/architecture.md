@@ -68,7 +68,7 @@ application infrastructure topology.
   historical duplicate IDs remain legacy records.
 - Every requirement has exactly one Plan Issue and at least one Ticket Issue; a
   single-behavior requirement is one Ticket with one Slice, and the Plan's
-  branch, PR, `pr-review`, merge, and cleanup gates remain mandatory exactly
+  branch, PR, merge, and cleanup gates remain mandatory exactly
   once.
 
 ## Ticket-to-Slice hierarchy

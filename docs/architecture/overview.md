@@ -18,8 +18,6 @@ procedures remain inside their own `SKILL.md` files.
 | `codex-development-workflow` | Coordinates the single Requirement-to-Plan-to-PR-to-Merge lifecycle, Plan/Ticket/Slice decomposition, bounded verification, and delivery gates. |
 | Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
 | Subagent selection | The host picks the subagent from each agent definition's `description`; no document maps a task class to an agent. |
-| `.codex/agents/reviewer.toml` | Optional project-scoped supplemental reviewer for explicitly high-risk changes; it is outside the default path. |
-| `.claude/agents/reviewer.md` | The same optional reviewer for Claude Code. It requires the task prompt to carry the diff and the acceptance criteria, because it has no shell and cannot run `git diff` itself. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). |
 | `plan-to-ticket` | Creates exactly one Plan for every requirement, splits it into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the Plan and child Ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
@@ -30,33 +28,27 @@ procedures remain inside their own `SKILL.md` files.
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
 | `references/skill-map.md` | Maps each managed bundle to its local source and both host destinations. |
-| `data-document-redaction` | Scans the files staged for the next commit before publication and repeats the scan after blocking review fixes that change staged content. |
+| `data-document-redaction` | Scans the files staged for the next commit before publication and repeats the scan after subsequent fixes that change staged content. |
 | `github-push-when-ready` | Guards feature-branch publication through Commit, Push, and PR readiness. |
-| `pr-review` | Owns the single PR merge decision and returns `PASS` or `BLOCKED`. |
 
 The main agent centrally owns requirements, architecture, planning, dependency
 ordering, integration, and final judgment. Bounded delegation may route
 independent exploration, testing, or isolated implementation to subagents; the
 host selects which one, and [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation)
-owns the policy. Supplemental review is outside the default path and requires
-explicit high-risk scope. Dependent or overlapping work remains sequential, and
-the main agent must not duplicate active delegated work.
+owns the policy. Dependent or overlapping work remains sequential, and the main
+agent must not duplicate active delegated work.
 
 ## Development process
 
 ### Component responsibilities and records
 
-![Component responsibilities and durable records](../diagrams/components.svg)
-
-Editable source: [`components.puml`](../diagrams/components.puml). Skills are
+Component diagram source: [`components.puml`](../diagrams/components.puml). Skills are
 main-agent procedures, not independently running services. Solid arrows show
 invocation or record ownership; the main agent retains integration and gate decisions.
 
 ### End-to-end lifecycle
 
-![Codex Development Workflow development process](../diagrams/architecture.svg)
-
-Editable source: [`architecture.puml`](../diagrams/architecture.puml).
+Lifecycle diagram source: [`architecture.puml`](../diagrams/architecture.puml).
 
 ### Macro stages
 
@@ -73,9 +65,7 @@ Requirement
   -> Commit
   -> Push branch
   -> Create / Update PR
-  -> pr-review
-  -> PASS: Merge the Plan PR once
-  -> BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review loop
+  -> Merge the Plan PR once
   -> Delete branch
   -> Update main
   -> Close Plan + Tickets
@@ -101,22 +91,15 @@ or causes a Slice split.
 The detailed Plan/Ticket lifecycle is split into three linked views so each
 return edge has a clear scope and exit condition:
 
-![Ticket planning and dependency loop](../diagrams/ticket-lifecycle.svg)
-
-Source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml).
+Ticket lifecycle diagram source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml).
 
 ![Slice implementation and validation loop](../diagrams/ticket-slice-loop.svg)
 
 Source: [`ticket-slice-loop.puml`](../diagrams/ticket-slice-loop.puml).
 
-![Plan PR fix and review loop](../diagrams/ticket-review-loop.svg)
-
-Source: [`ticket-review-loop.puml`](../diagrams/ticket-review-loop.puml).
-
 Dependency waits resume only after fresh evidence; a failed Slice returns to
 diagnosis and affected validation, while a design conflict returns to planning.
-PR findings are fixed in one batch on the same branch and republished before
-review. Recovery returns to the recorded failed stage, never a later gate.
+A failed validation or publication step returns to the recorded failed stage, never a later gate.
 Only the single verified Plan merge permits `done` and Plan/Ticket Issue closure.
 There is no outer per-Ticket merge loop. `planned`, `in_progress`, `blocked`,
 and `in_review` remain open states; `Status` is workflow metadata, not a claim
@@ -165,7 +148,7 @@ implementation. The main agent delegates only tasks with a clear goal, scope
 and exclusions, ownership boundary, dependencies, acceptance criteria,
 validation, and expected result summary. Parallel write tasks must not share
 files, interfaces, schemas, migrations, or configuration. Delegation never
-bypasses Test, Redaction when applicable, Commit, Push, PR, `pr-review`, or
+bypasses Test, Redaction when applicable, Commit, Push, PR, or
 Merge. Prefer a single delegation level. The host selects the subagent by
 `description`; the policy lives in
 [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
@@ -196,46 +179,14 @@ After the selected level passes, stop unless the acceptance criteria, failure
 evidence, affected boundaries, release requirements, or the user justify an
 escalation.
 
-### Pull-request review gate
-
-![Open Code Review execution and recovery](../diagrams/review-execution.svg)
-
-Editable source: [`review-execution.puml`](../diagrams/review-execution.puml).
-
-`pr-review` is invoked immediately after `github-push-when-ready` reports a
-created or updated PR ready. It is the only policy owner for the merge decision:
-`PASS` permits merge, while `BLOCKED` returns to the fix/test/redaction/commit/
-push loop. The [`pr-review` Skill](../../skills/pr-review/SKILL.md) defines
-blocking criteria and when a complete or bounded review is appropriate; the
-[runner reference](../../skills/pr-review/references/review-execution.md)
-documents only execution recovery mechanics.
-
-The runner invokes Alibaba Open Code Review's `ocr review` command and keeps its
-logs and state local. The first review covers the complete PR, while eligible
-bounded fixes may use the runner's incremental execution. Current tests and CI
-remain separate evidence and must pass before merge.
-
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Redaction/Commit/Push/pr-review loop when blocked -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow)`
 
 ### Host-specific project configuration
 
-Each host reads its own agent definitions. Codex uses `.codex/config.toml`
-(subagents enabled, three concurrent spawned-agent threads excluding the main
-thread) and `.codex/agents/reviewer.toml`; Claude Code uses
-`.claude/agents/reviewer.md`. Both are optional supplemental reviewers for
-explicitly high-risk changes and stay outside the default PR path, but their
-input and tool contracts are host-specific: the Codex definition reads the open
-PR diff itself under a read-only sandbox, while the Claude definition has no
-shell and requires the task prompt to carry the patch text and the acceptance
-criteria. The installer copies managed skills only; these project-scoped
-files remain in the checkout where the host runs. See the
-[installation and update guide](../deployment/installation.md) for the full
-mapping.
-
+Each host reads its own agent definitions. 
 ### Staged-output redaction gate
 
 Run the gate on the files staged for the next commit and repeat it after any
-blocking review fix that changes staged content. The scan reports `pass`,
+subsequent fix that changes staged content. The scan reports `pass`,
 `findings`, `needs_review`, `noop`, or `error`; only `pass` and `noop` continue,
 and a recorded skip is allowed only when the staged change carries no sensitive
 surface.
@@ -262,11 +213,11 @@ procedure.
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
 - Every requirement has exactly one Plan with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and every Plan uses one branch and PR.
-- Tests provide evidence inside a Slice; `pr-review` is the mandatory PR-stage merge gate after the branch is published.
+- Tests provide evidence inside a Slice; the Plan PR remains the publication and merge boundary.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - `repo-documentation` owns documentation governance; `repo-current-state` owns
   only the recovery snapshot.
 - Redaction is conditional and scoped to the staged commit set; it is not a mandatory transformation of every artifact.
 - State / Docs are updated after merge, source-branch deletion, and default-branch synchronization.
 - The package does not own target-project source code, application data, or deployment infrastructure.
-- Specialist skills are vendored under `skills/` and updated through this repository's normal review and version-control process.
+- Specialist skills are vendored under `skills/` and updated through this repository's normal version-control process.

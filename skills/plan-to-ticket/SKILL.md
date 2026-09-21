@@ -22,7 +22,7 @@ Create additional Tickets only when they reduce implementation complexity more
 than they add planning overhead. Never create a second Plan for behavior that
 belongs to the same requirement; a smaller Ticket changes planning detail only,
 and the parent workflow still requires one Plan branch, tests, applicable
-redaction, commit, push, one PR, Automatic Review, and one merge.
+redaction, commit, push, one PR and one merge.
 
 When this skill creates a plan or ticket, GitHub Issues are the mandatory
 durable store. Persistence is not an optional output mode. Chat output is only
@@ -211,7 +211,7 @@ Do not start a dependency-blocked Ticket merely to fill metadata. A dependent
 Ticket becomes ready when its prerequisite Ticket/Slices are complete and
 validated on the same Plan branch; no prerequisite merge is needed. When every
 Ticket acceptance boundary passes, the Plan is ready to open or update its one
-pull request. The parent workflow starts Automatic Review immediately after
+pull request. The parent workflow starts publication immediately after
 that PR is created or updated, fixes blocking findings through the
 Test/Redaction/Commit/Push loop, and delivers the requirement only after the Plan
 pull request is merged.

@@ -90,7 +90,7 @@ After that, invalid commit messages are rejected before a commit is created. Eac
 5. Before any push, verify unpublished commit subjects follow Conventional Commits 1.0.0 and check/complete the GitHub repository About description. The guarded scripts do this automatically when executed.
 6. Treat `push` as eligible only when the working tree is clean, the local branch is ahead of its upstream or has no upstream yet, and About verification succeeds.
 7. Use `push_if_ready.py --execute` with explicit `--pathspec` values for the standard guarded commit-and-push flow. If one file mixes multiple functional units, stage only the intended hunks manually after assessment, then use the equivalent guarded commit and push commands.
-8. After the push succeeds, check for an existing PR and create or update it with `gh pr create`/`gh pr edit` as needed. Record the PR URL or blocker and return `PR ready` when the PR is available for the separate `pr-review` gate.
+8. After the push succeeds, check for an existing PR and create or update it with `gh pr create`/`gh pr edit` as needed. Record the PR URL or blocker and return `PR ready` when the PR is available and the publication checks are satisfied.
 9. For another functional unit, re-inspect the remaining diff and restart this workflow from the readiness assessment.
 
 ## Push Rules
@@ -145,7 +145,7 @@ Use `--force` only when you intentionally want to replace an existing unmanaged 
 
 ### `scripts/auto_push_post_commit.py`
 
-Runs the same readiness assessment after each valid commit, enforces the configured commit and GitHub identities, completes/verifies GitHub About metadata, and pushes only when `recommended_action` is `push` on a non-default Plan branch. It does not open PRs because a post-commit hook lacks the review title/body and branch intent; use the explicit Create / Update PR step after the push. This keeps the automatic mode conservative: partial commits, unresolved conflicts, missing GitHub remotes, missing About metadata, unverified identities, default-branch work, and branches that are behind upstream are all skipped instead of being forced through.
+Runs the same readiness assessment after each valid commit, enforces the configured commit and GitHub identities, completes/verifies GitHub About metadata, and pushes only when `recommended_action` is `push` on a non-default Plan branch. It does not open PRs because a post-commit hook lacks the PR title/body and branch intent; use the explicit Create / Update PR step after the push. This keeps the automatic mode conservative: partial commits, unresolved conflicts, missing GitHub remotes, missing About metadata, unverified identities, default-branch work, and branches that are behind upstream are all skipped instead of being forced through.
 
 ### `scripts/publish_identity.py`
 

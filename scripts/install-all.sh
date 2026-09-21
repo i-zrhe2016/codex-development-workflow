@@ -92,12 +92,12 @@ SKILLS=(
   "skills/repo-documentation|repo-documentation"
   "skills/data-document-redaction|data-document-redaction"
   "skills/github-push-when-ready|github-push-when-ready"
-  "skills/pr-review|pr-review"
 )
 
 # Destinations from bundles retired by the workflow. These are removed only
 # during an explicit update so old installations do not keep discovering them.
 OBSOLETE_SKILLS=(
+  "pr-review"
   "ponytail"
   "ponytail-review"
   "ponytail-audit"

@@ -5,8 +5,7 @@ This repository is the source of truth for every skill installed by
 clone specialist repositories at installation time.
 
 Project-scoped runtime configuration lives separately under `.codex/` and
-`.claude/`: custom agent files such as `.codex/agents/reviewer.toml` and
-`.claude/agents/reviewer.md` are not Skill metadata and are not copied by the
+`.claude/`; those files are not Skill metadata and are not copied by the
 installer. Skill interface metadata remains in each managed bundle's
 `agents/openai.yaml`. Codex requires that file: the Codex target fails when a
 bundle omits it, and installs it. The Claude target installs the same bundle
@@ -22,7 +21,6 @@ without it, because Claude Code never reads it.
 | `repo-documentation` | `skills/repo-documentation/` | `docs/skills/repo-documentation/` | `repo-documentation` | `repo-documentation` |
 | `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` | `data-document-redaction` |
 | `github-push-when-ready` | `skills/github-push-when-ready/` with its scripts | `docs/skills/github-push-when-ready/` | `github-push-when-ready` | `github-push-when-ready` |
-| `pr-review` | `skills/pr-review/` with its runner and execution reference | `docs/skills/pr-review/` | `pr-review` | `pr-review` |
 
 Both destinations are the bare skill name; only the root differs, selected by
 `--target` (`${CODEX_HOME:-$HOME/.codex}/skills` for Codex, `$HOME/.claude/skills`
@@ -47,11 +45,9 @@ conditionally performs browser/E2E verification when browser-visible behavior
 changes.
 
 `data-document-redaction` owns the staged-file scan before commit and repeats it
-after blocking review fixes that change staged content. `github-push-when-ready`
+after subsequent fixes that change staged content. `github-push-when-ready`
 owns the feature-branch publication path through Commit, Push, and Create/Update
-PR readiness. `pr-review` owns the single merge decision gate and invokes
-Alibaba Open Code Review's `ocr review` command through its recoverable runner.
-The runner is packaged with `pr-review` rather than installed separately.
+PR readiness.
 
 `repo-documentation` owns documentation governance: the documentation impact
 check, canonical ownership per fact, the documentation router, the Markdown

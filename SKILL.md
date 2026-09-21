@@ -1,6 +1,6 @@
 ---
 name: codex-development-workflow
-description: "Entry point for repository-wide development. Record exactly one Plan per requirement with one or more Tickets, then route the Plan through one branch, tests, applicable redaction, commit, push, PR, pr-review, merge, cleanup, state update, and post-delivery process evaluation."
+description: "Entry point for repository-wide development. Record exactly one Plan per requirement with one or more Tickets, then route the Plan through one branch, tests, applicable redaction, commit, push, PR, merge, cleanup, state update, and post-delivery process evaluation."
 ---
 
 # Development Workflow
@@ -28,9 +28,7 @@ Requirement
     -> Commit
     -> Push branch
     -> Create / Update PR
-    -> pr-review
-    -> PASS: Merge the Plan PR once -> Delete branch -> Update main -> Close Plan + Tickets
-    -> BLOCKED: Fix -> Test -> Redaction -> Commit -> Push -> pr-review again
+    -> Merge the Plan PR once -> Delete branch -> Update main -> Close Plan + Tickets
     -> Update State / Docs
     -> If separately authorized: external release handoff (outside this workflow)
     -> Evaluate workflow
@@ -61,13 +59,10 @@ updates, and CI/CD changes all use the same path:
 4. Stage the intended files and run the redaction scan; continue on `pass`, or
    on a recorded skip when the staged change carries no sensitive surface.
 5. Commit and push the branch, then create or update its PR.
-6. Invoke `pr-review` immediately after the PR is created or updated; do not
-   wait for user confirmation.
-7. If `pr-review` returns `BLOCKED`, fix the findings and repeat Test,
-   Documentation impact, applicable Redaction, Commit, Push, and `pr-review`.
-8. Merge the Plan PR only after `pr-review` returns `PASS`, delete the source
-   branch, update the base branch, close the Plan and its child Tickets, and
-   then update State / Docs.
+6. Merge the Plan PR once the planned work, selected tests, documentation impact,
+   applicable redaction, commit, push, and PR publication steps have completed.
+   Delete the source branch, update the base branch, close the Plan and its child
+   Tickets, and then update State / Docs.
 9. After delivery, evaluate the workflow and start
    at most one bounded follow-up improvement when the evidence is reusable.
 
@@ -139,7 +134,7 @@ After the Plan branch exists and before or during implementation, the main agent
 may evaluate whether bounded delegation is useful. Delegation is optional;
 the default path remains a single agent executing the Slice itself. Delegation
 does not create a second delivery path or bypass the branch, test, redaction,
-commit, push, PR, review, and merge gates.
+commit, push, PR, and merge gates.
 
 Use delegation only for a bounded, independently executable task. Keep
 dependent or overlapping work sequential.
@@ -203,9 +198,7 @@ subagents unless explicitly required.
   Tickets to `Status: done` and close them.
 - Track implementation readiness separately from merge status. A passing
   change is ready to open or update a PR; it is delivered only after merging.
-- After `pr-review` returns `PASS`, merge the one Plan PR, delete the source
-  branch, update the default branch, close the Plan and child Tickets, and then
-  update State / Docs.
+- After the Plan PR is ready and the existing validation and publication checks pass, merge the one Plan PR, delete the source branch, update the default branch, close the Plan and child Tickets, and then update State / Docs.
 - If a ticket needs to be abandoned, preserve its work and re-plan.
   Do not automatically delete unmerged branches or reset user changes.
 
@@ -250,19 +243,6 @@ broader checks unless the acceptance criteria, a failure, an affected boundary,
 release requirements, or the user justifies escalation. The report should name
 the level used, commands, result, evidence, and any escalation reason.
 
-## Pull-request review gate
-
-After `github-push-when-ready` reports the Plan PR ready, invoke `pr-review`
-immediately. `PASS` permits merge. `BLOCKED` requires the main agent to batch
-the findings, fix them, run affected tests and applicable redaction, commit,
-push, and invoke `pr-review` again.
-
-`pr-review` is the sole owner of review scope, execution, assessment, and the
-decision about whether the PR can merge. Do not merge before it returns
-`PASS`.
-
-This workflow supports optional bounded delegation. It does not require
-multiple agents, parallel implementations, or agent handoffs for every task.
 
 ## Post-delivery evaluation and bounded self-improvement
 
@@ -272,7 +252,7 @@ delay an otherwise complete delivery.
 
 Evaluate only evidence from the completed work:
 
-- avoidable rework, failed assumptions, and repeated review findings;
+- avoidable rework, failed assumptions, and repeated delivery failures;
 - planning, context loading, or delegation that was too heavy or too weak;
 - tests or redaction that were disproportionate to the actual risk;
 - repeated manual steps that are good automation candidates;
@@ -291,10 +271,10 @@ Action: none | follow-up change | report for later
 
 When the user explicitly asks for timing, capture monotonic wall-clock duration
 for each externally observable gate: Plan/Ticket setup and Plan branch creation, implementation,
-validation, redaction, commit/push, PR and `pr-review`, merge/cleanup, and
+validation, redaction, commit/push, PR, merge/cleanup, and
 any requested Skill installation or synchronization. Use the measured command
 boundaries rather than estimates, report the total separately, and identify
-whether network or reviewer latency dominated the run. Timing is observational
+the dominant latency source. Timing is observational
 and does not add a new delivery gate; do not persist session-specific timing
 logs or include credentials, tokens, or private endpoint values in the report.
 
@@ -304,7 +284,7 @@ Self-improvement is bounded by these rules:
    supported by concrete evidence. Task-specific preference is not enough.
 2. Prefer simplifying, merging, or removing redundant steps before adding a new
    stage, agent, skill, document, or persistent record.
-3. Never weaken branch/PR, `pr-review`, redaction, security, permission,
+3. Never weaken branch/PR, redaction, security, permission,
    or release gates merely to reduce friction.
 4. A concrete, low-risk improvement that stays within the current workflow's
    intent may start automatically as one new follow-up change. Changes to
@@ -312,7 +292,7 @@ Self-improvement is bounded by these rules:
    scope are reported instead of self-applied.
 5. A follow-up improvement is a normal repository change: start from the
    updated default branch and repeat Plan -> Branch -> Test -> applicable
-   Redaction -> Commit -> Push -> PR -> `pr-review` -> Merge. Never edit
+   Redaction -> Commit -> Push -> PR -> Merge. Never edit
    the completed branch, installed skill, or default branch as a side effect of
    evaluation.
 6. Start at most one automatic follow-up improvement per delivered user
@@ -349,7 +329,6 @@ do not duplicate its detailed procedure here.
   content.
 - `github-push-when-ready`: before branch publication, commit, push, or PR
   readiness.
-- `pr-review`: after a PR is created or updated; the single merge decision gate.
 
 If a required specialist is unavailable locally, report it instead of silently
 replacing its workflow.
@@ -367,11 +346,8 @@ For every change, regardless of its file type or size:
 4. Stage the intended change and run `data-document-redaction`; continue only
    on `pass`, `noop`, or a recorded no-sensitive-surface skip.
 5. Invoke `github-push-when-ready`, commit, push the Plan branch, and create or
-   update the single Plan PR until it is ready for review.
-6. Invoke `pr-review` immediately. Merge only after it returns `PASS`.
-7. On `BLOCKED`, repeat Fix -> Test -> Documentation impact -> Redaction if
-   applicable -> Commit -> Push -> `pr-review` until it returns `PASS`.
-8. After `PASS`, merge the Plan PR once, delete the source branch, update the
+   update the single Plan PR until it is ready to merge.
+6. Merge the Plan PR once, delete the source branch, update the
    default branch, and close the Plan and its linked Tickets.
 9. Update `docs/Repo_Current_State.md` and other State / Docs after the merge
    and default-branch update when verified project state changed.
@@ -399,7 +375,7 @@ complete backlog, or test report.
 ## Redaction gate contract
 
 Run the gate on the files staged for the next commit, and repeat it after any
-blocking review fix that changes staged content before the next commit.
+subsequent fix that changes staged content before the next commit.
 
 - Stage the intended change, then run the `data-document-redaction` scanner and
   follow [`docs/workflow/redaction.md`](docs/workflow/redaction.md).

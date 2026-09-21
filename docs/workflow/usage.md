@@ -2,7 +2,7 @@
 
 > Type: Guide
 > Status: Active
-> Scope: Running the development workflow: stages, Plan/Ticket handoff, delegation, verification, review, and completion order
+> Scope: Running the development workflow: stages, Plan/Ticket handoff, delegation, verification, publication, and completion order
 
 Use `codex-development-workflow` as the entry point for repository work. It
 keeps planning at the Plan/Ticket/Slice levels, but uses one delivery path for
@@ -23,9 +23,7 @@ Requirement
   -> Commit
   -> Push branch
   -> Create / Update PR
-  -> pr-review
-  -> PASS: Merge the Plan PR once
-  -> BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review loop
+  -> Merge the Plan PR once
   -> Delete branch
   -> Update main
   -> Close Plan + Tickets
@@ -127,11 +125,8 @@ Verify the current branch and working tree before editing and preserve
 unrelated or uncommitted work. Parallel workers use isolated worktrees or
 return patches/findings for integration on the Plan branch; never create a
 second delivery branch for a Ticket. Before committing and pushing, complete
-the Plan's acceptance and relevant integration checks. After creating or
-updating the Plan PR, invoke `pr-review` without waiting for user confirmation.
-A passing Plan is ready for merge, not delivered; on `BLOCKED`, fix findings and
-repeat Test, applicable Redaction, Commit, Push, and `pr-review` before the one
-merge. The Plan Issue and implementation branch are a one-to-one pair; record
+the Plan's acceptance and relevant integration checks. After creating or updating the Plan PR, merge it once the existing validation
+and publication gates are satisfied. The Plan Issue and implementation branch are a one-to-one pair; record
 and verify the Plan's `Branch`/`Base` values, and require the Plan PR head/base
 to match them.
 
@@ -177,22 +172,6 @@ level passes unless acceptance criteria, failure evidence, affected boundaries,
 release requirements, or the user justify escalation. Report the level,
 commands, result, evidence, and escalation reason.
 
-## Pull-request review
-
-After the publication Skill reports `PR ready`, invoke the
-[`pr-review`](../../skills/pr-review/SKILL.md) Skill. It is the single merge
-decision gate and returns `PASS` or `BLOCKED`; its runtime instructions own the
-blocking criteria, review scope, and fix loop. The recoverable runner and its
-execution reference are implementation details of that Skill.
-
-An optional project-scoped supplemental reviewer is outside the default path
-and may be used only when an explicitly high-risk change calls for it.
-
-Read `docs/Repo_Current_State.md` at the start of planning. After merge, source
-branch deletion, and default-branch synchronization, update it when verified
-project state changed. Use it as a compact recovery point for current focus,
-implemented behavior, in-progress Slice, known failures, constraints, and the
-next Slice. It is not a session transcript, full backlog, or test report.
 
 ## Post-delivery workflow evaluation
 
@@ -202,7 +181,7 @@ the code, so it is not a merge gate.
 
 Look only for evidence from the completed work:
 
-- avoidable rework, failed assumptions, or repeated review findings;
+- avoidable rework, failed assumptions, or repeated delivery failures;
 - planning, context loading, or delegation that was too heavy or too weak;
 - tests or redaction that were disproportionate to risk;
 - repeated manual work that should be automated;
@@ -219,13 +198,13 @@ Action: none | follow-up change | report for later
 
 Apply self-improvement only when the lesson is reusable and evidence-backed.
 Prefer simplifying or removing redundant steps before adding new process. Never
-weaken branch/PR, `pr-review`, redaction, security, permission, or release
+weaken branch/PR, redaction, security, permission, or release
 gates for convenience.
 
 A low-risk improvement that stays within the existing workflow intent may start
 automatically as one separate follow-up repository change. It must begin from
 the updated default branch and repeat the normal branch, validation, redaction,
-PR, `pr-review`, and merge lifecycle. Policy, permission, security,
+PR and merge lifecycle. Policy, permission, security,
 release behavior, and broad project-scope changes are reported instead of
 self-applied.
 
@@ -238,7 +217,7 @@ without inventing work or backlog entries.
 
 Stage the intended change, then invoke `data-document-redaction` and follow
 [redaction.md](redaction.md) before creating the commit. Repeat the scan after
-any blocking review fix that changes staged content, before the next commit.
+any subsequent fix that changes staged content, before the next commit.
 
 The scan returns `pass`, `findings`, `needs_review`, `noop`, or `error`. Only
 `pass` and `noop` continue; record the inspected scope and skip only when the
@@ -251,7 +230,7 @@ project-specific tooling and review.
 
 ## Completion order
 
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Documentation impact check -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> pr-review -> Fix/Test/Documentation impact/Redaction/Commit/Push/pr-review loop -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
+`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Documentation impact check -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).
