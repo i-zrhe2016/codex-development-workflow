@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: working tree
+Last verified: 2026-09-21 @ a38e2d3
 
 ## Current Focus
 
@@ -31,6 +31,17 @@ Last verified: working tree
 - Diagrams are drawn with the host-installed `plantuml-skill` and rendered
   through Kroki. `docs/skills/repo-documentation/diagrams/` and
   `docs/deployment/diagrams/` hold the two diagrams added with the policy.
+- Documentation carries two complementary diagram layers: Draw.io for polished,
+  editable, human-facing overview views, and PlantUML for detailed
+  diagrams-as-code. Six editable `.drawio` views and their rendered `.svg` files
+  live under `docs/diagrams/drawio/`, where `doc-file-standard.md` sanctions
+  shared repository-level overviews.
+- `docs/` was normalized to the `repo-documentation` standard: every content
+  document carries a conforming `Type` / `Status` / `Scope` header, no document
+  claims a retired skill runs, no two documents share a `#` title, every
+  document is reachable from the root `README.md` router, and the legacy
+  directory placement and the Chinese `docs/skills/test-workflow/*` set were
+  reported rather than moved or translated.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
@@ -53,18 +64,24 @@ Last verified: working tree
 - Pre-existing identity and SSH test fixtures remain under
   `skills/github-push-when-ready/`; the staged redaction scan for PR #69
   passed, but this is not a repository-wide redaction classification.
-- Rendered diagrams under `docs/diagrams/` and `docs/skills/*/diagrams/` still
-  bake in the old "Codex" naming. Regenerating them needs PlantUML/Kroki
+- Rendered diagrams still bake in the old "Codex" naming. The affected files are
+  `docs/diagrams/architecture.svg`, `docs/diagrams/components.svg`,
+  `docs/deployment/diagrams/installer-decision-flow.svg`,
+  `docs/diagrams/drawio/workflow-overview.svg`, and
+  `docs/diagrams/drawio/installer-overview.svg`; the four per-skill SVGs under
+  `docs/skills/*/diagrams/` are clean. Regenerating them needs PlantUML/Kroki
   tooling that is not part of this repository.
 - `AGENTS.md` routes "Architecture or flow visualization" to a `plantuml-skill`
   that this repository does not bundle; the skill is installed on the host
   instead. `repo-documentation` now states that rendering is delegated to it by
   name and defines the unrendered path, so the routing is actionable even though
   the bundle is absent.
-- The existing shared `docs/diagrams/` directory predates the
-  `repo-documentation` diagram placement rule that puts new diagrams beside
-  their owning document. Those diagrams stay in place until their document is
-  migrated; no change has moved them.
+- The older shared `docs/diagrams/` PlantUML set (`architecture`, `components`,
+  `ticket-lifecycle`, `ticket-slice-loop`) predates the `repo-documentation`
+  placement rule that puts new diagrams beside their owning document. Those
+  diagrams stay in place until their owning document is migrated;
+  `docs/diagrams/drawio/` is a sanctioned location for shared
+  repository-level overviews, so it is not part of this finding.
 
 ## Constraints
 
@@ -82,7 +99,9 @@ Last verified: working tree
 - The root workflow owns lifecycle routing, Plan/Ticket/Slice gates, delegation,
   verification, and merge/cleanup guidance; each requirement has exactly one
   Plan, and each Plan owns one branch, PR, and merge for its child Tickets.
-- `github-push-when-ready` owns publication through PR readiness; the parent workflow merges the Plan PR after the existing validation and publication gates pass.
+- `github-push-when-ready` owns publication through PR readiness; the parent
+  workflow merges the Plan PR after the existing validation and publication
+  gates pass.
 - `repo-documentation` owns documentation governance and `repo-current-state`
   owns only the recovery snapshot. This repository routes its documentation from
   the root `README.md` instead of `docs/README.md`.
