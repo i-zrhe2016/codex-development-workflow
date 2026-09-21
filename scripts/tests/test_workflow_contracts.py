@@ -116,6 +116,35 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("retry cannot convert an unexplained flaky failure to PASS", root_skill)
         self.assertIn("Coverage is", root_skill)
 
+    def test_every_plantuml_source_has_same_basename_svg(self) -> None:
+        sources = sorted((REPO_ROOT / "docs").rglob("*.puml"))
+        self.assertTrue(sources, "Expected repository documentation diagrams.")
+        for source in sources:
+            with self.subTest(source=source.relative_to(REPO_ROOT)):
+                rendered = source.with_suffix(".svg")
+                self.assertTrue(rendered.is_file(), f"Missing render for {source}")
+                svg = rendered.read_text(encoding="utf-8")
+                self.assertIn("<svg", svg)
+
+    def test_plantuml_sources_follow_repository_contract(self) -> None:
+        for source in sorted((REPO_ROOT / "docs").rglob("*.puml")):
+            text = source.read_text(encoding="utf-8")
+            with self.subTest(source=source.relative_to(REPO_ROOT)):
+                self.assertIn("@startuml", text)
+                self.assertIn("@enduml", text)
+                self.assertIn("!theme plain", text)
+                self.assertNotIn("context-efficiency", text)
+                self.assertNotIn("PR review loop", text)
+
+    def test_every_plantuml_source_is_referenced_by_documentation(self) -> None:
+        markdown = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in [README, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
+        )
+        for source in sorted((REPO_ROOT / "docs").rglob("*.puml")):
+            with self.subTest(source=source.relative_to(REPO_ROOT)):
+                self.assertIn(source.name, markdown)
+
 
 if __name__ == "__main__":
     unittest.main()
