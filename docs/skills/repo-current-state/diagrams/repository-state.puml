@@ -1,24 +1,30 @@
 @startuml
 !theme plain
 top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
 
-title Repository documentation flow
+title repo-current-state — Verified Recovery Snapshot
 
 actor "Maintainer / Agent" as maintainer
-rectangle "SKILL.md\nMaintenance contract" as skill
-rectangle "Repository evidence\nFiles, config, Git state" as evidence
-rectangle "Merged PR + cleaned branch\nSynchronized default branch" as merged
-rectangle "docs/Repo_Current_State.md\nVerified snapshot" as state
-rectangle "README.md + docs/\nEntry point and detail" as docs
-rectangle "agents/openai.yaml\nAgent metadata" as metadata
+rectangle "Merged Plan PR\nSource branch deleted\nDefault branch synchronized" as delivery
+rectangle "Repository evidence\nGit state / files / config / issue status" as evidence
+rectangle "repo-current-state\nVerification rules" as skill
+rectangle "docs/Repo_Current_State.md\nCompact verified recovery point" as snapshot
+rectangle "Canonical documentation\nREADME + docs/" as docs
+database "GitHub Issues\nPlan / Ticket status" as issues
 
-maintainer --> skill : reads
-maintainer --> metadata : discovers
-maintainer --> merged : after delivery
-skill --> evidence : defines verification scope
-merged --> evidence : provides post-merge truth
-evidence --> state : records current facts
-state --> docs : links to detail
-skill ..> state : governs updates
+maintainer --> skill : invoke after verified state change
+delivery --> evidence : post-merge truth
+issues --> evidence : durable work status
+skill --> evidence : verify only relevant facts
+evidence --> snapshot : replace stale facts with current facts
+snapshot --> docs : point to detailed owners
+maintainer --> snapshot : resume from exact current state
 
+note right of snapshot
+Not a backlog.
+Not a session transcript.
+Not a duplicate of GitHub Issues.
+end note
 @enduml
