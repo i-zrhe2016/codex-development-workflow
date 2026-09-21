@@ -27,3 +27,6 @@ textual diffability matter more.
 - Run repository contract tests after edits.
 - Visually inspect overlap, clipping, crossings, edge-through-node routing, and
   label readability before publication.
+- Run `python -m unittest discover -s scripts/tests -p 'test_*.py'` before
+  publication; the repository contract tests parse every overview source and
+  verify SVG pairing plus documentation reachability.
