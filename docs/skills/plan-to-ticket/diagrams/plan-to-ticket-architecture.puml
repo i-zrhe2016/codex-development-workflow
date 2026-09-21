@@ -1,48 +1,39 @@
 @startuml
 !theme plain
 left to right direction
-
-skinparam packageStyle rectangle
-skinparam componentStyle rectangle
 skinparam shadowing false
-skinparam linetype ortho
 skinparam defaultFontName Arial
+skinparam componentStyle rectangle
 
-title Plan-to-Ticket Skill - Logical Architecture
+title plan-to-ticket — Plan / Ticket / Slice Persistence
 
 actor "Requestor" as requestor
+component "Skill trigger" as trigger
+component "Plan boundary" as plan
+component "Ticket decomposition" as tickets
+component "Slice decomposition" as slices
+component "Issue persistence\nrequired" as persistence
+database "GitHub Issues\nauthoritative Plan / Ticket records" as issues
+component "Result summary\nlinks + execution metadata" as output
 
-package "Codex orchestration" as orchestration #EAF2F8 {
-  component "Skill matcher" as matcher #D6EAF8
-  component "Planning instructions" as planner #D6EAF8
-  component "Plan + Ticket decomposition" as ticketing #D6EAF8
-  component "Slice decomposition" as slicing #D6EAF8
-  component "Issue persistence\n(required)" as persistence #D6EAF8
-  component "Text output\n(links only)" as output #D6EAF8
+folder "Skill bundle" as bundle {
+  artifact "SKILL.md" as skill
+  artifact "agents/openai.yaml" as metadata
 }
+folder "Documentation" as docs
 
-database "GitHub Issues\n(authoritative)" as issues #F9E79F
-
-package "Repository assets" as repository #FDF2E9 {
-  artifact "SKILL.md" as skill #FAD7A0
-  artifact "agents/openai.yaml" as metadata #FAD7A0
-  folder "docs/" as docs #FAD7A0
-}
-
-requestor --> matcher : request
-matcher --> planner : select
-planner --> ticketing : define behavior boundaries
-ticketing --> slicing : split each Ticket
-slicing --> persistence : persist Plan + Ticket plan
-persistence --> issues : CRUD
+requestor --> trigger : requirement
+trigger --> plan
+plan --> tickets : behavior boundaries
+tickets --> slices : dependency-ordered work
+slices --> persistence : complete execution contract
+persistence --> issues : create / update Plan + Tickets
 issues --> persistence : IDs / URLs
-persistence --> output : links
-output --> requestor : Plan + Tickets
+persistence --> output : canonical links
+output --> requestor
 
-skill --> matcher : trigger
-skill --> planner : rules
-skill ..> persistence
-metadata --> matcher
-docs ..> requestor : reference
-
+skill --> trigger : invocation rules
+skill --> plan : decomposition rules
+metadata --> trigger : UI metadata
+docs ..> requestor : usage / architecture reference
 @enduml
