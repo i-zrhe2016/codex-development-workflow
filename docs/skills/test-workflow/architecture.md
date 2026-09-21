@@ -6,7 +6,7 @@
 清单、验收标准和现有契约中提炼最小高价值测试集，并按成本从低到高逐层
 验证。浏览器验证只在行为对用户可见或验收明确要求端到端流程时启用。
 
-![test-workflow 通用测试验证梯度](diagrams/test-workflow-flow.svg)
+![test-workflow 风险驱动验证与 Test Quality Gate](diagrams/test-workflow-flow.svg)
 
 ## 核心数据流
 
@@ -83,4 +83,4 @@ role、label、accessible name 或 test ID，并记录实际页面状态和必�
 
 测试报告只记录实际执行的操作和证据。页面地址、账号、Cookie、Token、个人信息和真实业务数据使用占位符；公开图源和文档不应包含凭据或内部业务信息。
 
-图源位于 [`diagrams/test-workflow-flow.puml`](diagrams/test-workflow-flow.puml)。
+Source: [`diagrams/test-workflow-flow.puml`](diagrams/test-workflow-flow.puml)
