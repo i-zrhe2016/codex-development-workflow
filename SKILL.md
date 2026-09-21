@@ -314,8 +314,6 @@ not to maximize process, documentation, or agent activity.
 Invoke a specialist only when its trigger applies. Follow its own `SKILL.md`;
 do not duplicate its detailed procedure here.
 
-- `context-efficiency`: large, unfamiliar, or context-heavy repository
-  exploration; it is an optional context-loading aid, not a workflow stage.
 - `plan-to-ticket`: every requirement receives a Plan/Ticket/Slice breakdown;
   create exactly one Plan Issue and one or more child Ticket Issues before
   generating their Slices. Generated Slices must satisfy the Slice contract
