@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file defines repository-wide engineering principles, the development lifecycle, and when specialist Skills must be invoked.
+This file defines repository-wide engineering principles, the development workflow stages, and when specialist Skills must be invoked.
 
 Detailed procedures belong in each Skill's `SKILL.md`. Do not duplicate them here.
 
@@ -26,28 +26,29 @@ Priority:
 
 ## Development Workflow
 
-Use the lightest workflow that preserves correctness.
+Use the lightest workflow that preserves correctness. Work is routed to the
+stage that owns it rather than running one fixed chain for every request.
 
-For non-trivial work:
+| Situation | Stage |
+| --- | --- |
+| A requirement needs understanding, design, or decomposition | `plan-workflow` |
+| Repository content must change | `develop-workflow` |
+| Acceptance, a regression, or a branch needs proof | `verify-workflow` |
+| A verified change must be committed, pushed, or turned into a PR | `publish-workflow` |
+| A ready PR must be merged, cleaned up, or reconciled | `integrate-workflow` |
+| The user explicitly authorizes a complete end-to-end delivery | the full orchestration in `codex-development-workflow` |
 
-`Requirement -> Understand repo -> Plan -> Record Plan + Tickets + Slices -> Create Plan branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update Plan PR -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> Update State/Docs -> If separately authorized: external release handoff (outside this workflow)`
+Feature, bug fix, refactor, and documentation work are profiles of these stages,
+not separate workflows.
 
-Use `codex-development-workflow` to orchestrate the lifecycle.
+Persist a Plan Issue with one or more child Ticket Issues before branch work
+when the work is complex, must survive a session boundary, or the user asks for
+a persisted plan. A persisted Plan owns one branch, one PR, and one merge for
+all of its Tickets; split each Ticket into independently verifiable Slices.
 
-For each slice:
-
-`Acceptance Criteria -> Test Strategy -> Minimal Change -> Focused Validation -> Complete`
-
-* Work on one clear functional unit per agent at a time; independent Slices may run in parallel only when their ownership boundaries are disjoint.
-* Record exactly one GitHub Issue Plan for each requirement before creating its Plan branch, regardless of whether the change is Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, or CI/CD. A Plan may contain one or more behavior Ticket Issues; split each Ticket into independently verifiable Slices.
-* Every change type uses the same Plan-branch and PR gate: docs, code, tests, configuration, refactors, bug fixes, features, dependencies, and CI/CD changes must not bypass the PR.
-* Split complex or dependency-driven work into small, independently verifiable slices.
-* Run the smallest validation set that provides sufficient evidence.
-* Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
-* Do not force strict TDD or multi-Slice decomposition onto trivial changes; a tiny requirement is one Plan with one Ticket and one implicit Slice, and it still requires one branch and PR.
-* When the user explicitly requests workflow timing, record measured monotonic wall-clock duration for each externally observable gate and the total run; report the dominant latency source. Timing is observational, does not add a delivery gate, and must not persist session-specific timing logs.
-* If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.
-* Do not mix unrelated features, refactors, formatting, or dependency upgrades.
+`codex-development-workflow` routes to these stages and carries the invariants
+that hold in all of them. Its full orchestration is the only path that runs
+several stages as one authorized delivery.
 
 ## Multi-Agent Delegation
 
@@ -107,14 +108,19 @@ restating it.
 
 | Situation                                                              | Skill                        |
 | ---------------------------------------------------------------------- | ---------------------------- |
-| Non-trivial repository development lifecycle                           | `codex-development-workflow` |
-| Complex, multi-step, dependent, or incremental work                    | `plan-to-ticket`             |
+| Routing a request to its stage, or an authorized end-to-end delivery   | `codex-development-workflow` |
+| Planning, designing, or decomposing before changes                     | `plan-workflow`              |
+| Implementing or modifying repository content                           | `develop-workflow`           |
+| Verifying acceptance, a regression, or a branch                        | `verify-workflow`            |
+| Committing, pushing, or preparing a pull request                       | `publish-workflow`           |
+| Merging, cleaning up, or reconciling after delivery                    | `integrate-workflow`         |
+| Complex, multi-step, dependent, or incremental work needs a Plan/Ticket/Slice breakdown | `plan-to-ticket` |
 | Feature, bug fix, regression, integration, or browser validation       | `test-workflow`              |
 | Architecture or flow visualization materially improves understanding   | `plantuml-skill`             |
 | Verified repository state materially changed                           | `repo-current-state`         |
 | Every change (documentation impact check), or docs need normalizing    | `repo-documentation`         |
 | Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
-| Branch publication, Commit, Push, or PR readiness is required           | `github-push-when-ready`     |
+| Branch publication, Commit, Push, or PR readiness is required          | `github-push-when-ready`     |
 
 ## Skill Rules
 

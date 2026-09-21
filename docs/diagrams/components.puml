@@ -8,7 +8,12 @@ skinparam componentStyle rectangle
 title Codex Development Workflow — Components and Authorities
 
 actor "Main agent" as agent
-component "codex-development-workflow\nLifecycle orchestrator" as main
+component "codex-development-workflow\nWorkflow router + full orchestration" as main
+component "plan-workflow\nRequirement to work definition" as planw
+component "develop-workflow\nImplement to Development Complete" as devw
+component "verify-workflow\nVerification scope and conclusion" as verifyw
+component "publish-workflow\nDocs, redaction, commit, push, PR ready" as pubw
+component "integrate-workflow\nMerge, cleanup, state, docs" as intw
 component "plan-to-ticket\nPlan / Ticket / Slice decomposition" as plan
 component "test-workflow\nRisk-aware verification\nTest Quality Gate" as test
 component "repo-documentation\nDocumentation governance" as docs
@@ -20,16 +25,21 @@ database "GitHub Issues\nPlan / Ticket authority" as issues
 cloud "GitHub\nBranch / PR / Merge" as github
 folder "Repository docs\nREADME + docs/" as docstore
 
-agent --> main
-main --> plan : planning
-plan --> issues : persist
-main --> test : verification
-main --> docs : impact / ownership
+agent --> main : route request
+main --> planw
+planw --> devw
+devw --> verifyw
+verifyw --> pubw
+pubw --> intw
+planw --> plan : decompose
+plan --> issues : persist when required
+verifyw --> test : invoke
+pubw --> docs : impact / ownership
 docs --> docstore : update canonical docs
-main --> redact : pre-publication scan
-main --> publish : publish branch
+pubw --> redact : pre-publication scan
+pubw --> publish : publish branch
 publish --> github : commit / push / PR
-main --> github : merge once
-main --> state : post-merge reconciliation
+intw --> github : merge once
+intw --> state : post-merge reconciliation
 state --> docstore : update snapshot
 @enduml

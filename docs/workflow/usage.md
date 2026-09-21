@@ -2,28 +2,46 @@
 
 > Type: Guide
 > Status: Active
-> Scope: Running the development workflow: stages, Plan/Ticket handoff, delegation, verification, publication, and completion order
+> Scope: Running the development workflow: stage routing, Plan/Ticket handoff, delegation, verification, publication, and completion order
 
 Use `codex-development-workflow` as the entry point for repository work. It
-keeps planning at the Plan/Ticket/Slice levels, but uses one delivery path for
-every change type.
+routes a request to the stage workflow that owns it and carries the invariants
+shared by every stage.
 
-## Staged workflow
+## Stage workflows
 
 ```text
 Requirement
-  -> Understand repo
-  -> Plan
-  -> Record Plan + Tickets + Slices
-  -> Create Plan branch
+  -> plan-workflow        understand, design, decompose, persistence decision
+  -> develop-workflow     implement to Development Complete
+  -> verify-workflow      verification scope, level, and conclusion
+  -> publish-workflow     documentation impact, redaction, commit, push, PR ready
+  -> integrate-workflow   merge once, cleanup, close Issues, state and docs
+```
+
+Run one stage when that is all the request needs:
+
+| Request | Stage |
+|---|---|
+| Plan, design, investigate, or decompose before code changes | `plan-workflow` |
+| Implement, fix, refactor, or change repository content | `develop-workflow` |
+| Verify acceptance criteria, a regression, or a branch | `verify-workflow` |
+| Commit, push, or prepare a pull request | `publish-workflow` |
+| Merge, clean up, or reconcile after delivery | `integrate-workflow` |
+
+The full orchestration runs every stage as one explicitly authorized
+end-to-end delivery:
+
+```text
+Create Plan branch
   -> Implement all Plan Tickets
-  -> Test
+  -> Test Quality Gate
   -> Documentation impact check
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
   -> Create / Update PR
-  -> Merge the Plan PR once
+  -> Merge the PR once
   -> Delete branch
   -> Update main
   -> Close Plan + Tickets
@@ -33,11 +51,11 @@ Requirement
   -> Reusable improvement? -> one bounded follow-up change or finish
 ```
 
-The pipeline is identical for Docs, Code, Tests, Config, Refactor, Bugfix,
-Feature, Dependency, and CI/CD changes. Every requirement is recorded as
-exactly one Plan Issue with one or more child Ticket Issues before the Plan
-branch starts; only planning depth and test level vary, and no category may
-direct-push around the PR gate.
+Feature, Bug, Refactor, and Docs are profiles of these stages, not additional
+workflows. They change verification breadth and whether a plan is persisted.
+Planning depth and verification level may vary, but published work always uses
+the branch and PR path: Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
+Dependency, and CI/CD changes may not direct-push around the PR gate.
 
 ## External deployment handoff
 
@@ -51,9 +69,10 @@ completion evidence with the delivery.
 
 ## Ticket-to-Slice hierarchy
 
-Every requirement gets exactly one Plan Issue and at least one Ticket Issue.
-When a requirement crosses multiple behaviors or has dependencies, use this
-order:
+A requirement that is complex, must survive a session boundary, or is
+explicitly requested as a persisted plan gets one Plan Issue and at least one
+Ticket Issue. When the requirement crosses multiple behaviors or has
+dependencies, use this order:
 
 1. Define the single requirement boundary and create its Plan Issue.
 2. Split the requirement into independently reviewable behavior Tickets.
@@ -63,9 +82,9 @@ order:
 
 All Tickets and Slices for one Plan share the Plan's implementation branch.
 Ticket dependencies determine execution order within the Plan; Slice
-dependencies determine the execution order within a Ticket. A
-single-behavior requirement is one Ticket containing one Slice, and it still
-requires the Plan branch and one PR.
+dependencies determine the execution order within a Ticket. A single-behavior
+requirement is one Ticket containing one Slice, and a persisted plan still uses
+one branch and one PR.
 
 For every Slice, define:
 
@@ -82,14 +101,17 @@ Slice instead of growing the patch.
 
 ## Persistent plan and ticket handoff
 
-When `plan-to-ticket` creates a plan or ticket, GitHub Issues are the mandatory
-durable source of truth. Create or update one Plan Issue and every required
-child Ticket Issue before the Plan branch starts. The Plan Issue always exists,
-including for a one-Ticket requirement. The Plan Issue retains:
+Persist a plan when the work is complex, must survive a session boundary, or
+the user explicitly asks for a persisted plan. Small, single-session work keeps
+its plan inline.
+
+For a persisted plan, GitHub Issues are the durable source of truth. Create or
+update one Plan Issue and every required child Ticket Issue before the Plan
+branch starts. The Plan Issue retains:
 
 - `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
 - `Branch`, `Base`, `PR`, and child Ticket index metadata;
-  - the requirement goal, milestones, completion rule, and delivery contract.
+- the requirement goal, milestones, completion rule, and delivery contract.
 
 Each child Ticket Issue retains its Plan link, `Status`, `Dependencies`, goal,
 scope, acceptance criteria, Slice plan, and validation contract. It does not
@@ -101,41 +123,43 @@ Issue. Chat output contains convenience links only.
 duplicate plan or backlog.
 
 Search for stable plan/ticket markers before creating Issues so retries reuse
-existing records. If the GitHub connector, repository target, authentication,
-or required write fails, mark the operation blocked and stop; do not fall back
-to local Markdown or an unpersisted chat response.
+existing records. For a persisted plan, if the GitHub connector, repository
+target, authentication, or required write fails, mark the operation blocked and
+stop; do not fall back to local Markdown or an unpersisted chat response.
 
 Update the Plan as work progresses: `in_progress` when its branch starts,
 `blocked` for a blocking dependency or environment problem, `in_review` when
-the single Plan PR is opened, and `done`/closed only after that PR is verified
-merged. Update child Ticket status and acceptance evidence during execution;
-set all child Tickets to `done` and close them with the Plan after the one
-merge.
+the PR is opened, and `done`/closed only after that PR is verified merged.
+Update child Ticket status and acceptance evidence during execution; set all
+child Tickets to `done` and close them with the Plan after the one merge.
 
-## Branch per plan
+## Branch and PR discipline
 
-Before implementation, create or resume one Plan branch for every requirement.
-Use `<type>/<plan-id>-<short-description>` and create it from the updated
-default branch. Ticket dependencies are completed and validated on this branch;
-they do not require prerequisite Ticket merges. Keep the Plan's implementation,
-tests, and related documentation on this branch; all Tickets and internal
-Slices share it.
+Published work goes through a branch and a pull request. A persisted Plan owns
+exactly one branch, one PR, and one merge.
+
+Use `<type>/<plan-id>-<short-description>` and create the branch from the
+updated default branch. Ticket dependencies are completed and validated on this
+branch; they do not require prerequisite Ticket merges. Keep the Plan's
+implementation, tests, and related documentation on this branch; all Tickets
+and internal Slices share it.
 
 Verify the current branch and working tree before editing and preserve
 unrelated or uncommitted work. Parallel workers use isolated worktrees or
-return patches/findings for integration on the Plan branch; never create a
-second delivery branch for a Ticket. Before committing and pushing, complete
-the Plan's acceptance and relevant integration checks. After creating or updating the Plan PR, merge it once the existing validation
-and publication gates are satisfied. The Plan Issue and implementation branch are a one-to-one pair; record
-and verify the Plan's `Branch`/`Base` values, and require the Plan PR head/base
-to match them.
+return patches/findings for integration on the branch; never create a second
+delivery branch for a Ticket. Before publishing, complete the Plan's acceptance
+and relevant integration checks. After creating or updating the PR, merge it
+once the existing verification and publication gates are satisfied. The Plan
+Issue and implementation branch are a one-to-one pair; record and verify the
+Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 
 ## Optional delegation
 
-After the Plan branch exists and before or during implementation, the main
-agent may use bounded delegation when it materially improves speed, context
-isolation, or review quality. A single-agent execution remains the default.
-Delegation does not create a second delivery path or bypass any PR gate.
+Delegation is optional and may occur during implementation. The main agent uses
+it when it materially improves speed, context isolation, or review quality; a
+single-agent execution remains the default. Delegation does not create a second
+delivery path or bypass the branch, verification, redaction, commit, push, PR,
+or merge gates for published work.
 
 Delegate only a bounded, independently executable task. Keep dependent or
 overlapping work sequential; parallel write tasks must not touch the same
@@ -150,15 +174,15 @@ judgment with the main agent.
 Subagent selection is host-specific; follow the delegation policy in
 [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
 
-## Slice execution and verification
+## Verification
 
-Use test-first development for behavior changes, bug fixes, regressions, API
-behavior, core business logic, data processing, and high-risk code when a
-meaningful failing test can be produced. For docs, configuration, dependency
-updates, styling, typo fixes, simple refactors, and exploratory work, use
-direct focused validation without forcing RED/GREEN.
-
-Choose one bounded verification level:
+`verify-workflow` decides when verification runs, chooses one bounded level,
+invokes `test-workflow`, and returns a conclusion. Use test-first development
+for behavior changes, bug fixes, regressions, API behavior, core business
+logic, data processing, and high-risk code when a meaningful failing test can
+be produced. For docs, configuration, dependency updates, styling, typo fixes,
+simple refactors, and exploratory work, use direct focused validation without
+forcing RED/GREEN.
 
 | Level | Use |
 |---|---|
@@ -167,11 +191,10 @@ Choose one bounded verification level:
 | `regression` | Bug fixes, cross-module changes, demonstrated regression risk. |
 | `full` | High-risk, release gates, or explicit requirements. |
 
-Run the smallest set that provides sufficient evidence. Stop after the chosen
-level passes unless acceptance criteria, failure evidence, affected boundaries,
-release requirements, or the user justify escalation. Report the level,
-commands, result, evidence, and escalation reason.
-
+Run the smallest set that provides sufficient evidence. The level controls
+breadth, not PASS: stop only when the Test Quality Gate closes. Report the
+level, the acceptance-to-test matrix, the quality-gate dimensions, commands,
+results, evidence, N/A reasons, and any escalation reason.
 
 ## Post-delivery workflow evaluation
 
@@ -230,7 +253,13 @@ project-specific tooling and review.
 
 ## Completion order
 
-`Understand -> Plan -> Record Plan + Tickets + Slices -> Plan Branch -> Implement -> Test -> Documentation impact check -> Redaction if applicable -> Commit -> Push -> Create/Update Plan PR -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> State/Docs -> If separately authorized: external release handoff (outside this workflow) -> Evaluate workflow -> optional one bounded follow-up improvement`
+`plan-workflow -> develop-workflow -> verify-workflow -> publish-workflow -> integrate-workflow -> Evaluate workflow -> optional one bounded follow-up improvement`
+
+`publish-workflow` stops at PR ready and never merges. `integrate-workflow`
+merges once, deletes the branch, updates the default branch, closes the Plan and
+its Tickets, refreshes `docs/Repo_Current_State.md`, and reconciles the
+documentation index. State and documentation updates that change tracked
+content after the merge go through their own change with the same gates.
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

@@ -2,7 +2,7 @@
 
 > Type: Reference
 > Status: Active
-> Scope: Post-delivery process-evaluation rules, inspection areas, decision rubric, evaluation output, and current structural baseline
+> Scope: Post-delivery process-evaluation rules, inspection areas, decision rubric, evaluation output, and current structural baseline for the stage workflows
 
 Use this file to evaluate whether the development workflow is becoming heavier
 than the value it provides. It is a process-retrospective reference, not a
@@ -105,8 +105,8 @@ Decision: keep | simplify | merge | automate | remove | observe
 Action: none | follow-up change | report for later
 ```
 
-If `Action` is `follow-up change`, that change must use the same normal
-Requirement -> Plan -> Branch -> Test -> PR -> Merge lifecycle.
+If `Action` is `follow-up change`, that change uses the same stages as any
+other published work: plan, develop, verify, publish, and integrate.
 
 ## Current structural baseline
 
@@ -115,16 +115,17 @@ Use future real runs to confirm or reject them.
 
 | Candidate | Current assessment | Improvement direction |
 |---|---|---|
-| Macro workflow repeated across `SKILL.md`, `README.md`, usage, and architecture docs | Likely documentation redundancy and drift risk | Keep `SKILL.md` as control plane; make other docs explain details or link to one canonical flow instead of copying it |
-| Branch/PR rules appear in core path, branch section, delivery section, and completion gates | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
-| Post-delivery evaluation can itself create a documentation-only PR every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
+| Stage boundaries described in `SKILL.md`, `README.md`, usage, and architecture docs | Likely documentation redundancy and drift risk | Keep each stage's own `SKILL.md` as the authoritative boundary; make other docs explain details or link to it instead of copying it |
+| Branch/PR rules appear in the router, the usage guide, and the architecture overview | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
+| Post-delivery evaluation can itself create a documentation-only change every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
-| Plan/Ticket/Slice/delegation machinery | Every requirement has exactly one Plan; delegation remains optional | Keep the Plan mandatory for every change type and scale only its shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |
+| Plan/Ticket/Slice/delegation machinery | A plan is persisted only when the work is complex, must survive a session boundary, or the user asks for it; delegation remains optional | Keep persistence conditional and scale the plan's shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |
+| Stage routing versus one fixed chain | The five stage workflows are independently invocable; only an explicitly authorized delivery runs them all | Keep the router as the entry point and confirm each stage's non-responsibility still holds after every change |
 
 ## Improvement backlog discipline
 
 Do not turn this document into a backlog. When an improvement is actionable,
-record it as the normal Plan/Ticket before implementation; a small improvement
-is one Plan with one Ticket, a single Slice, and one PR. Remove or rewrite resolved baseline
-findings so this file stays a compact description of current process quality
-rather than a historical archive.
+record it as a normal plan before implementation; a small improvement is one
+Ticket with a single Slice that follows the same stages as any other published
+work. Remove or rewrite resolved baseline findings so this file stays a compact
+description of current process quality rather than a historical archive.

@@ -4,7 +4,7 @@ top to bottom direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title Plan / Ticket Lifecycle — One Branch, One PR, One Merge
+title Persisted Plan / Ticket Lifecycle — One Branch, One PR, One Merge
 
 state "Plan Issue persisted\nChild Ticket Issues persisted" as persisted
 state "Plan branch active" as branch

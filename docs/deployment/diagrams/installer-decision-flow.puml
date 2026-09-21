@@ -19,7 +19,7 @@ if (Destination is inside repository?) then (yes)
   stop
 endif
 
-:For each of 7 managed bundles;
+:For each of 12 managed bundles;
 
 if (Destination exists?) then (no)
   :Copy bundle;

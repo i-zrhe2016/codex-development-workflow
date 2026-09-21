@@ -14,6 +14,11 @@ without it, because Claude Code never reads it.
 | Skill | Managed source in this repository | Documentation | Codex destination | Claude Code destination |
 |---|---|---|---|---|
 | `codex-development-workflow` | Root package: `SKILL.md`, `agents/`, selected workflow references | `docs/workflow/`, `docs/architecture/` | `codex-development-workflow` | `codex-development-workflow` |
+| `plan-workflow` | `skills/plan-workflow/` | — | `plan-workflow` | `plan-workflow` |
+| `develop-workflow` | `skills/develop-workflow/` | — | `develop-workflow` | `develop-workflow` |
+| `verify-workflow` | `skills/verify-workflow/` | — | `verify-workflow` | `verify-workflow` |
+| `publish-workflow` | `skills/publish-workflow/` | — | `publish-workflow` | `publish-workflow` |
+| `integrate-workflow` | `skills/integrate-workflow/` | — | `integrate-workflow` | `integrate-workflow` |
 | `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` | `plan-to-ticket` | `plan-to-ticket` |
 | `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` | `test-workflow` | `test-workflow` |
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` | `repo-current-state` |
@@ -32,14 +37,27 @@ Each managed source is an independently installable skill folder containing
 backward compatibility; its installer entry copies only the files needed by
 the orchestrator rather than the whole repository.
 
-`plan-to-ticket` owns Plan-first decomposition for every requirement,
-Ticket/Slice generation, and mandatory persistence of exactly one Plan Issue plus
-its child Ticket Issues; each
-Slice should provide boundaries, acceptance criteria, relevant context, test
-strategy, test level, test cases, and a validation command. The Plan owns the
-single branch, PR, and merge for all of its Tickets.
-`test-workflow` owns the Test stage for the selected `minimal`, `focused`,
-`regression`, or `full` verification level and reports bounded evidence. It
+The managed bundles split into a workflow layer that decides *when* a stage
+runs and a capability layer that defines *how* it is performed. The five
+`*-workflow` bundles are the workflow layer; they own the stage boundary and
+delegate the procedure. The remaining bundles are the capability layer.
+
+`plan-workflow` owns the requirement-to-work-definition stage, including the
+decision whether a plan needs to be persisted. `develop-workflow` owns
+implementation up to Development Complete. `verify-workflow` is a thin stage
+that selects the verification scope and level and returns the conclusion.
+`publish-workflow` composes the documentation impact check, the redaction scan,
+and publication, and stops at PR ready without merging. `integrate-workflow`
+owns merge, cleanup, Plan and Ticket closure, state refresh, and documentation
+reconciliation.
+
+`plan-to-ticket` owns Plan-first decomposition, Ticket/Slice generation, and the
+persistence contract that applies whenever a plan is persisted; each Slice
+provides boundaries, acceptance criteria, relevant context, test strategy, test
+level, test cases, and a validation command. A persisted Plan owns one branch,
+PR, and merge for all of its Tickets.
+`test-workflow` owns the verification procedure for the selected `minimal`,
+`focused`, `regression`, or `full` level and reports bounded evidence. It
 conditionally performs browser/E2E verification when browser-visible behavior
 changes.
 

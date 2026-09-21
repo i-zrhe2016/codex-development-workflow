@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Workflow"
+  short_description: "Decide when to plan: understand, design, and decompose"
+  default_prompt: "Use $plan-workflow to understand the requirement, settle architecture and scope, decompose it into Tickets and Slices, and decide whether the plan needs to be persisted as a GitHub Issue before implementation starts."

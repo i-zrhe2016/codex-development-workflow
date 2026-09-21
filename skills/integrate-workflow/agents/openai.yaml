@@ -1,0 +1,4 @@
+interface:
+  display_name: "Integrate Workflow"
+  short_description: "Decide when to integrate: merge once, clean up, reconcile"
+  default_prompt: "Use $integrate-workflow to verify the pull request is ready, merge it once, delete the source branch, update the default branch, close the Plan and its Tickets, and refresh the repository state and documentation index."
