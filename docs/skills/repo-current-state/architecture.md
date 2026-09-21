@@ -1,5 +1,9 @@
 # Repository Architecture
 
+> Type: Architecture
+> Status: Active
+> Scope: Structure and boundaries of the repo-current-state specialist: components, maintenance flow, and state-snapshot invariants
+
 ## Scope
 
 This repository packages the `repo-current-state` specialist inside a larger

@@ -1,5 +1,9 @@
 # 通用测试工作流运行手册
 
+> Type: Guide
+> Status: Active
+> Scope: Running the test-workflow specialist: acceptance checklist, verification levels and mode selection, standard execution order, RED -> GREEN, failure classification, browser/E2E branch, and report template
+
 ## 适用范围
 
 适用于后端、前端、API、库、CLI 以及其他仓库级功能变更、缺陷修复、重构和

@@ -174,3 +174,5 @@ relevant bundle.
 - [Redaction workflow](docs/workflow/redaction.md)
 - [Workflow process evaluation](docs/workflow/process-evaluation.md)
 - [Managed skill source map](references/skill-map.md)
+- [Repository current state](docs/Repo_Current_State.md)
+- [Editable Draw.io overview diagrams](docs/diagrams/drawio/README.md)
