@@ -72,6 +72,12 @@ preserved and reported as `ownership unverified`. Retired skill destinations, in
 are removed under the same ownership check. Back up any local edits before
 using this option.
 
+![Installer overview: destination, ownership, and retirement decisions](../diagrams/drawio/installer-overview.svg)
+
+Editable source: [`installer-overview.drawio`](../diagrams/drawio/installer-overview.drawio)
+
+Detailed diagrams-as-code view:
+
 ![Installer decision flow: destination resolution, the ownership-marker check, and the install, skip, preserve, and remove outcomes](diagrams/installer-decision-flow.svg)
 
 Source: [`diagrams/installer-decision-flow.puml`](diagrams/installer-decision-flow.puml)
