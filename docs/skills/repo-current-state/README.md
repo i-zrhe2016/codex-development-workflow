@@ -26,9 +26,9 @@ backlog, test-report archive, or permissions record.
 4. Keep architecture detail, history, decisions, and future work in their
    appropriate documents or project systems.
 
-If the state update changes tracked content, make it through a new feature
-branch and the same mandatory PR gate; do not commit directly to the default
-branch.
+If the state update changes tracked content, make it through a new branch and
+the same publish and integrate stages as any other published change; do not
+commit directly to the default branch.
 
 ## Architecture
 

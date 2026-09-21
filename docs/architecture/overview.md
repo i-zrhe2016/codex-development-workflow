@@ -15,11 +15,11 @@ procedures remain inside their own `SKILL.md` files.
 
 | Component | Responsibility |
 |---|---|
-| `codex-development-workflow` | Coordinates the single Requirement-to-Plan-to-PR-to-Merge lifecycle, Plan/Ticket/Slice decomposition, bounded verification, and delivery gates. |
+| `codex-development-workflow` | Routes each request to the stage workflow that owns it — `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, or `integrate-workflow` — carries the invariants shared by all stages, and provides the optional full orchestration for an explicitly authorized end-to-end delivery. |
 | Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
 | Subagent selection | The host picks the subagent from each agent definition's `description`; no document maps a task class to an agent. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). |
-| `plan-to-ticket` | Creates exactly one Plan for every requirement, splits it into behavior Tickets, decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria, then persists the Plan and child Ticket Issues before branch work. |
+| `plan-to-ticket` | Turns a requirement into one Plan, splits it into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
@@ -78,14 +78,22 @@ documentation as persisted project knowledge.
 
 Source: [`architecture.puml`](../diagrams/architecture.puml)
 
-### Macro stages
+### Stage workflows
 
 ```text
 Requirement
-  -> Understand repo
-  -> Plan
-  -> Record Plan + Tickets + Slices
-  -> Create Plan branch
+  -> plan-workflow        understand, design, decompose, persistence decision
+  -> develop-workflow     implement to Development Complete
+  -> verify-workflow      verification scope, level, and conclusion
+  -> publish-workflow     documentation impact, redaction, commit, push, PR ready
+  -> integrate-workflow   merge once, cleanup, close Issues, state and docs
+  -> Evaluate workflow
+```
+
+The full orchestration runs these stages as one authorized delivery:
+
+```text
+Create Plan branch
   -> Implement all Plan Tickets
   -> Test Quality Gate
   -> Documentation impact check
@@ -93,7 +101,7 @@ Requirement
   -> Commit
   -> Push branch
   -> Create / Update PR
-  -> Merge the Plan PR once
+  -> Merge the PR once
   -> Delete branch
   -> Update main
   -> Close Plan + Tickets
@@ -102,18 +110,19 @@ Requirement
   -> Evaluate workflow
 ```
 
-All change types—Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
-Dependency, and CI/CD—use the same Plan-branch and PR lifecycle. Planning
-depth and test level may vary, but no category may direct-push around the PR
-gate. Every requirement is recorded as exactly one Plan Issue with one or more
-child Ticket Issues before branch work; split Ticket Slices only after each
-boundary is clear, and treat a single-behavior requirement as one Plan with one
-Ticket and one implicit Slice.
+Feature, Bug, Refactor, and Docs are profiles of these stages, not separate
+workflows: they change verification breadth and whether a plan is persisted.
+Planning depth and verification level may vary, but no category may direct-push
+around the PR gate for published work. A requirement that is complex, must
+survive a session boundary, or is explicitly requested as a persisted plan is
+recorded as one Plan Issue with one or more child Ticket Issues before branch
+work; split Ticket Slices only after each boundary is clear, and treat a
+single-behavior requirement as one Plan with one Ticket and one implicit Slice.
 
-If `plan-to-ticket` is used, it persists one Plan Issue and all child Ticket
-Issues before the Plan branch is created. Each Slice loads only the context
-needed for its acceptance criteria. A wrong design assumption returns to Plan
-or causes a Slice split.
+When `plan-to-ticket` persists a plan, it creates the Plan Issue and all child
+Ticket Issues before the Plan branch is created. Each Slice loads only the
+context needed for its acceptance criteria. A wrong design assumption returns to
+Plan or causes a Slice split.
 
 ### Ticket-to-Slice hierarchy
 
@@ -148,9 +157,9 @@ one Plan with one Ticket and one implicit Slice.
 
 ### Persistent ticket authority
 
-GitHub Issues are the sole durable authority for Plans and Tickets created by
-`plan-to-ticket`. Every requirement has exactly one Plan Issue holding the overall plan and
-linking to one or more child Ticket Issues. The Plan retains `Status`, `Branch`,
+GitHub Issues are the sole durable authority for persisted Plans and Tickets
+created by `plan-to-ticket`. A persisted plan has one Plan Issue holding the
+overall plan and linking to one or more child Ticket Issues. The Plan retains `Status`, `Branch`,
 `Base`, `PR`, and completion metadata; each child Ticket retains its Plan link,
 goal, scope, dependencies, acceptance criteria, validation, and Slice plan but
 does not own a branch or PR. The workflow blocks when required Issue reads or
@@ -162,8 +171,8 @@ not a backlog or second ticket database.
 
 ### Plan branch
 
-Every requirement owns one Plan branch created or resumed before editing, after its Plan
-and child Ticket Issues exist. The Plan branch is named
+A persisted Plan owns one branch created or resumed before editing, after its
+Plan and child Ticket Issues exist. The Plan branch is named
 `<type>/<plan-id>-<short-description>`. Ticket dependencies are completed and
 validated on that branch; no prerequisite Ticket merge is required. Parallel
 workers use isolated worktrees or return patches/findings for integration, and
@@ -215,7 +224,14 @@ risk profile justify it.
 
 ### Host-specific project configuration
 
-Each host reads its own agent definitions. 
+Each host reads its own agent definitions: Codex reads `.codex/agents/` and
+`.codex/config.toml`, while Claude Code reads `.claude/agents/`. Neither host
+reads the other's directory, and the selection rule is each agent definition's
+`description`. The delegation policy lives in
+[`AGENTS.md`](../../AGENTS.md#multi-agent-delegation), and
+[installation.md](../deployment/installation.md) owns the per-host
+configuration procedure.
+
 ### Staged-output redaction gate
 
 Run the gate on the files staged for the next commit and repeat it after any
@@ -245,7 +261,7 @@ procedure.
 ## Boundaries
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
-- Every requirement has exactly one Plan with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and every Plan uses one branch and PR.
+- A persisted plan has one Plan Issue with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and a persisted Plan uses one branch and PR.
 - Tests provide evidence inside a Slice; the Plan PR remains the publication and merge boundary.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - `repo-documentation` owns documentation governance; `repo-current-state` owns

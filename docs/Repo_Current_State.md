@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-21 @ a38e2d3
+Last verified: 2026-09-21 @ 8a2b79e
 
 ## Current Focus
 
@@ -8,10 +8,21 @@ Last verified: 2026-09-21 @ a38e2d3
 
 ## Implemented
 
-- Every requirement is recorded as exactly one Plan Issue with at least one
-  child Ticket before its Plan branch starts; all change types follow the Plan
-  branch -> test -> redaction -> commit -> push -> PR -> merge
-  and cleanup gates defined by `AGENTS.md`.
+- Work is routed to the stage that owns it: `plan-workflow` (requirement to
+  work definition), `develop-workflow` (implementation to Development Complete),
+  `verify-workflow` (verification scope and conclusion), `publish-workflow`
+  (documentation impact, redaction, commit, push, PR ready), and
+  `integrate-workflow` (merge once, cleanup, Issue closure, state and docs).
+  `codex-development-workflow` routes to those stages and carries the invariants
+  shared by all of them.
+- A persisted Plan Issue owns one branch, one PR, and one merge for all of its
+  child Tickets. A plan is persisted when the work is complex, must survive a
+  session boundary, or the user asks for it; small single-session work keeps its
+  plan inline.
+- The five stage-workflow bundles and the six capability bundles install for
+  both hosts: `scripts/install-all.sh` reports 12 bundles for the Codex target
+  and 12 for the Claude target, which omits the Codex-only
+  `agents/openai.yaml` metadata.
 - The bundle installs for two hosts. `scripts/install-all.sh --target codex`
   (default) writes to `${CODEX_HOME:-$HOME/.codex}/skills`; `--target claude`
   writes to `$HOME/.claude/skills`. `--dest` overrides either. The Claude target
@@ -20,9 +31,12 @@ Last verified: 2026-09-21 @ a38e2d3
   policy and maps no task class to an agent; Codex reads `.codex/agents/` and
   Claude Code reads `.claude/agents/`, selecting by each definition's
   `description`.
-- `github-push-when-ready` owns branch, commit, push, and PR readiness.
+- `github-push-when-ready` owns branch, commit, push, and PR readiness. It
+  publishes any non-default verified branch; Plan metadata is validated when the
+  branch carries it, and a persisted Plan is not a publication precondition.
 - `repo-documentation` governs documentation as one canonical document per
-  fact. Its impact check runs inside the existing Test -> Redaction path, and it
+  fact. Its impact check runs inside `publish-workflow`, between verification and
+  the staged redaction scan, and it
   routes each fact to its owning document type, keeps exactly one documentation
   router, and detects duplicates, orphans, and stale claims. It also owns the
   diagram policy: when a document carries a diagram, where the `.puml` source
@@ -45,10 +59,9 @@ Last verified: 2026-09-21 @ a38e2d3
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
-- `plan-to-ticket` uses exactly one canonical `[PLAN]` Issue per requirement,
-  `[T####]` child Issue titles, repository-scoped non-reused Ticket IDs, and
-  one shared Plan branch/PR/merge for all Tickets and Slices in that
-  requirement.
+- `plan-to-ticket` uses one canonical `[PLAN]` Issue per persisted plan,
+  `[T####]` child Issue titles, repository-scoped non-reused Ticket IDs, and one
+  shared branch/PR/merge for all Tickets and Slices of that plan.
 - The installer records per-bundle ownership markers, protects unmarked paths,
   and offers recoverable `--adopt-legacy` migration for pre-marker installs.
 - `scripts/tests/test_install_all.py` covers target selection, `--dest`
@@ -64,13 +77,12 @@ Last verified: 2026-09-21 @ a38e2d3
 - Pre-existing identity and SSH test fixtures remain under
   `skills/github-push-when-ready/`; the staged redaction scan for PR #69
   passed, but this is not a repository-wide redaction classification.
-- Rendered diagrams still bake in the old "Codex" naming. The affected files are
-  `docs/diagrams/architecture.svg`, `docs/diagrams/components.svg`,
-  `docs/deployment/diagrams/installer-decision-flow.svg`,
-  `docs/diagrams/drawio/workflow-overview.svg`, and
-  `docs/diagrams/drawio/installer-overview.svg`; the four per-skill SVGs under
-  `docs/skills/*/diagrams/` are clean. Regenerating them needs PlantUML/Kroki
-  tooling that is not part of this repository.
+- Diagram rendering tooling is part of this repository:
+  `scripts/render-diagrams.sh` renders every `docs/**/*.puml` source through
+  Kroki and `bash scripts/render-diagrams.sh --check` currently reports no render
+  drift for any of the nine sources. The `.drawio` overviews have no render
+  branch in that script, so their `.svg` previews are hand-synced with the
+  `.drawio` XML.
 - `AGENTS.md` routes "Architecture or flow visualization" to a `plantuml-skill`
   that this repository does not bundle; the skill is installed on the host
   instead. `repo-documentation` now states that rendering is delegated to it by
@@ -96,12 +108,12 @@ Last verified: 2026-09-21 @ a38e2d3
 
 ## Architecture Snapshot
 
-- The root workflow owns lifecycle routing, Plan/Ticket/Slice gates, delegation,
-  verification, and merge/cleanup guidance; each requirement has exactly one
-  Plan, and each Plan owns one branch, PR, and merge for its child Tickets.
-- `github-push-when-ready` owns publication through PR readiness; the parent
-  workflow merges the Plan PR after the existing validation and publication
-  gates pass.
+- `codex-development-workflow` is the router and the optional full
+  orchestration; each stage workflow owns one boundary and states its own
+  non-responsibility, so a stage never performs another stage's work.
+- A persisted Plan owns one branch, PR, and merge for its child Tickets;
+  `github-push-when-ready` owns publication through PR readiness, and
+  `integrate-workflow` merges once the verification and publication gates pass.
 - `repo-documentation` owns documentation governance and `repo-current-state`
   owns only the recovery snapshot. This repository routes its documentation from
   the root `README.md` instead of `docs/README.md`.
@@ -112,4 +124,5 @@ Last verified: 2026-09-21 @ a38e2d3
 
 ## Next
 
-- Start the next authorized Plan from the updated default branch.
+- Start the next authorized Plan from the updated default branch, or run a
+  single stage workflow when the request only needs that stage.

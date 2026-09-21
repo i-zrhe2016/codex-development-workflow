@@ -38,8 +38,9 @@ Source: [`diagrams/repository-state.puml`](diagrams/repository-state.puml)
 3. After the change PR is merged, its source branch is deleted, and the default
    branch is synchronized, verified facts are written to the target repository's
    `docs/Repo_Current_State.md` when the snapshot changed.
-4. If that write changes tracked content, it uses a Plan branch and the
-   same PR gate rather than a direct default-branch commit.
+4. If that write changes tracked content, it uses a branch and the same
+   publish and integrate stages as any other published change, rather than a
+   direct default-branch commit.
 5. Detailed architecture and entrypoint links remain in the appropriate
    documentation files.
 

@@ -4,20 +4,20 @@ top to bottom direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title Codex Development Workflow — Plan to Delivery
+title Codex Development Workflow — Full Orchestration, Requirement to Delivery
 
 state "Requirement" as Requirement
-state "Understand repository" as Understand
+state "plan-workflow\nUnderstand · Design · Decompose" as Understand
 state "Plan" as Plan
-state "Persist Plan + Tickets + Slices\nGitHub Issues" as Issues
+state "Persist Plan + Tickets + Slices\nGitHub Issues (when required)" as Issues
 state "Create Plan branch" as Branch
-state "Implement all Plan Tickets" as Implement
-state "Test Quality Gate" as Test
+state "develop-workflow\nImplement all Plan Tickets" as Implement
+state "verify-workflow\nTest Quality Gate" as Test
 state "Documentation impact check" as Docs
 state "Redaction scan\nwhen applicable" as Redact
 state "Commit + Push branch" as Publish
 state "Create / Update Plan PR" as PR
-state "Merge Plan PR once" as Merge
+state "integrate-workflow\nMerge Plan PR once" as Merge
 state "Delete branch + Update main" as Cleanup
 state "Close Plan + Tickets" as Close
 state "Update State / Docs" as State
@@ -27,7 +27,7 @@ state "Bounded follow-up improvement" as Improve
 [*] --> Requirement
 Requirement --> Understand
 Understand --> Plan
-Plan --> Issues
+Plan --> Issues : persist when required
 Issues --> Branch
 Branch --> Implement
 Implement --> Test

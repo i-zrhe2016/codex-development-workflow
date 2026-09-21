@@ -61,10 +61,10 @@ Source: [`diagrams/repo-documentation-flow.puml`](diagrams/repo-documentation-fl
    document's state changes; ADRs use `Proposed`, `Accepted`, `Deprecated`, or
    `Superseded` instead and are never deleted.
 
-The impact check runs between Test and Redaction, inside the existing
-`Test -> Documentation impact -> Redaction -> Commit` path. It is a required
-workflow step, not an additional merge gate, and it requires no documentation
-work when the change touches nothing documented.
+The impact check runs inside `publish-workflow`, between verification and the
+staged redaction scan: `verify -> Documentation impact -> Redaction -> Commit`.
+It is a required step of that stage, not an additional merge gate, and it
+requires no documentation work when the change touches nothing documented.
 
 ## Boundary with repo-current-state
 

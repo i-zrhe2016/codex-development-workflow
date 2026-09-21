@@ -13,15 +13,17 @@ Detailed diagrams-as-code: [`architecture.puml`](docs/diagrams/architecture.puml
 
 Core invariants:
 
-- every requirement becomes exactly one **Plan Issue** with one or more child
-  **Ticket Issues** before implementation;
-- one Plan owns one implementation branch, one PR, and one merge;
+- work is routed to the stage workflow that owns it — `plan-workflow`,
+  `develop-workflow`, `verify-workflow`, `publish-workflow`, or
+  `integrate-workflow` — instead of one fixed chain for every request;
+- a persisted **Plan Issue** owns one implementation branch, one PR, and one
+  merge for all of its child **Ticket Issues**;
 - Tickets decompose into dependency-ordered Slices that carry acceptance and
   validation contracts;
 - PASS requires the risk-aware **Test Quality Gate**, not merely a green focused
   test run;
 - documentation impact, applicable redaction, publication, merge cleanup, and
-  post-merge state reconciliation remain explicit lifecycle stages.
+  post-merge state reconciliation remain explicit stages.
 
 
 An external deployment handoff is outside this repository's workflow and does
@@ -32,16 +34,20 @@ deployment, health-check, and rollback instructions. The external release
 owner performs and verifies the rollout or rollback. Completion evidence is
 the external release result or incident link recorded with the delivery.
 
-The macro workflow controls architecture and scope. Every requirement is
-recorded as exactly one GitHub Issue Plan with one or more child Ticket Issues
-before branch work starts, so a single-behavior requirement is one Plan with one
-Ticket and one implicit Slice while larger requirements add Tickets and Slices
-under that Plan. The Plan owns the one branch, PR, and merge. All Tickets and
-Slices share that branch; Ticket dependencies remain separate from Slice
-dependencies, and the PR head and base must match the Plan metadata.
-Test level may vary with risk, but delivery does not: Docs, Code, Tests,
-Config, Refactor, Bugfix, Feature, Dependency, and CI/CD changes all require a
-branch, commit, push, PR, and merge.
+The macro workflow controls architecture and scope. A requirement that is
+complex, must survive a session boundary, or is explicitly requested as a
+persisted plan is recorded as one GitHub Issue Plan with one or more child
+Ticket Issues before branch work starts, so a single-behavior requirement is one
+Plan with one Ticket and one implicit Slice while larger requirements add
+Tickets and Slices under that Plan. A persisted Plan owns the one branch, PR,
+and merge. All Tickets and Slices share that branch; Ticket dependencies remain
+separate from Slice dependencies, and the PR head and base must match the Plan
+metadata.
+Verification breadth varies with risk, and published work follows one path:
+Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
+changes all use the branch, commit, push, PR, and merge path once they are
+published. Feature, Bug, Refactor, and Docs are profiles of the stage workflows,
+not separate workflows.
 
 After delivery, the main agent performs one lightweight workflow evaluation.
 It looks for reusable evidence such as avoidable rework, weak assumptions,
@@ -145,12 +151,13 @@ Restart the host after installation so it discovers the new skill directories.
 - `data-document-redaction`
 - `github-push-when-ready`
 
-`plan-to-ticket` persists exactly one Plan and every child Ticket to GitHub
-Issues before the Plan branch starts. GitHub Issues are the sole durable
+`plan-to-ticket` persists one Plan and its child Tickets to GitHub Issues when
+the work is complex, must survive a session boundary, or the user asks for a
+persisted plan. For a persisted plan, GitHub Issues are the sole durable
 Plan/Ticket authority; chat output and `Repo_Current_State.md` provide links and
-recovery context, not a parallel backlog. Every requirement has one Plan, and a
-Plan may contain one or more Tickets; the branch/PR/merge gate is mandatory once
-per Plan, never once per Ticket.
+recovery context, not a parallel backlog. A Plan may contain one or more
+Tickets, and its branch/PR/merge gate applies once per Plan, never once per
+Ticket.
 
 ## Skill documentation
 
@@ -163,11 +170,11 @@ relevant bundle.
 | Skill | Runtime source | Documentation |
 |---|---|---|
 | `codex-development-workflow` | [`SKILL.md`](SKILL.md) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `plan-workflow` | [`skills/plan-workflow/`](skills/plan-workflow/) | — |
-| `develop-workflow` | [`skills/develop-workflow/`](skills/develop-workflow/) | — |
-| `verify-workflow` | [`skills/verify-workflow/`](skills/verify-workflow/) | — |
-| `publish-workflow` | [`skills/publish-workflow/`](skills/publish-workflow/) | — |
-| `integrate-workflow` | [`skills/integrate-workflow/`](skills/integrate-workflow/) | — |
+| `plan-workflow` | [`skills/plan-workflow/`](skills/plan-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `develop-workflow` | [`skills/develop-workflow/`](skills/develop-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `verify-workflow` | [`skills/verify-workflow/`](skills/verify-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `publish-workflow` | [`skills/publish-workflow/`](skills/publish-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `integrate-workflow` | [`skills/integrate-workflow/`](skills/integrate-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 | `plan-to-ticket` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
 | `test-workflow` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
 | `repo-current-state` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |
