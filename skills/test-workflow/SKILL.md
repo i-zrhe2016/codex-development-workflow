@@ -6,7 +6,7 @@ description: "General repository testing workflow. Use when validating feature w
 # Test Workflow
 
 Validate behavior with the lightest reliable test strategy. This skill owns the
-Test stage for every change and for each blocking Automatic Review fix; it does
+Test stage for every change; it does
 not choose a direct-push path. Prefer deterministic automated feedback over
 repeated agent inspection.
 
@@ -40,7 +40,7 @@ justifies broader validation.
 
 Use task risk and complexity to choose the test strategy, not to choose a
 different delivery path. Every change still continues through the common branch,
-redaction when applicable, commit, push, PR, Automatic Review, and merge gates.
+redaction when applicable, commit, push, PR and merge gates.
 
 - **Tiny change:** run the closest existing checks after implementation. Add a regression test only when the change fixes behavior that could reasonably recur.
 - **Normal behavior change:** define or update focused tests around the changed contract, implement, then run focused tests and relevant regression checks.
@@ -104,7 +104,7 @@ Classify a failure before changing code:
 - **Environment/data failure:** dependency, service, account, fixture, permission, network, or test data unavailable -> mark blocked; do not fake a code fix.
 - **Requirement/design conflict:** expected behavior is ambiguous or the architecture assumption is wrong -> stop expanding the patch and re-plan.
 
-For ordinary failures with a clear cause, fix and rerun the focused test. Escalate to targeted code review/root-cause analysis when the same failure repeats without new evidence, the cause remains unclear, or the change is high-risk. Do not use code review as the first response to every red test.
+For ordinary failures with a clear cause, fix and rerun the focused test. Escalate to targeted root-cause analysis when the same failure repeats without new evidence, the cause remains unclear, or the change is high-risk. Do not use code review as the first response to every red test.
 
 ## Browser branch
 
@@ -155,8 +155,7 @@ A Ticket's Slices are test-complete when:
 
 For a multi-Ticket feature, keep inner-loop checks focused per Ticket, then run
 the appropriate integration/regression suite after all dependency-related
-Tickets are GREEN. When Automatic Review returns blocking findings, rerun the
-affected Test checks before the next redaction, commit, push, and review pass.
+Tickets are GREEN. When a later fix changes behavior, rerun the affected Test checks before the next redaction, commit, and push.
 
 ## Report
 

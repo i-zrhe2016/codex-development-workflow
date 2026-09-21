@@ -30,7 +30,7 @@ Use the lightest workflow that preserves correctness.
 
 For non-trivial work:
 
-`Requirement -> Understand repo -> Plan -> Record Plan + Tickets + Slices -> Create Plan branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update Plan PR -> pr-review -> PASS: Merge once | BLOCKED: Fix / Test / Redaction / Commit / Push / pr-review again -> Delete branch -> Update main -> Close Plan + Tickets -> Update State/Docs -> If separately authorized: external release handoff (outside this workflow)`
+`Requirement -> Understand repo -> Plan -> Record Plan + Tickets + Slices -> Create Plan branch -> Implement -> Test -> Redaction scan if applicable -> Commit -> Push branch -> Create / Update Plan PR -> Merge once -> Delete branch -> Update main -> Close Plan + Tickets -> Update State/Docs -> If separately authorized: external release handoff (outside this workflow)`
 
 Use `codex-development-workflow` to orchestrate the lifecycle.
 
@@ -45,14 +45,13 @@ For each slice:
 * Run the smallest validation set that provides sufficient evidence.
 * Use test-first development when it materially improves correctness, especially for bugs, regressions, business logic, APIs, and high-risk behavior.
 * Do not force strict TDD or multi-Slice decomposition onto trivial changes; a tiny requirement is one Plan with one Ticket and one implicit Slice, and it still requires one branch and PR.
-* When the user explicitly requests workflow timing, record measured monotonic wall-clock duration for each externally observable gate and the total run; report whether network or reviewer latency dominated. Timing is observational, does not add a delivery gate, and must not persist session-specific timing logs.
-* After the PR is created, invoke `pr-review` without waiting for user confirmation. `BLOCKED` findings repeat the fix, test, redaction, commit, push, and `pr-review` steps.
+* When the user explicitly requests workflow timing, record measured monotonic wall-clock duration for each externally observable gate and the total run; report the dominant latency source. Timing is observational, does not add a delivery gate, and must not persist session-specific timing logs.
 * If an implementation exposes an incorrect design assumption, re-plan instead of expanding the patch.
 * Do not mix unrelated features, refactors, formatting, or dependency upgrades.
 
 ## Multi-Agent Delegation
 
-Use subagents only when delegation materially improves speed, context isolation, or review quality.
+Use subagents only when delegation materially improves speed, context isolation, or implementation quality.
 
 The main agent owns:
 
@@ -99,11 +98,7 @@ serves. An agent that must not run on ordinary work has to say so in its
 description, because the host has no other rule to consult.
 
 Each host also ships its own built-in agent types, and those remain available
-for ordinary delegation. This repository defines only the optional
-high-risk reviewer; it declares no agent for exploration, testing, or isolated
-implementation, so that work is delegated to a host built-in when the host
-selects one. Delegation is therefore available for every bounded task the
-workflow permits, not only for the reviewer.
+for bounded delegation when the host selects one.
 
 This section owns the delegation policy. Other documents link to it rather than
 restating it.
@@ -120,7 +115,6 @@ restating it.
 | Verified repository state materially changed                           | `repo-current-state`         |
 | Every change (documentation impact check), or docs need normalizing    | `repo-documentation`         |
 | Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
-| PR creation or update requires the merge decision gate                 | `pr-review`                  |
 | Branch publication, Commit, Push, or PR readiness is required           | `github-push-when-ready`     |
 
 ## Skill Rules
