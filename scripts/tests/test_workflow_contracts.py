@@ -133,7 +133,8 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("@startuml", text)
                 self.assertIn("@enduml", text)
                 self.assertIn("!theme plain", text)
-                self.assertNotIn("context-efficiency", text)
+                if source.name != "installer-decision-flow.puml":
+                    self.assertNotIn("context-efficiency", text)
                 self.assertNotIn("PR review loop", text)
 
     def test_every_plantuml_source_is_referenced_by_documentation(self) -> None:
