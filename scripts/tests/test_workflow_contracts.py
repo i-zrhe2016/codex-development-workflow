@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -144,6 +145,42 @@ class WorkflowContractTests(unittest.TestCase):
         )
         for source in sorted((REPO_ROOT / "docs").rglob("*.puml")):
             with self.subTest(source=source.relative_to(REPO_ROOT)):
+                self.assertIn(source.name, markdown)
+
+
+    def test_drawio_overviews_are_structurally_valid_and_rendered(self) -> None:
+        sources = sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio"))
+        self.assertGreaterEqual(len(sources), 6)
+        for source in sources:
+            with self.subTest(source=source.name):
+                tree = ET.parse(source)
+                root = tree.getroot()
+                self.assertEqual(root.get("compressed"), "false")
+
+                cells = root.findall(".//mxCell")
+                ids = [cell.get("id") for cell in cells]
+                self.assertEqual(len(ids), len(set(ids)), f"duplicate IDs in {source}")
+                by_id = {cell.get("id"): cell for cell in cells}
+
+                for cell in cells:
+                    if cell.get("edge") == "1":
+                        self.assertIn(cell.get("source"), by_id)
+                        self.assertIn(cell.get("target"), by_id)
+                        geometry = cell.find("mxGeometry")
+                        self.assertIsNotNone(geometry)
+                        self.assertEqual(geometry.get("relative"), "1")
+
+                rendered = source.with_suffix(".svg")
+                self.assertTrue(rendered.is_file(), f"Missing SVG preview for {source}")
+                self.assertIn("<svg", rendered.read_text(encoding="utf-8"))
+
+    def test_drawio_overviews_are_referenced_by_documentation(self) -> None:
+        markdown = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in [README, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
+        )
+        for source in sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio")):
+            with self.subTest(source=source.name):
                 self.assertIn(source.name, markdown)
 
 

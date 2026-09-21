@@ -54,39 +54,51 @@ snapshot of what is true now and therefore keeps `Last verified`.
 
 ## Diagrams
 
-A diagram's editable source and its rendered image are files, not documents, so
+A diagram's editable source and rendered image are files, not documents, so
 they do not carry a title or a header.
 
+Use two complementary diagram layers when both are useful:
+
+- **Draw.io overview** for polished, editable, human-facing architecture or
+  workflow summaries. Keep the uncompressed `.drawio` source with stable
+  semantic IDs and a same-basename SVG preview.
+- **PlantUML detailed view** for diagrams-as-code that benefit from textual diff,
+  exact workflow loops, and deterministic regeneration. Keep the `.puml`
+  source with a same-basename SVG render.
+
+Rules:
+
 - Keep new diagrams in a `diagrams/` directory beside the document they
-  illustrate: `docs/architecture/diagrams/` for a document in
-  `docs/architecture/`, and `docs/skills/<skill>/diagrams/` for a specialist
-  page. An existing diagram keeps its current location until its owning document
-  is migrated or next modified, so the repository's shared `docs/diagrams/`
-  directory stays valid meanwhile; report the mismatch rather than moving files
-  as a side effect of an unrelated change.
-- Name the source after the fact it draws, with a `.puml` extension, and give
-  the rendered file the same basename: `installer-decision-flow.puml` and
-  `installer-decision-flow.svg`.
-- Use PlantUML for managed workflow diagrams. Pick the diagram type that fits
-  the fact (activity for workflow, state for lifecycle, component for
-  responsibilities, sequence for message flow), prefer `!theme plain`, and
-  stay within the Kroki-safe PlantUML subset unless a more advanced feature is
-  necessary.
-- Commit the `.puml` source and same-basename SVG together. SVG is the primary
-  documentation render because text remains crisp; an existing PNG may remain
-  only as a compatibility artifact.
-- Render through the configured backend and validate the result before claiming
-  success: HTTP/render command success, non-empty output, real SVG/image bytes,
-  then a readability check for clipped labels, cramped layout, wrong aspect
-  ratio, edge spaghetti, and low contrast. Fix and re-render after each change.
-- Public Kroki uploads the diagram source to a third party. Use it only for
-  non-sensitive repository diagrams. Internal, secret, proprietary, or
-  unreleased architecture requires a local Kroki or local PlantUML backend.
-  Never silently fall back between backends.
+  illustrate. Shared repository-level overview views may live under
+  `docs/diagrams/drawio/`; existing PlantUML diagrams keep their current
+  location unless the owning document is deliberately migrated.
+- Name each source after the fact it draws. Draw.io pairs use
+  `<name>.drawio` + `<name>.svg`; PlantUML pairs use
+  `<name>.puml` + `<name>.svg`.
+- For Draw.io, prefer architecture/flowchart/C4 conventions that match the
+  subject, use stable non-reserved IDs, require
+  `<mxGeometry relative="1" as="geometry"/>` on every edge, keep XML
+  uncompressed, and avoid node overlap or edge-through-node routing.
+- Draw.io overview diagrams should optimize hierarchy and readability rather
+  than repeat every low-level branch. Preserve detailed edge cases in the
+  linked PlantUML view or prose.
+- For PlantUML, pick the diagram type that fits the fact (activity for workflow,
+  state for lifecycle, component for responsibilities, sequence for message
+  flow), prefer `!theme plain`, and stay within the Kroki-safe subset unless
+  a more advanced feature is necessary.
+- SVG is the primary documentation render because text remains crisp. Existing
+  PNG files may remain only as compatibility artifacts.
+- Validate before claiming success. Draw.io requires XML/ID/edge structural
+  checks plus a visual pass for overlap, clipping, crossings, routing, and
+  unreadable labels. PlantUML requires renderer success, non-empty real SVG,
+  then the same readability pass.
+- Public Kroki uploads PlantUML source to a third party. Use it only for
+  non-sensitive diagrams. Internal, secret, proprietary, or unreleased
+  architecture requires a local backend.
 - Reference the rendered SVG from the owning document with descriptive alt
-  text, then link the editable `.puml` source immediately beside it.
+  text and link the editable source immediately beside it.
 - A diagram that exists in no document is an orphan: embed it or delete it.
-  Never commit a hand-made replacement for a managed PlantUML render.
+  Never replace a managed source diagram with a hand-made flattened image.
 
 ## Links
 

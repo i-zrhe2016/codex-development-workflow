@@ -14,9 +14,15 @@ are the external durable store used by the planning workflow.
 
 ## Architecture
 
+![Plan Ticket Slice work decomposition](../../diagrams/drawio/plan-ticket-slice.svg)
+
+Editable overview: [`plan-ticket-slice.drawio`](../../diagrams/drawio/plan-ticket-slice.drawio)
+
+Detailed Plan-to-Ticket logical architecture:
+
 ![Plan-to-Ticket logical architecture](diagrams/plan-to-ticket-architecture.svg)
 
-The diagram source is available at
+The diagrams-as-code source is available at
 [diagrams/plan-to-ticket-architecture.puml](diagrams/plan-to-ticket-architecture.puml).
 The full explanation is in [architecture.md](architecture.md).
 
@@ -26,7 +32,7 @@ When the skill is selected for a planning request, it:
 
 1. Identifies the desired outcome and the minimum implementation foundations.
 2. Splits complex or multi-behavior requirements into focused, independently
-   reviewable behavior Tickets.
+   verifiable behavior Tickets.
 3. Splits each Ticket into dependency-ordered Slices that the main agent can
    execute sequentially or delegate when they are independent, bounded, and
    have disjoint ownership.
