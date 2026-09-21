@@ -32,7 +32,7 @@ branch.
 
 ## Architecture
 
-![Repository documentation flow](diagrams/repository-state.svg)
+![repo-current-state verified recovery snapshot flow](diagrams/repository-state.svg)
 
 The diagram source is
 [`diagrams/repository-state.puml`](diagrams/repository-state.puml). The
