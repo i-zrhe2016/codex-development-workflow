@@ -28,32 +28,27 @@ procedures remain inside their own `SKILL.md` files.
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
 | `references/skill-map.md` | Maps each managed bundle to its local source and both host destinations. |
-| `data-document-redaction` | Scans the files staged for the next commit before publication and repeats the scan after blocking review fixes that change staged content. |
+| `data-document-redaction` | Scans the files staged for the next commit before publication and repeats the scan after subsequent fixes that change staged content. |
 | `github-push-when-ready` | Guards feature-branch publication through Commit, Push, and PR readiness. |
 
 The main agent centrally owns requirements, architecture, planning, dependency
 ordering, integration, and final judgment. Bounded delegation may route
 independent exploration, testing, or isolated implementation to subagents; the
 host selects which one, and [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation)
-owns the policy. Supplemental review is outside the default path and requires
-explicit high-risk scope. Dependent or overlapping work remains sequential, and
-the main agent must not duplicate active delegated work.
+owns the policy. Dependent or overlapping work remains sequential, and the main
+agent must not duplicate active delegated work.
 
 ## Development process
 
 ### Component responsibilities and records
 
-![Component responsibilities and durable records](../diagrams/components.svg)
-
-Editable source: [`components.puml`](../diagrams/components.puml). Skills are
+Component diagram source: [`components.puml`](../diagrams/components.puml). Skills are
 main-agent procedures, not independently running services. Solid arrows show
 invocation or record ownership; the main agent retains integration and gate decisions.
 
 ### End-to-end lifecycle
 
-![Codex Development Workflow development process](../diagrams/architecture.svg)
-
-Editable source: [`architecture.puml`](../diagrams/architecture.puml).
+Lifecycle diagram source: [`architecture.puml`](../diagrams/architecture.puml).
 
 ### Macro stages
 
@@ -96,9 +91,7 @@ or causes a Slice split.
 The detailed Plan/Ticket lifecycle is split into three linked views so each
 return edge has a clear scope and exit condition:
 
-![Ticket planning and dependency loop](../diagrams/ticket-lifecycle.svg)
-
-Source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml).
+Ticket lifecycle diagram source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml).
 
 ![Slice implementation and validation loop](../diagrams/ticket-slice-loop.svg)
 
@@ -106,8 +99,7 @@ Source: [`ticket-slice-loop.puml`](../diagrams/ticket-slice-loop.puml).
 
 Dependency waits resume only after fresh evidence; a failed Slice returns to
 diagnosis and affected validation, while a design conflict returns to planning.
-PR findings are fixed in one batch on the same branch and republished before
-review. Recovery returns to the recorded failed stage, never a later gate.
+A failed validation or publication step returns to the recorded failed stage, never a later gate.
 Only the single verified Plan merge permits `done` and Plan/Ticket Issue closure.
 There is no outer per-Ticket merge loop. `planned`, `in_progress`, `blocked`,
 and `in_review` remain open states; `Status` is workflow metadata, not a claim
@@ -228,4 +220,4 @@ procedure.
 - Redaction is conditional and scoped to the staged commit set; it is not a mandatory transformation of every artifact.
 - State / Docs are updated after merge, source-branch deletion, and default-branch synchronization.
 - The package does not own target-project source code, application data, or deployment infrastructure.
-- Specialist skills are vendored under `skills/` and updated through this repository's normal review and version-control process.
+- Specialist skills are vendored under `skills/` and updated through this repository's normal version-control process.

@@ -78,9 +78,7 @@ Delegation remains optional and the safety rules live in
 
 ## Architecture
 
-![Codex Development Workflow development process](docs/diagrams/architecture.svg)
-
-Detailed views: [component responsibilities](docs/diagrams/components.svg),
+Detailed views: [component responsibilities source](docs/diagrams/components.puml),
 [Plan/Ticket lifecycle and nested loops](docs/architecture/overview.md#ticket-to-slice-hierarchy), and the
 [architecture guide](docs/architecture/overview.md).
 

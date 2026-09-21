@@ -112,7 +112,7 @@ Use future real runs to confirm or reject them.
 | Candidate | Current assessment | Improvement direction |
 |---|---|---|
 | Macro workflow repeated across `SKILL.md`, `README.md`, usage, and architecture docs | Likely documentation redundancy and drift risk | Keep `SKILL.md` as control plane; make other docs explain details or link to one canonical flow instead of copying it |
-| Branch/PR rules appear in core path, branch section, review section, and completion gates | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
+| Branch/PR rules appear in core path, branch section, delivery section, and completion gates | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
 | Post-delivery evaluation can itself create a documentation-only PR every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
 | Plan/Ticket/Slice/delegation machinery | Every requirement has exactly one Plan; delegation remains optional | Keep the Plan mandatory for every change type and scale only its shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |

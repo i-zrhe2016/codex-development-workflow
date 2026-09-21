@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-20 @ c139c3a
+Last verified: working tree
 
 ## Current Focus
 
@@ -10,7 +10,7 @@ Last verified: 2026-09-20 @ c139c3a
 
 - Every requirement is recorded as exactly one Plan Issue with at least one
   child Ticket before its Plan branch starts; all change types follow the Plan
-  branch -> test -> redaction -> commit -> push -> PR -> `pr-review` -> merge
+  branch -> test -> redaction -> commit -> push -> PR -> merge
   and cleanup gates defined by `AGENTS.md`.
 - The bundle installs for two hosts. `scripts/install-all.sh --target codex`
   (default) writes to `${CODEX_HOME:-$HOME/.codex}/skills`; `--target claude`
@@ -20,19 +20,7 @@ Last verified: 2026-09-20 @ c139c3a
   policy and maps no task class to an agent; Codex reads `.codex/agents/` and
   Claude Code reads `.claude/agents/`, selecting by each definition's
   `description`.
-- `.claude/agents/reviewer.md` provides the optional high-risk reviewer for
-  Claude Code with no write tool and no shell; it requires the task prompt to
-  carry the patch text and acceptance criteria. `.codex/agents/reviewer.toml`
-  remains the Codex equivalent.
-- `pr-review` is the single merge decision gate. The first review covers the
-  complete PR; bounded fixes may use incremental runner coverage, while
-  high-impact or uncertain changes require full coverage.
-- `github-push-when-ready` owns branch, commit, push, and PR readiness. The
-  recoverable review runner is packaged with `pr-review` as an implementation
-  detail.
-- `pr-review` detects changed Markdown files and passes a trusted bundled
-  document rule to the same OpenCode Review execution; documentation remains
-  under the single `PASS`/`BLOCKED` merge gate.
+- `github-push-when-ready` owns branch, commit, push, and PR readiness.
 - `repo-documentation` governs documentation as one canonical document per
   fact. Its impact check runs inside the existing Test -> Redaction path, and it
   routes each fact to its owning document type, keeps exactly one documentation
@@ -80,8 +68,6 @@ Last verified: 2026-09-20 @ c139c3a
 
 ## Constraints
 
-- `pr-review` requires an installed and configured Alibaba Open Code Review CLI
-  (`ocr`) and a reachable provider endpoint with a supported model.
 - `agents/openai.yaml` remains a required file for the Codex target only. A
   bundle that omits it fails the Codex install but installs for Claude Code.
 - `skills/context-efficiency/SKILL.md` and `docs/skills/test-workflow/*` are
@@ -96,8 +82,7 @@ Last verified: 2026-09-20 @ c139c3a
 - The root workflow owns lifecycle routing, Plan/Ticket/Slice gates, delegation,
   verification, and merge/cleanup guidance; each requirement has exactly one
   Plan, and each Plan owns one branch, PR, and merge for its child Tickets.
-- `github-push-when-ready` owns publication through PR readiness; `pr-review`
-  owns the single PASS/BLOCKED merge decision and its recoverable runner.
+- `github-push-when-ready` owns publication through PR readiness; the parent workflow merges the Plan PR after the existing validation and publication gates pass.
 - `repo-documentation` owns documentation governance and `repo-current-state`
   owns only the recovery snapshot. This repository routes its documentation from
   the root `README.md` instead of `docs/README.md`.

@@ -1,115 +1,36 @@
 @startuml
-!theme plain
-top to bottom direction
-skinparam backgroundColor #FFFFFF
-skinparam defaultFontName Arial
-skinparam ArrowColor #4A5568
-skinparam state {
-  BackgroundColor #F8F9FA
-  BorderColor #4A5568
-  FontColor #1A202C
-}
+title Codex Development Workflow
 
-title Codex Development Workflow - Unified PR-Gated Lifecycle
+state Requirement
+state "Understand repo" as Understand
+state Plan
+state "Record Plan + Tickets + Slices" as Issues
+state "Create Plan branch" as Branch
+state "Implement all Plan Tickets" as Implement
+state Test
+state "Documentation impact check" as Docs
+state "Redaction scan if applicable" as Redact
+state Commit
+state "Push branch" as Push
+state "Create / Update PR" as PR
+state "Merge Plan PR once" as Merge
+state "Delete branch / Update main" as Cleanup
+state "Close Plan + Tickets" as Close
+state "Update State / Docs" as State
 
-state "Requirement" as requirement
-state "Understand repo\nRead current state + architecture + relevant code\n[context-efficiency when context-heavy]" as understand
-state "Plan\nScope / exclusions / acceptance / dependencies" as plan
-state "Record Plan + Tickets + Slices\n[GitHub Issues before branch]\nEvery requirement -> one Plan;\nPlan contains one or more Tickets" as decompose
-state "Create Plan branch\n(all change types)" as branch
-state "Implement all Plan Tickets\n(main agent; optional bounded delegation)" as implement
-state "Test + integrate Slices\n[test-workflow]\nminimal / focused / regression / full" as test
-state "Documentation impact check\n[repo-documentation]\nUpdate canonical owner + docs index;\nskip the work when nothing changed" as docs
-state "Staged redaction scan\nbefore commit\n[data-document-redaction]" as redact
-state "Publication readiness + Commit\n[github-push-when-ready]\nIdentity / clean boundaries / Conventional Commits" as commit
-state "Push branch\n[github-push-when-ready]" as push
-state "Create / Update PR\n[github-push-when-ready]\nPR ready" as pr
-state "pr-review\nSingle merge decision gate\nReturn PASS or BLOCKED" as review
-state "Blocking findings?" as blocking #FFF4CC
-state "Batch confirmed findings\nFix affected behavior" as fix
-state "Test again\n[test-workflow]" as test_again
-state "Redaction scan again\nafter review fix" as redact_again
-state "Commit fix" as commit_fix
-state "Push branch" as push_fix
-state "Merge the Plan PR once\nRequired checks + PASS verified" as merge
-state "Delete source branch" as delete_branch
-state "Synchronize actual PR base\nFast-forward + prune" as update_main
-state "Close Plan + child Tickets" as close_ticket
-state "Update State / Docs\n[repo-current-state]" as state_docs
-
-[*] --> requirement
-requirement --> understand
-understand --> plan
-plan --> decompose
-decompose --> branch
-branch --> implement
-implement --> test
-test --> docs
-docs --> redact
-redact --> commit
-commit --> push
-push --> pr
-pr --> review
-review --> blocking
-blocking --> fix : yes
-blocking --> merge : no / pass
-fix --> test_again
-test_again --> redact_again
-redact_again --> commit_fix
-commit_fix --> push_fix
-push_fix --> review : PR updated / review again
-merge --> delete_branch
-delete_branch --> update_main
-update_main --> close_ticket
-close_ticket --> state_docs
-state_docs --> [*] : complete
-
-note right of decompose
-Persist one Plan Issue and all child Ticket Issues
-before the Plan branch. The Plan owns one branch,
-one PR, and one merge; all Tickets and Slices share it.
-Ticket dependencies order work on that branch and
-never create a Ticket-level merge.
-Every requirement has exactly one Plan and at least one Ticket; a small requirement
-uses one Ticket with one Slice.
-end note
-
-note right of review
-Invoke immediately after the PR is ready.
-Only PASS permits merge. BLOCKED returns to
-Fix -> Test -> Documentation impact when applicable
--> Redaction when applicable -> Commit -> Push -> pr-review.
-Review execution recovery is an implementation detail.
-end note
-
-note right of implement
-Main agent owns integration and final judgment.
-Delegate only independent, bounded work.
-No overlapping files or shared interfaces in parallel.
-Wrong design assumption -> re-plan.
-Failed validation -> fix and rerun affected checks.
-More Slices -> repeat implementation and validation.
-  Publication waits for the whole Plan's acceptance.
-Unresolved failures stop delivery.
-end note
-
-note right of push
-Verify actual push URL(s) and destination branch.
-Unknown targets and default-branch publication block.
-All file types require a PR; never direct-push main.
-end note
-
-note right of state_docs
-Update the recovery snapshot only after merge,
-source-branch deletion, and default-branch sync.
-If tracked State / Docs change, use the same
-  Plan-branch and PR gate for that follow-up change.
-end note
-
-note left of requirement
-Docs, Code, Tests, Config, Refactor, Bugfix,
-Feature, Dependency, and CI/CD changes all use
-this lifecycle. No direct default-branch delivery.
-end note
-
+Requirement --> Understand
+Understand --> Plan
+Plan --> Issues
+Issues --> Branch
+Branch --> Implement
+Implement --> Test
+Test --> Docs
+Docs --> Redact
+Redact --> Commit
+Commit --> Push
+Push --> PR
+PR --> Merge
+Merge --> Cleanup
+Cleanup --> Close
+Close --> State
 @enduml
