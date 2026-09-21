@@ -6,9 +6,9 @@ skinparam defaultFontName Arial
 title install-all.sh — Destination, Ownership, Update and Retirement
 
 start
-:Parse --target / --dest / --update / --adopt-legacy;
+:Parse target / dest / update / adopt-legacy options;
 
-if (--dest provided?) then (yes)
+if (Explicit dest provided?) then (yes)
   :Use explicit skills destination;
 else (no)
   :Resolve target default\nCodex: CODEX_HOME or HOME/.codex/skills\nClaude: HOME/.claude/skills;
@@ -25,13 +25,13 @@ if (Destination exists?) then (no)
   :Copy bundle;
   :Write ownership marker;
 else (yes)
-  if (--update?) then (no)
+  if (Update enabled?) then (no)
     :Skip existing bundle;
   else (yes)
     if (Ownership marker matches?) then (yes)
       :Replace managed bundle;
     else (no)
-      if (--adopt-legacy?) then (yes)
+      if (Adopt legacy enabled?) then (yes)
         :Move legacy bundle to recoverable backup;
         :Install managed bundle;
       else (no)
@@ -41,7 +41,7 @@ else (yes)
   endif
 endif
 
-if (--update?) then (yes)
+if (Update enabled?) then (yes)
   :Prune owned retired skill destinations\nincluding context-efficiency and prior retired bundles;
 endif
 
