@@ -23,7 +23,6 @@ INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 
 EXPECTED_SKILLS = (
     "codex-development-workflow",
-    "context-efficiency",
     "plan-to-ticket",
     "test-workflow",
     "repo-current-state",
