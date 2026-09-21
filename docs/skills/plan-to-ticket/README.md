@@ -1,10 +1,11 @@
 # Plan to Ticket
 
 `plan-to-ticket` is the planning specialist for the main-agent workflow. It
-turns any requirement, including a feature, bug fix, refactor, documentation,
-configuration, dependency, test, or CI/CD change, into exactly one Plan,
-behavior Tickets, and dependency-ordered Slices within each Ticket, then
-persists the Plan and Tickets to GitHub Issues.
+turns a requirement, including a feature, bug fix, refactor, documentation,
+configuration, dependency, test, or CI/CD change, into one Plan, behavior
+Tickets, and dependency-ordered Slices within each Ticket, and persists the Plan
+and its Tickets to GitHub Issues when the work is complex, must survive a
+session boundary, or the user asks for a persisted plan.
 
 The executable skill source is maintained at
 [`skills/plan-to-ticket/`](../../../skills/plan-to-ticket/). This document and
@@ -38,8 +39,9 @@ When the skill is selected for a planning request, it:
    have disjoint ownership.
 4. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
-5. Creates or updates one Plan Issue and one Issue per Ticket before the Plan
-   branch starts, reusing stable markers to avoid duplicates.
+5. Persists one Plan Issue and one Issue per Ticket before the Plan branch
+   starts when the persistence trigger applies, reusing stable markers to avoid
+   duplicates.
 6. Assigns or resumes one implementation branch and base branch for the Plan;
    every Ticket and Slice on that Plan shares the branch.
 7. Returns the `Plan` and `Tickets` sections defined by the skill contract,
@@ -47,11 +49,12 @@ When the skill is selected for a planning request, it:
    metadata.
 
 The skill is intentionally implementation-neutral. It uses repository context
-and requires the available GitHub Issues connector for persistence, but it does
-not implement code, add dependencies, force parallel implementation, or invent
-commands for unknown tooling. The parent workflow decides whether any Slice is
-delegated. A required GitHub read/write failure blocks completion; the skill
-does not fall back to local Markdown or chat-only storage.
+and requires the available GitHub Issues connector for persisted planning, but it
+does not implement code, add dependencies, force parallel implementation, or
+invent commands for unknown tooling. The parent workflow decides whether any
+Slice is delegated. For a persisted plan, a required GitHub read/write failure
+blocks completion; the skill does not fall back to local Markdown or chat-only
+storage.
 
 ## Naming contract
 
@@ -68,8 +71,8 @@ New Ticket IDs are selected by scanning both open and closed Issue bodies and
 must be greater than every existing valid ID; IDs are never reused. Duplicate
 IDs in closed historical Issues are legacy records and are not renumbered.
 When a matching Issue is reused, its title is normalized without changing its
-stable marker or identifier. A one-Ticket requirement still has a Plan Issue and a
-child Ticket Issue, both using their canonical titles.
+stable marker or identifier. A persisted one-Ticket requirement still has a Plan
+Issue and a child Ticket Issue, both using their canonical titles.
 
 ## Ticket-to-Slice hierarchy
 
@@ -80,7 +83,7 @@ the behavior/capability boundary represented by one child Issue and no
 independent delivery branch. A Slice is a smaller execution-ready unit inside
 that Ticket and inherits the Plan branch. Keep Ticket dependencies at the
 execution-order level within the Plan and Slice dependencies inside the Ticket.
-Every requirement is recorded as exactly one Plan plus at least one Ticket; tiny
+A persisted requirement is recorded as one Plan plus at least one Ticket; tiny
 work is one Plan containing one Ticket with one implicit Slice.
 
 ## Usage
@@ -88,9 +91,11 @@ work is one Plan containing one Ticket with one implicit Slice.
 Make the skill available in a Codex skills environment, then provide a change
 request or implementation idea in a repository with a resolvable GitHub
 remote. The frontmatter description in `SKILL.md` is used for skill selection.
-The skill creates/updates one Plan Issue and its Ticket Issues before returning
-a successful Plan with execution-ready Tickets and nested Slices. If the connector or required permission is
-unavailable, the result is blocked rather than an unpersisted plan.
+When the persistence trigger applies, the skill creates or updates one Plan
+Issue and its Ticket Issues before returning a successful Plan with
+execution-ready Tickets and nested Slices. If the connector or required
+permission is unavailable, the persisted result is blocked rather than replaced
+by an unpersisted plan.
 
 For repository-aware planning, include the relevant repository in the working
 context. The skill will reuse existing architecture and conventions where they

@@ -1,19 +1,27 @@
 ---
 name: plan-to-ticket
-description: Convert any requirement, including feature, bug-fix, refactor, documentation, configuration, dependency, test, or CI/CD work, into exactly one Plan, one or more behavior Tickets, and small, dependency-ordered Slices for a main agent and optional bounded delegation. Persist the Plan and every Ticket to GitHub Issues before the single Plan branch starts; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
+description: Convert any requirement, including feature, bug-fix, refactor, documentation, configuration, dependency, test, or CI/CD work, into one Plan, one or more behavior Tickets, and small, dependency-ordered Slices for a main agent and optional bounded delegation. Persist the Plan and its child Tickets to GitHub Issues whenever the work is complex, must survive a session boundary, or the user asks for a persisted plan; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
 ---
 
 # Plan to Ticket
 
-Convert any requirement into exactly one Plan, the smallest useful set of
-behavior Tickets within that Plan, and execution-ready Slices within each
-Ticket. Every Plan gets at least one Ticket; complex or dependency-driven work
-adds more Tickets and Slices without adding another delivery branch or merge.
+Convert a requirement into one Plan, the smallest useful set of behavior
+Tickets within that Plan, and execution-ready Slices within each Ticket. A Plan
+gets at least one Ticket; complex or dependency-driven work adds more Tickets
+and Slices without adding another delivery branch or merge.
 
 ## Core principle
 
-Every requirement is recorded as exactly one Plan Issue and at least one child
-Ticket Issue before the Plan branch starts. Ticket count scales with the
+Persist a Plan and its child Tickets as GitHub Issues when any of these holds:
+
+- the work is complex, crosses modules, or has internal dependencies;
+- the work must survive a session boundary or be resumed by another agent;
+- the user explicitly asks for a persisted plan.
+
+Small, single-session work keeps its plan inline and creates no Issues.
+
+When a plan is persisted, it is recorded as one Plan Issue and at least one
+child Ticket Issue before the Plan branch starts. Ticket count scales with the
 requirement: a single-behavior requirement is one Ticket with one Slice, while
 larger or dependency-driven work adds more Tickets and Slices under the same
 Plan.
@@ -21,17 +29,16 @@ Plan.
 Create additional Tickets only when they reduce implementation complexity more
 than they add planning overhead. Never create a second Plan for behavior that
 belongs to the same requirement; a smaller Ticket changes planning detail only,
-and the parent workflow still requires one Plan branch, tests, applicable
-redaction, commit, push, one PR and one merge.
+and a persisted Plan still owns one branch, its tests, applicable redaction,
+commit, push, one PR and one merge.
 
-When this skill creates a plan or ticket, GitHub Issues are the mandatory
-durable store. Persistence is not an optional output mode. Chat output is only
-a convenience copy containing links to the Issues; it is never the source of
-truth. Issue persistence is always required once this skill produces a Ticket.
+For a persisted plan, GitHub Issues are the durable store and persistence is not
+an optional output mode. Chat output is only a convenience copy containing links
+to the Issues; it is never the source of truth.
 
 ## Rules
 
-- Do not treat text-only output as completion.
+- Do not treat text-only output as completion when the plan is persisted.
 - Do not implement the planned product or repository code.
 - Do not call tools unless repository context is explicitly available and needed.
 - For persisted planning, use the available GitHub Issues connector and the
@@ -43,10 +50,10 @@ truth. Issue persistence is always required once this skill produces a Ticket.
   ticket marker in the target repository. Reuse and update one existing
   matching Issue; do not create duplicates. If more than one candidate matches,
   stop and request resolution.
-- Create or update one Plan Issue and every required child Ticket Issue before
-  creating the Plan branch. Use the repository's default branch as the base
-  unless the request explicitly establishes another base.
-- A Plan Issue is always required, including when the Plan contains one Ticket.
+- When persistence applies, create or update the Plan Issue and every required
+  child Ticket Issue before creating the Plan branch. Use the repository's
+  default branch as the base unless the request explicitly establishes another
+  base.
 - Assign the Plan one implementation branch and base branch before branch work
   starts. Use `<type>/<plan-id>-<short-description>` and keep the same branch
   for every Ticket, Slice, test, and related document in the requirement.
@@ -59,9 +66,9 @@ truth. Issue persistence is always required once this skill produces a Ticket.
 - Ticket dependencies describe execution order within the Plan branch. Do not
   wait for or create a Ticket-level merge before starting a dependent Ticket;
   validate the prerequisite Ticket/Slices on the same Plan branch first.
-- Create one GitHub Issue per behavior ticket. Every ticket Issue must retain
-  its goal, scope, dependencies, acceptance criteria, validation, and the
-  execution metadata block defined below.
+- For a persisted plan, create one GitHub Issue per behavior ticket. Every
+  ticket Issue must retain its goal, scope, dependencies, acceptance criteria,
+  validation, and the execution metadata block defined below.
 - Update the Plan Issue and each child Ticket Issue as work progresses. The
   allowed status values are `planned`, `in_progress`, `blocked`, `in_review`,
   and `done`.
@@ -96,14 +103,15 @@ truth. Issue persistence is always required once this skill produces a Ticket.
 
 ## GitHub Issues persistence contract
 
-Every requirement uses exactly one Plan Issue for the overall plan, delivery
-metadata, and Ticket index, plus one child Issue for each Ticket. The Plan Issue contains the
-overall goal, milestones, Plan `Status`/`Branch`/`Base`/`PR`, and links to child
-Issues; it must not duplicate mutable Ticket acceptance or Slice progress. The
-child Issue is the authoritative record for that Ticket's current status,
-Plan link, boundaries, dependencies, nested Slice plan, and acceptance state.
-Comments may hold append-only progress evidence, but they do not replace the
-structured fields in the Issue body. A one-Ticket requirement still has both the
+Persist a plan when the Core principle's trigger applies. A persisted plan uses
+one Plan Issue for the overall plan, delivery metadata, and Ticket index, plus
+one child Issue for each Ticket. The Plan Issue contains the overall goal,
+milestones, Plan `Status`/`Branch`/`Base`/`PR`, and links to child Issues; it
+must not duplicate mutable Ticket acceptance or Slice progress. The child Issue
+is the authoritative record for that Ticket's current status, Plan link,
+boundaries, dependencies, nested Slice plan, and acceptance state. Comments may
+hold append-only progress evidence, but they do not replace the structured
+fields in the Issue body. A persisted one-Ticket requirement still has both the
 Plan Issue and its child Ticket Issue.
 
 ## Naming contract
@@ -115,7 +123,7 @@ human-readable Issue titles aligned with those identifiers:
   `persist-plan-to-ticket-github-issues`. It is written only in the
   `codex-plan-id` marker and must be unique within the target repository.
 - A Plan Issue title is exactly `[PLAN] <short plan title>`. A Plan Issue exists
-  for every requirement, including a Plan with one Ticket.
+  for every persisted plan, including a Plan with one Ticket.
 - A Ticket ID is an uppercase `T` followed by exactly four zero-padded decimal
   digits, such as `T0016`. Allocate IDs in repository scope: scan open and
   closed Issue bodies for exact `codex-ticket-id` markers, then choose a value
@@ -414,9 +422,10 @@ Do not pre-split speculative edge cases before evidence shows they need independ
 
 ## Output Format
 
-After the persistence contract succeeds, use this structure. Include the
-canonical Plan Issue URL and the canonical Issue URL for every child Ticket;
-these links are the durable handoff for later sessions and agents. List the
+For a persisted plan, use this structure after the persistence contract
+succeeds. Include the canonical Plan Issue URL and the canonical Issue URL for
+every child Ticket; these links are the durable handoff for later sessions and
+agents. List the
 Slices nested under their parent Ticket. A Slice inherits its Ticket Issue and
 the Plan's branch and base metadata; it does not create delivery metadata.
 

@@ -7,10 +7,11 @@
 ## Scope
 
 This repository packages the `plan-to-ticket` specialist inside a larger
-main-agent workflow. Its job is to convert every change request into exactly one
-Plan, behavior Tickets, and small engineering Slices within each Ticket with
-boundaries that can support optional delegation, then persist the Plan and
-Tickets to GitHub Issues. There is no
+main-agent workflow. Its job is to convert a change request into one Plan,
+behavior Tickets, and small engineering Slices within each Ticket with
+boundaries that can support optional delegation, and to persist the Plan and its
+Tickets to GitHub Issues when the work is complex, must survive a session
+boundary, or the user asks for a persisted plan. There is no
 application runtime, custom API client, or local ticket database in this
 package; GitHub Issues are the workflow's external durable store.
 
@@ -29,7 +30,7 @@ application infrastructure topology.
 | --- | --- | --- |
 | [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines trigger metadata, Plan/Ticket/Slice planning rules, Issue persistence contract, Slice structure, scope constraints, and verification expectations. | It plans and persists Issue records; it does not implement the planned change. |
 | [`skills/plan-to-ticket/agents/openai.yaml`](../../../skills/plan-to-ticket/agents/openai.yaml) | Supplies the display name and short interface description. | It describes the skill in the interface; it does not define planning behavior. |
-| GitHub Issues connector | Creates, finds, and updates one Plan Issue plus one child Issue per Ticket. | It is the external durable authority; no local Markdown mirror is maintained. |
+| GitHub Issues connector | Creates, finds, and updates one Plan Issue plus one child Issue per Ticket for a persisted plan. | It is the external durable authority; no local Markdown mirror is maintained. |
 | This documentation package | Explains the bundle structure, behavior, output contract, and maintenance expectations. | Documentation does not add executable behavior. |
 
 ## Request flow
@@ -44,7 +45,7 @@ application infrastructure topology.
 5. The skill resolves the repository's GitHub target, searches exact stable
    markers and Ticket ID collisions, normalizes matching Issue titles, and
    creates or updates one Plan Issue and its Ticket Issues before the Plan
-   branch starts.
+   branch starts when the persistence trigger applies.
 6. The skill assigns or resumes one branch and base branch for the Plan, records
    those values on the Plan Issue, and keeps all Tickets on that branch.
 7. The successful output follows the contract in `SKILL.md`: a `Plan` section
@@ -60,7 +61,8 @@ application infrastructure topology.
 - The interface metadata is kept separate from behavior so presentation changes do not alter planning semantics.
 - The skill does not prescribe a project framework, dependency, command, or deployment platform unless repository context establishes it. It requires the available GitHub Issues connector for persistence but does not implement a custom API client.
 - Slice verification describes observable checks. It does not claim that implementation has already been completed.
-- A required GitHub Issue failure blocks completion; chat output and local Markdown are not persistence fallbacks.
+- For a persisted plan, a required GitHub Issue failure blocks completion; chat
+  output and local Markdown are not persistence fallbacks.
 - The skill does not force multi-agent handoffs or parallel implementation; the
   parent workflow decides whether an independent Slice is safe to delegate.
 - Each Plan Issue maps to one implementation branch and one PR; all child
@@ -70,10 +72,9 @@ application infrastructure topology.
   use `[T####] <short behavior/capability title>`. New `T####` identifiers are
   repository-scoped, four-digit, monotonically allocated, and never reused;
   historical duplicate IDs remain legacy records.
-- Every requirement has exactly one Plan Issue and at least one Ticket Issue; a
+- A persisted plan has one Plan Issue and at least one Ticket Issue; a
   single-behavior requirement is one Ticket with one Slice, and the Plan's
-  branch, PR, merge, and cleanup gates remain mandatory exactly
-  once.
+  branch, PR, merge, and cleanup gates remain mandatory exactly once.
 
 ## Ticket-to-Slice hierarchy
 

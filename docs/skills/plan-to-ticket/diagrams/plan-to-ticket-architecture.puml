@@ -12,7 +12,7 @@ component "Skill trigger" as trigger
 component "Plan boundary" as plan
 component "Ticket decomposition" as tickets
 component "Slice decomposition" as slices
-component "Issue persistence\nrequired" as persistence
+component "Issue persistence\nwhen triggered" as persistence
 database "GitHub Issues\nauthoritative Plan / Ticket records" as issues
 component "Result summary\nlinks + execution metadata" as output
 
