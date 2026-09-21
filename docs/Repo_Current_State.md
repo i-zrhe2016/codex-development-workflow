@@ -70,10 +70,10 @@ Last verified: working tree
 
 - `agents/openai.yaml` remains a required file for the Codex target only. A
   bundle that omits it fails the Codex install but installs for Claude Code.
-- `skills/context-efficiency/SKILL.md` and `docs/skills/test-workflow/*` are
-  written in Chinese; the remaining skill content is English.
-- Shell commands use the available native tools through `context-efficiency`;
-  exact evidence and publication gates preserve raw output and exit status.
+- `docs/skills/test-workflow/*` is written in Chinese; the remaining managed
+  skill content is English.
+- Shell commands use the available native tools directly; exact evidence and
+  publication gates preserve raw output and exit status.
 - Persisted Plans and child Tickets require an available, authorized GitHub
   Issues target; GitHub Issues are the durable authority for future work.
 
