@@ -46,6 +46,29 @@ while IFS= read -r -d '' src; do
 
   rm -f "$tmp"
   trap - EXIT
+
+  png="${src%.puml}.png"
+  if [[ -f "$png" ]]; then
+    ptmp="$(mktemp)"
+    phttp="$(curl -sS -w "%{http_code}" -o "$ptmp" \
+      -X POST "$KROKI_URL/plantuml/png" \
+      -H "Content-Type: text/plain" \
+      --data-binary "@$src")"
+    if [[ "$phttp" != "200" || ! -s "$ptmp" ]]; then
+      echo "PNG render failed: $src (HTTP $phttp)" >&2
+      cat "$ptmp" >&2 || true
+      failures=$((failures + 1))
+    elif [[ "$mode" == "--check" ]]; then
+      if ! cmp -s "$ptmp" "$png"; then
+        echo "PNG render drift: $src -> $png" >&2
+        failures=$((failures + 1))
+      fi
+    else
+      mv "$ptmp" "$png"
+      echo "rendered compatibility PNG: $src -> $png"
+    fi
+    rm -f "$ptmp"
+  fi
 done < <(find docs -type f -name '*.puml' -print0 | sort -z)
 
 echo "processed: $count diagram(s)"
