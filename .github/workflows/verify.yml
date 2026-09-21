@@ -24,7 +24,9 @@ jobs:
           python-version: "3.12"
 
       - name: Validate shell syntax
-        run: bash -n scripts/install-all.sh
+        run: |
+          bash -n scripts/install-all.sh
+          bash -n scripts/render-diagrams.sh
 
       - name: Compile repository tests
         run: python -m compileall -q scripts/tests
