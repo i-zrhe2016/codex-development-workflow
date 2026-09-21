@@ -1,50 +1,49 @@
 @startuml
 !theme plain
-skinparam defaultFontName Arial
+top to bottom direction
 skinparam shadowing false
-skinparam ArrowColor #475569
-title Plan Ticket/Slice Loop - Implement, Validate, Diagnose and Re-plan
+skinparam defaultFontName Arial
 
-state "Select next dependency-ready Ticket/Slice\nRead Plan + Ticket + shared branch evidence" as select
-state "Define Slice contract\nGoal / exclusions / ownership / dependencies\nAcceptance / concrete cases / validation command\nLevel: minimal / focused / regression / full" as contract
-state "Minimal implementation\nTest-first when useful; bounded delegation optional\nKeep all Tickets/Slices on the Plan branch" as implement
-state "Run selected focused checks\nCapture real exit status + failure evidence" as test
-state "Classify failure\nDo not weaken assertions or retry blindly" as diagnose #FFF4CC
-state "Fix implementation or test defect\nOnly evidence-backed, in-scope changes" as fix
-state "Environment / dependency blocked\nPlan/Ticket Issue open; Status: blocked\nRecord cause + exact resume point" as blocked #FFF4CC
-state "Re-plan Ticket / Slice\nUpdate boundaries, dependencies and acceptance\nPreserve completed valid work; stop widening patch" as replan
-state "Slice validated\nRecord concise evidence in authoritative Ticket\nTicket is not done until Plan merge" as slice_done #DCFCE7
-state "Plan acceptance + integration checks\nEscalate test level only for evidenced risk" as integrate
-state "Plan ready for one PR\nContinue to Plan PR review loop" as ready #DCFCE7
+title Ticket / Slice Loop — Implement, Verify, Diagnose, Re-plan
+
+state "Select dependency-ready Slice\nRead Plan + Ticket + shared branch evidence" as select
+state "Define Slice contract\nGoal / scope / exclusions / dependencies\nAcceptance / test strategy / level / cases / command" as contract
+state "Minimal implementation\nTest-first when useful\nBounded delegation optional" as implement
+state "Focused verification\nCheapest relevant checks first" as focused
+state "Mandatory risk dimensions\nBoundary / negative / integration / regression\nProperty / mutation / E2E / isolation when applicable" as dimensions
+state "Test Quality Gate" as gate
+state "Classify failure\nImplementation / test / regression / environment\nflaky / requirement conflict" as diagnose
+state "Fix in-scope defect" as fix
+state "Blocked\nRecord cause + exact resume point" as blocked
+state "Re-plan Slice / Ticket\nUpdate boundaries and acceptance" as replan
+state "Slice complete\nRecord executed evidence" as slice_done
+state "Ticket complete\nAll Slices + acceptance satisfied" as ticket_done
 
 [*] --> select
-select --> contract : next Slice
+select --> contract
 contract --> implement
-implement --> test
-test --> slice_done : acceptance satisfied
-test --> diagnose : failure / missing evidence
-diagnose --> fix : implementation or test defect
-fix --> test : rerun affected checks
-diagnose --> blocked : external cause
-blocked --> select : cause resolved; revalidate context\nStatus: in_progress
-diagnose --> replan : requirement/design conflict\nor out-of-scope correction needed
-implement --> replan : incorrect design assumption exposed
-replan --> select : updated plan persisted; dependencies ready
+implement --> focused
+focused --> diagnose : failure
+focused --> dimensions : GREEN
+dimensions --> diagnose : missing / failed evidence
+dimensions --> gate : required dimensions satisfied
+gate --> diagnose : BLOCKED
+gate --> slice_done : PASS
+diagnose --> fix : implementation / test defect
+fix --> focused
+diagnose --> blocked : external dependency
+blocked --> select : cause resolved
+diagnose --> replan : requirement / design conflict
+implement --> replan : wrong assumption exposed
+replan --> select
 slice_done --> select : more Slices
-slice_done --> integrate : all Slices validated
-integrate --> ready : Ticket acceptance passes
-integrate --> diagnose : integration regression / gap\nidentify affected Slice
-ready --> [*]
+slice_done --> ticket_done : all Slices complete
+ticket_done --> [*]
 
-note right of select
-Slice execution and Plan delivery are different loops.
-Do not commit unrelated changes or start dependent Slices early.
-Optional parallel work requires disjoint ownership;
-main agent integrates and makes the final judgment.
-end note
-note right of test
-Task commands use available native tools.
-Tests / raw evidence preserve real output and exit status.
-Passing focused checks do not trigger a full suite by default.
+note right of gate
+A GREEN test level is not enough by itself.
+Every acceptance criterion needs executed evidence.
+Applicable dimensions must pass or have a concrete N/A reason.
+Retry cannot turn unexplained flaky failure into PASS.
 end note
 @enduml
