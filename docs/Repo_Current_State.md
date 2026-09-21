@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-20 @ 829c87b
+Last verified: 2026-09-20 @ c139c3a
 
 ## Current Focus
 
@@ -38,7 +38,11 @@ Last verified: 2026-09-20 @ 829c87b
   routes each fact to its owning document type, keeps exactly one documentation
   router, and detects duplicates, orphans, and stale claims. It also owns the
   diagram policy: when a document carries a diagram, where the `.puml` source
-  and rendered image live, and when an existing diagram is stale.
+  and rendered image live, how an unrendered diagram is marked, and when an
+  existing diagram is stale.
+- Diagrams are drawn with the host-installed `plantuml-skill` and rendered
+  through Kroki. `docs/skills/repo-documentation/diagrams/` and
+  `docs/deployment/diagrams/` hold the two diagrams added with the policy.
 - `Repo_Current_State.md` is the compact current-state memory; GitHub Issues
   hold Plans and child Tickets, while `docs/skills/` documents the managed
   skills.
@@ -65,7 +69,14 @@ Last verified: 2026-09-20 @ 829c87b
   bake in the old "Codex" naming. Regenerating them needs PlantUML/Kroki
   tooling that is not part of this repository.
 - `AGENTS.md` routes "Architecture or flow visualization" to a `plantuml-skill`
-  that this repository does not bundle.
+  that this repository does not bundle; the skill is installed on the host
+  instead. `repo-documentation` now states that rendering is delegated to it by
+  name and defines the unrendered path, so the routing is actionable even though
+  the bundle is absent.
+- The existing shared `docs/diagrams/` directory predates the
+  `repo-documentation` diagram placement rule that puts new diagrams beside
+  their owning document. Those diagrams stay in place until their document is
+  migrated; no change has moved them.
 
 ## Constraints
 
