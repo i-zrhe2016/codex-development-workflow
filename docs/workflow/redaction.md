@@ -1,5 +1,9 @@
 # Redaction Workflow
 
+> Type: Guide
+> Status: Active
+> Scope: The orchestration-level redaction gate: when it runs, its procedure, gate outcomes, exit codes, and scope boundaries
+
 This document defines the orchestration-level redaction gate for the
 development workflow. The `data-document-redaction` specialist owns detection
 and sanitization behavior; this page defines when the gate runs and how its
@@ -8,9 +12,9 @@ result affects publication.
 ## When the gate runs
 
 Run the gate after the intended files are staged for the next commit and before
-that commit is created. Repeat it after any blocking `pr-review` fix that
-changes staged content, before the next commit. Git history is durable, so do
-not rely on cleaning up a secret or personal value after it has been committed.
+that commit is created. Repeat it after any corrective change that alters the
+staged content, before the next commit. Git history is durable, so do not rely
+on cleaning up a secret or personal value after it has been committed.
 
 ## Procedure
 

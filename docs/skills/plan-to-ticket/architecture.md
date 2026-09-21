@@ -1,4 +1,8 @@
-# Architecture Overview
+# Plan-to-Ticket Architecture
+
+> Type: Architecture
+> Status: Active
+> Scope: Structure and boundaries of the plan-to-ticket specialist: components, request flow, Plan/Ticket/Slice hierarchy, and Slice output contract
 
 ## Scope
 

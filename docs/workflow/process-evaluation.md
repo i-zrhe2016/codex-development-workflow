@@ -1,5 +1,9 @@
 # Workflow Process Evaluation
 
+> Type: Reference
+> Status: Active
+> Scope: Post-delivery process-evaluation rules, inspection areas, decision rubric, evaluation output, and current structural baseline
+
 Use this file to evaluate whether the development workflow is becoming heavier
 than the value it provides. It is a process-retrospective reference, not a
 second workflow specification and not a session log.
