@@ -39,9 +39,31 @@ agent must not duplicate active delegated work.
 
 ## Development process
 
+### Curated editable views
+
+![Workflow components and responsibilities](../diagrams/drawio/components-overview.svg)
+
+Editable source: [`components-overview.drawio`](../diagrams/drawio/components-overview.drawio)
+
+![Plan Ticket Slice work decomposition](../diagrams/drawio/plan-ticket-slice.svg)
+
+Editable source: [`plan-ticket-slice.drawio`](../diagrams/drawio/plan-ticket-slice.drawio)
+
+![Risk-aware Test Quality Gate](../diagrams/drawio/test-quality-gate.svg)
+
+Editable source: [`test-quality-gate.drawio`](../diagrams/drawio/test-quality-gate.drawio)
+
+![Documentation and publication lifecycle](../diagrams/drawio/docs-publication-flow.svg)
+
+Editable source: [`docs-publication-flow.drawio`](../diagrams/drawio/docs-publication-flow.drawio)
+
+These curated Draw.io views optimize information hierarchy and readability.
+The detailed PlantUML views below remain the diagrams-as-code layer for exact
+workflow loops and lower-level lifecycle detail.
+
 ### Component responsibilities and records
 
-![Workflow components and authorities](../diagrams/components.svg)
+![Detailed workflow components and authorities](../diagrams/components.svg)
 
 Source: [`components.puml`](../diagrams/components.puml)
 
@@ -52,7 +74,7 @@ documentation as persisted project knowledge.
 
 ### End-to-end lifecycle
 
-![End-to-end workflow lifecycle](../diagrams/architecture.svg)
+![Detailed end-to-end workflow lifecycle](../diagrams/architecture.svg)
 
 Source: [`architecture.puml`](../diagrams/architecture.puml)
 
@@ -184,9 +206,11 @@ styling, typo fixes, simple refactors, or exploratory work.
 | `regression` | Bug fixes and cross-module risk. |
 | `full` | High-risk or release verification. |
 
-After the selected level passes, stop unless the acceptance criteria, failure
-evidence, affected boundaries, release requirements, or the user justify an
-escalation.
+The verification level controls breadth, not PASS. Stop only after every
+acceptance criterion has executed evidence and every mandatory risk dimension
+has passed or has a concrete N/A reason. Escalate breadth when acceptance
+criteria, failure evidence, affected boundaries, release requirements, or the
+risk profile justify it.
 
 
 ### Host-specific project configuration
