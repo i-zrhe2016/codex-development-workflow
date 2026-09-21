@@ -1,21 +1,35 @@
 @startuml
-title Codex Development Workflow Components
+!theme plain
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
 
+title Codex Development Workflow — Components and Authorities
+
+actor "Main agent" as agent
 component "codex-development-workflow\nLifecycle orchestrator" as main
-component "plan-to-ticket\nPlan / Ticket / Slice planning" as plan
-component "test-workflow\nBounded verification" as test
+component "plan-to-ticket\nPlan / Ticket / Slice decomposition" as plan
+component "test-workflow\nRisk-aware verification\nTest Quality Gate" as test
 component "repo-documentation\nDocumentation governance" as docs
+component "repo-current-state\nVerified recovery snapshot" as state
 component "data-document-redaction\nStaged sensitive-data scan" as redact
 component "github-push-when-ready\nCommit / Push / PR readiness" as publish
+
 database "GitHub Issues\nPlan / Ticket authority" as issues
 cloud "GitHub\nBranch / PR / Merge" as github
+folder "Repository docs\nREADME + docs/" as docstore
 
-main --> plan
-plan --> issues
-main --> test
-main --> docs
-main --> redact
-main --> publish
-publish --> github
-main --> github : merge Plan PR
+agent --> main
+main --> plan : planning
+plan --> issues : persist
+main --> test : verification
+main --> docs : impact / ownership
+docs --> docstore : update canonical docs
+main --> redact : pre-publication scan
+main --> publish : publish branch
+publish --> github : commit / push / PR
+main --> github : merge once
+main --> state : post-merge reconciliation
+state --> docstore : update snapshot
 @enduml
