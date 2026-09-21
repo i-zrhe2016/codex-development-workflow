@@ -1,38 +1,41 @@
 @startuml
 !theme plain
-skinparam backgroundColor #FFFFFF
+top to bottom direction
+skinparam shadowing false
 skinparam defaultFontName Arial
-skinparam ArrowColor #4A5568
-skinparam activityBackgroundColor #F8F9FA
-skinparam activityBorderColor #4A5568
-skinparam activityFontColor #1A202C
 
-title repo-documentation — one fact, one owner, one diagram
+title repo-documentation — Impact, Canonical Ownership and Diagram Policy
 
 start
+:Run documentation impact check;
 
-:Documentation impact check\n(7 questions, one per change);
-
-if (Change touches documented behavior\nor an existing diagram?) then (yes)
-  :Find the canonical owner\nby document type;
-  if (An owner document\nalready holds the fact?) then (yes)
-    :Update the owner document;
-  else (no)
-    :Create the document\nonly when no owner exists;
-  endif
-  :Update the documentation router\n(root README.md) in the same change;
-  if (Fact is a flow, sequence,\nlifecycle, or relationship set?) then (yes)
-    :Write the .puml source in the\ndocument's diagrams/ directory;
-    :Render and validate the image\n[AGENTS.md routes the renderer];
-    :Embed the image with alt text\nand link the .puml source;
-  else (no)
-    :Keep the fact in prose;
-  endif
-  :Record the result in the\nchange's delivery record;
-else (no)
-  :Report that no documentation\nchange is needed;
+if (Documented behavior, architecture, interface,\nworkflow, dependency or diagram changed?) then (no)
+  :Record no documentation change needed;
+  stop
 endif
 
-stop
+:Find canonical owner document;
 
+if (Owner exists?) then (yes)
+  :Update canonical owner;
+else (no)
+  :Create one focused owner document;
+endif
+
+:Update README documentation router when needed;
+
+if (A diagram materially improves understanding?) then (yes)
+  :Choose appropriate PlantUML diagram type;
+  :Write stable .puml beside owner document;
+  :Render SVG from the same source;
+  :Validate render and readability;
+  :Embed SVG with descriptive alt text;
+  :Link editable .puml source;
+else (no)
+  :Keep explanation in prose / tables;
+endif
+
+:Check duplicate facts and orphaned docs;
+:Record documentation result in delivery evidence;
+stop
 @enduml
