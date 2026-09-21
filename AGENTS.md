@@ -108,7 +108,6 @@ restating it.
 | Situation                                                              | Skill                        |
 | ---------------------------------------------------------------------- | ---------------------------- |
 | Non-trivial repository development lifecycle                           | `codex-development-workflow` |
-| Large, unfamiliar, or context-heavy repository exploration             | `context-efficiency`         |
 | Complex, multi-step, dependent, or incremental work                    | `plan-to-ticket`             |
 | Feature, bug fix, regression, integration, or browser validation       | `test-workflow`              |
 | Architecture or flow visualization materially improves understanding   | `plantuml-skill`             |
