@@ -130,6 +130,12 @@ Tickets, and its metadata stays current at the boundaries below.
 
 ## Ticket-to-Slice hierarchy
 
+Planning begins with a Requirement Contract that preserves the original user
+intent as stable Requirement IDs plus Must Not, Non-goal, Constraint,
+Assumption, and Open Question boundaries. The Requirement Fidelity Gate must
+pass before decomposition, and Requirement IDs remain traceable through
+Tickets, Slices, acceptance criteria, and verification evidence.
+
 - A **Plan** is one coherent requirement or delivery boundary. When persisted,
   it owns one Plan Issue, one implementation branch, one pull request, and one
   merge.
@@ -157,6 +163,7 @@ Each Slice must be independently understandable and contain:
 
 ```text
 Goal
+Requirement coverage
 Scope
 Out of scope
 Dependencies
