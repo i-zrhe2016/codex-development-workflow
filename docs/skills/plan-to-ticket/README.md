@@ -31,20 +31,24 @@ The full explanation is in [architecture.md](architecture.md).
 
 When the skill is selected for a planning request, it:
 
-1. Identifies the desired outcome and the minimum implementation foundations.
-2. Splits complex or multi-behavior requirements into focused, independently
+1. Normalizes the original request into a Requirement Contract with stable
+   Requirement IDs, explicit Must Not / Non-goal boundaries, constraints,
+   assumptions, and open questions, then runs the Requirement Fidelity Gate.
+2. Identifies the desired outcome and the minimum implementation foundations.
+3. Splits complex or multi-behavior requirements into focused, independently
    verifiable behavior Tickets.
-3. Splits each Ticket into dependency-ordered Slices that the main agent can
+4. Splits each Ticket into dependency-ordered Slices that the main agent can
    execute sequentially or delegate when they are independent, bounded, and
    have disjoint ownership.
-4. Defines scope boundaries, acceptance criteria, relevant context, test
-   strategy, bounded test level, test cases, and validation for each Slice.
-5. Persists one Plan Issue and one Issue per Ticket before the Plan branch
+5. Defines scope boundaries, Requirement coverage, acceptance criteria,
+   relevant context, test strategy, bounded test level, test cases, and
+   validation for each Slice.
+6. Persists one Plan Issue and one Issue per Ticket before the Plan branch
    starts when the persistence trigger applies, reusing stable markers to avoid
    duplicates.
-6. Assigns or resumes one implementation branch and base branch for the Plan;
+7. Assigns or resumes one implementation branch and base branch for the Plan;
    every Ticket and Slice on that Plan shares the branch.
-7. Returns the `Plan` and `Tickets` sections defined by the skill contract,
+8. Returns the `Plan` and `Tickets` sections defined by the skill contract,
    including canonical Issue links, nested Slices, and current execution
    metadata.
 
@@ -84,7 +88,11 @@ independent delivery branch. A Slice is a smaller execution-ready unit inside
 that Ticket and inherits the Plan branch. Keep Ticket dependencies at the
 execution-order level within the Plan and Slice dependencies inside the Ticket.
 A persisted requirement is recorded as one Plan plus at least one Ticket; tiny
-work is one Plan containing one Ticket with one implicit Slice.
+work is one Plan containing one Ticket with one implicit Slice. Requirement IDs
+are the stable semantic link from the original request to Ticket/Slice
+acceptance criteria and later verification evidence. An uncovered Requirement
+or behavior-changing Plan item with no Requirement or verified repository
+constraint blocks the Plan.
 
 ## Usage
 
