@@ -32,9 +32,12 @@ feedback belongs to `develop-workflow`.
   single acceptance criterion.
 - Choose one bounded level — `minimal`, `focused`, `regression`, or `full` —
   from the change's behavior and risk, not from habit.
-- Invoke `test-workflow` and let it own the acceptance-to-test matrix, the
-  mandatory test dimensions, the RED/GREEN loop, the flaky and isolation
-  policy, and the Test Quality Gate.
+- Invoke `test-workflow` and let it own the requirement-to-acceptance-to-test
+  matrix, the mandatory test dimensions, the RED/GREEN loop, the flaky and
+  isolation policy, and the Test Quality Gate.
+- For a Ticket, branch, or Plan conclusion, verify that every originating
+  Requirement ID is covered by acceptance criteria and executed evidence; a
+  green test suite with an uncovered Requirement is not sufficient for PASS.
 - When verification contains independent bounded checks, the main agent may
   schedule them adaptively under `AGENTS.md`. Parallel evidence gathering is
   allowed only when the checks do not interfere with one another; the main
@@ -46,7 +49,8 @@ feedback belongs to `develop-workflow`.
 
 Return exactly one conclusion:
 
-- `PASS` — the selected level and every applicable mandatory dimension passed;
+- `PASS` — every originating Requirement ID is covered by executed evidence,
+  and the selected level and every applicable mandatory dimension passed;
 - `FAIL` — a check failed, reported with the failing check and its evidence;
 - `BLOCKED` — verification could not run, reported with the reason.
 
