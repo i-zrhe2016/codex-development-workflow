@@ -68,10 +68,11 @@ Quality Gate. The default is focused validation; each acceptance criterion maps
 to executed evidence, and applicable boundary, negative, integration,
 regression, property/fuzz, mutation, browser, or isolation dimensions must pass
 or be explicitly N/A with reason. Coverage remains diagnostic rather than a
-quality target, and an unexplained flaky FAIL cannot become PASS through retry. The main agent owns requirements, architecture,
-decomposition, integration, evaluation, and final judgment; bounded exploration,
-Slice implementation, and testing may be delegated when useful, with the host
-selecting the subagent.
+quality target, and an unexplained flaky FAIL cannot become PASS through retry.
+The main agent owns requirements, architecture, decomposition, adaptive
+execution-wave scheduling, integration, evaluation, and final judgment.
+Exploration, Slice implementation, and verification evidence may be delegated
+when useful; the actual agent topology is chosen dynamically for each wave.
 
 ## Adaptive multi-agent execution
 
