@@ -12,13 +12,17 @@ deterministic automated feedback over repeated agent inspection.
 
 ## Core rules
 
-1. Derive tests from the requirement, ticket function checklist, acceptance criteria, and existing project contracts.
+1. Derive tests from stable Requirement IDs, the ticket function checklist,
+   acceptance criteria, and existing project contracts. Preserve the mapping
+   from requirement to acceptance criterion to evidence.
 2. Reuse the repository's existing test framework, scripts, fixtures, helpers, and conventions before adding new infrastructure.
 3. Run the smallest relevant check first; broaden only after the focused checks pass.
 4. Test observable behavior and stable contracts, not implementation details unless the implementation detail is itself the contract.
 5. Never weaken assertions, delete meaningful tests, add blind retries, or add fixed sleeps merely to obtain GREEN.
 6. Do not run expensive full-suite or browser validation repeatedly inside the inner implementation loop unless the repository requires it.
-7. A passing test does not prove an untested requirement. Map every acceptance criterion to evidence.
+7. A passing test does not prove an untested requirement. Map every Requirement
+   ID to at least one acceptance criterion and every acceptance criterion to
+   executed evidence.
 
 ## Bounded verification levels
 
@@ -72,17 +76,18 @@ Prefer a compact high-signal set over a large low-signal matrix, but do not use
 a fixed case count as a completeness rule. Cover contracts, boundaries, state
 transitions, and failure handling first.
 
-## Build the acceptance-to-test matrix
+## Build the requirement-to-acceptance-to-test matrix
 
-Before declaring a Slice test-complete, map every acceptance criterion to
-executed evidence:
+Before declaring a Slice test-complete, map every originating Requirement ID to
+acceptance criteria and executed evidence:
 
-| Acceptance criterion | Risk | Required dimension | Evidence | Result |
-|---|---|---|---|---|
-| <criterion> | low/medium/high | unit/integration/negative/... | <command/test> | pass/fail/blocked |
+| Requirement | Acceptance criterion | Risk | Required dimension | Evidence | Result |
+|---|---|---|---|---|---|
+| R1 | <criterion> | low/medium/high | unit/integration/negative/... | <command/test> | pass/fail/blocked |
 
-A passing test that is not mapped to a requirement does not prove the
-requirement. A requirement without evidence keeps the quality gate open.
+A passing test that is not mapped to a Requirement ID does not prove the
+requirement. A Requirement ID without acceptance coverage or executed evidence
+keeps the quality gate open.
 
 ## Select mandatory test dimensions
 
@@ -224,6 +229,7 @@ Browser tests complement unit/integration checks; they do not replace them.
 
 A Ticket's Slices are test-complete only when the Test Quality Gate closes:
 
+- every originating Requirement ID maps to at least one acceptance criterion;
 - every acceptance criterion maps to concrete executed evidence;
 - every mandatory risk dimension is satisfied, or explicitly N/A with reason;
 - the selected checks for the chosen level are GREEN;
@@ -252,11 +258,11 @@ Return a concise report:
 - Level: minimal / focused / regression / full
 - Result: pass / partial / fail / blocked
 
-### Acceptance-to-test matrix
+### Requirement-to-acceptance-to-test matrix
 
-| Acceptance criterion | Risk | Required dimension | Evidence | Result |
-|---|---|---|---|---|
-| ... | ... | ... | command/test/observed behavior | pass/fail/blocked |
+| Requirement | Acceptance criterion | Risk | Required dimension | Evidence | Result |
+|---|---|---|---|---|---|
+| R1 | ... | ... | ... | command/test/observed behavior | pass/fail/blocked |
 
 ### Test Quality Gate
 

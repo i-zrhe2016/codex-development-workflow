@@ -81,9 +81,19 @@ to the Issues; it is never the source of truth.
   number. The PR head/base must match the Plan's `Branch`/`Base`; set the Plan
   to `in_review` when it opens. Child Tickets keep only their Plan link,
   status, dependencies, acceptance, and Slice metadata.
+- When the user materially changes the requirement after planning, increment
+  `Requirement-Revision`, update the Requirement Contract, rerun the
+  Requirement Fidelity Gate and Requirement Traceability Gate, and update every
+  affected Ticket/Slice before implementation continues. Do not silently adapt
+  the old Plan to the new intent.
 - Keep `docs/Repo_Current_State.md` as a compact pointer to the active Issue
   when repository state is updated; do not copy the plan or backlog into it.
 - Keep tickets small, focused, independently understandable, and independently verifiable.
+- Carry the Requirement Contract from `plan-workflow` into the Plan. Every
+  behavior-changing Ticket and Slice must declare which Requirement IDs it
+  covers, unless it exists solely because of a verified repository constraint.
+- Never create planned behavior with no Requirement ID or verified repository
+  constraint as its source. Never leave an explicit Requirement ID uncovered.
 - Prefer one behavior or capability per ticket, not one file or one coding step per ticket.
 - Do not use Plan, Ticket, and Slice as synonyms: a Plan is the requirement
   delivery boundary; a Ticket is the child behavior boundary; a Slice is an
@@ -100,6 +110,26 @@ to the Issues; it is never the source of truth.
 - If repository context exists, respect its architecture, conventions, constraints, and current state.
 - If exact commands or implementation details are unknown, describe validation behavior instead of inventing commands.
 - Do not prescribe strict RED/GREEN for trivial or mechanically verifiable changes. Let the downstream testing workflow choose the appropriate test mode.
+
+## Requirement Traceability Gate
+
+Before a Plan is executable, build and validate this chain:
+
+```text
+Requirement -> Ticket -> Slice -> Acceptance Criteria
+```
+
+The gate passes only when:
+
+- every Requirement ID maps to at least one Ticket or Slice;
+- every Requirement ID maps to at least one observable acceptance criterion;
+- every behavior-changing Ticket and Slice traces to a Requirement ID or a
+  verified repository constraint;
+- no two planned items contradict the same Requirement; and
+- Must Not and Non-goal boundaries are not violated by the Plan.
+
+A missing Requirement mapping blocks execution. A planned behavior with no
+source is scope expansion and also blocks execution.
 
 ## GitHub Issues persistence contract
 
@@ -152,6 +182,9 @@ Use stable markers so retries and later sessions can find the same records:
 The Plan Issue should contain:
 
 - the stable plan marker;
+- the Requirement Contract, including stable Requirement IDs, Must Not,
+  Non-goals, Constraints, Assumptions, and Open Questions;
+- the requirement revision number and a Requirement Coverage matrix;
 - the overall goal and milestones;
 - `Status`, `Branch`, `Base`, and `PR` metadata;
 - a Ticket index linking each Ticket ID to its GitHub Issue; and
@@ -162,6 +195,7 @@ actual Plan data:
 
 ```yaml
 Status: planned
+Requirement-Revision: 1
 Branch: <type>/plan-slug-short-description
 Base: main
 PR: null
@@ -175,6 +209,7 @@ the actual Ticket data:
 Plan: <canonical Plan Issue URL>
 Status: planned
 Dependencies: []
+Covers: [R1]
 ```
 
 The Ticket Issue body uses the Ticket structure in this skill, including Goal,
@@ -189,7 +224,8 @@ acceptance boundary, or Slice plan changes.
 Persist in this order:
 
 1. Resolve the target repository and base branch.
-2. Generate the plan and dependency-ordered tickets in memory.
+2. Generate the Requirement Contract, run the Requirement Fidelity Gate, and
+   generate the plan and dependency-ordered tickets in memory.
 3. Search for the exact stable plan/ticket markers, check ID collisions, and
    resolve any existing Issues.
 4. Create or update the Plan Issue with its delivery metadata and Ticket index.
@@ -228,17 +264,22 @@ pull request is merged.
 
 Before writing the output, determine internally:
 
-1. The one requirement and final desired outcome represented by the Plan.
-2. How many Tickets the requirement needs.
-3. The minimum foundations required first.
-4. The smallest independently reviewable behavior Tickets within the Plan.
-5. The dependency order between Tickets on the shared Plan branch.
-6. The smallest independently verifiable Slices within each Ticket.
-7. The dependency order between Slices and any safe delegation boundaries.
-8. The scope boundaries that prevent drift into another Plan/requirement.
-9. The observable acceptance criteria for each Slice.
-10. The test cases and validation evidence needed to prove each Slice and the
-    final Plan.
+1. The Desired Outcome and Requirement Contract represented by the Plan.
+2. Stable Requirement IDs and any Must Not, Non-goal, Constraint, Assumption,
+   or Open Question that affects planning.
+3. Whether the Requirement Fidelity Gate passes against the original request
+   and verified repository evidence.
+4. How many Tickets the requirement needs.
+5. The minimum foundations required first.
+6. The smallest independently reviewable behavior Tickets within the Plan.
+7. The dependency order between Tickets on the shared Plan branch.
+8. The smallest independently verifiable Slices within each Ticket.
+9. The dependency order between Slices and any safe delegation boundaries.
+10. The scope boundaries that prevent drift into another Plan/requirement.
+11. The Requirement IDs covered by each Ticket and Slice.
+12. The observable acceptance criteria for each Slice.
+13. The test cases and validation evidence needed to prove each Requirement and
+    the final Plan.
 
 Do not expose internal reasoning.
 
@@ -330,7 +371,9 @@ Avoid:
 - Code is clean.
 - Feature is complete.
 
-Acceptance criteria define **what must be true**. Test cases define **how that behavior will be exercised**.
+Acceptance criteria define **what must be true**. Each criterion must identify
+which Requirement ID or verified repository constraint it proves. Test cases
+define **how that behavior will be exercised**.
 
 ## Test Cases
 
@@ -445,11 +488,48 @@ Plan Issue: <Canonical GitHub plan Issue URL>
 
 ```yaml
 Status: planned
+Requirement-Revision: 1
 Branch: <type>/plan-slug-short-description
 Base: main
 PR: null
 Tickets: [T0001]
 ```
+
+## Requirement Contract
+
+**Desired Outcome**
+
+<What the user must be able to observe when the Plan is complete.>
+
+**Requirements**
+
+- R1 - <Observable requirement or explicit constraint>
+
+**Must Not**
+
+- <Explicit prohibited behavior, or None>
+
+**Non-goals**
+
+- <Explicitly excluded related work, or None>
+
+**Constraints**
+
+- <Verified repository or architecture constraint, or None>
+
+**Assumptions**
+
+- <Implementation-relevant assumption, or None>
+
+**Open Questions**
+
+- <Material unresolved ambiguity, or None>
+
+**Requirement Coverage**
+
+| Requirement | Ticket | Slice | Acceptance |
+|---|---|---|---|
+| R1 | T0001 | S0001.1 | <criterion> |
 
 1. <Milestone>
 2. <Milestone>
@@ -471,6 +551,7 @@ Tickets: [T0001]
 Plan: <Canonical GitHub Plan Issue URL>
 Status: planned
 Dependencies: []
+Covers: [R1]
 ```
 
 **Ticket Goal**
@@ -517,6 +598,10 @@ Dependencies: []
 **Goal**
 
 <One concrete Slice outcome within T0001.>
+
+**Covers**
+
+- R1
 
 **Scope**
 
