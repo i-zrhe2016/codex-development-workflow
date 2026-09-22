@@ -81,6 +81,11 @@ to the Issues; it is never the source of truth.
   number. The PR head/base must match the Plan's `Branch`/`Base`; set the Plan
   to `in_review` when it opens. Child Tickets keep only their Plan link,
   status, dependencies, acceptance, and Slice metadata.
+- When the user materially changes the requirement after planning, increment
+  `Requirement-Revision`, update the Requirement Contract, rerun the
+  Requirement Fidelity Gate and Requirement Traceability Gate, and update every
+  affected Ticket/Slice before implementation continues. Do not silently adapt
+  the old Plan to the new intent.
 - Keep `docs/Repo_Current_State.md` as a compact pointer to the active Issue
   when repository state is updated; do not copy the plan or backlog into it.
 - Keep tickets small, focused, independently understandable, and independently verifiable.
