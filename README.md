@@ -1,8 +1,9 @@
 # Codex Development Workflow
 
-An adaptive, main-agent-led development workflow for Codex and Claude Code with
-optional bounded delegation, post-delivery process evaluation, bounded
-self-improvement, and all required specialist skills managed in this repository.
+A main-agent-led development workflow for Codex and Claude Code with a fixed
+delivery lifecycle and adaptive multi-agent execution, plus post-delivery
+process evaluation, bounded self-improvement, and all required specialist
+skills managed in this repository.
 
 ## At a glance
 
@@ -47,7 +48,9 @@ Verification breadth varies with risk, and published work follows one path:
 Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
 changes all use the branch, commit, push, PR, and merge path once they are
 published. Feature, Bug, Refactor, and Docs are profiles of the stage workflows,
-not separate workflows.
+not separate workflows. The macro stage order and gates stay fixed; inside the
+current stage, the main agent chooses the smallest useful execution wave and may
+run dependency-ready, non-overlapping work concurrently.
 
 After delivery, the main agent performs one lightweight workflow evaluation.
 It looks for reusable evidence such as avoidable rework, weak assumptions,
@@ -70,16 +73,29 @@ decomposition, integration, evaluation, and final judgment; bounded exploration,
 Slice implementation, and testing may be delegated when useful, with the host
 selecting the subagent.
 
-## Optional project-scoped delegation
+## Adaptive multi-agent execution
 
-The project configuration keeps multi-agent support deliberately small. Each
-host reads its own agent directory, and each host selects the subagent from the
-agent's own `description`:
+The workflow uses a **fixed control plane / adaptive execution plane** model.
 
-- Codex reads `.codex/config.toml` (subagents enabled, spawned-agent threads
-  capped at three excluding the main thread) and `.codex/agents/`.
-- Claude Code reads `.claude/agents/`.
-Delegation remains optional and the safety rules live in
+- The fixed control plane is `plan -> develop -> verify -> publish -> integrate`
+  with the existing branch, Test Quality Gate, redaction, PR, and merge
+  boundaries unchanged.
+- The adaptive execution plane is selected by the main agent at runtime. It
+  decides whether delegation helps, which dependency-ready Slices can run in
+  parallel, how many subagents are useful, and which available agent best
+  matches each bounded task.
+- The configured concurrency is a ceiling, not a target. A wave may use zero,
+  one, or several subagents.
+- The ready set is recomputed after each material result, failure, dependency
+  change, or integration step. The Plan is never pre-assigned wholesale to
+  agents.
+- Publication, merge, stage-gate decisions, and final judgment remain with the
+  main agent.
+
+Codex reads `.codex/config.toml`, may use its built-in subagents, and may also
+use project-defined agents under `.codex/agents/` when present. Claude Code may
+use its built-in agents and project-defined agents under `.claude/agents/`.
+The shared scheduling and safety rules live in
 [`AGENTS.md`](AGENTS.md#multi-agent-delegation).
 
 ## Architecture
