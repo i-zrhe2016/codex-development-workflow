@@ -209,17 +209,27 @@ of its branch: record `Branch` and `Base` before editing, set Plan
 `Status: in_progress` when work starts, and require the Plan PR head/base to
 match those fields.
 
-### Delegation
+### Adaptive delegation
 
-Delegation is optional and may occur after branch creation during
-implementation. The main agent delegates only tasks with a clear goal, scope
-and exclusions, ownership boundary, dependencies, acceptance criteria,
-validation, and expected result summary. Parallel write tasks must not share
-files, interfaces, schemas, migrations, or configuration. Delegation never
-bypasses Test, Redaction when applicable, Commit, Push, PR, or
-Merge. Prefer a single delegation level. The host selects the subagent by
-`description`; the policy lives in
-[`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
+Delegation is an execution decision inside the current stage, not a second
+workflow. The main agent schedules dependency-ready bounded tasks in execution
+waves and dynamically chooses direct execution, one subagent, or several
+non-overlapping subagents up to the host concurrency ceiling.
+
+The entire Plan is never assigned to agents in advance. After each material
+result, failure, dependency change, or integration step, the main agent
+recomputes the ready set and may choose a different topology for the next wave.
+
+Every delegated task has a clear goal, scope and exclusions, ownership
+boundary, dependencies, acceptance criteria, validation, and expected result
+summary. Parallel write tasks may not share files, interfaces, schemas,
+migrations, or shared configuration. When write isolation is uncertain, use
+sequential execution or read-only delegation.
+
+Subagents return findings, changes or patches, test evidence, and unresolved
+risks. The main agent integrates every wave and retains stage-gate, publication,
+merge, and final-judgment authority. Prefer one delegation level. The canonical
+policy lives in [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
 
 ### Slice execution
 
@@ -252,10 +262,13 @@ risk profile justify it.
 
 ### Host-specific project configuration
 
-Each host reads its own agent definitions: Codex reads `.codex/agents/` and
-`.codex/config.toml`, while Claude Code reads `.claude/agents/`. Neither host
-reads the other's directory, and the selection rule is each agent definition's
-`description`. The delegation policy lives in
+Each host exposes its own agent runtime. Codex reads `.codex/config.toml`, may
+use built-in agents, and may also read project-defined agents from
+`.codex/agents/` when present. Claude Code may use its built-in agents and
+project-defined agents from `.claude/agents/`. Neither host reads the other's
+project-agent directory. Agent choice is dynamic and driven by the task
+contract plus the available agent descriptions; the repository does not
+hard-code task classes to agent names. The scheduling policy lives in
 [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation), and
 [installation.md](../deployment/installation.md) owns the per-host
 configuration procedure.
