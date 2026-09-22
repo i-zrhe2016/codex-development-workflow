@@ -93,6 +93,9 @@ are the stable semantic link from the original request to Ticket/Slice
 acceptance criteria and later verification evidence. An uncovered Requirement
 or behavior-changing Plan item with no Requirement or verified repository
 constraint blocks the Plan.
+Material requirement changes increment `Requirement-Revision` and require the
+fidelity and traceability gates to run again before affected implementation
+continues.
 
 ## Usage
 
