@@ -99,6 +99,187 @@ use its built-in agents and project-defined agents under `.claude/agents/`.
 The shared scheduling and safety rules live in
 [`AGENTS.md`](AGENTS.md#multi-agent-delegation).
 
+## Workflow composition examples
+
+Stage workflows are composable. Use only the stages needed for the current
+request, while preserving stage ownership and the existing gates. A partial
+workflow stops when its requested stage is complete; it does not implicitly
+continue into publication or merge.
+
+### 1. Planning only
+
+Use when the requirement needs architecture, decomposition, or a persisted Plan
+but no repository change is requested yet.
+
+```text
+Requirement
+  -> plan-workflow
+  -> Plan / Tickets / Slices
+  -> stop
+```
+
+Example request:
+
+```text
+Plan how to add multi-tenant routing. Do not modify code yet.
+```
+
+### 2. Implement only from an existing plan
+
+Use when executable Tickets or Slices already exist and the request is only to
+make the repository changes.
+
+```text
+Existing Slice
+  -> develop-workflow
+  -> Development Complete
+  -> stop
+```
+
+Codex may execute the Slice itself or dynamically schedule independent ready
+Slices across subagents. It still stops before delivery verification and
+publication.
+
+### 3. Implement and verify
+
+Use for a local feature or bug-fix cycle where implementation and evidence are
+needed, but no commit or PR is requested.
+
+```text
+develop-workflow
+  -> verify-workflow
+  -> PASS | FAIL | BLOCKED
+  -> stop
+```
+
+A failed verification returns to development for the affected Slice rather than
+advancing to publication.
+
+### 4. Verify only
+
+Use when code already exists and only acceptance, regression, or branch evidence
+is required.
+
+```text
+Existing change
+  -> verify-workflow
+  -> Test Quality Gate
+  -> PASS | FAIL | BLOCKED
+  -> stop
+```
+
+Independent checks may run concurrently, but the main agent owns the final
+verification conclusion.
+
+### 5. Verify and publish
+
+Use when implementation is already complete and the goal is to prove the change
+and prepare it for review.
+
+```text
+Existing change
+  -> verify-workflow
+  -> publish-workflow
+  -> documentation impact
+  -> redaction when applicable
+  -> commit
+  -> push
+  -> PR ready
+  -> stop
+```
+
+This combination never merges the pull request.
+
+### 6. Publish only
+
+Use when the user explicitly asks to commit, push, or prepare a PR for a change
+that already has sufficient verification evidence.
+
+```text
+Verified change
+  -> publish-workflow
+  -> PR ready
+  -> stop
+```
+
+Publication still keeps documentation, redaction, branch, and PR gates intact.
+
+### 7. Integrate only
+
+Use when a PR is already ready and the remaining request is merge, cleanup, and
+state reconciliation.
+
+```text
+Ready PR
+  -> integrate-workflow
+  -> merge once
+  -> delete source branch
+  -> update default branch
+  -> close Plan / Tickets
+  -> reconcile State / Docs
+  -> stop
+```
+
+### 8. Full end-to-end delivery
+
+Use only when the user explicitly authorizes complete delivery.
+
+```text
+Requirement
+  -> plan-workflow
+  -> develop-workflow
+  -> verify-workflow
+  -> publish-workflow
+  -> integrate-workflow
+  -> workflow evaluation
+```
+
+The macro sequence is fixed, while execution inside eligible stages stays
+adaptive:
+
+```text
+ready Slices
+  -> Codex chooses self / delegate / parallel wave
+  -> integrate results
+  -> recompute ready set
+  -> continue current stage
+```
+
+### 9. Parallel implementation inside one fixed workflow
+
+For a Plan with independent Slices:
+
+```text
+Plan
+  |
+  +-- Slice A: API --------> Worker / Main ---+
+  +-- Slice B: UI ---------> Worker / Main ---+--> integrate wave
+  +-- Slice C: docs -------> Worker / Main ---+
+                                                |
+                                                v
+                                         verify-workflow
+```
+
+Codex decides the actual topology at runtime. If Slice A and Slice B touch the
+same interface, schema, migration, shared configuration, or files, they stay
+sequential even when concurrency is available.
+
+### Composition rule
+
+Think of the system as:
+
+```text
+Fixed stage contracts
+        +
+Composable requested stages
+        +
+Adaptive execution inside the active stage
+```
+
+Stages answer **what must happen and where the workflow stops**. The main Codex
+agent decides **how ready work is executed** without changing stage ownership or
+bypassing quality gates.
+
 ## Architecture
 
 The repository keeps two complementary diagram layers:
