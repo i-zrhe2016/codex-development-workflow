@@ -7,8 +7,8 @@
 ## Scope
 
 This repository packages a main-agent-led development-workflow orchestrator for
-Codex and Claude Code with optional bounded delegation and its specialist
-skills. The orchestrator owns stage routing and quality gates; specialist
+Codex and Claude Code with a fixed workflow topology and adaptive multi-agent
+execution. The orchestrator owns stage routing and quality gates; specialist
 procedures remain inside their own `SKILL.md` files.
 
 ## Components
@@ -16,9 +16,9 @@ procedures remain inside their own `SKILL.md` files.
 | Component | Responsibility |
 |---|---|
 | `codex-development-workflow` | Routes each request to the stage workflow that owns it — `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, or `integrate-workflow` — carries the invariants shared by all stages, and provides the optional full orchestration for an explicitly authorized end-to-end delivery. |
-| Delegation | Optional bounded implementation work after branch creation; it never creates a second delivery path or bypasses the PR gate. |
-| Subagent selection | The host picks the subagent from each agent definition's `description`; no document maps a task class to an agent. |
-| `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). |
+| Adaptive execution waves | Runtime scheduling of dependency-ready bounded tasks inside the current stage. The main agent may execute work itself or delegate non-overlapping tasks concurrently, then integrates the wave before the next gate. |
+| Subagent selection | The main agent and host choose the best available built-in or project-defined subagent from the task contract and agent description; no task class is hard-coded to a named agent. |
+| `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). The cap is a ceiling, not a target. |
 | `plan-to-ticket` | Turns a requirement into one Plan, splits it into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
@@ -31,11 +31,12 @@ procedures remain inside their own `SKILL.md` files.
 | `github-push-when-ready` | Guards feature-branch publication through Commit, Push, and PR readiness. |
 
 The main agent centrally owns requirements, architecture, planning, dependency
-ordering, integration, and final judgment. Bounded delegation may route
-independent exploration, testing, or isolated implementation to subagents; the
-host selects which one, and [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation)
-owns the policy. Dependent or overlapping work remains sequential, and the main
-agent must not duplicate active delegated work.
+ordering, execution-wave scheduling, integration, stage-gate decisions, and
+final judgment. Adaptive execution may route independent exploration, testing,
+or isolated implementation to subagents, but it never changes the workflow
+topology. [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation) owns the
+scheduling policy. Dependent or overlapping work remains sequential, and the
+main agent must not duplicate active delegated work.
 
 ## Development process
 
@@ -124,6 +125,33 @@ Ticket Issues before the Plan branch is created. Each Slice loads only the
 context needed for its acceptance criteria. A wrong design assumption returns to
 Plan or causes a Slice split.
 
+### Fixed topology and adaptive execution waves
+
+The workflow and agent layers have different stability:
+
+```text
+Static control plane
+  plan -> develop -> verify -> publish -> integrate
+            |
+            v
+Dynamic execution plane inside the current stage
+  ready set -> choose self/delegate -> execution wave -> integrate
+            -> recompute ready set
+```
+
+The stage order, stage ownership, Plan branch, Test Quality Gate, redaction,
+publication, and merge boundaries are fixed. The execution topology is not.
+For each wave the main agent derives the ready set from satisfied dependencies,
+removes tasks whose write ownership overlaps, and chooses the smallest useful
+combination of direct work and delegated work under the host concurrency
+ceiling.
+
+The scheduler is evidence-driven rather than pre-assigned. A result may expose
+a new dependency, conflict, failure, or safer sequential path, so the main agent
+recomputes the next wave after every material result or integration step.
+Subagents cannot advance stage gates, publish, merge, or replace the main
+agent's final judgment.
+
 ### Ticket-to-Slice hierarchy
 
 The detailed Plan/Ticket lifecycle is split into three linked views so each
@@ -181,17 +209,27 @@ of its branch: record `Branch` and `Base` before editing, set Plan
 `Status: in_progress` when work starts, and require the Plan PR head/base to
 match those fields.
 
-### Delegation
+### Adaptive delegation
 
-Delegation is optional and may occur after branch creation during
-implementation. The main agent delegates only tasks with a clear goal, scope
-and exclusions, ownership boundary, dependencies, acceptance criteria,
-validation, and expected result summary. Parallel write tasks must not share
-files, interfaces, schemas, migrations, or configuration. Delegation never
-bypasses Test, Redaction when applicable, Commit, Push, PR, or
-Merge. Prefer a single delegation level. The host selects the subagent by
-`description`; the policy lives in
-[`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
+Delegation is an execution decision inside the current stage, not a second
+workflow. The main agent schedules dependency-ready bounded tasks in execution
+waves and dynamically chooses direct execution, one subagent, or several
+non-overlapping subagents up to the host concurrency ceiling.
+
+The entire Plan is never assigned to agents in advance. After each material
+result, failure, dependency change, or integration step, the main agent
+recomputes the ready set and may choose a different topology for the next wave.
+
+Every delegated task has a clear goal, scope and exclusions, ownership
+boundary, dependencies, acceptance criteria, validation, and expected result
+summary. Parallel write tasks may not share files, interfaces, schemas,
+migrations, or shared configuration. When write isolation is uncertain, use
+sequential execution or read-only delegation.
+
+Subagents return findings, changes or patches, test evidence, and unresolved
+risks. The main agent integrates every wave and retains stage-gate, publication,
+merge, and final-judgment authority. Prefer one delegation level. The canonical
+policy lives in [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
 
 ### Slice execution
 
@@ -224,10 +262,13 @@ risk profile justify it.
 
 ### Host-specific project configuration
 
-Each host reads its own agent definitions: Codex reads `.codex/agents/` and
-`.codex/config.toml`, while Claude Code reads `.claude/agents/`. Neither host
-reads the other's directory, and the selection rule is each agent definition's
-`description`. The delegation policy lives in
+Each host exposes its own agent runtime. Codex reads `.codex/config.toml`, may
+use built-in agents, and may also read project-defined agents from
+`.codex/agents/` when present. Claude Code may use its built-in agents and
+project-defined agents from `.claude/agents/`. Neither host reads the other's
+project-agent directory. Agent choice is dynamic and driven by the task
+contract plus the available agent descriptions; the repository does not
+hard-code task classes to agent names. The scheduling policy lives in
 [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation), and
 [installation.md](../deployment/installation.md) owns the per-host
 configuration procedure.

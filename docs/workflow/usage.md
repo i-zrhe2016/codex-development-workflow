@@ -153,26 +153,48 @@ once the existing verification and publication gates are satisfied. The Plan
 Issue and implementation branch are a one-to-one pair; record and verify the
 Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 
-## Optional delegation
+## Adaptive agent orchestration
 
-Delegation is optional and may occur during implementation. The main agent uses
-it when it materially improves speed, context isolation, or review quality; a
-single-agent execution remains the default. Delegation does not create a second
-delivery path or bypass the branch, verification, redaction, commit, push, PR,
-or merge gates for published work.
+The main process is fixed while task execution is adaptive.
 
-Delegate only a bounded, independently executable task. Keep dependent or
-overlapping work sequential; parallel write tasks must not touch the same
-files, interfaces, schemas, migrations, or shared configuration.
+```text
+Fixed:
+plan -> develop -> verify -> publish -> integrate
 
-Every delegated task includes its goal, scope and exclusions, ownership
+Dynamic inside the current stage:
+ready tasks -> choose self/delegate -> execution wave -> integrate -> reschedule
+```
+
+The main agent computes a ready set from satisfied dependencies and clear
+ownership boundaries. It then chooses the smallest useful execution wave:
+
+- execute everything itself when delegation adds little value;
+- delegate one bounded task when context isolation or independent evidence helps;
+- run several independent tasks concurrently when their write boundaries do
+  not overlap and host capacity is available.
+
+Concurrency is a ceiling, not a utilization target. The main agent decides the
+actual count at runtime. It does not assign the entire Plan to agents in
+advance; after each material result, failure, dependency change, or integration
+step it recomputes the ready set and may choose a different topology for the
+next wave.
+
+Agent selection is also dynamic. The host and main agent choose among available
+built-in or project-defined agents from the task contract and agent description;
+this repository does not hard-code task categories to agent names.
+
+Every delegated task carries its goal, scope and exclusions, ownership
 boundary, dependencies, acceptance criteria, validation, and expected result
-summary. Subagents return findings, changes, test results, and unresolved
-risks, not raw logs. Prefer one delegation level and keep integration and final
-judgment with the main agent.
+summary. Parallel write tasks may not share files, interfaces, schemas,
+migrations, or shared configuration. When isolation is uncertain, use
+sequential execution or read-only delegation.
 
-Subagent selection is host-specific; follow the delegation policy in
-[`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
+Subagents return findings, changes or patches, test evidence, and unresolved
+risks. The main agent integrates each wave and retains ownership of stage-gate
+decisions, publication, merge, and final judgment.
+
+See [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation) for the canonical
+scheduling policy.
 
 ## Verification
 

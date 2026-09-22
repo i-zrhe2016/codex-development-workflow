@@ -1,3 +1,4 @@
 [agents]
 enabled = true
+# Ceiling, not a target: the main agent chooses useful concurrency per execution wave.
 max_concurrent_threads_per_session = 3

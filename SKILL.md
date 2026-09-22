@@ -11,9 +11,11 @@ whichever stage runs. An explicitly authorized end-to-end delivery may instead
 run the full orchestration described here.
 
 The main agent owns requirements, architecture, the planning and persistence
-decision, integration, delivery gates, process evaluation, and final judgment.
-Stage workflows decide *when* a stage runs; capability skills define *how* it is
-performed.
+decision, dependency ordering, adaptive execution-wave scheduling, integration,
+delivery gates, process evaluation, and final judgment. Stage workflows decide
+*when* a stage runs; capability skills define *how* it is performed. Agent
+assignment is an execution choice inside a stage, never a replacement for the
+stage topology or its gates.
 
 ## Routing
 
@@ -50,6 +52,47 @@ These hold in every stage, including the full orchestration:
 - Verified state is reconciled after merge, not before it.
 - Do not implement future work, unrelated refactors, formatting sweeps, or
   dependency upgrades inside another change.
+
+## Fixed control flow, adaptive execution
+
+Use a **static control plane / dynamic execution plane** model.
+
+The control plane is fixed:
+
+```text
+plan-workflow -> develop-workflow -> verify-workflow
+              -> publish-workflow -> integrate-workflow
+```
+
+When the full orchestration is authorized, the stage order, ownership,
+completion contracts, branch/PR discipline, Test Quality Gate, redaction gate,
+and merge boundary are invariant. Multi-agent execution may not skip, reorder,
+or redefine them.
+
+Inside the stage that currently owns the work, the main agent decides the
+execution topology at runtime. It may execute work itself, delegate one bounded
+task, or run several dependency-ready tasks concurrently when their ownership
+boundaries are disjoint. The host concurrency limit is a ceiling, not a target.
+
+For each scheduling wave:
+
+1. Build the ready set from tasks whose dependencies are satisfied.
+2. Exclude tasks with unresolved file, interface, schema, migration, or shared
+   configuration overlap.
+3. Choose the smallest useful mix of main-agent work and delegated work based
+   on speed, context isolation, independent evidence, implementation quality,
+   risk, and available concurrency.
+4. Select the best available built-in or project-defined subagent from the task
+   contract and the agent description; do not hard-code task classes to names.
+5. Integrate material results before crossing the current stage gate.
+6. Recompute the ready set after each material result, failure, dependency
+   change, or integration step.
+
+Do not pre-assign the whole Plan to agents. A subagent may produce findings,
+implementation, or verification evidence, but it may not change the workflow
+topology, advance a stage gate, publish or merge on behalf of the main agent, or
+override the main agent's final judgment. Follow the adaptive scheduling policy
+in `AGENTS.md`.
 
 ## Full orchestration
 
@@ -139,29 +182,32 @@ Load only the files, documentation, and state needed for each Slice. Do not
 implement future-slice features or unrelated refactors. Record each result
 before selecting the next Slice.
 
-## Optional bounded delegation during implementation
+## Adaptive agent orchestration
 
-After the Plan branch exists and before or during implementation, the main agent
-may evaluate whether bounded delegation is useful. Delegation is optional;
-the default path remains a single agent executing the Slice itself. Delegation
-does not create a second delivery path or bypass the branch, verification,
-redaction, commit, push, PR, and merge gates for published work.
+After the Plan branch exists, and whenever the current stage contains several
+bounded tasks, the main agent dynamically chooses whether delegation is useful.
+Single-agent execution remains valid and is preferred when it is simpler.
 
-Use delegation only for a bounded, independently executable task. Keep
-dependent or overlapping work sequential.
+Use the Slice contract as the scheduling contract during implementation. A
+dependency-ready Slice becomes a candidate for the next execution wave only
+when its ownership boundary is clear. Independent read-only investigation,
+isolated implementation, and bounded verification may be delegated; dependent
+or overlapping work remains sequential.
 
-The host selects the subagent; this skill does not name one for a task class.
-A host may select either an agent this repository defines or one of its own
-built-in agent types. Codex reads project agents from `.codex/agents/`; Claude
-Code reads them from `.claude/agents/` and selects by each definition's
-`description`. See `AGENTS.md` for the delegation policy this workflow follows.
+The main agent decides at runtime:
 
-Parallel write tasks require clearly separated ownership boundaries. They must
-not modify the same files, interfaces, schemas, migrations, or shared
-configuration. A Slice with unresolved dependencies stays with the main agent
-or waits until its dependencies are complete.
+- whether to delegate at all;
+- which ready tasks to execute itself;
+- how many subagents to use up to the host concurrency ceiling;
+- which available subagent best matches each task;
+- when to stop parallel work and return to sequential integration.
 
-For every delegated task, provide:
+Parallel write tasks must not modify the same files, interfaces, schemas,
+migrations, or shared configuration. When write isolation is uncertain, prefer
+read-only delegation or have the subagent return findings or a patch for
+main-agent integration.
+
+Every delegated task includes:
 
 - goal;
 - scope and out-of-scope;
@@ -171,10 +217,14 @@ For every delegated task, provide:
 - validation;
 - expected result summary.
 
-The main agent must not duplicate work delegated to an active subagent. Workers
-return material findings, changes, test results, and unresolved risks rather
-than raw logs. Prefer one delegation level; subagents do not create further
-subagents unless explicitly required.
+The main agent must not duplicate active delegated work. Subagents return
+material findings, changed files or patches, test results, and unresolved risks
+rather than raw logs. Integrate the current wave before scheduling the next
+wave, then recompute dependency readiness from fresh evidence.
+
+Prefer one delegation level; subagents do not create further subagents unless
+explicitly required. Publication, merge, stage-gate decisions, and final
+judgment remain with the main agent.
 
 ## Branch and PR discipline
 

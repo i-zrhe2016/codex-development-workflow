@@ -52,7 +52,16 @@ several stages as one authorized delivery.
 
 ## Multi-Agent Delegation
 
-Use subagents only when delegation materially improves speed, context isolation, or implementation quality.
+Use a **fixed workflow / adaptive execution** model.
+
+The workflow topology and gates are static. Stage ownership, Plan -> Ticket -> Slice
+decomposition, dependency constraints, verification, publication, integration, and
+final completion rules do not change because multiple agents are available.
+
+Agent execution is dynamic. For the work owned by the current stage, the main
+agent decides at runtime whether to execute work itself or delegate it, how many
+subagents to use, which dependency-ready items may run concurrently, and which
+available agent best matches each delegated item.
 
 The main agent owns:
 
@@ -60,14 +69,39 @@ The main agent owns:
 * architecture and design decisions;
 * planning and task decomposition;
 * dependency ordering;
+* execution-wave scheduling;
 * integration;
+* stage-gate decisions;
 * final judgment.
 
-Delegate work only when the task is bounded and independently executable.
+### Adaptive execution waves
 
-Keep dependent or overlapping work sequential.
+Treat each dependency-ready Slice or other bounded stage task as a scheduling
+candidate. Before starting a wave, the main agent evaluates:
 
-Parallel write tasks must have clearly separated scope and should not modify the same files, interfaces, schemas, migrations, or shared configuration.
+* whether the task is independently executable;
+* whether its dependencies are satisfied;
+* whether its read/write ownership is clear;
+* whether it overlaps files, interfaces, schemas, migrations, or shared
+  configuration with another active task;
+* whether delegation materially improves speed, context isolation, independent
+  evidence, or implementation quality;
+* whether the task's risk makes main-agent execution preferable;
+* current host concurrency capacity.
+
+The main agent then chooses the smallest useful execution wave. It may execute
+all work itself, delegate one item, or run several independent items in
+parallel up to the host's configured concurrency limit. The concurrency limit
+is a ceiling, never a target.
+
+Do not pre-assign the whole Plan to agents. Recompute the ready set after each
+material result, failure, dependency change, or integration step. Keep dependent
+or overlapping work sequential.
+
+Parallel write tasks must have clearly separated ownership and must not modify
+the same files, interfaces, schemas, migrations, or shared configuration.
+Where safe write isolation is unavailable, delegate read-only investigation or
+return findings/patches for main-agent integration instead.
 
 Each delegated task must define:
 
@@ -79,30 +113,35 @@ Each delegated task must define:
 * validation;
 * expected result summary.
 
-Subagents should return material findings, changes, test results, and unresolved risks rather than raw logs.
+Subagents return material findings, changes, test results, and unresolved risks
+rather than raw logs. The main agent integrates each completed wave before the
+workflow crosses the next stage gate.
+
+A subagent may gather implementation or verification evidence, but it does not
+change the workflow topology, skip a gate, declare publication or integration
+complete, or override the main agent's final judgment.
 
 The main agent must not duplicate work already delegated to an active subagent.
-
-Prefer a single delegation level. Subagents should not create further subagents unless explicitly required.
+Prefer a single delegation level. Subagents should not create further subagents
+unless explicitly required.
 
 ### Who chooses the subagent
 
-The host selects the subagent, not this document. Do not map a task class to a
-named agent here or anywhere else in the repository.
+The host and main agent choose the best available subagent dynamically from the
+task contract; do not hard-code task classes to named agents in this repository.
 
-* Codex selects from the agent definitions under `.codex/agents/`.
-* Claude Code selects from the agent definitions under `.claude/agents/`,
-  using each definition's `description` as the only selection signal.
+* Codex may use built-in agents and any project-defined agents under
+  `.codex/agents/`.
+* Claude Code may use built-in agents and project-defined agents under
+  `.claude/agents/`, using each definition's `description` as its selection
+  signal.
 
-Write an agent's `description` so that it states the exact trigger the agent
-serves. An agent that must not run on ordinary work has to say so in its
-description, because the host has no other rule to consult.
+Write an agent's `description` so that it states the exact trigger and operating
+boundary it serves. An agent that must not run on ordinary work has to say so in
+its description.
 
-Each host also ships its own built-in agent types, and those remain available
-for bounded delegation when the host selects one.
-
-This section owns the delegation policy. Other documents link to it rather than
-restating it.
+This section owns the delegation and adaptive scheduling policy. Other
+documents link to it rather than restating it.
 
 ## Skill Routing
 
