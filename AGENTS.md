@@ -155,7 +155,7 @@ documents link to it rather than restating it.
 | Merging, cleaning up, or reconciling after delivery                    | `integrate-workflow`         |
 | Complex, multi-step, dependent, or incremental work needs a Plan/Ticket/Slice breakdown | `plan-to-ticket` |
 | Feature, bug fix, regression, integration, or browser validation       | `test-workflow`              |
-| Architecture or flow visualization materially improves understanding   | `plantuml-skill`             |
+| Architecture or flow visualization materially improves understanding   | `plantuml`                   |
 | Verified repository state materially changed                           | `repo-current-state`         |
 | Every change (documentation impact check), or docs need normalizing    | `repo-documentation`         |
 | Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |

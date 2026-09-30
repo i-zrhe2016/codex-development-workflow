@@ -91,11 +91,11 @@ Placement and naming are defined in
 embedding block, including the unrendered case, is in
 [`references/templates.md`](references/templates.md).
 
-Rendering is done by `plantuml-skill`, the skill `AGENTS.md` routes diagram work
-to. Load it before drawing; it is installed on the host rather than bundled in
-this repository, so its procedure is not restated here. When it is unavailable,
-keep the `.puml` source and report the diagram as unrendered — the required
-markup for that case is defined in
+Rendering is done by `plantuml`, the bundled capability skill that `AGENTS.md`
+routes diagram work to. Invoke it before drawing and keep its procedure in that
+skill rather than restating it here. When it is unavailable, keep the `.puml`
+source and report the diagram as unrendered — the required markup for that case
+is defined in
 [`references/doc-file-standard.md`](references/doc-file-standard.md).
 
 A diagram is stale when the flow it draws no longer matches the system: a
