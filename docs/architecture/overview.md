@@ -63,9 +63,9 @@ workflow loops and lower-level lifecycle detail.
 
 ### Component responsibilities and records
 
-![Detailed workflow components and authorities](../diagrams/components.svg)
+![Detailed workflow components and authorities](diagrams/components.svg)
 
-Source: [`components.puml`](../diagrams/components.puml)
+Source: [`diagrams/components.puml`](diagrams/components.puml)
 
 Skills are main-agent procedures, not independently running services. The
 diagram separates lifecycle orchestration, specialist responsibilities, GitHub
@@ -74,9 +74,9 @@ documentation as persisted project knowledge.
 
 ### End-to-end lifecycle
 
-![Detailed end-to-end workflow lifecycle](../diagrams/architecture.svg)
+![Detailed end-to-end workflow lifecycle](diagrams/architecture.svg)
 
-Source: [`architecture.puml`](../diagrams/architecture.puml)
+Source: [`diagrams/architecture.puml`](diagrams/architecture.puml)
 
 ### Stage workflows
 
@@ -129,13 +129,13 @@ Plan or causes a Slice split.
 The detailed Plan/Ticket lifecycle is split into three linked views so each
 return edge has a clear scope and exit condition:
 
-![Plan / Ticket lifecycle](../diagrams/ticket-lifecycle.svg)
+![Plan / Ticket lifecycle](diagrams/ticket-lifecycle.svg)
 
-Source: [`ticket-lifecycle.puml`](../diagrams/ticket-lifecycle.puml)
+Source: [`diagrams/ticket-lifecycle.puml`](diagrams/ticket-lifecycle.puml)
 
-![Slice implementation and validation loop](../diagrams/ticket-slice-loop.svg)
+![Slice implementation and validation loop](diagrams/ticket-slice-loop.svg)
 
-Source: [`ticket-slice-loop.puml`](../diagrams/ticket-slice-loop.puml)
+Source: [`diagrams/ticket-slice-loop.puml`](diagrams/ticket-slice-loop.puml)
 
 Dependency waits resume only after fresh evidence; a failed Slice returns to
 diagnosis and affected validation, while a design conflict returns to planning.

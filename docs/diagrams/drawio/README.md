@@ -11,9 +11,9 @@ textual diffability matter more.
 
 | View | Purpose | Detailed diagram |
 |---|---|---|
-| [workflow-overview.svg](workflow-overview.svg) | Stage routing and the full orchestration | [../architecture.puml](../architecture.puml) |
-| [components-overview.svg](components-overview.svg) | Stage workflows, capability skills, and boundaries | [../components.puml](../components.puml) |
-| [plan-ticket-slice.svg](plan-ticket-slice.svg) | Persisted Plan → Ticket → Slice hierarchy | [../ticket-lifecycle.puml](../ticket-lifecycle.puml) |
+| [workflow-overview.svg](workflow-overview.svg) | Stage routing and the full orchestration | [architecture.puml](../../architecture/diagrams/architecture.puml) |
+| [components-overview.svg](components-overview.svg) | Stage workflows, capability skills, and boundaries | [components.puml](../../architecture/diagrams/components.puml) |
+| [plan-ticket-slice.svg](plan-ticket-slice.svg) | Persisted Plan → Ticket → Slice hierarchy | [ticket-lifecycle.puml](../../architecture/diagrams/ticket-lifecycle.puml) |
 | [test-quality-gate.svg](test-quality-gate.svg) | Risk-aware verification overview | [../../skills/test-workflow/diagrams/test-workflow-flow.puml](../../skills/test-workflow/diagrams/test-workflow-flow.puml) |
 | [docs-publication-flow.svg](docs-publication-flow.svg) | `publish-workflow` documentation and publication | [../../skills/repo-documentation/diagrams/repo-documentation-flow.puml](../../skills/repo-documentation/diagrams/repo-documentation-flow.puml) |
 | [installer-overview.svg](installer-overview.svg) | Installation ownership and retirement decisions | [../../deployment/diagrams/installer-decision-flow.puml](../../deployment/diagrams/installer-decision-flow.puml) |
