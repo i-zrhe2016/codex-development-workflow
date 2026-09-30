@@ -21,6 +21,7 @@ without it, because Claude Code never reads it.
 | `integrate-workflow` | `skills/integrate-workflow/` | — | `integrate-workflow` | `integrate-workflow` |
 | `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` | `plan-to-ticket` | `plan-to-ticket` |
 | `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` | `test-workflow` | `test-workflow` |
+| `plantuml` | `skills/plantuml/` | `docs/skills/plantuml/` | `plantuml` | `plantuml` |
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` | `repo-current-state` | `repo-current-state` |
 | `repo-documentation` | `skills/repo-documentation/` | `docs/skills/repo-documentation/` | `repo-documentation` | `repo-documentation` |
 | `data-document-redaction` | `skills/data-document-redaction/` with its staged-scan script | `docs/skills/data-document-redaction/` | `data-document-redaction` | `data-document-redaction` |
@@ -60,6 +61,12 @@ PR, and merge for all of its Tickets.
 `focused`, `regression`, or `full` level and reports bounded evidence. It
 conditionally performs browser/E2E verification when browser-visible behavior
 changes.
+
+`plantuml` owns diagram-type selection, PlantUML source quality, rendering, and
+readability validation when architecture or flow visualization materially
+improves understanding. It is a capability skill, not a workflow stage, and
+works with `repo-documentation`, which continues to own documentation impact,
+canonical placement, naming, and lifecycle.
 
 `data-document-redaction` owns the staged-file scan before commit and repeats it
 after subsequent fixes that change staged content. `github-push-when-ready`

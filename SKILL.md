@@ -420,6 +420,9 @@ Capability skills:
   enough boundaries for a safe delegation decision.
 - `test-workflow`: execute the selected validation level and report bounded
   evidence.
+- `plantuml`: create, render, and review focused diagrams-as-code when
+  architecture or flow visualization materially improves understanding, or
+  when `repo-documentation` requires a PlantUML source/render pair.
 - `repo-current-state`: reconcile verified state after merge, branch cleanup,
   and default-branch synchronization.
 - `repo-documentation`: run its documentation impact check for every change,
