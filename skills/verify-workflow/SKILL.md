@@ -35,6 +35,10 @@ feedback belongs to `develop-workflow`.
 - Invoke `test-workflow` and let it own the acceptance-to-test matrix, the
   mandatory test dimensions, the RED/GREEN loop, the flaky and isolation
   policy, and the Test Quality Gate.
+- When verification contains independent bounded checks, the main agent may
+  schedule them adaptively under `AGENTS.md`. Parallel evidence gathering is
+  allowed only when the checks do not interfere with one another; the main
+  agent still synthesizes the evidence and owns the final conclusion.
 - Return the conclusion with its evidence. Escalate the level only when the
   evidence, the acceptance criteria, or an explicit requirement justify it.
 
@@ -53,5 +57,7 @@ Return the result and stop.
 - modifying code, tests, configuration, or documentation so a check passes —
   return `FAIL` to `develop-workflow` instead;
 - duplicating, restating, or relaxing the quality gate;
+- letting a subagent advance the workflow, publish, merge, or replace the main
+  agent's PASS / FAIL / BLOCKED judgment;
 - committing, pushing, opening a pull request, or merging;
 - closing Issues or updating repository state.

@@ -12,6 +12,10 @@ transition.
 
 - Load only the context the Slice needs: the affected files, their direct
   dependencies, the relevant tests, and the current repository state.
+- When several dependency-ready Slices or bounded implementation tasks exist,
+  apply the adaptive execution-wave policy in `AGENTS.md`: the main agent
+  decides at runtime whether to work directly or delegate, how much concurrency
+  is useful, and which available agent best matches each task.
 - Confirm the smallest useful local validation before editing.
 - Use test-first development when a meaningful failing test can be written for
   behavior changes, bug fixes, regressions, API behavior, core business logic,
@@ -21,6 +25,10 @@ transition.
 - Make the minimum change that satisfies the Slice acceptance criteria.
 - Run focused local validation and fix failures whose cause is clear.
 - Refactor only inside the Slice, and only after its acceptance criteria pass.
+- Integrate the material results of each execution wave before scheduling the
+  next wave; recompute dependency readiness from fresh evidence.
+- Keep overlapping writes, unresolved dependencies, and shared interface,
+  schema, migration, or configuration changes sequential.
 - Stop and re-plan when implementation exposes a wrong design assumption
   instead of growing the patch.
 

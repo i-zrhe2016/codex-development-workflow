@@ -30,6 +30,7 @@ EXPECTED_SKILLS = (
     "integrate-workflow",
     "plan-to-ticket",
     "test-workflow",
+    "plantuml",
     "repo-current-state",
     "repo-documentation",
     "data-document-redaction",
