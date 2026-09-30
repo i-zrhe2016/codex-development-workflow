@@ -1,187 +1,55 @@
 ---
 name: repo-documentation
-description: Govern repository documentation as one canonical source of truth per fact. Use when a change may affect documented behavior, when creating or updating a Markdown document under `docs/`, or when the user asks to normalize, audit, organize, or check project documentation. Route each fact to the document type that owns it, prefer updating the canonical document over creating a new one, keep exactly one documentation router reachable from the repository entry point, and detect duplicates, orphans, and stale claims.
+description: "Govern repository documentation so each fact has one canonical owner and remains discoverable from one documentation router. Use when a change may affect docs, when creating/updating docs/, or when auditing/normalizing documentation. Prefer updating existing owners, detect stale/duplicate/orphaned content, and load detailed standards only when needed."
 ---
 
 # Repo Documentation
 
-Govern repository documentation so every fact has exactly one home, and that
-home is findable from the repository entry point.
+Use **one fact -> one canonical document -> links elsewhere**.
 
-## Core contract
+## Core rules
 
-```text
-One fact -> one canonical document -> other documents link to it
-```
-
-- The repository is the system of record. Verify a claim against code,
-  configuration, tests, or Git before writing it.
-- Never state the same fact in two documents. Keep it in the owner and link.
-- Prefer updating the canonical document over creating a new file.
-- Create a directory only when it has content. Structure follows need, not
-  symmetry.
-- Keep a document small enough to read in one pass.
-- A document that no one can find does not exist. Every document is reachable
-  from the documentation index.
+- Verify claims against code/config/tests/Git before writing them.
+- Update the canonical owner before creating a new document.
+- Do not duplicate the same fact across documents.
+- Keep every content document reachable from exactly one documentation router: normally `docs/README.md`, with the root README linking to it; an existing root README router may remain.
+- Keep current state in `docs/Repo_Current_State.md`, planned work in GitHub Issues, and history in Git/changelog.
 
 ## Documentation impact check
 
-Run this check before publication for every change, and whenever the user asks
-whether documentation needs updating. Ask only:
+Before publication, or when asked whether docs need changes, check whether the change affected:
 
-1. Did this change architecture, components, or their boundaries? A module,
-   service, dependency, or data-flow change counts.
-2. Did this change an interface, contract, API, CLI, or configuration surface?
-   A flag, key, default, schema, or error code counts.
-3. Did this change deployment, operations, or recovery? A step, command, health
-   check, or rollback path counts.
-4. Did this change the developer workflow or local setup? A tool, command, or
-   prerequisite counts.
-5. Did this change or add a design decision worth an ADR? Reversing or
-   constraining a previous choice counts.
-6. Did this make an existing document wrong or stale?
-7. Does any existing diagram affected by this change still show the flow it
-   claims to show? A changed component, order, decision, or boundary counts.
+- architecture/components/boundaries or a diagram that describes them;
+- API/CLI/config/schema/error contracts;
+- deployment/operations/recovery;
+- developer workflow/setup;
+- a design decision/ADR;
+- an existing documented claim that is now stale.
 
-Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
-finds nothing costs one search; a skipped check leaves a wrong document behind.
+If no documented fact changed, report that in one line and create nothing.
 
-Report the result in the change's existing delivery record: the pull-request
-description, or the Plan Issue's delivery evidence when the workflow uses one.
-The check creates no separate artifact. A yes answer names the canonical
-document that changed and the fact it now owns. A no answer is one line stating
-that nothing documented changed. Do not write documents to look thorough.
+## Resolve the owner
 
-## Canonical owner
+Load [references/document-types.md](references/document-types.md) when owner/type is unclear.
 
-Resolve every fact to exactly one owner before writing anything. Owners are
-routed by document type in
-[`references/document-types.md`](references/document-types.md).
+For a document create/update, load [references/doc-file-standard.md](references/doc-file-standard.md) for filename/header/diagram rules. Load [references/templates.md](references/templates.md) only when a template or diagram embedding block is needed. Load [references/documentation-lifecycle.md](references/documentation-lifecycle.md) only for deprecation, supersession, deletion, duplicate, or orphan handling.
 
-When two documents could own a fact, choose the more specific type and make the
-other document link to it. A fact that no content document owns stays where it
-already belongs: current truth in `docs/Repo_Current_State.md`, planned work in
-GitHub Issues, and change history in Git.
-
-## Document standard
-
-Every content document under `docs/` follows
-[`references/doc-file-standard.md`](references/doc-file-standard.md): a
-`kebab-case` filename, a single `#` title, and a header block of `Type`,
-`Status`, and `Scope` fields. The header is what lets a reader or an agent
-decide which document owns a fact.
-
-README pages, `docs/Repo_Current_State.md`, and the ADR filename and status
-values are the documented exceptions in that reference.
-
-## Diagrams
-
-A diagram is part of the document it illustrates, not a separate document. It
-follows the same rules: one canonical owner, no restated fact, and the same
-update obligations as the prose around it.
-
-Draw one when the fact is materially clearer as a picture than as prose: a
-decision path, a request or data flow, a state machine, or the boundary between
-components. Do not add a diagram for a list of values, a single step, or
-symmetry with a neighbouring page; a document that reads clearly without one
-does not need one.
-
-Placement and naming are defined in
-[`references/doc-file-standard.md`](references/doc-file-standard.md); the
-embedding block, including the unrendered case, is in
-[`references/templates.md`](references/templates.md).
-
-Rendering is done by `plantuml-skill`, the skill `AGENTS.md` routes diagram work
-to. Load it before drawing; it is installed on the host rather than bundled in
-this repository, so its procedure is not restated here. When it is unavailable,
-keep the `.puml` source and report the diagram as unrendered — the required
-markup for that case is defined in
-[`references/doc-file-standard.md`](references/doc-file-standard.md).
-
-A diagram is stale when the flow it draws no longer matches the system: a
-changed component, a changed order, a changed decision, or a changed boundary.
-The impact check above covers it. Update the `.puml` source, re-render through
-that skill, and commit both files in the same change that changed the behavior —
-never edit a rendered image by hand, and never leave a diagram that contradicts
-the prose beside it.
+Keep references one level from this file; do not load all references by default.
 
 ## Update before create
 
-Before creating any file:
+1. Search `docs/` for the fact.
+2. Update the existing canonical owner when one exists.
+3. Split a mixed-topic owner only when it truly owns unrelated topics.
+4. Create a new document only when no owner exists.
+5. Ensure the documentation router links the final owner.
 
-1. Search `docs/` for the fact, not for the filename you imagined.
-2. If a canonical document already owns the fact, update that document.
-3. If the owning document has grown to cover unrelated topics, split it and
-   link the parts.
-4. Create a new document only when no existing document owns the fact.
+For diagrams, treat the source/rendered diagram as part of its owner document. Use the host diagram skill when available; never hand-edit generated images.
 
-Do not create a second document that restates an existing one, and do not let
-two near-identical names coexist. Duplicate and orphan handling is defined in
-[`references/documentation-lifecycle.md`](references/documentation-lifecycle.md).
+## Audit/normalize
 
-## Documentation index
+When explicitly asked to audit or normalize, scan `docs/` for owner/type, stale claims, duplicates, orphans, naming/header violations, and missing router links. Preserve meaning and avoid cosmetic churn.
 
-A repository has exactly one documentation router, and every document is
-reachable from it.
+## Output
 
-- Default: `docs/README.md` is the router, and the repository `README.md` links
-  to it.
-- A repository that already routes documentation from its root `README.md` may
-  keep that file as the router instead of adding `docs/README.md`.
-
-The router groups links by type or topic. It carries links and grouping, never
-the facts themselves. A document that the router does not reach is an orphan:
-link it from the router, or delete it only when it is no longer authoritative,
-nothing references it, and it holds no historical or decision value.
-
-A router may keep the short entry-point facts it needs to be usable, such as
-how to install the project or which components exist. Keep them brief and link
-to the canonical document for detail; never let the router become the detailed
-owner of a fact that a content document owns.
-
-## Normalization
-
-When the user asks to normalize, organize, audit, or check project
-documentation:
-
-```text
-Scan docs/ -> classify by type -> detect duplicates, orphans, misplacement,
-naming violations, missing index links, stale claims, mixed-topic documents
--> normalize -> update the documentation router
-```
-
-Preserve meaning. Do not rewrite documents to make the tree look tidy, and do
-not invent missing content. Report what changed and what was deliberately left
-alone.
-
-## Lifecycle
-
-State lives in the document header. Creation, update, deprecation, supersession,
-and deletion rules are in
-[`references/documentation-lifecycle.md`](references/documentation-lifecycle.md).
-ADRs are never deleted.
-
-## Templates
-
-Use [`references/templates.md`](references/templates.md) for Architecture, ADR,
-Guide, Runbook, and Reference documents.
-
-## Boundaries
-
-This Skill does not own:
-
-- what is true right now -> `docs/Repo_Current_State.md` and `repo-current-state`
-- planned or in-progress work -> GitHub Issues and `plan-to-ticket`
-- change history -> Git
-
-Never copy the state snapshot, the Plan/Ticket backlog, or Git history into a
-content document.
-
-## Output behavior
-
-- Update the canonical document and the index; do not create parallel files.
-- When the impact check is negative, report that no documentation change is
-  needed.
-- When reporting completion, state which documents were created, updated,
-  deprecated, or deleted, which index entries changed, and any claim left
-  unverified.
+Update the canonical document and router directly when tools permit. Report created/updated/deprecated/deleted documents, router changes, and any unverified claim. Do not create parallel state, plan, backlog, or history documents.
