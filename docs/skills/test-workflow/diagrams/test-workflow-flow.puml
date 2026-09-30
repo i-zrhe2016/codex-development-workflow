@@ -10,54 +10,57 @@ start
 :Build Acceptance-to-Test Matrix;
 :Select mandatory risk dimensions;
 
-:Static / type / lint / schema checks;
+:Run static / type / lint / schema checks;
 if (Useful failure?) then (yes)
   :Classify root cause;
+  :Return FAIL / BLOCKED with evidence;
   stop
 endif
 
-:Focused unit / component / API tests;
+:Run focused unit / component / API tests;
 if (Useful failure?) then (yes)
   :Classify root cause;
+  :Return FAIL / BLOCKED with evidence;
   stop
 endif
 
-:Boundary + negative-path checks;
+:Run boundary + negative-path checks;
 
 if (Complex input space or strong invariant?) then (yes)
-  :Property / fuzz checks;
+  :Run property / fuzz checks;
 endif
 
 if (External or multi-module boundary touched?) then (yes)
-  :Integration / contract checks;
+  :Run integration / contract checks;
 endif
 
 if (High-risk logic or weak-test suspicion?) then (yes)
-  :Targeted mutation / test-strength check;
+  :Run targeted mutation / test-strength check;
 endif
 
-:Affected regression;
+:Run affected regression checks;
 
 if (Critical browser-visible flow?) then (yes)
-  :Browser / E2E;
+  :Run browser / E2E checks;
 endif
 
 if (Nondeterminism risk or intermittent failure?) then (yes)
-  :Isolation / flaky diagnosis;
+  :Run isolation / flaky diagnosis;
 endif
 
 :Evaluate Test Quality Gate;
 
 if (Every acceptance criterion and\nmandatory dimension satisfied?) then (yes)
-  :PASS;
+  :Return PASS with evidence;
 else (no)
-  :FAIL / PARTIAL / BLOCKED;
+  :Return FAIL / PARTIAL / BLOCKED with evidence;
 endif
+
 stop
 
 note right
-Coverage is diagnostic only.
-N/A requires a concrete reason.
-FAIL then retry PASS without a verified external cause is flaky, not PASS.
+Coverage is diagnostic.
+N/A needs a concrete reason.
+Unexplained flaky retry is not PASS.
 end note
 @enduml

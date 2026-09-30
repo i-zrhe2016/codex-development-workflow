@@ -5,41 +5,51 @@ skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam componentStyle rectangle
 
-title Codex Development Workflow — Components and Authorities
+title Codex Development Workflow — Workflow Stages and Capability Authorities
 
 actor "Main agent" as agent
-component "codex-development-workflow\nWorkflow router + full orchestration" as main
-component "plan-workflow\nRequirement to work definition" as planw
-component "develop-workflow\nImplement to Development Complete" as devw
-component "verify-workflow\nVerification scope and conclusion" as verifyw
-component "publish-workflow\nDocs, redaction, commit, push, PR ready" as pubw
-component "integrate-workflow\nMerge, cleanup, state, docs" as intw
-component "plan-to-ticket\nPlan / Ticket / Slice decomposition" as plan
-component "test-workflow\nRisk-aware verification\nTest Quality Gate" as test
-component "repo-documentation\nDocumentation governance" as docs
-component "repo-current-state\nVerified recovery snapshot" as state
-component "data-document-redaction\nStaged sensitive-data scan" as redact
-component "github-push-when-ready\nCommit / Push / PR readiness" as publish
+component "codex-development-workflow\nRequest router + full orchestration" as main
+
+package "Workflow stages" {
+  component "plan-workflow\nRequirement to work definition" as planw
+  component "develop-workflow\nImplementation to Development Complete" as devw
+  component "verify-workflow\nVerification scope + conclusion" as verifyw
+  component "publish-workflow\nDocs + redaction + PR readiness" as pubw
+  component "integrate-workflow\nMerge + cleanup + reconciliation" as intw
+}
+
+package "Capability skills" {
+  component "plan-to-ticket\nPlan / Ticket / Slice decomposition" as plan
+  component "test-workflow\nRisk-aware verification" as test
+  component "repo-documentation\nDocumentation governance" as docs
+  component "plantuml\nDiagram source + render + review" as plantuml
+  component "repo-current-state\nVerified recovery snapshot" as state
+  component "data-document-redaction\nStaged sensitive-data scan" as redact
+  component "github-push-when-ready\nCommit / Push / PR readiness" as publish
+}
 
 database "GitHub Issues\nPlan / Ticket authority" as issues
 cloud "GitHub\nBranch / PR / Merge" as github
 folder "Repository docs\nREADME + docs/" as docstore
 
-agent --> main : route request
-main --> planw
-planw --> devw
-devw --> verifyw
-verifyw --> pubw
-pubw --> intw
-planw --> plan : decompose
-plan --> issues : persist when required
-verifyw --> test : invoke
-pubw --> docs : impact / ownership
-docs --> docstore : update canonical docs
-pubw --> redact : pre-publication scan
-pubw --> publish : publish branch
-publish --> github : commit / push / PR
-intw --> github : merge once
-intw --> state : post-merge reconciliation
-state --> docstore : update snapshot
+agent --> main : Route request
+main --> planw : Plan / design
+main --> devw : Modify repository
+main --> verifyw : Verify change
+main --> pubw : Publish verified change
+main --> intw : Integrate ready PR
+
+planw --> plan : Decompose or persist plan
+plan --> issues : Create / update Plan + Ticket Issues
+verifyw --> test : Execute selected verification
+pubw --> docs : Check documentation impact
+docs --> plantuml : Create / update diagram when needed
+docs --> docstore : Update canonical documentation
+plantuml --> docstore : Update .puml + rendered SVG
+pubw --> redact : Scan staged sensitive surfaces
+pubw --> publish : Prepare branch publication
+publish --> github : Commit / push / create or update PR
+intw --> github : Merge Plan PR once
+intw --> state : Reconcile verified post-merge state
+state --> docstore : Update recovery snapshot
 @enduml

@@ -1,39 +1,30 @@
 @startuml
 !theme plain
-top to bottom direction
+left to right direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam componentStyle rectangle
 
-title plan-to-ticket — Plan / Ticket / Slice Persistence
+title plan-to-ticket — From Requirement to Authoritative Plan / Ticket Records
 
 actor "Requestor" as requestor
-component "Skill trigger" as trigger
-component "Plan boundary" as plan
-component "Ticket decomposition" as tickets
-component "Slice decomposition" as slices
-component "Issue persistence\nwhen triggered" as persistence
-database "GitHub Issues\nauthoritative Plan / Ticket records" as issues
-component "Result summary\nlinks + execution metadata" as output
 
-folder "Skill bundle" as bundle {
-  artifact "SKILL.md" as skill
-  artifact "agents/openai.yaml" as metadata
+package "plan-to-ticket" {
+  component "Plan boundary" as plan
+  component "Ticket decomposition" as tickets
+  component "Slice decomposition" as slices
+  component "Issue persistence\nwhen triggered" as persistence
+  component "Result summary\nlinks + execution metadata" as output
 }
-folder "Documentation" as docs
 
-requestor --> trigger : requirement
-trigger --> plan
-plan --> tickets : behavior boundaries
-tickets --> slices : dependency-ordered work
-slices --> persistence : complete execution contract
-persistence --> issues : create / update Plan + Tickets
-issues --> persistence : IDs / URLs
-persistence --> output : canonical links
-output --> requestor
+database "GitHub Issues\nAuthoritative Plan / Ticket records" as issues
 
-skill --> trigger : invocation rules
-skill --> plan : decomposition rules
-metadata --> trigger : UI metadata
-docs ..> requestor : usage / architecture reference
+requestor --> plan : Provide requirement
+plan --> tickets : Split behavior boundaries
+tickets --> slices : Define dependency-ordered work
+slices --> persistence : Supply executable Slice contracts
+persistence --> issues : Create / update Plan + Ticket Issues
+issues --> persistence : Return canonical IDs + URLs
+persistence --> output : Assemble execution metadata
+output --> requestor : Return persisted plan summary
 @enduml

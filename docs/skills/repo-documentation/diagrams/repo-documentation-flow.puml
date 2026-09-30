@@ -3,7 +3,7 @@
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title repo-documentation — Impact, Canonical Ownership and Diagram Policy
+title repo-documentation — Impact Check, Canonical Ownership and Diagram Routing
 
 start
 :Run documentation impact check;
@@ -21,20 +21,18 @@ else (no)
   :Create one focused owner document;
 endif
 
-:Update README documentation router when needed;
+:Update documentation router when needed;
 
-if (A diagram materially improves understanding?) then (yes)
-  :Choose appropriate PlantUML diagram type;
-  :Write stable .puml beside owner document;
-  :Render SVG from the same source;
-  :Validate render and readability;
+if (Diagram materially improves understanding?) then (yes)
+  :Invoke plantuml capability;
+  :Create / update focused .puml\nand same-basename SVG;
   :Embed SVG with descriptive alt text;
   :Link editable .puml source;
 else (no)
   :Keep explanation in prose / tables;
 endif
 
-:Check duplicate facts and orphaned docs;
+:Check duplicate facts + orphaned docs;
 :Record documentation result in delivery evidence;
 stop
 @enduml

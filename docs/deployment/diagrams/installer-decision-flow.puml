@@ -19,7 +19,20 @@ if (Destination is inside repository?) then (yes)
   stop
 endif
 
-:For each of 12 managed bundles;
+if (Update enabled?) then (yes)
+  :Inspect retired skill destinations;
+  if (Retired destination is managed?) then (yes)
+    :Remove retired destination;
+  else (no)
+    if (Adopt legacy enabled?) then (yes)
+      :Move retired legacy destination\nto recoverable backup;
+    else (no)
+      :Preserve unverified retired destination;
+    endif
+  endif
+endif
+
+:For each of 13 managed bundles;
 
 if (Destination exists?) then (no)
   :Copy bundle;
@@ -39,10 +52,6 @@ else (yes)
       endif
     endif
   endif
-endif
-
-if (Update enabled?) then (yes)
-  :Prune owned retired skill destinations\nincluding context-efficiency and prior retired bundles;
 endif
 
 :Report installed / skipped / migrated\nand resolved destination;

@@ -1,35 +1,35 @@
 @startuml
 !theme plain
-top to bottom direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title Persisted Plan / Ticket Lifecycle — One Branch, One PR, One Merge
+title Persisted Plan Delivery — One Branch, One PR, One Merge
 
-state "Plan Issue persisted\nChild Ticket Issues persisted" as persisted
-state "Plan branch active" as branch
-state "Select dependency-ready Ticket" as select
-state "Execute dependency-ready Slices" as slices
-state "Ticket acceptance + evidence complete" as accepted
-state "More Tickets?" as more
-state "Plan integration + Test Quality Gate" as gate
-state "Create / Update Plan PR" as publish
-state "Merge Plan PR once" as merge
-state "Delete branch + Update main" as cleanup
-state "Close Plan + Tickets" as done
+start
+:Persist Plan Issue + child Ticket Issues;
+:Create Plan branch;
 
-[*] --> persisted
-persisted --> branch
-branch --> select
-select --> slices
-slices --> accepted
-accepted --> more
-more --> select : yes
-more --> gate : no
-gate --> slices : gap / failed evidence
-gate --> publish : PASS
-publish --> merge
-merge --> cleanup
-cleanup --> done
-done --> [*]
+while (Unfinished Tickets remain?) is (yes)
+  :Select dependency-ready Ticket;
+  while (Ticket acceptance incomplete?) is (yes)
+    :Execute dependency-ready Slice;
+    :Record Slice validation evidence;
+  endwhile (no)
+  :Record Ticket acceptance evidence;
+endwhile (no)
+
+repeat
+  :Run Plan integration + Test Quality Gate;
+  if (Gate satisfied?) then (no)
+    :Return to affected Ticket / Slice;
+    :Resolve failed or missing evidence;
+  endif
+repeat while (Gate satisfied?) is (no)
+->yes;
+
+:Create / Update Plan PR;
+:Merge Plan PR once;
+:Delete source branch + update default branch;
+:Close Plan + child Tickets;
+stop
 @enduml
