@@ -10,7 +10,7 @@ skills managed in this repository.
 ![Codex Development Workflow delivery lifecycle](docs/diagrams/drawio/workflow-overview.svg)
 
 Editable source: [`workflow-overview.drawio`](docs/diagrams/drawio/workflow-overview.drawio) ·
-Detailed diagrams-as-code: [`architecture.puml`](docs/diagrams/architecture.puml)
+Detailed diagrams-as-code: [`architecture.puml`](docs/architecture/diagrams/architecture.puml)
 
 Core invariants:
 
@@ -292,7 +292,7 @@ The repository keeps two complementary diagram layers:
 ![Workflow components and responsibilities](docs/diagrams/drawio/components-overview.svg)
 
 Editable source: [`components-overview.drawio`](docs/diagrams/drawio/components-overview.drawio) ·
-Detailed source: [`components.puml`](docs/diagrams/components.puml)
+Detailed source: [`components.puml`](docs/architecture/diagrams/components.puml)
 
 ### Work decomposition
 
