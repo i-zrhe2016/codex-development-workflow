@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-09-21 @ 6f24e2d
+Last verified: 2026-09-30 @ 8e5b6ad
 
 ## Current Focus
 
@@ -19,9 +19,9 @@ Last verified: 2026-09-21 @ 6f24e2d
   child Tickets. A plan is persisted when the work is complex, must survive a
   session boundary, or the user asks for it; small single-session work keeps its
   plan inline.
-- The five stage-workflow bundles and the six capability bundles install for
-  both hosts: `scripts/install-all.sh` reports 12 bundles for the Codex target
-  and 12 for the Claude target, which omits the Codex-only
+- The five stage-workflow bundles and seven capability bundles install for
+  both hosts: `scripts/install-all.sh` reports 13 bundles for the Codex target
+  and 13 for the Claude target, which omits the Codex-only
   `agents/openai.yaml` metadata.
 - The bundle installs for two hosts. `scripts/install-all.sh --target codex`
   (default) writes to `${CODEX_HOME:-$HOME/.codex}/skills`; `--target claude`
@@ -42,14 +42,16 @@ Last verified: 2026-09-21 @ 6f24e2d
   diagram policy: when a document carries a diagram, where the `.puml` source
   and rendered image live, how an unrendered diagram is marked, and when an
   existing diagram is stale.
-- Diagrams are drawn with the host-installed `plantuml-skill` and rendered
-  through Kroki. `docs/skills/repo-documentation/diagrams/` and
-  `docs/deployment/diagrams/` hold the two diagrams added with the policy.
+- The repository bundles the `plantuml` capability under `skills/plantuml/`;
+  detailed diagrams live beside their owning documents, and the renderer sends
+  PlantUML sources through Kroki. `docs/skills/repo-documentation/diagrams/`
+  and `docs/deployment/diagrams/` hold the two diagrams added with the policy.
 - Documentation carries two complementary diagram layers: Draw.io for polished,
   editable, human-facing overview views, and PlantUML for detailed
-  diagrams-as-code. Six editable `.drawio` views and their rendered `.svg` files
-  live under `docs/diagrams/drawio/`, where `doc-file-standard.md` sanctions
-  shared repository-level overviews.
+  diagrams-as-code. The four shared architecture diagrams live under
+  `docs/architecture/diagrams/`. Six editable `.drawio` views and their
+  rendered `.svg` files live under `docs/diagrams/drawio/`, where
+  `doc-file-standard.md` sanctions shared repository-level overviews.
 - `docs/` was normalized to the `repo-documentation` standard: every content
   document carries a conforming `Type` / `Status` / `Scope` header, no document
   claims a retired skill runs, no two documents share a `#` title, every
@@ -83,17 +85,6 @@ Last verified: 2026-09-21 @ 6f24e2d
   drift for any of the nine sources. The `.drawio` overviews have no render
   branch in that script, so their `.svg` previews are hand-synced with the
   `.drawio` XML.
-- `AGENTS.md` routes "Architecture or flow visualization" to a `plantuml-skill`
-  that this repository does not bundle; the skill is installed on the host
-  instead. `repo-documentation` now states that rendering is delegated to it by
-  name and defines the unrendered path, so the routing is actionable even though
-  the bundle is absent.
-- The older shared `docs/diagrams/` PlantUML set (`architecture`, `components`,
-  `ticket-lifecycle`, `ticket-slice-loop`) predates the `repo-documentation`
-  placement rule that puts new diagrams beside their owning document. Those
-  diagrams stay in place until their owning document is migrated;
-  `docs/diagrams/drawio/` is a sanctioned location for shared
-  repository-level overviews, so it is not part of this finding.
 
 ## Constraints
 
