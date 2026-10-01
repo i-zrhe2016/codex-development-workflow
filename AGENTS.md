@@ -18,7 +18,7 @@ There is no mandatory stage workflow.
 
 The model decides whether a capability is useful, when to invoke it, which capability is the most specific match, and how to compose multiple capabilities when their independent triggers apply. A capability may be skipped when it is unnecessary, redundant, or its outcome is already satisfied by stronger evidence.
 
-Use native model reasoning for ordinary planning, implementation, investigation, integration, and coordination. Do not invoke a capability merely because it exists.
+Use native model reasoning for ordinary planning, decomposition, sequencing, acceptance criteria, test design, implementation, investigation, integration, delegation, and coordination. Do not invoke a capability merely because it exists.
 
 ## GitHub Issues task authority
 
@@ -26,12 +26,12 @@ GitHub Issues are the sole authoritative source for repository development tasks
 
 - Before implementation begins, every development task must exist as an Issue in the target repository.
 - Chat plans, PR bodies, local Markdown, TODO files, and model memory may summarize or link to a task, but they must not become a parallel backlog or task authority.
-- Small work may use one Issue directly. Complex or dependency-heavy work may use plan-to-ticket to create a Plan Issue and child Ticket Issues.
+- Small work may use one Issue directly. When the model has already decided a durable multi-Issue structure is useful, plan-to-ticket may persist that structure as a Plan Issue and child Ticket Issues.
 - Branch, PR, acceptance evidence, blockers, and completion status must be reflected back to the authoritative Issue.
 - If GitHub Issues are unavailable or unwritable, implementation is blocked; do not silently fall back to another task store.
 
 Available capabilities:
-- plan-to-ticket: persisted Plan / Ticket / Slice contracts.
+- plan-to-ticket: GitHub Issue persistence for model-decided Plan / Ticket records.
 - repo-documentation: documentation ownership, impact, and lifecycle.
 - repo-current-state: verified repository-state snapshot.
 - data-document-redaction: staged sensitive-data scan.
@@ -63,9 +63,9 @@ Never commit credentials, tokens, private keys, .env, or other secrets.
 
 ## Planning and persistence
 
-Every development task already has an authoritative GitHub Issue. Use plan-to-ticket only when that Issue needs durable Plan / Ticket / Slice decomposition because the work is complex, dependency-heavy, resumable, or explicitly requested.
+Every development task already has an authoritative GitHub Issue. Planning and decomposition remain native model work. Use plan-to-ticket only when the model-decided structure needs durable Plan/Ticket persistence.
 
-A persisted Plan owns one implementation branch, one pull request, and one merge. Tickets and Slices are decomposition boundaries, not independent delivery branches.
+A persisted Plan owns one implementation branch, one pull request, and one merge. Tickets are persistence records inside that delivery boundary, not independent delivery branches.
 
 ## Verification
 
