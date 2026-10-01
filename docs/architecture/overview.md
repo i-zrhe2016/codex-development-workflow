@@ -41,3 +41,11 @@ Source: [components.puml](diagrams/components.puml)
 - diagram improves understanding -> plantuml
 
 Capabilities may compose naturally, but composition is decided from the current goal and evidence rather than a predefined chain.
+
+
+## Detailed execution diagrams
+
+Persisted Plan execution details remain capability references rather than mandatory workflow stages:
+
+- [ticket-lifecycle.puml](diagrams/ticket-lifecycle.puml) — persisted Plan / Ticket delivery boundary.
+- [ticket-slice-loop.puml](diagrams/ticket-slice-loop.puml) — dependency-ready Slice execution and verification loop.

@@ -27,14 +27,14 @@ Never weaken security, permission, branch, verification, or release controls for
 
 ## Installed skills
 
-- codex-development-workflow
-- plan-to-ticket
-- test-quality
-- plantuml
-- repo-current-state
-- repo-documentation
-- data-document-redaction
-- github-publish
+- `codex-development-workflow`
+- `plan-to-ticket`
+- `test-quality`
+- `plantuml`
+- `repo-current-state`
+- `repo-documentation`
+- `data-document-redaction`
+- `github-publish`
 
 ## Capability summary
 
