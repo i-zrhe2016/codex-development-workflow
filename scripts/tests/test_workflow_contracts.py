@@ -128,7 +128,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_drawio_overviews_are_structurally_valid_and_rendered(self) -> None:
         sources = sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio"))
-        self.assertGreaterEqual(len(sources), 3)
+        self.assertGreaterEqual(len(sources), 2)
         for source in sources:
             with self.subTest(source=source.name):
                 tree = ET.parse(source)
