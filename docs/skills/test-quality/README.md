@@ -20,8 +20,7 @@ Editable overview: [`test-quality-gate.drawio`](../../diagrams/drawio/test-quali
 ![test-quality 通用测试验证梯度](diagrams/test-quality-flow.svg)
 
 图源：[test-quality-flow.puml](diagrams/test-quality-flow.puml)。规范产物使用
-[SVG](diagrams/test-quality-flow.svg)；已有 PNG 仅作为兼容产物保留，不作为
-文档主引用。
+[SVG](diagrams/test-quality-flow.svg)。
 
 ## Managed skill
 

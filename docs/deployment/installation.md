@@ -16,7 +16,7 @@ Restart the host after installation so the new skill directories are
 discovered.
 
 
-## Install the workflow
+## Install the capabilities
 
 The supported installation is run from a checkout so the installer and all
 bundled specialist skills are available together:
@@ -38,7 +38,7 @@ Select the host with `--target`. Codex is the default:
 bash scripts/install-all.sh --target claude
 ```
 
-Both targets install the same twelve managed bundles under the bare skill name; the
+Both targets install the same eight managed bundles under the bare skill name; the
 Claude target omits the Codex-only `agents/openai.yaml` metadata, so the two
 installations are not byte-for-byte identical. The destination root and that
 metadata are the only differences. `--dest PATH` overrides either destination.
@@ -54,7 +54,7 @@ bash scripts/install-all.sh
 
 ## Update an existing installation
 
-Use `--update` to replace already-installed workflow skills:
+Use `--update` to replace already-installed managed capabilities and retire owned legacy bundles:
 
 ```bash
 bash scripts/install-all.sh --update                  # Codex destination
@@ -85,7 +85,7 @@ Source: [`diagrams/installer-decision-flow.puml`](diagrams/installer-decision-fl
 The marker is stored as the hidden file
 `.codex-development-workflow-managed` inside each installed bundle. This
 prevents an update from recursively deleting an unrelated skill that happens
-to use a retired or current workflow name. Installations created before this
+to use a retired or current managed skill name. Installations created before this
 marker existed remain untouched by the default update. To migrate one of those
 installations, explicitly opt in:
 
@@ -138,8 +138,7 @@ Codex may use built-in agents and project-defined agents under
 project-defined agents under `.claude/agents/`. Claude Code does **not** read
 `.codex/` and does not read `agents/openai.yaml`; Codex does **not** read
 `.claude/agents/`. Neither host reads the other's project-scoped
-configuration. Agent selection is dynamic; the workflow does not require a
-fixed task-to-agent mapping.
+configuration. Agent selection is dynamic; the repository does not require a fixed task-to-agent mapping.
 
 Project-scoped runtime configuration stays in this checkout and is not installed
 by `scripts/install-all.sh`.
@@ -157,8 +156,7 @@ hosts reach it differently:
 
 When a target project already has its own `CLAUDE.md`, Claude Code will not fall
 back to that project's `AGENTS.md`. That project must then carry the delegation
-policy itself — copy the "Multi-Agent Delegation" section into its `CLAUDE.md`,
-or add a `CLAUDE.md` that links to it.
+policy itself — copy the "Delegation" policy into its `CLAUDE.md`, or add a `CLAUDE.md` that links to it.
 
 ## Installation behavior and trust boundary
 
