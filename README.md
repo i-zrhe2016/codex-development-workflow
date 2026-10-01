@@ -1,37 +1,28 @@
 # Codex Development Capabilities
 
-A capability-driven repository for Codex and Claude Code.
+A native-first repository policy for Codex and Claude Code.
 
-The model reasons about the user's goal directly and invokes specialized Skills only when they add repository-specific contracts, deterministic tooling, or hard safety gates. There is no mandatory plan -> develop -> verify -> publish -> integrate workflow.
+Codex handles general software-engineering work directly. This repository adds Skills only where the repository needs durable external state, deterministic tooling, or hard guards.
 
-## Architecture
+## Native-first rule
 
-User goal -> Model reasoning -> native work or a matching capability -> Model reasoning -> completion.
+Keep these native to Codex:
 
-The root codex-development-workflow package is retained only as a thin compatibility and policy layer. It does not route requests through stage Skills.
+- requirement understanding and planning;
+- task decomposition and sequencing;
+- architecture and implementation;
+- refactoring and investigation;
+- verification strategy and test execution;
+- delegation, coordination, and integration;
+- ordinary Git/GitHub operations;
+- diagram design and authoring.
 
-## Design principles
-
-- GitHub Issues are the sole development-task authority.
-- Model decides when a capability is useful; unnecessary or redundant capabilities may be skipped.
-- Capability defines specialized how.
-- Documentation/state record obligations cannot be skipped even when the corresponding Skill is skipped.
-- Keep hard guardrails explicit.
-- Prefer native model reasoning over procedural wrappers.
-- Prefer the smallest useful context and execution topology.
-- Do not invoke a capability merely because it exists.
-
-## Hard guardrails
-
-Before publication, required verification must have sufficient evidence, applicable sensitive-data checks must pass, documentation impact must be considered, and target repository branch/PR policy must be respected.
-
-Never weaken security, permission, branch, verification, or release controls for convenience.
+Do not wrap those capabilities in repository Skills.
 
 ## Installed skills
 
 - `codex-development-workflow`
-- `plan-to-ticket`
-- `plantuml`
+- `github-issue-persistence`
 - `repo-current-state`
 - `repo-documentation`
 - `data-document-redaction`
@@ -41,32 +32,27 @@ Never weaken security, permission, branch, verification, or release controls for
 
 | Capability | Purpose |
 |---|---|
-| plan-to-ticket | Persist complex/resumable work as Plan, Tickets, and dependency-ordered Slices. |
-| repo-documentation | Govern documentation impact, canonical ownership, diagrams, and lifecycle. |
-| repo-current-state | Maintain the compact verified repository-state snapshot. |
-| data-document-redaction | Scan staged content for credentials, personal data, and other sensitive values. |
-| github-publish | Guard Conventional Commit, push, publication identity, and PR readiness. |
-| plantuml | Create, render, and review maintainable engineering diagrams. |
+| github-issue-persistence | Persist durable GitHub Issue hierarchy, stable IDs, delivery metadata, and lifecycle. |
+| repo-documentation | Enforce canonical documentation ownership and repository document conventions. |
+| repo-current-state | Maintain the compact verified repository-state snapshot contract. |
+| data-document-redaction | Run the deterministic staged sensitive-data gate. |
+| github-publish | Enforce repository-specific identity, Conventional Commit, branch, push, and PR guards. |
 
-## Task authority and planning
+## Task authority
 
-Every repository development task starts from an authoritative GitHub Issue. A small task may remain one Issue. Use plan-to-ticket only when decomposition into a Plan, Tickets, and Slices adds value.
+GitHub Issues are the sole development-task authority. Every development task must have an authoritative Issue before implementation.
 
-Chat, PR bodies, local Markdown, and model memory may link to or summarize the Issue but are not parallel task stores.
+A simple task may stay as one Issue. Codex plans natively. Use `github-issue-persistence` only when durable Plan/Ticket records, stable IDs, dependency links, or lifecycle metadata are useful.
 
-For every task, the Issue must record verification evidence or a skip reason, Documentation Impact, and Repo Current State reconciliation. Those records are mandatory even when the model skips the corresponding capability Skill.
+Every task Issue records verification evidence or a skip reason, Documentation Impact, and Repo Current State reconciliation.
 
-## Verification model
+## Publication
 
-Verification is model-native rather than a Skill. The model decides whether checks are warranted from the requirement, changed behavior, and risk, chooses the smallest sufficient evidence, and records that evidence (or a concrete skip reason) in the authoritative Issue.
-
-## Publication model
-
-When a repository change is ready to publish, the model independently checks whether documentation, redaction, and publication capabilities apply. These are event-driven capability triggers, not mandatory workflow stages.
+Before publication, required verification must be sufficient, applicable redaction must pass, documentation impact must be recorded, and repository publication guards must pass.
 
 ## Installation
 
-Install all managed capabilities:
+Install:
 
     bash scripts/install-all.sh
 
@@ -74,22 +60,19 @@ Claude Code:
 
     bash scripts/install-all.sh --target claude
 
-Update an existing managed installation:
+Update and prune retired managed Skills:
 
     bash scripts/install-all.sh --update
 
-During update, retired stage Skills and old capability names are removed only when their ownership marker confirms they came from this repository.
-
 ## Skill documentation
 
-| Skill | Runtime source | Documentation |
-|---|---|---|
-| codex-development-workflow | SKILL.md | AGENTS.md |
-| plan-to-ticket | skills/plan-to-ticket/ | docs/skills/plan-to-ticket/ |
-| plantuml | skills/plantuml/ | docs/skills/plantuml/ |
-| repo-current-state | skills/repo-current-state/ | docs/skills/repo-current-state/ |
-| repo-documentation | skills/repo-documentation/ | docs/skills/repo-documentation/ |
-| data-document-redaction | skills/data-document-redaction/ | docs/skills/data-document-redaction/ |
-| github-publish | skills/github-publish/ | docs/skills/github-publish/ |
+| Skill | Runtime source |
+|---|---|
+| codex-development-workflow | SKILL.md |
+| github-issue-persistence | skills/github-issue-persistence/ |
+| repo-current-state | skills/repo-current-state/ |
+| repo-documentation | skills/repo-documentation/ |
+| data-document-redaction | skills/data-document-redaction/ |
+| github-publish | skills/github-publish/ |
 
-See references/skill-map.md for managed installation mapping and docs/architecture/overview.md for the capability architecture.
+See `references/skill-map.md` for the managed installation mapping and `docs/architecture/overview.md` for the native-first architecture.
