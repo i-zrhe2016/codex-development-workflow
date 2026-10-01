@@ -8,9 +8,11 @@ from pathlib import Path
 
 from git_push_utils import run_git, run_git_or_raise
 
-MANAGED_MARKER = "github-push-when-ready auto-push hook"
+MANAGED_MARKER = "github-publish auto-push hook"
+LEGACY_MANAGED_MARKER = "github-push-when-ready auto-push hook"
 BACKUP_SUFFIX = ".pre-codex-auto-push.bak"
-CONVENTIONAL_COMMIT_MARKER = "github-push-when-ready conventional-commits hook"
+CONVENTIONAL_COMMIT_MARKER = "github-publish conventional-commits hook"
+LEGACY_CONVENTIONAL_COMMIT_MARKER = "github-push-when-ready conventional-commits hook"
 CONVENTIONAL_COMMIT_BACKUP_SUFFIX = ".pre-codex-conventional-commits.bak"
 
 
@@ -68,7 +70,7 @@ def build_hook_body(skill_dir: Path) -> str:
             f'python3 {script_arg} --repo "$repo_root"',
             "status=$?",
             'if [ "$status" -ne 0 ]; then',
-            '  printf \'%s\\n\' "github-push-when-ready: auto-push reported an error." >&2',
+            '  printf \'%s\\n\' "github-publish: auto-push reported an error." >&2',
             "fi",
             "exit 0",
             "",
@@ -89,11 +91,19 @@ def build_conventional_commit_hook_body(skill_dir: Path) -> str:
     )
 
 
+def _is_managed_hook(existing_body: str, marker: str) -> bool:
+    legacy_marker = {
+        MANAGED_MARKER: LEGACY_MANAGED_MARKER,
+        CONVENTIONAL_COMMIT_MARKER: LEGACY_CONVENTIONAL_COMMIT_MARKER,
+    }.get(marker)
+    return marker in existing_body or bool(legacy_marker and legacy_marker in existing_body)
+
+
 def _check_unmanaged_hook(hook_path: Path, marker: str, new_body: str) -> str | None:
     if not hook_path.exists():
         return None
     existing_body = hook_path.read_text()
-    if existing_body == new_body or marker in existing_body:
+    if existing_body == new_body or _is_managed_hook(existing_body, marker):
         return None
     return f"existing unmanaged {hook_path.name} hook found at {hook_path}; rerun with --force to replace it"
 
@@ -110,7 +120,7 @@ def _install_hook(
         existing_body = hook_path.read_text()
         if existing_body == new_body:
             return f"{hook_path.name} hook already installed at {hook_path}"
-        if marker not in existing_body:
+        if not _is_managed_hook(existing_body, marker):
             if not force:
                 raise RuntimeError(
                     f"existing unmanaged {hook_path.name} hook found at {hook_path}; "

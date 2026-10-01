@@ -2,49 +2,30 @@
 !theme plain
 skinparam shadowing false
 skinparam defaultFontName Arial
-
-title install-all.sh — Destination, Ownership, Update and Retirement
-
+title install-all.sh — Capability Installation and Safe Retirement
 start
-:Parse target / dest / update / adopt-legacy options;
-
-if (Explicit dest provided?) then (yes)
-  :Use explicit skills destination;
-else (no)
-  :Resolve target default\nCodex: CODEX_HOME or HOME/.codex/skills\nClaude: HOME/.claude/skills;
-endif
-
-if (Destination is inside repository?) then (yes)
+:Resolve Codex / Claude destination;
+if (Destination inside repository?) then (yes)
   :Refuse installation;
   stop
 endif
-
-:For each of 12 managed bundles;
-
+:For each of 8 managed bundles;
 if (Destination exists?) then (no)
-  :Copy bundle;
-  :Write ownership marker;
+  :Install capability;
 else (yes)
-  if (Update enabled?) then (no)
-    :Skip existing bundle;
-  else (yes)
-    if (Ownership marker matches?) then (yes)
+  if (Update enabled?) then (yes)
+    if (Managed ownership marker matches?) then (yes)
       :Replace managed bundle;
     else (no)
-      if (Adopt legacy enabled?) then (yes)
-        :Move legacy bundle to recoverable backup;
-        :Install managed bundle;
-      else (no)
-        :Preserve path\nReport ownership unverified;
-      endif
+      :Preserve or adopt legacy when explicitly requested;
     endif
+  else (no)
+    :Skip existing bundle;
   endif
 endif
-
 if (Update enabled?) then (yes)
-  :Prune owned retired skill destinations\nincluding context-efficiency and prior retired bundles;
+  :Remove owned retired stage Skills\nand renamed legacy capability destinations;
 endif
-
-:Report installed / skipped / migrated\nand resolved destination;
+:Report installed / skipped / migrated;
 stop
 @enduml

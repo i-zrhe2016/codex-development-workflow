@@ -1,0 +1,6 @@
+interface:
+  display_name: "GitHub Publish"
+  short_description: "Guard Conventional Commit, push, and pull-request publication"
+  default_prompt: "Use $github-publish when a repository change is ready to be committed, pushed, or opened as a pull request. Enforce branch readiness, publication identity, Conventional Commits, and PR safety; stop at PR ready unless merge is separately authorized."
+policy:
+  allow_implicit_invocation: true

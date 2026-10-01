@@ -12,7 +12,7 @@ MANAGED_MARKER=".codex-development-workflow-managed"
 
 usage() {
   cat <<'USAGE'
-Install the complete development workflow skill set bundled in this repository
+Install the capability-driven development skill set bundled in this repository
 into a Codex or Claude Code skills directory.
 
 Usage:
@@ -22,7 +22,7 @@ Options:
   --target NAME  Host to install for: codex (default) or claude.
                  codex  -> ${CODEX_HOME:-$HOME/.codex}/skills
                  claude -> $HOME/.claude/skills
-  --update       Replace already-installed workflow skills.
+  --update       Replace already-installed managed skills and retire owned legacy bundles.
   --adopt-legacy Adopt pre-marker destinations during --update, moving them
                  to a recoverable backup first.
   --dest PATH    Install into PATH instead of the --target destination.
@@ -85,18 +85,13 @@ esac
 # The root package is kept at the repository root for backward compatibility.
 SKILLS=(
   ".|codex-development-workflow"
-  "skills/plan-workflow|plan-workflow"
-  "skills/develop-workflow|develop-workflow"
-  "skills/verify-workflow|verify-workflow"
-  "skills/publish-workflow|publish-workflow"
-  "skills/integrate-workflow|integrate-workflow"
   "skills/plan-to-ticket|plan-to-ticket"
-  "skills/test-workflow|test-workflow"
+  "skills/test-quality|test-quality"
   "skills/plantuml|plantuml"
   "skills/repo-current-state|repo-current-state"
   "skills/repo-documentation|repo-documentation"
   "skills/data-document-redaction|data-document-redaction"
-  "skills/github-push-when-ready|github-push-when-ready"
+  "skills/github-publish|github-publish"
 )
 
 # Destinations from bundles retired by the workflow. These are removed only
@@ -111,6 +106,13 @@ OBSOLETE_SKILLS=(
   "ponytail-gain"
   "ponytail-help"
   "auto-deploy"
+  "plan-workflow"
+  "develop-workflow"
+  "verify-workflow"
+  "publish-workflow"
+  "integrate-workflow"
+  "test-workflow"
+  "github-push-when-ready"
 )
 
 destination_is_managed() {

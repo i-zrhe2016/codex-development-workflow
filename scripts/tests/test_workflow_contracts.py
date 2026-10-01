@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repository contract tests for the managed workflow and test-quality policy."""
+"""Repository contract tests for the capability-driven skill set."""
 
 from __future__ import annotations
 
@@ -11,27 +11,22 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 README = REPO_ROOT / "README.md"
 ROOT_SKILL = REPO_ROOT / "SKILL.md"
-TEST_SKILL = REPO_ROOT / "skills" / "test-workflow" / "SKILL.md"
+TEST_SKILL = REPO_ROOT / "skills" / "test-quality" / "SKILL.md"
 TEST_DOCS = (
-    REPO_ROOT / "docs" / "skills" / "test-workflow" / "README.md",
-    REPO_ROOT / "docs" / "skills" / "test-workflow" / "architecture.md",
-    REPO_ROOT / "docs" / "skills" / "test-workflow" / "usage.md",
+    REPO_ROOT / "docs" / "skills" / "test-quality" / "README.md",
+    REPO_ROOT / "docs" / "skills" / "test-quality" / "architecture.md",
+    REPO_ROOT / "docs" / "skills" / "test-quality" / "usage.md",
 )
 
 EXPECTED_SKILLS = {
     "codex-development-workflow",
-    "plan-workflow",
-    "develop-workflow",
-    "verify-workflow",
-    "publish-workflow",
-    "integrate-workflow",
     "plan-to-ticket",
-    "test-workflow",
+    "test-quality",
     "plantuml",
     "repo-current-state",
     "repo-documentation",
     "data-document-redaction",
-    "github-push-when-ready",
+    "github-publish",
 }
 
 
@@ -81,7 +76,7 @@ class WorkflowContractTests(unittest.TestCase):
         }
         self.assertEqual(listed, EXPECTED_SKILLS)
 
-    def test_test_workflow_contains_quality_gate_contract(self) -> None:
+    def test_test_quality_contains_quality_gate_contract(self) -> None:
         runtime = TEST_SKILL.read_text(encoding="utf-8").lower()
         required = (
             "acceptance-to-test matrix",
@@ -103,7 +98,7 @@ class WorkflowContractTests(unittest.TestCase):
             "A GREEN test level must not bypass mandatory risk dimensions.",
         )
 
-    def test_test_workflow_docs_match_runtime_quality_model(self) -> None:
+    def test_test_quality_docs_match_runtime_quality_model(self) -> None:
         combined = "\n".join(path.read_text(encoding="utf-8") for path in TEST_DOCS).lower()
         for marker in (
             "acceptance-to-test matrix",
@@ -117,11 +112,11 @@ class WorkflowContractTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, combined)
 
-    def test_root_workflow_requires_quality_gate(self) -> None:
+    def test_root_policy_requires_quality_gate(self) -> None:
         root_skill = ROOT_SKILL.read_text(encoding="utf-8")
         self.assertIn("Test Quality Gate", root_skill)
-        self.assertIn("retry cannot convert an unexplained flaky failure to PASS", root_skill)
-        self.assertIn("Coverage is", root_skill)
+        self.assertIn("Retry cannot convert an unexplained flaky failure to PASS", root_skill)
+        self.assertIn("Coverage is diagnostic evidence only", root_skill)
 
     def test_every_plantuml_source_has_same_basename_svg(self) -> None:
         sources = sorted((REPO_ROOT / "docs").rglob("*.puml"))
@@ -156,7 +151,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_drawio_overviews_are_structurally_valid_and_rendered(self) -> None:
         sources = sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio"))
-        self.assertGreaterEqual(len(sources), 6)
+        self.assertGreaterEqual(len(sources), 3)
         for source in sources:
             with self.subTest(source=source.name):
                 tree = ET.parse(source)

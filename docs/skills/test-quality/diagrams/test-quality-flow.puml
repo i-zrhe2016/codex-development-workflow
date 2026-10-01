@@ -3,7 +3,7 @@
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title test-workflow — Risk-Aware Verification and Test Quality Gate
+title test-quality — Risk-Aware Verification and Test Quality Gate
 
 start
 :Read requirement / Slice acceptance criteria / changed behavior;

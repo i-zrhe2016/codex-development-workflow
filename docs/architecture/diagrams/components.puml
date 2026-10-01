@@ -4,42 +4,32 @@ left to right direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam componentStyle rectangle
-
-title Codex Development Workflow — Components and Authorities
-
-actor "Main agent" as agent
-component "codex-development-workflow\nWorkflow router + full orchestration" as main
-component "plan-workflow\nRequirement to work definition" as planw
-component "develop-workflow\nImplement to Development Complete" as devw
-component "verify-workflow\nVerification scope and conclusion" as verifyw
-component "publish-workflow\nDocs, redaction, commit, push, PR ready" as pubw
-component "integrate-workflow\nMerge, cleanup, state, docs" as intw
-component "plan-to-ticket\nPlan / Ticket / Slice decomposition" as plan
-component "test-workflow\nRisk-aware verification\nTest Quality Gate" as test
+title Codex Development Capabilities — Model-Selected Capabilities
+actor "User" as user
+component "Model reasoning\nIntent · architecture · implementation · coordination" as model
+component "codex-development-workflow\nThin policy / compatibility" as policy
+component "plan-to-ticket\nPersisted planning" as plan
+component "test-quality\nVerification evidence\nTest Quality Gate" as test
 component "repo-documentation\nDocumentation governance" as docs
-component "repo-current-state\nVerified recovery snapshot" as state
+component "repo-current-state\nVerified state snapshot" as state
 component "data-document-redaction\nStaged sensitive-data scan" as redact
-component "github-push-when-ready\nCommit / Push / PR readiness" as publish
-
-database "GitHub Issues\nPlan / Ticket authority" as issues
-cloud "GitHub\nBranch / PR / Merge" as github
-folder "Repository docs\nREADME + docs/" as docstore
-
-agent --> main : route request
-main --> planw
-planw --> devw
-devw --> verifyw
-verifyw --> pubw
-pubw --> intw
-planw --> plan : decompose
-plan --> issues : persist when required
-verifyw --> test : invoke
-pubw --> docs : impact / ownership
-docs --> docstore : update canonical docs
-pubw --> redact : pre-publication scan
-pubw --> publish : publish branch
-publish --> github : commit / push / PR
-intw --> github : merge once
-intw --> state : post-merge reconciliation
-state --> docstore : update snapshot
+component "github-publish\nCommit / Push / PR guard" as publish
+component "plantuml\nDiagram capability" as diagram
+database "GitHub Issues" as issues
+cloud "GitHub" as github
+folder "Repository" as repository
+user --> model : goal
+model --> policy : guardrails
+model --> plan : complex / resumable
+plan --> issues : persist
+model --> test : verification needed
+model --> docs : documentation affected
+model --> state : verified truth changed
+model --> redact : sensitive staged surface
+model --> publish : commit / push / PR
+publish --> github
+model --> diagram : visual explanation useful
+docs --> repository
+state --> repository
+diagram --> repository
 @enduml

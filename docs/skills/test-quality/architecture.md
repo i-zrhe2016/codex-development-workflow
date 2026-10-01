@@ -1,18 +1,18 @@
-# 通用测试工作流架构
+# 通用测试能力架构
 
 > Type: Architecture
 > Status: Active
-> Scope: Structure of the test-workflow specialist: verification levels and gradient, risk branches, Test Quality Gate, failure handling, and the browser/E2E branch
+> Scope: Structure of the test-quality specialist: verification levels and gradient, risk branches, Test Quality Gate, failure handling, and the browser/E2E branch
 
 ## 目标
 
-`test-workflow` 面向后端、前端、API、库和 CLI 等仓库变更，从需求、Slice 功能
+`test-quality` 面向后端、前端、API、库和 CLI 等仓库变更，从需求、Slice 功能
 清单、验收标准和现有契约中提炼最小高价值测试集，并按成本从低到高逐层
 验证。浏览器验证只在行为对用户可见或验收明确要求端到端流程时启用。
 
-![test-workflow 风险驱动验证与 Test Quality Gate](diagrams/test-workflow-flow.svg)
+![test-quality 风险驱动验证与 Test Quality Gate](diagrams/test-quality-flow.svg)
 
-Source: [`diagrams/test-workflow-flow.puml`](diagrams/test-workflow-flow.puml)
+Source: [`diagrams/test-quality-flow.puml`](diagrams/test-quality-flow.puml)
 
 ## 核心数据流
 

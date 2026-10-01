@@ -1,11 +1,11 @@
-# Test Workflow
+# Test Quality
 
-本目录迁移并维护 `test-workflow` specialist 的文档。运行时 skill 源码位于
-[`skills/test-workflow/`](../../../skills/test-workflow/)；它服务于本仓库的
+本目录迁移并维护 `test-quality` specialist 的文档。运行时 skill 源码位于
+[`skills/test-quality/`](../../../skills/test-quality/)；它服务于本仓库的
 主 Agent / Slice workflow；它负责验证委派或主线程执行的 Slice，但不负责
 决定是否拆分 Agent 或如何并行实现。
 
-核心入口是 `test-workflow`：先建立 Acceptance-to-Test Matrix，再从变更风险
+核心入口是 `test-quality`：先建立 Acceptance-to-Test Matrix，再从变更风险
 选择 mandatory test dimensions，并按 `静态检查 -> focused -> boundary/negative
 -> property/fuzz -> integration/contract -> mutation -> regression -> browser/E2E
 -> isolation/flaky` 的成本梯度执行。复杂或高风险行为采用 RED -> GREEN；
@@ -17,22 +17,21 @@ Editable overview: [`test-quality-gate.drawio`](../../diagrams/drawio/test-quali
 
 详细验证梯度继续由 PlantUML diagrams-as-code 维护：
 
-![test-workflow 通用测试验证梯度](diagrams/test-workflow-flow.svg)
+![test-quality 通用测试验证梯度](diagrams/test-quality-flow.svg)
 
-图源：[test-workflow-flow.puml](diagrams/test-workflow-flow.puml)。规范产物使用
-[SVG](diagrams/test-workflow-flow.svg)；已有 PNG 仅作为兼容产物保留，不作为
-文档主引用。
+图源：[test-quality-flow.puml](diagrams/test-quality-flow.puml)。规范产物使用
+[SVG](diagrams/test-quality-flow.svg)。
 
 ## Managed skill
 
 | Skill | 用途 | 运行时入口 |
 |---|---|---|
-| `test-workflow` | 通用单元、组件、API、集成、回归和条件式浏览器验证 | [`skills/test-workflow/SKILL.md`](../../../skills/test-workflow/SKILL.md) |
+| `test-quality` | 通用单元、组件、API、集成、回归和条件式浏览器验证 | [`skills/test-quality/SKILL.md`](../../../skills/test-quality/SKILL.md) |
 
 ## 文档索引
 
-- [通用测试工作流架构](architecture.md)：测试梯度、职责边界、风险分支和失败处理。
-- [通用测试工作流运行手册](usage.md)：模式选择、验收清单、执行顺序和报告格式。
+- [通用测试能力架构](architecture.md)：测试梯度、职责边界、风险分支和失败处理。
+- [通用测试能力运行手册](usage.md)：模式选择、验收清单、执行顺序和报告格式。
 
 ## 验证级别
 

@@ -5,10 +5,6 @@ one fact, one canonical document, and other documents link to it. The managed
 runtime source is
 [`skills/repo-documentation/`](../../../skills/repo-documentation/).
 
-![Documentation and publication lifecycle overview](../../diagrams/drawio/docs-publication-flow.svg)
-
-Editable overview: [`docs-publication-flow.drawio`](../../diagrams/drawio/docs-publication-flow.drawio)
-
 Detailed documentation-governance flow:
 
 ![repo-documentation flow: impact check, canonical owner, router update, and the diagram step](diagrams/repo-documentation-flow.svg)
@@ -61,10 +57,7 @@ Source: [`diagrams/repo-documentation-flow.puml`](diagrams/repo-documentation-fl
    document's state changes; ADRs use `Proposed`, `Accepted`, `Deprecated`, or
    `Superseded` instead and are never deleted.
 
-The impact check runs inside `publish-workflow`, between verification and the
-staged redaction scan: `verify -> Documentation impact -> Redaction -> Commit`.
-It is a required step of that stage, not an additional merge gate, and it
-requires no documentation work when the change touches nothing documented.
+The model invokes this capability before publication when documentation impact is plausible. It is an event-driven documentation guardrail, not a workflow stage, and it requires no documentation work when the change touches nothing documented.
 
 ## Boundary with repo-current-state
 

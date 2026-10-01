@@ -1,14 +1,11 @@
 ---
-name: test-workflow
-description: "General repository verification and test-quality workflow. Use when validating feature work, bug fixes, refactors, or ticket acceptance criteria across backend, frontend, APIs, libraries, and CLI projects. Map acceptance criteria to evidence, choose mandatory test dimensions from risk, run the cheapest relevant checks first, use RED/GREEN for complex or risky behavior, add boundary/negative, property/fuzz, mutation, integration, regression, or browser checks when justified, detect flaky tests, and require an explicit Test Quality Gate before PASS."
+name: test-quality
+description: "General repository verification and test-quality capability. Use when validating feature work, bug fixes, refactors, or ticket acceptance criteria across backend, frontend, APIs, libraries, and CLI projects. Map acceptance criteria to evidence, choose mandatory test dimensions from risk, run the cheapest relevant checks first, use RED/GREEN for complex or risky behavior, add boundary/negative, property/fuzz, mutation, integration, regression, or browser checks when justified, detect flaky tests, and require an explicit Test Quality Gate before PASS."
 ---
 
-# Test Workflow
+# Test Quality
 
-Validate behavior with the lightest reliable test strategy. This skill owns the
-verification procedure and returns its result; deciding when verification runs
-and how much of it a change warrants belongs to `verify-workflow`. Prefer
-deterministic automated feedback over repeated agent inspection.
+Validate behavior with the lightest reliable test strategy. This capability owns the verification procedure and returns its evidence. The model decides when verification is warranted and chooses a bounded level from the current requirement, changed behavior, and risk. Prefer deterministic automated feedback over repeated agent inspection.
 
 ## Core rules
 
