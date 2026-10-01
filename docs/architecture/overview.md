@@ -2,49 +2,36 @@
 
 > Type: Architecture
 > Status: Active
-> Scope: Capability-driven repository development architecture
+> Scope: Native-first repository capability architecture
 
 ## Core model
 
-The model is the orchestrator. There is no fixed stage topology.
+Codex is the orchestrator and owns ordinary software-engineering reasoning and execution.
 
-GitHub Issues are the sole development-task authority. Capability Skills are optional execution aids; mandatory records are policy-level invariants and cannot be bypassed.
+Repository Skills exist only for durable repository-specific state, deterministic tooling, external persistence, or hard gates.
 
-User goal -> Model reasoning -> native work or discovered capability -> Model reasoning -> requested outcome.
-
-Planning, implementation, verification, publication, and integration are outcomes the model reasons about, not repository Skills that must be traversed.
+User goal -> Codex native work -> repository-specific capability only when needed -> requested outcome.
 
 ## Components
 
 | Component | Responsibility |
 |---|---|
-| Model | Resolve the authoritative Issue, understand intent, choose architecture, implement, coordinate, select/skip capabilities, integrate results, own final judgment and mandatory records |
-| codex-development-workflow | Thin compatibility policy and guardrails |
-| plan-to-ticket | Durable decomposition and GitHub Issue persistence |
-| repo-documentation | Documentation impact and canonical ownership |
-| repo-current-state | Verified current-state snapshot |
-| data-document-redaction | Staged sensitive-data scan |
-| github-publish | Commit/push/PR publication guard |
-| plantuml | Diagram source, render, and readability validation |
+| Codex | Planning, decomposition, architecture, implementation, verification, delegation, integration, Git/GitHub operation, diagram authoring |
+| codex-development-workflow | Thin repository policy and hard guardrails |
+| github-issue-persistence | Durable GitHub Issue schema, stable IDs, delivery metadata, lifecycle |
+| repo-documentation | Documentation ownership and repository document conventions |
+| repo-current-state | Verified current-state snapshot contract |
+| data-document-redaction | Deterministic staged sensitive-data scan |
+| github-publish | Repository-specific publication guards |
 
-## Event-driven capability use
+## Trigger model
 
-- complex/resumable requirement -> plan-to-ticket
-- behavior needs proof -> model-native verification
-- documented surface changed -> repo-documentation
+- durable GitHub task records needed -> github-issue-persistence
+- documented repository facts changed -> repo-documentation
+- verified repository truth materially changed -> repo-current-state
 - staged sensitive surface -> data-document-redaction
-- commit/push/PR requested -> github-publish
-- verified repo truth changed -> repo-current-state
-- diagram improves understanding -> plantuml
+- commit/push/PR publication -> github-publish
 
-Capabilities may compose naturally, but composition is decided from the current goal and evidence rather than a predefined chain. A capability may be skipped when unnecessary or redundant.
+Planning, testing, Git operations, and diagrams remain native even when a repository contract records their result.
 
-Mandatory Issue records remain independent of capability invocation: status/delivery references, verification evidence or skip reason, Documentation Impact, and Repo Current State reconciliation.
-
-
-## Detailed execution diagrams
-
-Persisted Plan execution details remain capability references rather than mandatory workflow stages:
-
-- [ticket-lifecycle.puml](diagrams/ticket-lifecycle.puml) — persisted Plan / Ticket delivery boundary.
-- [ticket-slice-loop.puml](diagrams/ticket-slice-loop.puml) — dependency-ready Slice execution and verification loop.
+Mandatory Issue records remain independent of Skill invocation: status/delivery references, verification evidence or skip reason, Documentation Impact, and Repo Current State reconciliation.

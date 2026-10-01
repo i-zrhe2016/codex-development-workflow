@@ -1,231 +1,44 @@
 ---
 name: repo-current-state
-description: Maintain a concise, repository-native `docs/Repo_Current_State.md` as the verified current-state memory for an AI-assisted software project. Read it when work starts and refresh it after merge, branch cleanup, and default-branch synchronization when repository state changed. Use when the user asks to create, refresh, reconcile, or validate it. Verify claims against repository evidence, prevent stale-state drift, and keep history, plans, architecture detail, and approvals out of this file.
+description: "Maintain the repository-specific docs/Repo_Current_State.md recovery snapshot and its reconciliation record. Use when verified repository truth materially changes or when the snapshot must be reconciled. Codex performs repository investigation natively; this Skill only defines the snapshot schema, evidence boundary, and update contract."
 ---
 
-# Repo Current State
+# Repository Current State Contract
 
-Maintain `docs/Repo_Current_State.md` as a small, factual snapshot of what the repository is true **now**.
+Target: `docs/Repo_Current_State.md`.
 
-## Core Contract
+The file is a compact recovery snapshot of verified repository truth, not a changelog, backlog, plan, test archive, or reasoning trace.
 
-Treat the repository as the source of technical truth, GitHub Issues as the sole development-task authority, and this file as a compact index into current repository reality.
+## Required shape
 
-- Verify important claims against code, tests, configuration, Git state, or other authoritative repository files.
-- Do not trust chat history or an existing state file when repository evidence disagrees.
-- Rewrite obsolete state instead of accumulating historical entries.
-- Keep the file small enough to read at the beginning of an agent session.
-- Record uncertainty explicitly. Never fill gaps with guesses.
-- Keep implementation history in Git/changelog, architecture rationale in ADRs or architecture docs, and future work in GitHub Issues.
-- GitHub Issues are always the sole development-task authority, whether or not `plan-to-ticket` is used. This file may link to the active Issue, Plan, or Ticket, but must not duplicate their backlog, metadata, or progress record.
+Keep these sections:
 
-## When Reading State
+- `Last verified`
+- `Current Focus`
+- `Implemented`
+- `In Progress`
+- `Known Issues / Failing Checks`
+- `Constraints`
+- `Architecture Snapshot`
+- `Next`
 
-At the beginning of planning or implementation:
+Prefer concise factual bullets and links to canonical detail.
 
-1. Read `AGENTS.md` if present.
-2. Read `docs/Repo_Current_State.md` if present.
-3. Treat its `Last verified` metadata as a freshness hint, not proof.
-4. Verify only the facts needed for the current task against the repository.
-5. If the state file is materially stale, reconcile it before relying on it for planning.
+## Evidence boundary
 
-Do not scan the entire repository just to validate every line. Validate progressively around the current task.
+Only write claims supported by current repository evidence such as tracked files, configuration, Git/GitHub state, or authoritative Issues. Omit or explicitly qualify unverified claims.
 
-## When Updating State
+Do not copy Plan/Ticket bodies, historical change logs, detailed test output, or authorization data into the snapshot.
 
-Update the file after a Plan or coherent work unit has passed its required
-tests, its single PR has merged, the source branch has been cleaned up, and the
-default branch has been synchronized, when the change materially affects
-repository capabilities, constraints, active work, or known failures. State /
-Docs is a post-merge recovery step, not a pre-PR shortcut.
+## Reconciliation record
 
-Prefer this order:
+For every development task, record in the authoritative Issue:
 
-`Implement Plan -> Test -> Redaction -> Commit/Push -> Create/Update Plan PR -> Automatic Review -> Fix loop if needed -> Merge once -> Cleanup -> Update Repo_Current_State.md`
+- `Repo Current State: updated — docs/Repo_Current_State.md`, or
+- `Repo Current State: no-change — <concrete reason>`.
 
-If updating the state file changes tracked content after the merge, make that
-update through a new Plan branch and the same mandatory PR gate; never commit
-the post-merge state update directly to the default branch.
+Update the snapshot only when repository truth materially changed. Do not churn the file for every task.
 
-Do not update the file for trivial formatting-only edits or changes that do not affect the project state represented here.
+## Freshness
 
-For every development task, however, record the reconciliation decision in the authoritative GitHub Issue even when this file does not change:
-- `Repo Current State: updated — docs/Repo_Current_State.md`
-- `Repo Current State: no-change — <concrete reason>`
-
-The decision record is mandatory even if the model skips this Skill as unnecessary or redundant.
-
-## Source Priority
-
-Resolve conflicts in this order:
-
-1. Executed test/build results and observable runtime behavior.
-2. Current code and configuration.
-3. Git state and the current commit/branch.
-4. Architecture/decision documents that are still applicable.
-5. Existing `Repo_Current_State.md`.
-6. Conversation memory.
-
-If evidence is insufficient, write `Unverified` or omit the claim.
-
-## Required Shape
-
-Create or maintain this compact structure:
-
-```markdown
-# Repository Current State
-
-Last verified: <YYYY-MM-DD> @ <commit-or-working-tree>
-
-## Current Focus
-- <current Plan milestone, Ticket, or "None">
-
-## Implemented
-- <important capability that exists now>
-
-## In Progress
-- <work actually started but not complete>
-
-## Known Issues / Failing Checks
-- <specific unresolved issue or failing check>
-
-## Constraints
-- <current technical or compatibility constraint>
-
-## Architecture Snapshot
-- <only the high-level facts needed to orient an agent>
-- See `<path>` for detailed architecture when applicable.
-
-## Next
-- <link to the immediate next GitHub Issue/work item, if known>
-```
-
-Omit empty bullets. Use `None` only when the absence itself is useful information.
-
-## Section Rules
-
-### Current Focus
-
-Keep one active milestone or work unit when possible. Do not turn this into a roadmap.
-
-### Implemented
-
-Record meaningful capabilities, not every file or function. Remove entries that are no longer true.
-
-Prefer:
-
-- GitHub OAuth login is available through the existing authentication flow.
-
-Avoid:
-
-- Added `oauth.ts`.
-- Changed 14 files.
-
-### In Progress
-
-Only list work that has actually started and remains incomplete. Move completed work to `Implemented`; remove abandoned work.
-
-### Known Issues / Failing Checks
-
-Record unresolved, reproducible facts relevant to future work. Include the failing check or symptom when known.
-
-Do not list speculative risks here; put those in review output or tickets.
-
-### Constraints
-
-Record constraints that affect implementation choices now, such as compatibility boundaries, required interfaces, migration restrictions, or dependency limitations.
-
-Do not treat this section as authorization. Never store deploy approval, secret-access approval, spending authority, or other permission grants here.
-
-### Architecture Snapshot
-
-Keep only a few orientation-level facts. Link to `docs/ARCHITECTURE.md`, ADRs, or module docs instead of duplicating detailed design.
-
-### Next
-
-Point to the immediate next Plan/Ticket Issue when known. Do not duplicate the full backlog or Plan.
-
-## Freshness and Drift Control
-
-Always maintain a `Last verified` line.
-
-- If the working tree is clean and this file was not changed by the commit being
-  verified, use the current short commit SHA when available.
-- If the file is updated before the implementation commit, use `working tree`
-  rather than inventing the future commit SHA. Keep that marker in the commit
-  carrying the state-file update: replacing it with that commit's own SHA would
-  be self-referential. A later clean-tree verification may replace it with the
-  actual SHA.
-- For a post-merge refresh performed on its own Plan branch, the state-only
-  commit may retain `working tree` or record the already-verified base/parent
-  SHA. Never use that state-only commit's own SHA.
-- Use the current date only when actually updating or validating the file.
-- If a section cannot be verified, mark the specific item `Unverified` or remove it.
-
-When stale information is found:
-
-1. Verify the current repository truth.
-2. Replace the stale entry with the current fact.
-3. Remove obsolete completed/in-progress items.
-4. Do not preserve stale text merely for historical context.
-
-Git history already preserves the old version.
-
-## Boundaries
-
-`Repo_Current_State.md` is **not**:
-
-- a changelog
-- a session transcript
-- a research log
-- a full architecture document
-- a decision rationale archive
-- a complete backlog
-- a test report archive
-- an authorization or approval record
-
-Route those concerns elsewhere:
-
-- history -> Git / `CHANGELOG.md`
-- architecture -> `docs/ARCHITECTURE.md`
-- rationale -> ADRs / decision docs
-- future work -> GitHub Issues (not a parallel Markdown ticket backlog)
-- test evidence -> CI/test reports
-- approvals -> the appropriate external authority or protected workflow
-
-## Size Discipline
-
-Prefer a few hundred tokens of high-value state over exhaustive detail.
-
-- Keep bullets short.
-- Collapse duplicated facts.
-- Link to detailed docs instead of copying them.
-- Remove resolved issues and obsolete constraints.
-- Avoid timestamps per bullet, narrative prose, and chronological logs.
-
-If the file grows beyond roughly 150 lines, treat that as a signal that content belongs in more specialized documents.
-
-## Reconciliation Workflow
-
-When asked to refresh or validate the file:
-
-1. Read the existing state file if present.
-2. Inspect the minimum repository evidence needed to validate its claims.
-3. Identify stale, missing, duplicated, or misplaced items.
-4. Rewrite the document to current truth.
-5. Update `Last verified`.
-6. Re-read the final file for contradictions and scope creep.
-
-Do not create extra state files unless the user explicitly asks.
-
-## Output Behavior
-
-When operating inside a repository, create or update `docs/Repo_Current_State.md` directly when tools permit.
-
-When the user asks only for text, return the complete proposed Markdown content and nothing else.
-
-When reporting completion, state only:
-
-- whether the file was created, updated, or already current
-- what evidence was used to verify it
-- any items left `Unverified`
+`Last verified` identifies the branch/change context used for the latest reconciliation. Remove stale statements when evidence no longer supports them.

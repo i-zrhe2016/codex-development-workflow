@@ -13,8 +13,7 @@ README = REPO_ROOT / "README.md"
 ROOT_SKILL = REPO_ROOT / "SKILL.md"
 EXPECTED_SKILLS = {
     "codex-development-workflow",
-    "plan-to-ticket",
-    "plantuml",
+    "github-issue-persistence",
     "repo-current-state",
     "repo-documentation",
     "data-document-redaction",
@@ -71,11 +70,11 @@ class WorkflowContractTests(unittest.TestCase):
     def test_issue_authority_and_non_skippable_records_are_policy_invariants(self) -> None:
         agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
         root_skill = ROOT_SKILL.read_text(encoding="utf-8")
-        planning = (REPO_ROOT / "skills" / "plan-to-ticket" / "SKILL.md").read_text(encoding="utf-8")
+        persistence = (REPO_ROOT / "skills" / "github-issue-persistence" / "SKILL.md").read_text(encoding="utf-8")
         docs = (REPO_ROOT / "skills" / "repo-documentation" / "SKILL.md").read_text(encoding="utf-8")
         state = (REPO_ROOT / "skills" / "repo-current-state" / "SKILL.md").read_text(encoding="utf-8")
 
-        for text in (agents, root_skill, planning):
+        for text in (agents, root_skill, persistence):
             self.assertIn("GitHub Issues are the sole", text)
 
         for marker in ("Documentation Impact", "Repo Current State"):
@@ -83,17 +82,18 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(marker, root_skill)
 
         self.assertIn("authoritative GitHub Issue", docs)
-        self.assertIn("decision record is mandatory", state)
-        self.assertNotIn("Small, single-session work keeps its plan inline and creates no Issues.", planning)
+        self.assertIn("Repo Current State: updated", state)
+        self.assertIn("Repo Current State: no-change", state)
+        self.assertIn("Codex performs the planning itself", persistence)
 
-    def test_verification_is_model_native_and_recorded(self) -> None:
+    def test_native_capabilities_are_not_runtime_skills(self) -> None:
         root_skill = ROOT_SKILL.read_text(encoding="utf-8")
         agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("Verification is model-native", root_skill)
-        self.assertIn("Do not use or invoke a dedicated testing Skill", root_skill)
-        self.assertIn("Verification is handled directly by the model", agents)
+        self.assertIn("Do not reproduce native model behavior inside Skills", root_skill)
+        self.assertIn("Use Codex natively for planning", agents)
         self.assertIn("verification evidence", root_skill)
-        self.assertFalse((REPO_ROOT / "skills" / "test-quality").exists())
+        for retired in ("test-quality", "plan-to-ticket", "plantuml"):
+            self.assertFalse((REPO_ROOT / "skills" / retired / "SKILL.md").exists())
 
     def test_every_plantuml_source_has_same_basename_svg(self) -> None:
         sources = sorted((REPO_ROOT / "docs").rglob("*.puml"))
