@@ -8,7 +8,7 @@ Start from the user's goal, but create or resolve its authoritative GitHub Issue
 
 | Situation | Capability |
 |---|---|
-| Complex, dependent, resumable, or explicitly persisted planning | plan-to-ticket |
+| A model-decided Plan/Ticket structure needs durable GitHub Issue persistence | plan-to-ticket |
 | Verification evidence is needed | model-native reasoning |
 | Documented surfaces may change | repo-documentation |
 | Verified repository truth materially changed | repo-current-state |
@@ -16,7 +16,7 @@ Start from the user's goal, but create or resolve its authoritative GitHub Issue
 | Commit, push, or PR publication is requested | github-publish |
 | A diagram materially improves understanding | plantuml |
 
-Ordinary planning, coding, refactoring, exploration, verification, integration, and delegation remain native model work.
+Planning, decomposition, sequencing, acceptance criteria, test design, coding, refactoring, exploration, verification, integration, and delegation remain native model work. Skills must not restate those capabilities.
 
 Capabilities may be skipped when unnecessary, redundant, or already satisfied by stronger evidence. Composition is contextual, not a mandatory pipeline.
 
