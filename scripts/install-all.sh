@@ -85,8 +85,7 @@ esac
 # The root package is kept at the repository root for backward compatibility.
 SKILLS=(
   ".|codex-development-workflow"
-  "skills/plan-to-ticket|plan-to-ticket"
-  "skills/plantuml|plantuml"
+  "skills/github-issue-persistence|github-issue-persistence"
   "skills/repo-current-state|repo-current-state"
   "skills/repo-documentation|repo-documentation"
   "skills/data-document-redaction|data-document-redaction"
@@ -112,6 +111,8 @@ OBSOLETE_SKILLS=(
   "integrate-workflow"
   "test-workflow"
   "test-quality"
+  "plan-to-ticket"
+  "plantuml"
   "github-push-when-ready"
 )
 
