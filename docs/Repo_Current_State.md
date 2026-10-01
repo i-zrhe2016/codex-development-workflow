@@ -1,10 +1,10 @@
 # Repository Current State
 
-Last verified: 2026-10-02 @ policy/disable-test-quality
+Last verified: 2026-10-02 @ policy/native-model-first
 
 ## Current Focus
 
-- GitHub Issue #184: retire `test-quality` while preserving verification evidence as a mandatory Issue record.
+- GitHub Issue #186: preserve native model capabilities and reduce `plan-to-ticket` to GitHub Issue persistence.
 
 ## Implemented
 
@@ -13,10 +13,10 @@ Last verified: 2026-10-02 @ policy/disable-test-quality
 - Capability invocation is optional when unnecessary or redundant, but Issue lifecycle/evidence, Documentation Impact, and Repo Current State reconciliation records are mandatory.
 - The root `codex-development-workflow` bundle is retained only as a thin compatibility and policy layer carrying repository-wide guardrails.
 - Five stage bundles are retired: `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, and `integrate-workflow`.
-- Six focused capabilities remain: `plan-to-ticket`, `repo-documentation`, `repo-current-state`, `data-document-redaction`, `github-publish`, and `plantuml`.
+- Six focused capabilities remain: `plan-to-ticket`, `repo-documentation`, `repo-current-state`, `data-document-redaction`, `github-publish`, and `plantuml`; each is limited to repository-specific behavior.
 - The installer manages 7 bundles total for both Codex and Claude Code: one thin policy bundle plus six capabilities. Claude omits Codex-only `agents/openai.yaml` metadata.
 - `test-workflow` and `test-quality` are retired; `github-push-when-ready` is renamed to `github-publish`. Owned legacy destinations are retired during `--update`.
-- Small tasks may remain one authoritative Issue. Complex tasks may be decomposed into a Plan Issue and child Ticket Issues; a decomposed Plan owns one branch, one PR, and one merge.
+- Planning, decomposition, sequencing, acceptance criteria, test design, and delegation are native model work. `plan-to-ticket` only persists a model-decided Plan/Ticket structure; a persisted Plan owns one branch, one PR, and one merge.
 - Verification is model-native. The authoritative Issue still records verification evidence or a concrete reason verification was unnecessary.
 - `repo-documentation` owns documentation impact and canonical ownership. The model invokes it when documented behavior, architecture, interfaces, configuration, operations, or diagrams may be affected.
 - `data-document-redaction` remains a hard publication boundary for staged sensitive surfaces.
@@ -27,7 +27,7 @@ Last verified: 2026-10-02 @ policy/disable-test-quality
 
 ## In Progress
 
-- CI verification and diagram regeneration for the capability-driven refactor.
+- CI verification and diagram regeneration for the native-model-first refactor.
 
 ## Known Issues / Failing Checks
 
@@ -41,7 +41,7 @@ Last verified: 2026-10-02 @ policy/disable-test-quality
 
 ## Architecture Snapshot
 
-- Model + Capabilities + Guardrails.
+- Native Model + Repository-Specific Capabilities + Guardrails.
 - No fixed `plan -> develop -> verify -> publish -> integrate` stage topology.
 - Skill frontmatter descriptions are the primary discovery/trigger surface.
 - Capability composition is event-driven: the model invokes only capabilities whose trigger applies to the current goal and repository state.
@@ -50,4 +50,4 @@ Last verified: 2026-10-02 @ policy/disable-test-quality
 
 ## Next
 
-- Merge the capability-driven refactor after repository verification passes.
+- Merge the native-model-first refactor after repository verification passes.
