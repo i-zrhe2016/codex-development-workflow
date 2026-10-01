@@ -220,9 +220,9 @@ for spec in "${SKILLS[@]}"; do
       cd "$REPO_ROOT"
       if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
         tar "${TAR_EXCLUDES[@]}" -cf - \
-          SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+          SKILL.md agents references/skill-map.md
       else
-        tar -cf - SKILL.md agents docs/workflow/redaction.md references/skill-map.md
+        tar -cf - SKILL.md agents references/skill-map.md
       fi
     ) | (cd "$dest" && tar -xf -)
   else
