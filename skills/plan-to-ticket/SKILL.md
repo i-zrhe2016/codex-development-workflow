@@ -1,6 +1,6 @@
 ---
 name: plan-to-ticket
-description: Convert an existing GitHub Issue-backed development task into a durable Plan, behavior Tickets, and dependency-ordered Slices when decomposition adds value. Use for complex, cross-module, dependency-heavy, resumable, or explicitly requested planning. GitHub Issues are always the sole development-task authority: simple work may remain one Issue, while complex work uses a Plan Issue plus child Ticket Issues. Never create a parallel task source in chat or local Markdown.
+description: Convert an existing GitHub Issue-backed development task into a durable Plan, behavior Tickets, and dependency-ordered Slices when decomposition adds value. Use for complex, cross-module, dependency-heavy, resumable, or explicitly requested planning. GitHub Issues are the sole development-task authority: simple work may remain one Issue, while complex work uses a Plan Issue plus child Ticket Issues. Never create a parallel task source in chat or local Markdown.
 ---
 
 # Plan to Ticket
