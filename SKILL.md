@@ -1,74 +1,52 @@
 ---
 name: codex-development-workflow
-description: "Thin repository development policy for capability-driven Codex and Claude Code work. Use as a compatibility entry point when repository-wide engineering guardrails are needed. It does not route work through fixed plan/develop/verify/publish/integrate stages. The model reasons about the user's goal directly and invokes specialized capabilities only when their trigger applies."
+description: "Thin repository policy for Codex and Claude Code. Native model capabilities handle planning, implementation, verification, delegation, Git/GitHub operations, and diagram authoring. Load a repository Skill only for durable repository-specific contracts, deterministic tooling, or hard publication gates."
 ---
 
-# Capability-Driven Development Policy
+# Repository Policy
 
-Use model reasoning as the default control plane.
+Codex is the control plane. Do not reproduce native model behavior inside Skills.
 
-Do not run a fixed development workflow and do not require a stage Skill for ordinary planning, implementation, verification, publication, or integration. Select specialized capabilities only when they add repository-specific behavior, durable contracts, deterministic scripts, or hard safety gates.
+## Active repository capabilities
 
-## Capability selection
+- `github-issue-persistence` — persist repository task hierarchy and lifecycle metadata in GitHub Issues.
+- `repo-documentation` — enforce canonical documentation ownership and repository document conventions.
+- `repo-current-state` — maintain the compact `docs/Repo_Current_State.md` snapshot contract.
+- `data-document-redaction` — run the deterministic staged sensitive-data gate.
+- `github-publish` — enforce repository-specific publication identity, commit, branch, and PR guards.
 
-Available capabilities:
-- plan-to-ticket — Plan / Ticket / Slice decomposition and GitHub Issue persistence.
-- repo-documentation — documentation impact, canonical ownership, and lifecycle.
-- repo-current-state — verified repository-state reconciliation.
-- data-document-redaction — staged sensitive-data scanning and sanitization.
-- github-publish — guarded Conventional Commit, push, and pull-request publication.
-- plantuml — maintainable engineering diagrams.
-
-The model decides when to invoke each capability from the current task and repository state. Prefer the most specific capability. Multiple capabilities may be composed when their independent triggers apply. Skip a capability when it is unnecessary, duplicative, or its outcome is already established by stronger evidence.
-
-## Native model work
-
-Use native reasoning for understanding requirements, architecture and design choices, implementation, refactoring, local exploration, delegation choices, integration, and deciding whether verification, documentation, publication, or state reconciliation is needed.
-
-Do not wrap these ordinary decisions in an extra workflow Skill.
+Everything else stays native to Codex, including requirement understanding, planning and decomposition, architecture, coding, refactoring, testing strategy and execution, delegation, integration, ordinary Git/GitHub use, and diagram design.
 
 ## Task authority
 
-GitHub Issues are the sole authoritative source for repository development tasks. Before implementation begins, ensure the task exists as an Issue in the target repository. Chat, PR descriptions, local Markdown, and model memory may reference the Issue but must not replace it.
+GitHub Issues are the sole authoritative development-task store for this repository policy.
 
-Small tasks may use one Issue directly. Use plan-to-ticket only when a task needs Plan / Ticket / Slice decomposition.
+Before implementation, the task must have an authoritative Issue. Chat, PR bodies, local Markdown, and model memory may summarize or link to it but must not become a parallel backlog.
 
-If the authoritative Issue cannot be created or updated, implementation is blocked.
+Use `github-issue-persistence` only when repository-specific Issue hierarchy, stable IDs, or lifecycle metadata must be created or reconciled. Do not load it merely to plan.
 
-## Non-skippable record contract
+## Required Issue records
 
-Skill invocation is optional; required records are not.
+For every development task, keep these records current in the authoritative Issue:
 
-For every development task, update the authoritative Issue with:
-- current status plus branch / PR references when applicable;
-- verification evidence, or a concrete reason structured verification was unnecessary;
+- current status and branch / PR references when applicable;
+- verification evidence, or a concrete reason verification was unnecessary;
 - `Documentation Impact: updated | no-change` plus documents or reason;
 - `Repo Current State: updated | no-change` plus document or reason.
 
-The model may produce these records directly without loading the corresponding Skill, but it may not bypass the records.
+These are policy records, not reasons to create extra workflow Skills.
 
-## Guardrails
+## Publication guardrails
 
 Before publication:
+
 - required verification evidence must be sufficient;
-- applicable redaction must pass;
-- documentation impact must be considered;
-- publication must follow the target repository's branch and PR policy.
+- applicable staged redaction must pass;
+- documentation impact must be recorded;
+- repository branch, identity, commit, and PR policy must pass.
 
-Never weaken security, permission, branch, verification, or release gates for convenience.
-
-## Verification contract
-
-Verification is model-native. Decide the smallest sufficient checks from changed behavior, acceptance criteria, and risk. Record the evidence in the authoritative Issue, or record a concrete reason verification was unnecessary. Do not use or invoke a dedicated testing Skill.
-
-## Persistence contract
-
-Use plan-to-ticket when the authoritative Issue needs complex, dependent, resumable, or explicitly requested decomposition. A decomposed Plan owns one branch, one PR, and one merge for all child Tickets and Slices.
-
-## Publication contract
-
-Use github-publish when a change is ready to commit, push, or open/update a pull request. Use data-document-redaction before the commit when the staged set may contain sensitive values. Use repo-documentation when documentation may be affected.
+Never weaken security, permissions, verification, redaction, branch, or release controls for convenience.
 
 ## Completion
 
-Finish when the user's requested outcome is satisfied, the authoritative Issue contains all required records, and all applicable capability contracts and hard guardrails have passed. Do not manufacture extra stages, artifacts, or follow-up work merely to match a process.
+Finish when the requested outcome is satisfied, required Issue records are current, and applicable repository-specific gates pass. Do not manufacture stages, artifacts, or Skill calls for capabilities Codex already provides.
