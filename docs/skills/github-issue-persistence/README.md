@@ -15,3 +15,10 @@ The runtime Skill at `skills/github-issue-persistence/` exists only to persist r
 - durable lifecycle reconciliation.
 
 Do not use this Skill as a planning methodology.
+
+Repository overview diagram:
+
+- Render: [plan-ticket-slice.svg](../../diagrams/drawio/plan-ticket-slice.svg)
+- Editable source: [plan-ticket-slice.drawio](../../diagrams/drawio/plan-ticket-slice.drawio)
+
+The diagram documents the persisted Issue hierarchy only; it is not a Codex planning workflow.
