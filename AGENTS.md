@@ -16,9 +16,19 @@ Priority: Correctness -> Simplicity -> Architecture Clarity -> Maintainability -
 
 There is no mandatory stage workflow.
 
-The model decides whether a capability is useful, when to invoke it, which capability is the most specific match, and how to compose multiple capabilities when their independent triggers apply.
+The model decides whether a capability is useful, when to invoke it, which capability is the most specific match, and how to compose multiple capabilities when their independent triggers apply. A capability may be skipped when it is unnecessary, redundant, or its outcome is already satisfied by stronger evidence.
 
 Use native model reasoning for ordinary planning, implementation, investigation, integration, and coordination. Do not invoke a capability merely because it exists.
+
+## GitHub Issues task authority
+
+GitHub Issues are the sole authoritative source for repository development tasks.
+
+- Before implementation begins, every development task must exist as an Issue in the target repository.
+- Chat plans, PR bodies, local Markdown, TODO files, and model memory may summarize or link to a task, but they must not become a parallel backlog or task authority.
+- Small work may use one Issue directly. Complex or dependency-heavy work may use plan-to-ticket to create a Plan Issue and child Ticket Issues.
+- Branch, PR, acceptance evidence, blockers, and completion status must be reflected back to the authoritative Issue.
+- If GitHub Issues are unavailable or unwritable, implementation is blocked; do not silently fall back to another task store.
 
 Available capabilities:
 - plan-to-ticket: persisted Plan / Ticket / Slice contracts.
@@ -28,6 +38,18 @@ Available capabilities:
 - data-document-redaction: staged sensitive-data scan.
 - github-publish: guarded Conventional Commit, push, and pull-request publication.
 - plantuml: maintainable engineering diagrams.
+
+## Non-skippable records
+
+Capability invocation is optional; record obligations are not.
+
+For every development task, keep these records current in the authoritative GitHub Issue:
+- task status and delivery references (branch / PR when applicable);
+- verification evidence or the explicit reason structured verification was not required;
+- Documentation Impact: documents updated, or `no-change` with a concrete reason;
+- Repo Current State: snapshot updated, or `no-change` with a concrete reason.
+
+The model may satisfy these obligations directly or through a capability Skill, but it may not omit them.
 
 ## Hard guardrails
 
@@ -42,7 +64,7 @@ Never commit credentials, tokens, private keys, .env, or other secrets.
 
 ## Planning and persistence
 
-Use plan-to-ticket when work is complex, dependency-heavy, must survive a session boundary, or the user explicitly requests a persisted plan. Small single-session work may stay inline.
+Every development task already has an authoritative GitHub Issue. Use plan-to-ticket only when that Issue needs durable Plan / Ticket / Slice decomposition because the work is complex, dependency-heavy, resumable, or explicitly requested.
 
 A persisted Plan owns one implementation branch, one pull request, and one merge. Tickets and Slices are decomposition boundaries, not independent delivery branches.
 

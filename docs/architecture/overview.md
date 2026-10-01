@@ -8,6 +8,8 @@
 
 The model is the orchestrator. There is no fixed stage topology.
 
+GitHub Issues are the sole development-task authority. Capability Skills are optional execution aids; mandatory records are policy-level invariants and cannot be bypassed.
+
 User goal -> Model reasoning -> native work or discovered capability -> Model reasoning -> requested outcome.
 
 Planning, implementation, verification, publication, and integration are outcomes the model reasons about, not repository Skills that must be traversed.
@@ -16,7 +18,7 @@ Planning, implementation, verification, publication, and integration are outcome
 
 | Component | Responsibility |
 |---|---|
-| Model | Understand intent, choose architecture, implement, coordinate, select capabilities, integrate results, own final judgment |
+| Model | Resolve the authoritative Issue, understand intent, choose architecture, implement, coordinate, select/skip capabilities, integrate results, own final judgment and mandatory records |
 | codex-development-workflow | Thin compatibility policy and guardrails |
 | plan-to-ticket | Durable decomposition and GitHub Issue persistence |
 | test-quality | Verification strategy, evidence matrix, mandatory risk dimensions, Test Quality Gate |
@@ -40,7 +42,9 @@ Source: [components.puml](diagrams/components.puml)
 - verified repo truth changed -> repo-current-state
 - diagram improves understanding -> plantuml
 
-Capabilities may compose naturally, but composition is decided from the current goal and evidence rather than a predefined chain.
+Capabilities may compose naturally, but composition is decided from the current goal and evidence rather than a predefined chain. A capability may be skipped when unnecessary or redundant.
+
+Mandatory Issue records remain independent of capability invocation: status/delivery references, verification evidence or skip reason, Documentation Impact, and Repo Current State reconciliation.
 
 
 ## Detailed execution diagrams

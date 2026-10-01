@@ -20,13 +20,33 @@ Available capabilities:
 - github-publish — guarded Conventional Commit, push, and pull-request publication.
 - plantuml — maintainable engineering diagrams.
 
-The model decides when to invoke each capability from the current task and repository state. Prefer the most specific capability. Multiple capabilities may be composed when their independent triggers apply.
+The model decides when to invoke each capability from the current task and repository state. Prefer the most specific capability. Multiple capabilities may be composed when their independent triggers apply. Skip a capability when it is unnecessary, duplicative, or its outcome is already established by stronger evidence.
 
 ## Native model work
 
 Use native reasoning for understanding requirements, architecture and design choices, implementation, refactoring, local exploration, delegation choices, integration, and deciding whether verification, documentation, publication, or state reconciliation is needed.
 
 Do not wrap these ordinary decisions in an extra workflow Skill.
+
+## Task authority
+
+GitHub Issues are the sole authoritative source for repository development tasks. Before implementation begins, ensure the task exists as an Issue in the target repository. Chat, PR descriptions, local Markdown, and model memory may reference the Issue but must not replace it.
+
+Small tasks may use one Issue directly. Use plan-to-ticket only when a task needs Plan / Ticket / Slice decomposition.
+
+If the authoritative Issue cannot be created or updated, implementation is blocked.
+
+## Non-skippable record contract
+
+Skill invocation is optional; required records are not.
+
+For every development task, update the authoritative Issue with:
+- current status plus branch / PR references when applicable;
+- verification evidence, or a concrete reason structured verification was unnecessary;
+- `Documentation Impact: updated | no-change` plus documents or reason;
+- `Repo Current State: updated | no-change` plus document or reason.
+
+The model may produce these records directly without loading the corresponding Skill, but it may not bypass the records.
 
 ## Guardrails
 
@@ -44,7 +64,7 @@ When structured verification is needed, use test-quality. PASS requires the Test
 
 ## Persistence contract
 
-Use plan-to-ticket for complex, dependent, resumable, or explicitly persisted work. A persisted Plan owns one branch, one PR, and one merge for all child Tickets and Slices.
+Use plan-to-ticket when the authoritative Issue needs complex, dependent, resumable, or explicitly requested decomposition. A decomposed Plan owns one branch, one PR, and one merge for all child Tickets and Slices.
 
 ## Publication contract
 
@@ -52,4 +72,4 @@ Use github-publish when a change is ready to commit, push, or open/update a pull
 
 ## Completion
 
-Finish when the user's requested outcome is satisfied and all applicable capability contracts and hard guardrails have passed. Do not manufacture extra stages, artifacts, or follow-up work merely to match a process.
+Finish when the user's requested outcome is satisfied, the authoritative Issue contains all required records, and all applicable capability contracts and hard guardrails have passed. Do not manufacture extra stages, artifacts, or follow-up work merely to match a process.

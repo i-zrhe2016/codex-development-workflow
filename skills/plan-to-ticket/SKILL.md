@@ -1,6 +1,6 @@
 ---
 name: plan-to-ticket
-description: Convert any requirement, including feature, bug-fix, refactor, documentation, configuration, dependency, test, or CI/CD work, into one Plan, one or more behavior Tickets, and small, dependency-ordered Slices for a main agent and optional bounded delegation. Persist the Plan and its child Tickets to GitHub Issues whenever the work is complex, must survive a session boundary, or the user asks for a persisted plan; each Slice includes boundaries, observable acceptance criteria, relevant context, test strategy, a bounded test level, concrete test cases, and validation guidance.
+description: Convert an existing GitHub Issue-backed development task into a durable Plan, behavior Tickets, and dependency-ordered Slices when decomposition adds value. Use for complex, cross-module, dependency-heavy, resumable, or explicitly requested planning. GitHub Issues are the sole development-task authority: simple work may remain one Issue, while complex work uses a Plan Issue plus child Ticket Issues. Never create a parallel task source in chat or local Markdown.
 ---
 
 # Plan to Ticket
@@ -12,16 +12,17 @@ and Slices without adding another delivery branch or merge.
 
 ## Core principle
 
-Persist a Plan and its child Tickets as GitHub Issues when any of these holds:
+Every development task must already exist as a GitHub Issue before implementation starts. This skill does not decide whether a task should be persisted; persistence is mandatory at repository policy level.
+
+Expand the authoritative task into a Plan and child Tickets when any of these holds:
 
 - the work is complex, crosses modules, or has internal dependencies;
 - the work must survive a session boundary or be resumed by another agent;
 - the user explicitly asks for a persisted plan.
 
-Small, single-session work keeps its plan inline and creates no Issues.
+Small, single-session work may remain a single authoritative Issue and does not need Plan/Ticket/Slice decomposition.
 
-When a plan is persisted, it is recorded as one Plan Issue and at least one
-child Ticket Issue before the Plan branch starts. Ticket count scales with the
+When decomposition is used, record it as one Plan Issue and at least one child Ticket Issue before the Plan branch starts. Ticket count scales with the
 requirement: a single-behavior requirement is one Ticket with one Slice, while
 larger or dependency-driven work adds more Tickets and Slices under the same
 Plan.
@@ -32,9 +33,7 @@ belongs to the same requirement; a smaller Ticket changes planning detail only,
 and a persisted Plan still owns one branch, its tests, applicable redaction,
 commit, push, one PR and one merge.
 
-For a persisted plan, GitHub Issues are the durable store and persistence is not
-an optional output mode. Chat output is only a convenience copy containing links
-to the Issues; it is never the source of truth.
+GitHub Issues are the only task authority. Chat output, PR bodies, local Markdown, TODO files, and model memory are convenience views only and must link back to the authoritative Issue instead of creating a parallel backlog.
 
 ## Rules
 
@@ -103,7 +102,7 @@ to the Issues; it is never the source of truth.
 
 ## GitHub Issues persistence contract
 
-Persist a plan when the Core principle's trigger applies. A persisted plan uses
+Decompose the existing authoritative Issue when the Core principle's trigger applies. A persisted plan uses
 one Plan Issue for the overall plan, delivery metadata, and Ticket index, plus
 one child Issue for each Ticket. The Plan Issue contains the overall goal,
 milestones, Plan `Status`/`Branch`/`Base`/`PR`, and links to child Issues; it

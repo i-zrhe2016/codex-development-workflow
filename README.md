@@ -12,8 +12,10 @@ The root codex-development-workflow package is retained only as a thin compatibi
 
 ## Design principles
 
-- Model decides when a capability is useful.
+- GitHub Issues are the sole development-task authority.
+- Model decides when a capability is useful; unnecessary or redundant capabilities may be skipped.
 - Capability defines specialized how.
+- Documentation/state record obligations cannot be skipped even when the corresponding Skill is skipped.
 - Keep hard guardrails explicit.
 - Prefer native model reasoning over procedural wrappers.
 - Prefer the smallest useful context and execution topology.
@@ -48,9 +50,13 @@ Never weaken security, permission, branch, verification, or release controls for
 | github-publish | Guard Conventional Commit, push, publication identity, and PR readiness. |
 | plantuml | Create, render, and review maintainable engineering diagrams. |
 
-## Planning model
+## Task authority and planning
 
-Small single-session work stays inline. Use plan-to-ticket when work is complex, dependency-heavy, must survive a session boundary, or the user asks for persisted planning. A persisted Plan owns one branch, one PR, and one merge.
+Every repository development task starts from an authoritative GitHub Issue. A small task may remain one Issue. Use plan-to-ticket only when decomposition into a Plan, Tickets, and Slices adds value.
+
+Chat, PR bodies, local Markdown, and model memory may link to or summarize the Issue but are not parallel task stores.
+
+For every task, the Issue must record verification evidence or a skip reason, Documentation Impact, and Repo Current State reconciliation. Those records are mandatory even when the model skips the corresponding capability Skill.
 
 ## Verification model
 
