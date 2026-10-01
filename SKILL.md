@@ -12,7 +12,7 @@ Do not run a fixed development workflow and do not require a stage Skill for ord
 ## Capability selection
 
 Available capabilities:
-- plan-to-ticket — Plan / Ticket / Slice decomposition and GitHub Issue persistence.
+- plan-to-ticket — persistence of model-decided Plan/Ticket records into GitHub Issues.
 - repo-documentation — documentation impact, canonical ownership, and lifecycle.
 - repo-current-state — verified repository-state reconciliation.
 - data-document-redaction — staged sensitive-data scanning and sanitization.
@@ -23,7 +23,7 @@ The model decides when to invoke each capability from the current task and repos
 
 ## Native model work
 
-Use native reasoning for understanding requirements, architecture and design choices, implementation, refactoring, local exploration, delegation choices, integration, and deciding whether verification, documentation, publication, or state reconciliation is needed.
+Use native reasoning for understanding requirements, planning and decomposition, architecture and design choices, implementation, refactoring, local exploration, sequencing, acceptance criteria, test design, delegation choices, integration, and deciding whether verification, documentation, publication, or state reconciliation is needed.
 
 Do not wrap these ordinary decisions in an extra workflow Skill.
 
@@ -31,7 +31,7 @@ Do not wrap these ordinary decisions in an extra workflow Skill.
 
 GitHub Issues are the sole authoritative source for repository development tasks. Before implementation begins, ensure the task exists as an Issue in the target repository. Chat, PR descriptions, local Markdown, and model memory may reference the Issue but must not replace it.
 
-Small tasks may use one Issue directly. Use plan-to-ticket only when a task needs Plan / Ticket / Slice decomposition.
+Small tasks may use one Issue directly. Use plan-to-ticket only to persist a model-decided multi-Issue Plan/Ticket structure; do not use it to perform planning or decomposition.
 
 If the authoritative Issue cannot be created or updated, implementation is blocked.
 
@@ -63,7 +63,7 @@ Verification is model-native. Decide the smallest sufficient checks from changed
 
 ## Persistence contract
 
-Use plan-to-ticket when the authoritative Issue needs complex, dependent, resumable, or explicitly requested decomposition. A decomposed Plan owns one branch, one PR, and one merge for all child Tickets and Slices.
+Use plan-to-ticket only when a model-decided structure needs durable Plan/Ticket persistence in GitHub Issues. The Skill does not decide decomposition. A persisted Plan owns one branch, one PR, and one merge for all child Tickets.
 
 ## Publication contract
 
