@@ -24,7 +24,6 @@ INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 EXPECTED_SKILLS = (
     "codex-development-workflow",
     "plan-to-ticket",
-    "test-quality",
     "plantuml",
     "repo-current-state",
     "repo-documentation",
@@ -163,7 +162,7 @@ class InstallerTargetTests(unittest.TestCase):
         self.assertNotIn("local-custom-skill", result.stdout)
         self.assertEqual((unrelated / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
 
-    def test_update_preserves_unverified_managed_destination(self) -> None:
+    def test_update_preserves_unverified_retired_test_quality_destination(self) -> None:
         dest = self.tmp / "dest"
         unverified = dest / "test-quality"
         unverified.mkdir(parents=True)
@@ -173,6 +172,20 @@ class InstallerTargetTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("preserve: test-quality (ownership unverified)", result.stdout)
         self.assertEqual((unverified / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
+
+    def test_update_removes_managed_retired_test_quality_destination(self) -> None:
+        dest = self.tmp / "dest"
+        retired = dest / "test-quality"
+        retired.mkdir(parents=True)
+        (retired / "SKILL.md").write_text("managed old skill\n", encoding="utf-8")
+        (retired / ".codex-development-workflow-managed").write_text(
+            "codex-development-workflow:test-quality\n", encoding="utf-8"
+        )
+
+        result = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("remove: test-quality (retired)", result.stdout)
+        self.assertFalse(retired.exists())
 
 
 if __name__ == "__main__":
