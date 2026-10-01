@@ -23,18 +23,13 @@ INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 
 EXPECTED_SKILLS = (
     "codex-development-workflow",
-    "plan-workflow",
-    "develop-workflow",
-    "verify-workflow",
-    "publish-workflow",
-    "integrate-workflow",
     "plan-to-ticket",
-    "test-workflow",
+    "test-quality",
     "plantuml",
     "repo-current-state",
     "repo-documentation",
     "data-document-redaction",
-    "github-push-when-ready",
+    "github-publish",
 )
 
 
@@ -170,13 +165,13 @@ class InstallerTargetTests(unittest.TestCase):
 
     def test_update_preserves_unverified_managed_destination(self) -> None:
         dest = self.tmp / "dest"
-        unverified = dest / "test-workflow"
+        unverified = dest / "test-quality"
         unverified.mkdir(parents=True)
         (unverified / "SKILL.md").write_text("local work\n", encoding="utf-8")
 
         result = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("preserve: test-workflow (ownership unverified)", result.stdout)
+        self.assertIn("preserve: test-quality (ownership unverified)", result.stdout)
         self.assertEqual((unverified / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
 
 

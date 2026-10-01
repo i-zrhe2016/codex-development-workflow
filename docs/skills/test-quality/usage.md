@@ -1,8 +1,8 @@
-# 通用测试工作流运行手册
+# 通用测试能力运行手册
 
 > Type: Guide
 > Status: Active
-> Scope: Running the test-workflow specialist: acceptance checklist, verification levels and mode selection, standard execution order, RED -> GREEN, failure classification, browser/E2E branch, and report template
+> Scope: Running the test-quality specialist: acceptance checklist, verification levels and mode selection, standard execution order, RED -> GREEN, failure classification, browser/E2E branch, and report template
 
 ## 适用范围
 

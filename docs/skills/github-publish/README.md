@@ -1,11 +1,11 @@
-# GitHub Push When Ready
+# GitHub Publish
 
-`github-push-when-ready` is the publication gate for feature branches, commits,
+`github-publish` is the publication gate for feature branches, commits,
 pushes, and pull requests. It checks that the repository is ready to publish,
 that the change has one clear purpose, that the commit follows Conventional
 Commits 1.0.0, and that no secrets or unrelated changes are being shipped.
 
-The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-ready/SKILL.md).
+The runtime instructions live in [`SKILL.md`](../../../skills/github-publish/SKILL.md).
 
 ## Delivery principles
 
@@ -19,7 +19,7 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
 - If the default branch cannot be determined from the actual GitHub push target, guarded publication fails closed and requires manual review.
 - The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a feature branch while still tracking an upstream default branch.
-- After the PR is created or updated, return `PR ready`; the parent workflow may merge once the existing validation and publication gates are satisfied.
+- After the PR is created or updated, return `PR ready`; the model may merge once the existing validation and publication gates are satisfied.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.
 - Check GitHub repository metadata when the task includes publishing or a pull
@@ -36,26 +36,26 @@ commits.
 
 | Script | Purpose |
 |---|---|
-| [`assess_push_readiness.py`](../../../skills/github-push-when-ready/scripts/assess_push_readiness.py) | Inspect repository readiness |
-| [`auto_push_post_commit.py`](../../../skills/github-push-when-ready/scripts/auto_push_post_commit.py) | Guard an optional post-commit push |
-| [`conventional_commits.py`](../../../skills/github-push-when-ready/scripts/conventional_commits.py) | Validate commit message format |
-| [`github_about.py`](../../../skills/github-push-when-ready/scripts/github_about.py) | Check or update GitHub About metadata |
-| [`git_push_utils.py`](../../../skills/github-push-when-ready/scripts/git_push_utils.py) | Shared readiness and Git helpers |
-| [`install_post_commit_hook.py`](../../../skills/github-push-when-ready/scripts/install_post_commit_hook.py) | Install guarded commit/push hooks |
-| [`publish_identity.py`](../../../skills/github-push-when-ready/scripts/publish_identity.py) | Enforce repository and GitHub publication identity |
-| [`push_if_ready.py`](../../../skills/github-push-when-ready/scripts/push_if_ready.py) | Push after readiness checks |
+| [`assess_push_readiness.py`](../../../skills/github-publish/scripts/assess_push_readiness.py) | Inspect repository readiness |
+| [`auto_push_post_commit.py`](../../../skills/github-publish/scripts/auto_push_post_commit.py) | Guard an optional post-commit push |
+| [`conventional_commits.py`](../../../skills/github-publish/scripts/conventional_commits.py) | Validate commit message format |
+| [`github_about.py`](../../../skills/github-publish/scripts/github_about.py) | Check or update GitHub About metadata |
+| [`git_push_utils.py`](../../../skills/github-publish/scripts/git_push_utils.py) | Shared readiness and Git helpers |
+| [`install_post_commit_hook.py`](../../../skills/github-publish/scripts/install_post_commit_hook.py) | Install guarded commit/push hooks |
+| [`publish_identity.py`](../../../skills/github-publish/scripts/publish_identity.py) | Enforce repository and GitHub publication identity |
+| [`push_if_ready.py`](../../../skills/github-publish/scripts/push_if_ready.py) | Push after readiness checks |
 
 For example, a local readiness assessment can be run with:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 skills/github-push-when-ready/scripts/assess_push_readiness.py --json
+PYTHONDONTWRITEBYTECODE=1 python3 skills/github-publish/scripts/assess_push_readiness.py --json
 ```
 
 Use the exact command and authorization appropriate to the current task before
-running any commit or push action. Once the PR is ready, return control to the parent workflow for merge.
+running any commit or push action. Once the PR is ready, return control to the model for merge.
 
 ## Maintenance
 
 Update this index when delivery policy or managed scripts change. The runtime
-[`SKILL.md`](../../../skills/github-push-when-ready/SKILL.md) remains the
+[`SKILL.md`](../../../skills/github-publish/SKILL.md) remains the
 authoritative operational procedure.

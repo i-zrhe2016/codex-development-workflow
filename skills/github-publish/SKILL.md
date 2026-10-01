@@ -1,9 +1,9 @@
 ---
-name: github-push-when-ready
+name: github-publish
 description: Guard every Git commit, GitHub push, and pull request by assessing repository readiness, enforcing Conventional Commits 1.0.0, keeping one requirement per commit, completing GitHub About metadata, and publishing only when safe. Use whenever the agent is about to commit, push, or open a PR, finishes a coherent unit of work in a GitHub-connected repo, or is asked to ship or sync changes.
 ---
 
-# GitHub Push When Ready
+# GitHub Publish
 
 ## Overview
 
