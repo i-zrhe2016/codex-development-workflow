@@ -2,12 +2,9 @@
 
 > Type: Guide
 > Status: Active
-> Scope: The orchestration-level redaction gate: when it runs, its procedure, gate outcomes, exit codes, and scope boundaries
+> Scope: The event-driven staged redaction gate: trigger, procedure, outcomes, exit codes, and scope boundaries
 
-This document defines the orchestration-level redaction gate for the
-development workflow. The `data-document-redaction` specialist owns detection
-and sanitization behavior; this page defines when the gate runs and how its
-result affects publication.
+This document defines the staged redaction gate used when publication is approaching and the staged change has a sensitive surface. The `data-document-redaction` capability owns detection and sanitization behavior; this page defines its publication effect.
 
 ## When the gate runs
 
