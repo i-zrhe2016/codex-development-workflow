@@ -23,8 +23,7 @@ INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 
 EXPECTED_SKILLS = (
     "codex-development-workflow",
-    "plan-to-ticket",
-    "plantuml",
+    "github-issue-persistence",
     "repo-current-state",
     "repo-documentation",
     "data-document-redaction",
