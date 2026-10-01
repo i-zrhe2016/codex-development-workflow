@@ -9,7 +9,7 @@ Maintain `docs/Repo_Current_State.md` as a small, factual snapshot of what the r
 
 ## Core Contract
 
-Treat the repository as the system of record and this file as a compact index into that reality.
+Treat the repository as the source of technical truth, GitHub Issues as the sole development-task authority, and this file as a compact index into current repository reality.
 
 - Verify important claims against code, tests, configuration, Git state, or other authoritative repository files.
 - Do not trust chat history or an existing state file when repository evidence disagrees.
@@ -17,7 +17,7 @@ Treat the repository as the system of record and this file as a compact index in
 - Keep the file small enough to read at the beginning of an agent session.
 - Record uncertainty explicitly. Never fill gaps with guesses.
 - Keep implementation history in Git/changelog, architecture rationale in ADRs or architecture docs, and future work in GitHub Issues.
-- When `plan-to-ticket` is used, GitHub Issues are the sole durable authority for the Plan and child Tickets. This file may link to the active Plan or Ticket, but must not duplicate their backlog, metadata, or progress record.
+- GitHub Issues are always the sole development-task authority, whether or not `plan-to-ticket` is used. This file may link to the active Issue, Plan, or Ticket, but must not duplicate their backlog, metadata, or progress record.
 
 ## When Reading State
 
@@ -48,6 +48,12 @@ update through a new Plan branch and the same mandatory PR gate; never commit
 the post-merge state update directly to the default branch.
 
 Do not update the file for trivial formatting-only edits or changes that do not affect the project state represented here.
+
+For every development task, however, record the reconciliation decision in the authoritative GitHub Issue even when this file does not change:
+- `Repo Current State: updated — docs/Repo_Current_State.md`
+- `Repo Current State: no-change — <concrete reason>`
+
+The decision record is mandatory even if the model skips this Skill as unnecessary or redundant.
 
 ## Source Priority
 

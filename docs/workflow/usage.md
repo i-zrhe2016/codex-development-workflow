@@ -4,7 +4,7 @@
 > Status: Active
 > Scope: Selecting repository capabilities without a fixed development workflow
 
-Start from the user's goal. Let the model reason about the work directly.
+Start from the user's goal, but create or resolve its authoritative GitHub Issue before implementation. GitHub Issues are the sole development-task authority.
 
 | Situation | Capability |
 |---|---|
@@ -18,6 +18,16 @@ Start from the user's goal. Let the model reason about the work directly.
 
 Ordinary planning, coding, refactoring, exploration, integration, and delegation remain native model work.
 
-Capabilities may be composed when independent triggers apply. That composition is contextual, not a mandatory pipeline.
+Capabilities may be skipped when unnecessary, redundant, or already satisfied by stronger evidence. Composition is contextual, not a mandatory pipeline.
+
+## Mandatory records
+
+Regardless of which capabilities are invoked, every development Issue must record:
+- task status and branch / PR references when applicable;
+- verification evidence or why structured verification was unnecessary;
+- Documentation Impact: updated or no-change, with documents/reason;
+- Repo Current State: updated or no-change, with document/reason.
+
+A PR may mirror these fields, but the GitHub Issue remains authoritative.
 
 Stop when the requested outcome is satisfied and applicable hard gates have passed. Do not create extra stages, Issues, documents, or follow-up changes solely for process symmetry.

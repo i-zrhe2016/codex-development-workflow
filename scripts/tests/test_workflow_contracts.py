@@ -112,6 +112,24 @@ class WorkflowContractTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, combined)
 
+    def test_issue_authority_and_non_skippable_records_are_policy_invariants(self) -> None:
+        agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        root_skill = ROOT_SKILL.read_text(encoding="utf-8")
+        planning = (REPO_ROOT / "skills" / "plan-to-ticket" / "SKILL.md").read_text(encoding="utf-8")
+        docs = (REPO_ROOT / "skills" / "repo-documentation" / "SKILL.md").read_text(encoding="utf-8")
+        state = (REPO_ROOT / "skills" / "repo-current-state" / "SKILL.md").read_text(encoding="utf-8")
+
+        for text in (agents, root_skill, planning):
+            self.assertIn("GitHub Issues are the sole", text)
+
+        for marker in ("Documentation Impact", "Repo Current State"):
+            self.assertIn(marker, agents)
+            self.assertIn(marker, root_skill)
+
+        self.assertIn("authoritative GitHub Issue", docs)
+        self.assertIn("decision record is mandatory", state)
+        self.assertNotIn("Small, single-session work keeps its plan inline and creates no Issues.", planning)
+
     def test_root_policy_requires_quality_gate(self) -> None:
         root_skill = ROOT_SKILL.read_text(encoding="utf-8")
         self.assertIn("Test Quality Gate", root_skill)

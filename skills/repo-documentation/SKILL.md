@@ -46,8 +46,13 @@ whether documentation needs updating. Ask only:
 Tie-breaker: when an answer is unclear, treat it as yes and look. A check that
 finds nothing costs one search; a skipped check leaves a wrong document behind.
 
-Report the result in the change's existing delivery record: the pull-request
-description, or the Plan Issue's delivery evidence when the workflow uses one.
+Always record the documentation impact result in the authoritative GitHub Issue for the development task. The pull-request description may mirror it, but it is not the authoritative record.
+
+Use one of:
+- `Documentation Impact: updated — <documents>`
+- `Documentation Impact: no-change — <concrete reason>`
+
+The record is mandatory even if this Skill was not loaded because the model judged the capability unnecessary or redundant.
 The check creates no separate artifact. A yes answer names the canonical
 document that changed and the fact it now owns. A no answer is one line stating
 that nothing documented changed. Do not write documents to look thorough.
@@ -180,7 +185,7 @@ content document.
 ## Output behavior
 
 - Update the canonical document and the index; do not create parallel files.
-- When the impact check is negative, report that no documentation change is
+- When the impact check is negative, record in the authoritative Issue that no documentation change is
   needed.
 - When reporting completion, state which documents were created, updated,
   deprecated, or deleted, which index entries changed, and any claim left
