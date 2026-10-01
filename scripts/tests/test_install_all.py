@@ -78,7 +78,7 @@ class InstallerTargetTests(unittest.TestCase):
         root_bundle = dest / "codex-development-workflow"
         self.assertTrue((root_bundle / "SKILL.md").is_file())
         self.assertTrue((root_bundle / "agents").is_dir())
-        self.assertTrue((root_bundle / "docs" / "workflow" / "redaction.md").is_file())
+        self.assertFalse((root_bundle / "docs").exists())
         self.assertTrue((root_bundle / "references" / "skill-map.md").is_file())
 
     def test_codex_target_installs_codex_metadata_for_every_bundle(self) -> None:
