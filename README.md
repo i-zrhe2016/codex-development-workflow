@@ -31,7 +31,6 @@ Never weaken security, permission, branch, verification, or release controls for
 
 - `codex-development-workflow`
 - `plan-to-ticket`
-- `test-quality`
 - `plantuml`
 - `repo-current-state`
 - `repo-documentation`
@@ -43,7 +42,6 @@ Never weaken security, permission, branch, verification, or release controls for
 | Capability | Purpose |
 |---|---|
 | plan-to-ticket | Persist complex/resumable work as Plan, Tickets, and dependency-ordered Slices. |
-| test-quality | Map acceptance criteria to evidence and close a risk-aware Test Quality Gate. |
 | repo-documentation | Govern documentation impact, canonical ownership, diagrams, and lifecycle. |
 | repo-current-state | Maintain the compact verified repository-state snapshot. |
 | data-document-redaction | Scan staged content for credentials, personal data, and other sensitive values. |
@@ -60,7 +58,7 @@ For every task, the Issue must record verification evidence or a skip reason, Do
 
 ## Verification model
 
-The model decides whether verification is warranted from the requirement, changed behavior, and risk. Use test-quality when structured verification evidence is needed. Verification levels remain bounded: minimal, focused, regression, or full. PASS is controlled by the Test Quality Gate.
+Verification is model-native rather than a Skill. The model decides whether checks are warranted from the requirement, changed behavior, and risk, chooses the smallest sufficient evidence, and records that evidence (or a concrete skip reason) in the authoritative Issue.
 
 ## Publication model
 
@@ -88,7 +86,6 @@ During update, retired stage Skills and old capability names are removed only wh
 |---|---|---|
 | codex-development-workflow | SKILL.md | AGENTS.md |
 | plan-to-ticket | skills/plan-to-ticket/ | docs/skills/plan-to-ticket/ |
-| test-quality | skills/test-quality/ | docs/skills/test-quality/ |
 | plantuml | skills/plantuml/ | docs/skills/plantuml/ |
 | repo-current-state | skills/repo-current-state/ | docs/skills/repo-current-state/ |
 | repo-documentation | skills/repo-documentation/ | docs/skills/repo-documentation/ |
