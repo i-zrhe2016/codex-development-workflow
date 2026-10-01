@@ -1,12 +1,11 @@
 # Skill Map
 
-This repository installs one thin policy package plus seven focused capabilities. The model decides when each capability applies; there is no stage-workflow routing layer.
+This repository installs one thin policy package plus six focused capabilities. The model decides when each capability applies; there is no stage-workflow routing layer.
 
 | Skill | Managed source | Purpose |
 |---|---|---|
 | codex-development-workflow | repository root | Thin compatibility policy and hard guardrails only |
 | plan-to-ticket | skills/plan-to-ticket/ | Persisted Plan / Ticket / Slice contracts |
-| test-quality | skills/test-quality/ | Risk-aware verification and Test Quality Gate |
 | plantuml | skills/plantuml/ | Engineering diagrams |
 | repo-current-state | skills/repo-current-state/ | Verified repository-state snapshot |
 | repo-documentation | skills/repo-documentation/ | Documentation governance |
@@ -25,5 +24,6 @@ Owned legacy destinations are pruned on --update:
 - verify-workflow
 - publish-workflow
 - integrate-workflow
-- test-workflow (renamed to test-quality)
+- test-workflow
+- test-quality
 - github-push-when-ready (renamed to github-publish)

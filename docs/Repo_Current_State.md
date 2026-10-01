@@ -1,10 +1,10 @@
 # Repository Current State
 
-Last verified: 2026-10-01 @ policy/issues-as-task-authority
+Last verified: 2026-10-02 @ policy/disable-test-quality
 
 ## Current Focus
 
-- GitHub Issue #182: enforce GitHub Issues as the sole development-task authority and make documentation/state records non-skippable.
+- GitHub Issue #184: retire `test-quality` while preserving verification evidence as a mandatory Issue record.
 
 ## Implemented
 
@@ -13,11 +13,11 @@ Last verified: 2026-10-01 @ policy/issues-as-task-authority
 - Capability invocation is optional when unnecessary or redundant, but Issue lifecycle/evidence, Documentation Impact, and Repo Current State reconciliation records are mandatory.
 - The root `codex-development-workflow` bundle is retained only as a thin compatibility and policy layer carrying repository-wide guardrails.
 - Five stage bundles are retired: `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, and `integrate-workflow`.
-- Seven focused capabilities remain: `plan-to-ticket`, `test-quality`, `repo-documentation`, `repo-current-state`, `data-document-redaction`, `github-publish`, and `plantuml`.
-- The installer manages 8 bundles total for both Codex and Claude Code: one thin policy bundle plus seven capabilities. Claude omits Codex-only `agents/openai.yaml` metadata.
-- `test-workflow` is renamed to `test-quality`; `github-push-when-ready` is renamed to `github-publish`. Owned legacy destinations are retired during `--update`.
+- Six focused capabilities remain: `plan-to-ticket`, `repo-documentation`, `repo-current-state`, `data-document-redaction`, `github-publish`, and `plantuml`.
+- The installer manages 7 bundles total for both Codex and Claude Code: one thin policy bundle plus six capabilities. Claude omits Codex-only `agents/openai.yaml` metadata.
+- `test-workflow` and `test-quality` are retired; `github-push-when-ready` is renamed to `github-publish`. Owned legacy destinations are retired during `--update`.
 - Small tasks may remain one authoritative Issue. Complex tasks may be decomposed into a Plan Issue and child Ticket Issues; a decomposed Plan owns one branch, one PR, and one merge.
-- `test-quality` owns risk-aware verification, Acceptance-to-Test evidence, mandatory risk dimensions, flaky/isolation policy, and the Test Quality Gate. The model decides when this capability is warranted.
+- Verification is model-native. The authoritative Issue still records verification evidence or a concrete reason verification was unnecessary.
 - `repo-documentation` owns documentation impact and canonical ownership. The model invokes it when documented behavior, architecture, interfaces, configuration, operations, or diagrams may be affected.
 - `data-document-redaction` remains a hard publication boundary for staged sensitive surfaces.
 - `github-publish` owns guarded Conventional Commit, push, publication identity, and PR readiness.

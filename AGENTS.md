@@ -32,7 +32,6 @@ GitHub Issues are the sole authoritative source for repository development tasks
 
 Available capabilities:
 - plan-to-ticket: persisted Plan / Ticket / Slice contracts.
-- test-quality: risk-aware verification and the Test Quality Gate.
 - repo-documentation: documentation ownership, impact, and lifecycle.
 - repo-current-state: verified repository-state snapshot.
 - data-document-redaction: staged sensitive-data scan.
@@ -70,9 +69,7 @@ A persisted Plan owns one implementation branch, one pull request, and one merge
 
 ## Verification
 
-The model decides when verification is warranted from changed behavior, acceptance criteria, and risk. When structured evidence is needed, use test-quality.
-
-A green focused test is not automatically PASS. Applicable risk dimensions must pass or have a concrete N/A reason. Retry does not convert an unexplained flaky failure into PASS. Coverage is diagnostic evidence, not a quality target.
+Verification is handled directly by the model. Choose checks from changed behavior, acceptance criteria, and risk; prefer the smallest sufficient evidence. Record verification evidence in the authoritative Issue, or a concrete reason verification was unnecessary. Do not route verification through a dedicated testing Skill.
 
 ## Publication
 

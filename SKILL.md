@@ -13,7 +13,6 @@ Do not run a fixed development workflow and do not require a stage Skill for ord
 
 Available capabilities:
 - plan-to-ticket — Plan / Ticket / Slice decomposition and GitHub Issue persistence.
-- test-quality — risk-aware verification and the Test Quality Gate.
 - repo-documentation — documentation impact, canonical ownership, and lifecycle.
 - repo-current-state — verified repository-state reconciliation.
 - data-document-redaction — staged sensitive-data scanning and sanitization.
@@ -60,7 +59,7 @@ Never weaken security, permission, branch, verification, or release gates for co
 
 ## Verification contract
 
-When structured verification is needed, use test-quality. PASS requires the Test Quality Gate, not merely a green focused test. Retry cannot convert an unexplained flaky failure to PASS. Coverage is diagnostic evidence only.
+Verification is model-native. Decide the smallest sufficient checks from changed behavior, acceptance criteria, and risk. Record the evidence in the authoritative Issue, or record a concrete reason verification was unnecessary. Do not use or invoke a dedicated testing Skill.
 
 ## Persistence contract
 

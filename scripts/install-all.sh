@@ -86,7 +86,6 @@ esac
 SKILLS=(
   ".|codex-development-workflow"
   "skills/plan-to-ticket|plan-to-ticket"
-  "skills/test-quality|test-quality"
   "skills/plantuml|plantuml"
   "skills/repo-current-state|repo-current-state"
   "skills/repo-documentation|repo-documentation"
@@ -112,6 +111,7 @@ OBSOLETE_SKILLS=(
   "publish-workflow"
   "integrate-workflow"
   "test-workflow"
+  "test-quality"
   "github-push-when-ready"
 )
 
