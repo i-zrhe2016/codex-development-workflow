@@ -82,7 +82,8 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(marker, root_skill)
 
         self.assertIn("authoritative GitHub Issue", docs)
-        self.assertIn("decision record is mandatory", state)
+        self.assertIn("Repo Current State: updated", state)
+        self.assertIn("Repo Current State: no-change", state)
         self.assertIn("Codex performs the planning itself", persistence)
 
     def test_native_capabilities_are_not_runtime_skills(self) -> None:
