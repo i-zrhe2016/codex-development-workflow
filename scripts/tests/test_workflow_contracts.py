@@ -95,6 +95,18 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("verification evidence", root_skill)
         self.assertFalse((REPO_ROOT / "skills" / "test-quality").exists())
 
+    def test_plan_to_ticket_is_persistence_only(self) -> None:
+        planning = (REPO_ROOT / "skills" / "plan-to-ticket" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("persistence adapter", planning)
+        self.assertIn("The model owns requirement understanding, planning, decomposition", planning)
+        self.assertIn("GitHub Issues are the sole authoritative task store", planning)
+        self.assertNotIn("## Planning Process", planning)
+        self.assertNotIn("## Ticket Sizing", planning)
+        self.assertNotIn("## Dependencies and Sequencing", planning)
+        self.assertNotIn("## Re-planning Boundary", planning)
+        self.assertNotIn("**Test Strategy**", planning)
+        self.assertNotIn("**Test Level**", planning)
+
     def test_every_plantuml_source_has_same_basename_svg(self) -> None:
         sources = sorted((REPO_ROOT / "docs").rglob("*.puml"))
         self.assertTrue(sources, "Expected repository documentation diagrams.")
