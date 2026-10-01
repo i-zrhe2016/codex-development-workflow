@@ -1,24 +1,24 @@
 # Skill Map
 
-This repository installs one thin policy package plus six focused capabilities. The model decides when each capability applies; there is no stage-workflow routing layer.
+This repository installs one thin policy package plus five repository-specific capabilities. Native Codex behavior is intentionally not packaged as Skills.
 
-| Skill | Managed source | Purpose |
+| Skill | Managed source | Repository-specific value |
 |---|---|---|
-| codex-development-workflow | repository root | Thin compatibility policy and hard guardrails only |
-| plan-to-ticket | skills/plan-to-ticket/ | Persisted Plan / Ticket / Slice contracts |
-| plantuml | skills/plantuml/ | Engineering diagrams |
-| repo-current-state | skills/repo-current-state/ | Verified repository-state snapshot |
-| repo-documentation | skills/repo-documentation/ | Documentation governance |
-| data-document-redaction | skills/data-document-redaction/ | Staged sensitive-data gate |
-| github-publish | skills/github-publish/ | Guarded commit, push, and PR publication |
+| codex-development-workflow | repository root | Thin policy and hard guardrails |
+| github-issue-persistence | skills/github-issue-persistence/ | Durable GitHub Issue schema, IDs, and lifecycle |
+| repo-current-state | skills/repo-current-state/ | Verified current-state snapshot contract |
+| repo-documentation | skills/repo-documentation/ | Canonical documentation ownership and file/lifecycle rules |
+| data-document-redaction | skills/data-document-redaction/ | Deterministic staged sensitive-data gate |
+| github-publish | skills/github-publish/ | Deterministic publication identity and branch/commit/PR guards |
 
-## Selection model
+## Native Codex capabilities
 
-Skill metadata is the discovery surface. Descriptions state the capability and its trigger. The model uses native reasoning for ordinary planning, implementation, investigation, integration, and coordination.
+Do not add Skills for ordinary planning/decomposition, implementation/refactoring, verification/testing, delegation/coordination, Git/GitHub operations, or diagram authoring. Codex performs those natively.
 
 ## Retired bundles
 
-Owned legacy destinations are pruned on --update:
+Owned legacy destinations are pruned on `--update`, including:
+
 - plan-workflow
 - develop-workflow
 - verify-workflow
@@ -26,4 +26,6 @@ Owned legacy destinations are pruned on --update:
 - integrate-workflow
 - test-workflow
 - test-quality
-- github-push-when-ready (renamed to github-publish)
+- plan-to-ticket
+- plantuml
+- github-push-when-ready
