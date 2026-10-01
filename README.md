@@ -17,6 +17,7 @@ The root codex-development-workflow package is retained only as a thin compatibi
 - Capability defines specialized how.
 - Documentation/state record obligations cannot be skipped even when the corresponding Skill is skipped.
 - Keep hard guardrails explicit.
+- Preserve native model capabilities; Skills must not restate planning, decomposition, sequencing, test design, delegation, or other abilities the model already has.
 - Prefer native model reasoning over procedural wrappers.
 - Prefer the smallest useful context and execution topology.
 - Do not invoke a capability merely because it exists.
@@ -41,7 +42,7 @@ Never weaken security, permission, branch, verification, or release controls for
 
 | Capability | Purpose |
 |---|---|
-| plan-to-ticket | Persist complex/resumable work as Plan, Tickets, and dependency-ordered Slices. |
+| plan-to-ticket | Persist model-decided Plan/Ticket structure into authoritative GitHub Issues. |
 | repo-documentation | Govern documentation impact, canonical ownership, diagrams, and lifecycle. |
 | repo-current-state | Maintain the compact verified repository-state snapshot. |
 | data-document-redaction | Scan staged content for credentials, personal data, and other sensitive values. |
@@ -50,7 +51,7 @@ Never weaken security, permission, branch, verification, or release controls for
 
 ## Task authority and planning
 
-Every repository development task starts from an authoritative GitHub Issue. A small task may remain one Issue. Use plan-to-ticket only when decomposition into a Plan, Tickets, and Slices adds value.
+Every repository development task starts from an authoritative GitHub Issue. A small task may remain one Issue. Planning/decomposition stays native to the model; use plan-to-ticket only when the resulting Plan/Ticket structure needs durable GitHub Issue persistence.
 
 Chat, PR bodies, local Markdown, and model memory may link to or summarize the Issue but are not parallel task stores.
 
