@@ -1,39 +1,30 @@
 @startuml
 !theme plain
-top to bottom direction
+left to right direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam componentStyle rectangle
 
-title plan-to-ticket — Plan / Ticket / Slice Persistence
+title plan-to-ticket — GitHub Issue Persistence Adapter
 
-actor "Requestor" as requestor
-component "Skill trigger" as trigger
-component "Plan boundary" as plan
-component "Ticket decomposition" as tickets
-component "Slice decomposition" as slices
-component "Issue persistence\nwhen triggered" as persistence
-database "GitHub Issues\nauthoritative Plan / Ticket records" as issues
-component "Result summary\nlinks + execution metadata" as output
+actor "Model\n(native planning)" as model
+component "plan-to-ticket\npersistence contract" as skill
+database "GitHub Issues\nauthoritative task store" as issues
+component "Delivery metadata\nBranch · Base · PR · Status" as delivery
+component "Durable handoff\ncanonical Issue links" as output
 
-folder "Skill bundle" as bundle {
-  artifact "SKILL.md" as skill
-  artifact "agents/openai.yaml" as metadata
-}
-folder "Documentation" as docs
+model --> skill : model-decided\nPlan / Ticket structure
+skill --> issues : resolve markers\ncreate / update records
+issues --> skill : IDs / URLs / state
+skill --> delivery : enforce one Plan\none branch / PR / merge
+delivery --> issues : update lifecycle metadata
+skill --> output : return durable references
+output --> model
 
-requestor --> trigger : requirement
-trigger --> plan
-plan --> tickets : behavior boundaries
-tickets --> slices : dependency-ordered work
-slices --> persistence : complete execution contract
-persistence --> issues : create / update Plan + Tickets
-issues --> persistence : IDs / URLs
-persistence --> output : canonical links
-output --> requestor
-
-skill --> trigger : invocation rules
-skill --> plan : decomposition rules
-metadata --> trigger : UI metadata
-docs ..> requestor : usage / architecture reference
+note bottom of model
+Planning, decomposition,
+sequencing, acceptance criteria,
+test design, and delegation
+remain native model work.
+end note
 @enduml
