@@ -5,7 +5,7 @@ This repository installs one thin policy package plus six focused capabilities. 
 | Skill | Managed source | Purpose |
 |---|---|---|
 | codex-development-workflow | repository root | Thin compatibility policy and hard guardrails only |
-| plan-to-ticket | skills/plan-to-ticket/ | Persisted Plan / Ticket / Slice contracts |
+| plan-to-ticket | skills/plan-to-ticket/ | GitHub Issue persistence for model-decided Plan / Ticket records |
 | plantuml | skills/plantuml/ | Engineering diagrams |
 | repo-current-state | skills/repo-current-state/ | Verified repository-state snapshot |
 | repo-documentation | skills/repo-documentation/ | Documentation governance |
@@ -14,7 +14,7 @@ This repository installs one thin policy package plus six focused capabilities. 
 
 ## Selection model
 
-Skill metadata is the discovery surface. Descriptions state the capability and its trigger. The model uses native reasoning for ordinary planning, implementation, investigation, integration, and coordination.
+Skill metadata is the discovery surface. Descriptions state the capability and its trigger. The model uses native reasoning for planning, decomposition, sequencing, acceptance criteria, test design, implementation, investigation, integration, delegation, and coordination. Skills must not duplicate those native capabilities.
 
 ## Retired bundles
 
