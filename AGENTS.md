@@ -1,84 +1,52 @@
 # AGENTS.md
 
-Repository-wide engineering principles and hard guardrails. Detailed procedures live in capability Skills.
+Repository-specific policy only. Codex owns ordinary reasoning and execution.
 
-## Principles
+## Native-first rule
 
-Priority: Correctness -> Simplicity -> Architecture Clarity -> Maintainability -> Extensibility
+Use Codex natively for planning, decomposition, architecture, implementation, refactoring, investigation, verification, delegation, coordination, integration, ordinary Git/GitHub operations, and diagram authoring.
 
-- Prefer the simplest necessary and maintainable solution.
-- Understand affected architecture before non-trivial changes.
-- Reuse existing capabilities and conventions before adding abstractions.
-- Fix root causes instead of hiding them with process or code complexity.
-- Keep scope bounded to the user's goal.
+Do not invoke or add a Skill merely to teach those capabilities.
 
-## Capability model
+A repository Skill is justified only when it adds at least one of:
 
-There is no mandatory stage workflow.
+- a durable repository-specific data contract;
+- deterministic repository tooling;
+- an external-system persistence contract;
+- a hard safety or publication gate.
 
-The model decides whether a capability is useful, when to invoke it, which capability is the most specific match, and how to compose multiple capabilities when their independent triggers apply. A capability may be skipped when it is unnecessary, redundant, or its outcome is already satisfied by stronger evidence.
+## GitHub Issues authority
 
-Use native model reasoning for ordinary planning, implementation, investigation, integration, and coordination. Do not invoke a capability merely because it exists.
+GitHub Issues are the sole authoritative development-task store.
 
-## GitHub Issues task authority
+- Every development task must have an authoritative Issue before implementation.
+- Chat, PR bodies, local Markdown, TODO files, and model memory are non-authoritative views.
+- Use `github-issue-persistence` only for repository-specific Issue hierarchy, identifiers, or lifecycle metadata.
+- If the authoritative Issue cannot be created or updated, implementation is blocked.
 
-GitHub Issues are the sole authoritative source for repository development tasks.
+## Active Skills
 
-- Before implementation begins, every development task must exist as an Issue in the target repository.
-- Chat plans, PR bodies, local Markdown, TODO files, and model memory may summarize or link to a task, but they must not become a parallel backlog or task authority.
-- Small work may use one Issue directly. Complex or dependency-heavy work may use plan-to-ticket to create a Plan Issue and child Ticket Issues.
-- Branch, PR, acceptance evidence, blockers, and completion status must be reflected back to the authoritative Issue.
-- If GitHub Issues are unavailable or unwritable, implementation is blocked; do not silently fall back to another task store.
+- `github-issue-persistence`: GitHub Issue persistence schema and lifecycle.
+- `repo-documentation`: canonical documentation ownership and repository document conventions.
+- `repo-current-state`: verified repository-state snapshot contract.
+- `data-document-redaction`: deterministic staged sensitive-data gate.
+- `github-publish`: repository-specific publication guards.
 
-Available capabilities:
-- plan-to-ticket: persisted Plan / Ticket / Slice contracts.
-- repo-documentation: documentation ownership, impact, and lifecycle.
-- repo-current-state: verified repository-state snapshot.
-- data-document-redaction: staged sensitive-data scan.
-- github-publish: guarded Conventional Commit, push, and pull-request publication.
-- plantuml: maintainable engineering diagrams.
+## Required records
 
-## Non-skippable records
+Every development Issue must keep current:
 
-Capability invocation is optional; record obligations are not.
-
-For every development task, keep these records current in the authoritative GitHub Issue:
-- task status and delivery references (branch / PR when applicable);
-- verification evidence or the explicit reason structured verification was not required;
-- Documentation Impact: documents updated, or `no-change` with a concrete reason;
-- Repo Current State: snapshot updated, or `no-change` with a concrete reason.
-
-The model may satisfy these obligations directly or through a capability Skill, but it may not omit them.
+- task status and branch / PR references when applicable;
+- verification evidence or a concrete skip reason;
+- `Documentation Impact: updated | no-change` with documents or reason;
+- `Repo Current State: updated | no-change` with document or reason.
 
 ## Hard guardrails
 
-Before publishing repository changes:
-- required verification must have sufficient evidence;
-- applicable sensitive-data checks must pass;
-- documentation impact must be considered;
-- the target repository's branch and PR policy must be respected.
+Before publication, required verification, applicable redaction, documentation impact, and repository publication policy must pass.
 
-Never weaken security, permission, branch, verification, or release controls merely to complete a task.
-Never commit credentials, tokens, private keys, .env, or other secrets.
-
-## Planning and persistence
-
-Every development task already has an authoritative GitHub Issue. Use plan-to-ticket only when that Issue needs durable Plan / Ticket / Slice decomposition because the work is complex, dependency-heavy, resumable, or explicitly requested.
-
-A persisted Plan owns one implementation branch, one pull request, and one merge. Tickets and Slices are decomposition boundaries, not independent delivery branches.
-
-## Verification
-
-Verification is handled directly by the model. Choose checks from changed behavior, acceptance criteria, and risk; prefer the smallest sufficient evidence. Record verification evidence in the authoritative Issue, or a concrete reason verification was unnecessary. Do not route verification through a dedicated testing Skill.
-
-## Publication
-
-When committing, pushing, or opening a pull request, use github-publish. Before the commit, invoke data-document-redaction when staged content has a sensitive surface. Run repo-documentation when the change may affect documented behavior, architecture, interfaces, configuration, operations, or diagrams.
-
-## Delegation
-
-The model may execute work directly or delegate bounded independent work. Prefer the smallest useful execution topology. Keep dependent or overlapping writes sequential. The main agent owns integration and final judgment.
+Never commit credentials, tokens, private keys, `.env`, or other secrets. Never weaken security, permissions, verification, branch, redaction, or release controls to complete a task.
 
 ## Documentation
 
-Keep README.md as the project introduction and documentation index. Put detailed documentation under docs/. Maintain one canonical owner per fact and link instead of duplicating.
+Keep `README.md` as the project introduction and documentation index. Detailed documentation belongs under `docs/`. Maintain one canonical owner per fact and link instead of duplicating.
