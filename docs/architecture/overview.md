@@ -12,7 +12,7 @@ GitHub Issues are the sole development-task authority. Capability Skills are opt
 
 User goal -> Model reasoning -> native work or discovered capability -> Model reasoning -> requested outcome.
 
-Planning, implementation, verification, publication, and integration are outcomes the model reasons about, not repository Skills that must be traversed.
+Planning, decomposition, sequencing, acceptance criteria, test design, implementation, verification, delegation, publication, and integration are native model responsibilities, not repository Skills that must be traversed or restated.
 
 ## Components
 
@@ -20,7 +20,7 @@ Planning, implementation, verification, publication, and integration are outcome
 |---|---|
 | Model | Resolve the authoritative Issue, understand intent, choose architecture, implement, coordinate, select/skip capabilities, integrate results, own final judgment and mandatory records |
 | codex-development-workflow | Thin compatibility policy and guardrails |
-| plan-to-ticket | Durable decomposition and GitHub Issue persistence |
+| plan-to-ticket | GitHub Issue persistence for model-decided Plan/Ticket structure |
 | repo-documentation | Documentation impact and canonical ownership |
 | repo-current-state | Verified current-state snapshot |
 | data-document-redaction | Staged sensitive-data scan |
@@ -29,7 +29,7 @@ Planning, implementation, verification, publication, and integration are outcome
 
 ## Event-driven capability use
 
-- complex/resumable requirement -> plan-to-ticket
+- model-decided Plan/Ticket structure needs durable Issue persistence -> plan-to-ticket
 - behavior needs proof -> model-native verification
 - documented surface changed -> repo-documentation
 - staged sensitive surface -> data-document-redaction
