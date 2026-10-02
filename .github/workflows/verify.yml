@@ -25,11 +25,11 @@ jobs:
 
       - name: Validate shell syntax
         run: |
-          bash -n scripts/install-all.sh
+          bash -n scripts/retire-skills.sh
           bash -n scripts/render-diagrams.sh
 
       - name: Compile repository tests
-        run: python -m compileall -q scripts/tests
+        run: python -m compileall -q scripts/tests scripts/publication scripts/redaction
 
       - name: Run regression and contract tests
         run: python -m unittest discover -s scripts/tests -p 'test_*.py'

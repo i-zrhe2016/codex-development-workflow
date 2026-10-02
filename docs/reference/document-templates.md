@@ -130,4 +130,4 @@ Diagram (not yet rendered): [`diagrams/<name>.puml`](diagrams/<name>.puml)
 
 ## State
 
-`docs/Repo_Current_State.md` follows `repo-current-state`, not this file.
+`docs/Repo_Current_State.md` follows the state contract in `AGENTS.md`, not this file.

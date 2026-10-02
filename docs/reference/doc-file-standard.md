@@ -129,7 +129,7 @@ decision value.
   README pages are entry or index pages for the repository, a directory, or a
   documentation area.
 - `docs/Repo_Current_State.md` keeps its name and its `Last verified` field, and
-  follows `repo-current-state` instead of the header defined here.
+  follows the Repo Current State contract in `AGENTS.md` instead of the header defined here.
 - An ADR is exempt only from the ordinary filename rule and the ordinary status
   values. It still uses a single `#` title and the header, with the numbered
   filename and the ADR status values defined above.

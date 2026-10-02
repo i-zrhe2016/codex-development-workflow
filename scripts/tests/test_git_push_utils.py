@@ -10,7 +10,7 @@ import sys
 from unittest.mock import patch
 
 
-SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
+SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "publication"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from git_push_utils import assess_repo, resolve_default_branch, resolve_effective_push_branch  # noqa: E402

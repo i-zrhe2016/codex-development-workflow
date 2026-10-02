@@ -1,28 +1,24 @@
-# Capability Usage Guide
+# Repository Policy Usage
 
 > Type: Guide
 > Status: Active
-> Scope: Selecting repository-specific capabilities without wrapping native Codex behavior
+> Scope: Using the repository without runtime Skills
 
-Start from the user's goal and authoritative GitHub Issue.
+There is no capability routing layer.
 
-| Repository-specific need | Capability |
+1. Codex handles the user's engineering goal natively.
+2. `AGENTS.md` supplies repository-specific contracts.
+3. Run deterministic scripts only when their gate applies.
+4. Persist task state and required records in the authoritative GitHub Issue.
+
+## Deterministic gates
+
+| Need | Tool |
 |---|---|
-| Durable Plan/Ticket Issue hierarchy, IDs, or lifecycle metadata | github-issue-persistence |
-| Canonical documentation ownership or repository doc rules | repo-documentation |
-| Current-state snapshot reconciliation | repo-current-state |
-| Deterministic staged sensitive-data scan | data-document-redaction |
-| Repository-specific commit/push/PR guards | github-publish |
+| staged sensitive-data check | `python3 scripts/redaction/scan_staged.py` |
+| publication readiness | `python3 scripts/publication/assess_push_readiness.py --json` |
+| guarded commit/push | `python3 scripts/publication/push_if_ready.py ... --execute` |
+| diagram render | `bash scripts/render-diagrams.sh render` |
+| diagram drift check | `bash scripts/render-diagrams.sh --check` |
 
-Planning, coding, testing, delegation, Git/GitHub use, and diagram authoring stay native to Codex.
-
-## Mandatory records
-
-Every development Issue records:
-
-- task status and branch / PR references when applicable;
-- verification evidence or why verification was unnecessary;
-- Documentation Impact: updated or no-change, with documents/reason;
-- Repo Current State: updated or no-change, with document/reason.
-
-Do not create a Skill call or extra artifact solely to represent a native Codex capability.
+Planning, coding, testing, delegation, Git/GitHub operations, and diagram authoring do not require wrappers.

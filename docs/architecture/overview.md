@@ -1,37 +1,43 @@
-# Capability Architecture
+# Zero-Skill Architecture
 
 > Type: Architecture
 > Status: Active
-> Scope: Native-first repository capability architecture
+> Scope: Codex-native execution with repository contracts in AGENTS.md
 
 ## Core model
 
-Codex is the orchestrator and owns ordinary software-engineering reasoning and execution.
+Codex is the execution engine. The repository does not package runtime Skills.
 
-Repository Skills exist only for durable repository-specific state, deterministic tooling, external persistence, or hard gates.
+```text
+Codex native capabilities
+        |
+        v
+AGENTS.md repository-specific contracts
+        |
+        +--> scripts/redaction/       deterministic sensitive-data gate
+        +--> scripts/publication/     deterministic publication guards
+        +--> scripts/render-diagrams.sh
+        |
+        v
+GitHub Issues / docs / GitHub PR
+```
 
-User goal -> Codex native work -> repository-specific capability only when needed -> requested outcome.
+## Responsibility boundary
 
-## Components
-
-| Component | Responsibility |
+| Surface | Responsibility |
 |---|---|
-| Codex | Planning, decomposition, architecture, implementation, verification, delegation, integration, Git/GitHub operation, diagram authoring |
-| codex-development-workflow | Thin repository policy and hard guardrails |
-| github-issue-persistence | Durable GitHub Issue schema, stable IDs, delivery metadata, lifecycle |
-| repo-documentation | Documentation ownership and repository document conventions |
-| repo-current-state | Verified current-state snapshot contract |
-| data-document-redaction | Deterministic staged sensitive-data scan |
-| github-publish | Repository-specific publication guards |
+| Codex | planning, decomposition, architecture, implementation, verification, delegation, integration, Git/GitHub use, diagram authoring |
+| AGENTS.md | repository-specific policy and durable contracts |
+| scripts/redaction/ | staged sensitive-data detection |
+| scripts/publication/ | publication readiness, identity, commit, push and hook checks |
+| GitHub Issues | authoritative task records |
+| docs/Repo_Current_State.md | compact verified repository-state snapshot |
+| docs/reference/ | repository documentation standards |
 
-## Trigger model
+No repository `SKILL.md` is allowed.
 
-- durable GitHub task records needed -> github-issue-persistence
-- documented repository facts changed -> repo-documentation
-- verified repository truth materially changed -> repo-current-state
-- staged sensitive surface -> data-document-redaction
-- commit/push/PR publication -> github-publish
+## Why
 
-Planning, testing, Git operations, and diagrams remain native even when a repository contract records their result.
+A Skill should not duplicate model-native ability. Requirements that are not model capabilities are more direct and cheaper as repository instructions or deterministic scripts.
 
-Mandatory Issue records remain independent of Skill invocation: status/delivery references, verification evidence or skip reason, Documentation Impact, and Repo Current State reconciliation.
+This keeps one runtime instruction surface, avoids Skill discovery/context overhead, and makes hard policy visible in the repository itself.
