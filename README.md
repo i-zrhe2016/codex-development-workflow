@@ -1,78 +1,81 @@
-# Codex Development Capabilities
+# Codex Development Workflow
 
-A native-first repository policy for Codex and Claude Code.
+A zero-Skill repository policy for Codex.
 
-Codex handles general software-engineering work directly. This repository adds Skills only where the repository needs durable external state, deterministic tooling, or hard guards.
+Codex handles software-engineering work natively. This repository does not install or expose runtime Skills. Repository-specific requirements live in `AGENTS.md`; deterministic checks live under `scripts/`.
 
-## Native-first rule
+## Runtime model
 
-Keep these native to Codex:
+```text
+User goal
+  -> Codex native reasoning/execution
+  -> AGENTS.md repository contracts
+  -> deterministic scripts when a hard check is needed
+  -> completion
+```
 
-- requirement understanding and planning;
-- task decomposition and sequencing;
-- architecture and implementation;
-- refactoring and investigation;
-- verification strategy and test execution;
-- delegation, coordination, and integration;
-- ordinary Git/GitHub operations;
-- diagram design and authoring.
+Native Codex work includes planning, decomposition, architecture, implementation, refactoring, testing, delegation, integration, ordinary Git/GitHub operations, and diagram authoring.
 
-Do not wrap those capabilities in repository Skills.
+## Repository-specific contracts
 
-## Installed skills
+`AGENTS.md` owns:
 
-- `codex-development-workflow`
-- `github-issue-persistence`
-- `repo-current-state`
-- `repo-documentation`
-- `data-document-redaction`
-- `github-publish`
+- GitHub Issues as the sole development-task authority;
+- optional durable Plan/Ticket Issue schema and lifecycle;
+- mandatory verification / Documentation Impact / Repo Current State records;
+- canonical documentation ownership;
+- `docs/Repo_Current_State.md` shape and reconciliation;
+- staged sensitive-data gate;
+- publication identity / branch / commit / PR policy;
+- diagram source/render synchronization rules.
 
-## Capability summary
+## Deterministic tooling
 
-| Capability | Purpose |
-|---|---|
-| github-issue-persistence | Persist durable GitHub Issue hierarchy, stable IDs, delivery metadata, and lifecycle. |
-| repo-documentation | Enforce canonical documentation ownership and repository document conventions. |
-| repo-current-state | Maintain the compact verified repository-state snapshot contract. |
-| data-document-redaction | Run the deterministic staged sensitive-data gate. |
-| github-publish | Enforce repository-specific identity, Conventional Commit, branch, push, and PR guards. |
+Sensitive-data scan:
 
-## Task authority
+```bash
+python3 scripts/redaction/scan_staged.py
+```
 
-GitHub Issues are the sole development-task authority. Every development task must have an authoritative Issue before implementation.
+Publication readiness:
 
-A simple task may stay as one Issue. Codex plans natively. Use `github-issue-persistence` only when durable Plan/Ticket records, stable IDs, dependency links, or lifecycle metadata are useful.
+```bash
+python3 scripts/publication/assess_push_readiness.py --json
+```
 
-Every task Issue records verification evidence or a skip reason, Documentation Impact, and Repo Current State reconciliation.
+Guarded commit/push:
 
-## Publication
+```bash
+python3 scripts/publication/push_if_ready.py \
+  --message "type(scope): description" \
+  --pathspec path/to/file \
+  --execute
+```
 
-Before publication, required verification must be sufficient, applicable redaction must pass, documentation impact must be recorded, and repository publication guards must pass.
+Diagram rendering:
 
-## Installation
+```bash
+bash scripts/render-diagrams.sh render
+bash scripts/render-diagrams.sh --check
+```
 
-Install:
+## No Skill installation
 
-    bash scripts/install-all.sh
+There is no Skill installer.
 
-Claude Code:
+To remove bundles installed by older versions of this repository:
 
-    bash scripts/install-all.sh --target claude
+```bash
+bash scripts/retire-skills.sh
+bash scripts/retire-skills.sh --target claude
+```
 
-Update and prune retired managed Skills:
+Only directories carrying this repository's ownership marker are removed automatically; unrelated or unverified directories are preserved.
 
-    bash scripts/install-all.sh --update
+## Documentation
 
-## Skill documentation
-
-| Skill | Runtime source |
-|---|---|
-| codex-development-workflow | SKILL.md |
-| github-issue-persistence | skills/github-issue-persistence/ |
-| repo-current-state | skills/repo-current-state/ |
-| repo-documentation | skills/repo-documentation/ |
-| data-document-redaction | skills/data-document-redaction/ |
-| github-publish | skills/github-publish/ |
-
-See `references/skill-map.md` for the managed installation mapping and `docs/architecture/overview.md` for the native-first architecture.
+- [Repository policy](AGENTS.md)
+- [Architecture](docs/architecture/overview.md)
+- [Migration / retirement](docs/deployment/installation.md)
+- [Repository current state](docs/Repo_Current_State.md)
+- [Documentation file standard](docs/reference/doc-file-standard.md)
