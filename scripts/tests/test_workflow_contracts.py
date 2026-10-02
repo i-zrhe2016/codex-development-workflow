@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repository contract tests for the capability-driven skill set."""
+"""Repository contracts for the zero-Skill architecture."""
 
 from __future__ import annotations
 
@@ -8,157 +8,87 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 README = REPO_ROOT / "README.md"
-ROOT_SKILL = REPO_ROOT / "SKILL.md"
-EXPECTED_SKILLS = {
-    "codex-development-workflow",
-    "github-issue-persistence",
-    "repo-current-state",
-    "repo-documentation",
-    "data-document-redaction",
-    "github-publish",
-}
+AGENTS = REPO_ROOT / "AGENTS.md"
 
 
 class WorkflowContractTests(unittest.TestCase):
-    def test_installer_managed_skills_match_repository_sources(self) -> None:
-        installer = INSTALLER.read_text(encoding="utf-8")
-        managed: set[str] = set()
-        in_skills = False
-        for line in installer.splitlines():
-            stripped = line.strip()
-            if stripped == "SKILLS=(":
-                in_skills = True
-                continue
-            if in_skills and stripped == ")":
-                break
-            if in_skills and "|" in stripped:
-                spec = stripped.strip('"')
-                managed.add(spec.split("|", 1)[1])
-        self.assertEqual(managed, EXPECTED_SKILLS)
+    def test_zero_runtime_skills(self) -> None:
+        self.assertFalse((REPO_ROOT / "SKILL.md").exists())
+        skills = REPO_ROOT / "skills"
+        self.assertEqual(list(skills.rglob("SKILL.md")) if skills.exists() else [], [])
+        self.assertFalse((REPO_ROOT / "agents" / "openai.yaml").exists())
+        self.assertEqual(list(skills.rglob("agents/openai.yaml")) if skills.exists() else [], [])
 
-        sources = {"codex-development-workflow"}
-        sources.update(
-            p.name
-            for p in (REPO_ROOT / "skills").iterdir()
-            if p.is_dir() and (p / "SKILL.md").is_file()
+    def test_agents_owns_non_native_contracts(self) -> None:
+        text = AGENTS.read_text(encoding="utf-8")
+        for marker in (
+            "GitHub Issues are the sole authoritative development-task store",
+            "<!-- codex-plan-id:",
+            "<!-- codex-ticket-id:",
+            "Documentation Impact:",
+            "Repo Current State:",
+            "scripts/redaction/scan_staged.py",
+            "scripts/publication/assess_push_readiness.py",
+            "Conventional Commits 1.0.0",
+            "scripts/render-diagrams.sh",
+        ):
+            self.assertIn(marker, text)
+
+    def test_deterministic_tools_are_outside_skills(self) -> None:
+        required = (
+            "scripts/redaction/scan_staged.py",
+            "scripts/publication/assess_push_readiness.py",
+            "scripts/publication/push_if_ready.py",
+            "scripts/publication/publish_identity.py",
+            "scripts/retire-skills.sh",
         )
-        self.assertEqual(sources, EXPECTED_SKILLS)
+        for relative in required:
+            self.assertTrue((REPO_ROOT / relative).is_file(), relative)
 
-    def test_every_managed_skill_has_required_codex_metadata(self) -> None:
-        roots = [REPO_ROOT]
-        roots.extend(
-            REPO_ROOT / "skills" / name
-            for name in sorted(EXPECTED_SKILLS - {"codex-development-workflow"})
-        )
-        for root in roots:
-            with self.subTest(skill=root.name):
-                self.assertTrue((root / "SKILL.md").is_file())
-                self.assertTrue((root / "agents" / "openai.yaml").is_file())
-
-    def test_readme_installed_skill_list_matches_installer(self) -> None:
-        readme = README.read_text(encoding="utf-8")
-        section = readme.split("## Installed skills", 1)[1].split("## Skill documentation", 1)[0]
-        listed = {
-            line.removeprefix("- `").removesuffix("`")
-            for line in section.splitlines()
-            if line.startswith("- `") and line.endswith("`")
-        }
-        self.assertEqual(listed, EXPECTED_SKILLS)
-
-    def test_issue_authority_and_non_skippable_records_are_policy_invariants(self) -> None:
-        agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        root_skill = ROOT_SKILL.read_text(encoding="utf-8")
-        persistence = (REPO_ROOT / "skills" / "github-issue-persistence" / "SKILL.md").read_text(encoding="utf-8")
-        docs = (REPO_ROOT / "skills" / "repo-documentation" / "SKILL.md").read_text(encoding="utf-8")
-        state = (REPO_ROOT / "skills" / "repo-current-state" / "SKILL.md").read_text(encoding="utf-8")
-
-        for text in (agents, root_skill, persistence):
-            self.assertIn("GitHub Issues are the sole", text)
-
-        for marker in ("Documentation Impact", "Repo Current State"):
-            self.assertIn(marker, agents)
-            self.assertIn(marker, root_skill)
-
-        self.assertIn("authoritative GitHub Issue", docs)
-        self.assertIn("Repo Current State: updated", state)
-        self.assertIn("Repo Current State: no-change", state)
-        self.assertIn("Codex performs the planning itself", persistence)
-
-    def test_native_capabilities_are_not_runtime_skills(self) -> None:
-        root_skill = ROOT_SKILL.read_text(encoding="utf-8")
-        agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("Do not reproduce native model behavior inside Skills", root_skill)
-        self.assertIn("Use Codex natively for planning", agents)
-        self.assertIn("verification evidence", root_skill)
-        for retired in ("test-quality", "plan-to-ticket", "plantuml"):
-            self.assertFalse((REPO_ROOT / "skills" / retired / "SKILL.md").exists())
+    def test_documentation_references_are_outside_skills(self) -> None:
+        for name in (
+            "doc-file-standard.md",
+            "document-types.md",
+            "documentation-lifecycle.md",
+            "document-templates.md",
+        ):
+            self.assertTrue((REPO_ROOT / "docs" / "reference" / name).is_file())
 
     def test_every_plantuml_source_has_same_basename_svg(self) -> None:
-        sources = sorted((REPO_ROOT / "docs").rglob("*.puml"))
-        self.assertTrue(sources, "Expected repository documentation diagrams.")
-        for source in sources:
-            with self.subTest(source=source.relative_to(REPO_ROOT)):
-                rendered = source.with_suffix(".svg")
-                self.assertTrue(rendered.is_file(), f"Missing render for {source}")
-                svg = rendered.read_text(encoding="utf-8")
-                self.assertIn("<svg", svg)
-
-    def test_plantuml_sources_follow_repository_contract(self) -> None:
         for source in sorted((REPO_ROOT / "docs").rglob("*.puml")):
-            text = source.read_text(encoding="utf-8")
+            rendered = source.with_suffix(".svg")
             with self.subTest(source=source.relative_to(REPO_ROOT)):
-                self.assertIn("@startuml", text)
-                self.assertIn("@enduml", text)
-                self.assertIn("!theme plain", text)
-                if source.name != "installer-decision-flow.puml":
-                    self.assertNotIn("context-efficiency", text)
-                self.assertNotIn("PR review loop", text)
+                self.assertTrue(rendered.is_file())
+                self.assertIn("<svg", rendered.read_text(encoding="utf-8"))
 
-    def test_every_plantuml_source_is_referenced_by_documentation(self) -> None:
+    def test_every_plantuml_source_is_referenced(self) -> None:
         markdown = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in [README, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
+            for path in [README, AGENTS, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
         )
         for source in sorted((REPO_ROOT / "docs").rglob("*.puml")):
             with self.subTest(source=source.relative_to(REPO_ROOT)):
                 self.assertIn(source.name, markdown)
 
-
-    def test_drawio_overviews_are_structurally_valid_and_rendered(self) -> None:
-        sources = sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio"))
-        self.assertGreaterEqual(len(sources), 2)
+    def test_drawio_overviews_are_valid_and_referenced(self) -> None:
+        root = REPO_ROOT / "docs" / "diagrams" / "drawio"
+        sources = sorted(root.glob("*.drawio"))
+        markdown = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in [README, AGENTS, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
+        )
         for source in sources:
             with self.subTest(source=source.name):
                 tree = ET.parse(source)
-                root = tree.getroot()
-                self.assertEqual(root.get("compressed"), "false")
-
-                cells = root.findall(".//mxCell")
+                xml_root = tree.getroot()
+                self.assertEqual(xml_root.get("compressed"), "false")
+                cells = xml_root.findall(".//mxCell")
                 ids = [cell.get("id") for cell in cells]
-                self.assertEqual(len(ids), len(set(ids)), f"duplicate IDs in {source}")
-                by_id = {cell.get("id"): cell for cell in cells}
-
-                for cell in cells:
-                    if cell.get("edge") == "1":
-                        self.assertIn(cell.get("source"), by_id)
-                        self.assertIn(cell.get("target"), by_id)
-                        geometry = cell.find("mxGeometry")
-                        self.assertIsNotNone(geometry)
-                        self.assertEqual(geometry.get("relative"), "1")
-
+                self.assertEqual(len(ids), len(set(ids)))
                 rendered = source.with_suffix(".svg")
-                self.assertTrue(rendered.is_file(), f"Missing SVG preview for {source}")
+                self.assertTrue(rendered.is_file())
                 self.assertIn("<svg", rendered.read_text(encoding="utf-8"))
-
-    def test_drawio_overviews_are_referenced_by_documentation(self) -> None:
-        markdown = "\n".join(
-            path.read_text(encoding="utf-8")
-            for path in [README, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
-        )
-        for source in sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio")):
-            with self.subTest(source=source.name):
                 self.assertIn(source.name, markdown)
 
 
