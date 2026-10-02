@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 
-SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
+SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "publication"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from git_push_utils import GitError  # noqa: E402
