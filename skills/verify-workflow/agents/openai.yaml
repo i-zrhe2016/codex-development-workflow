@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Workflow"
+  short_description: "Decide when to verify: scope, level, and a bounded result"
+  default_prompt: "Use $verify-workflow to decide whether verification is warranted, choose the bounded verification level from the change risk, invoke $test-workflow for the quality gate, and return PASS, FAIL, or BLOCKED with its evidence."

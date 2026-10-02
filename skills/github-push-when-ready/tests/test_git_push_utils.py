@@ -1,0 +1,290 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+import sys
+from unittest.mock import patch
+
+
+SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
+sys.path.insert(0, str(SCRIPTS_DIR))
+
+from git_push_utils import assess_repo, resolve_default_branch, resolve_effective_push_branch  # noqa: E402
+
+
+class PushReadinessTests(unittest.TestCase):
+    def test_mirror_boolean_spellings_are_blocked(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        self.run_git(repo, "config", "push.default", "current")
+        for value in ("true", "yes", "on", "1", "invalid"):
+            with self.subTest(value=value):
+                self.run_git(repo, "config", "remote.origin.mirror", value)
+                self.assertIsNone(resolve_effective_push_branch(repo, "work", None, "origin"))
+        for value in ("false", "no", "off", "0"):
+            with self.subTest(value=value):
+                self.run_git(repo, "config", "remote.origin.mirror", value)
+                self.assertEqual(resolve_effective_push_branch(repo, "work", None, "origin"), "work")
+
+    def test_triangular_simple_uses_feature_name(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        self.run_git(repo, "config", "push.default", "simple")
+        self.run_git(repo, "config", "branch.work.remote", "upstream")
+        self.run_git(repo, "config", "branch.work.merge", "refs/heads/main")
+        self.assertEqual(resolve_effective_push_branch(repo, "work", "upstream/main", "origin"), "work")
+
+    def test_first_push_explicit_branch_ignores_push_default(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        for mode in ("upstream", "nothing", "matching", "simple", "current"):
+            with self.subTest(mode=mode):
+                self.run_git(repo, "config", "push.default", mode)
+                self.assertEqual(resolve_effective_push_branch(repo, "work", None, "origin"), "work")
+
+    def test_custom_fetch_mapping_does_not_hide_default_destination(self):
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-c", "work")
+        self.run_git(repo, "config", "remote.origin.fetch", "+refs/heads/main:refs/remotes/origin/work")
+        self.run_git(repo, "update-ref", "refs/remotes/origin/work", "HEAD")
+        self.run_git(repo, "config", "branch.work.remote", "origin")
+        self.run_git(repo, "config", "branch.work.merge", "refs/heads/main")
+        self.run_git(repo, "config", "push.default", "upstream")
+        self.run_git(repo, "commit", "--allow-empty", "-m", "fix(test): change")
+        report = self.assess_with_default_branch(repo, "main")
+        self.assertEqual(report["effective_push_branch"], "main")
+        self.assertFalse(report["safe_to_push"])
+
+    def run_git(self, repo: Path, *args: str) -> str:
+        completed = subprocess.run(
+            ["git", "-C", str(repo), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return completed.stdout.strip()
+
+    def make_repo(self) -> Path:
+        temp = tempfile.TemporaryDirectory(prefix="push-readiness-test-")
+        self.addCleanup(temp.cleanup)
+        repo = Path(temp.name)
+        self.run_git(repo, "init", "-q", "-b", "main")
+        self.run_git(repo, "config", "user.name", "i-zrhe2016")
+        self.run_git(repo, "config", "user.email", "test")
+        self.run_git(
+            repo,
+            "remote",
+            "add",
+            "origin",
+            "https://github.com/i-zrhe2016/codex-development-workflow.git",
+        )
+        self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): baseline")
+        return repo
+
+    def assess_with_default_branch(self, repo: Path, default_branch: str | None) -> dict[str, object]:
+        with patch("git_push_utils.resolve_default_branch", return_value=default_branch):
+            return assess_repo(repo)
+
+    def test_default_branch_is_read_from_push_target_api(self) -> None:
+        with patch("git_push_utils.shutil.which", return_value="/usr/bin/gh"), patch(
+            "git_push_utils.subprocess.run"
+        ) as run:
+            run.return_value = subprocess.CompletedProcess(
+                ["gh"], 0, '{"default_branch":"release/main"}\n', ""
+            )
+
+            result = resolve_default_branch(
+                "https://github.com/example/project.git",
+            )
+
+        self.assertEqual(result, "release/main")
+        command = run.call_args.args[0]
+        self.assertEqual(
+            command,
+            [
+                "/usr/bin/gh",
+                "api",
+                "repos/example/project",
+                "--hostname",
+                "github.com",
+                "--jq",
+                "{default_branch: .default_branch}",
+            ],
+        )
+        self.assertEqual(run.call_args.kwargs["timeout"], 10)
+        self.assertEqual(run.call_args.kwargs["env"]["GH_PROMPT_DISABLED"], "1")
+
+    def test_default_branch_probe_timeout_fails_closed(self) -> None:
+        with patch("git_push_utils.shutil.which", return_value="/usr/bin/gh"), patch(
+            "git_push_utils.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(["gh"], timeout=10),
+        ):
+            result = resolve_default_branch(
+                "https://github.com/example/project.git"
+            )
+
+        self.assertIsNone(result)
+
+    def test_null_default_branch_output_is_unknown(self) -> None:
+        with patch("git_push_utils.shutil.which", return_value="/usr/bin/gh"), patch(
+            "git_push_utils.subprocess.run"
+        ) as run:
+            run.return_value = subprocess.CompletedProcess(
+                ["gh"], 0, '{"default_branch":null}\n', ""
+            )
+
+            result = resolve_default_branch("https://github.com/example/project.git")
+
+        self.assertIsNone(result)
+
+    def test_branch_tracking_default_upstream_requires_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        self.run_git(repo, "branch", "--set-upstream-to=origin/main", "work")
+        self.run_git(repo, "config", "push.default", "upstream")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_pull_upstream_with_separate_push_remote_can_publish_feature_branch(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "remote", "add", "upstream", "https://github.com/example/upstream.git")
+        self.run_git(repo, "update-ref", "refs/remotes/upstream/main", "HEAD")
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        self.run_git(repo, "branch", "--set-upstream-to=upstream/main", "work")
+        self.run_git(repo, "config", "branch.work.pushRemote", "origin")
+        self.run_git(repo, "config", "push.default", "current")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertEqual(report["preferred_remote"], "origin")
+        self.assertEqual(report["effective_push_branch"], "work")
+        self.assertEqual(report["recommended_action"], "commit_then_push")
+        self.assertTrue(report["safe_to_push"])
+
+    def test_all_push_targets_must_have_verified_default_branches(self) -> None:
+        repo = self.make_repo()
+        self.run_git(
+            repo,
+            "remote",
+            "set-url",
+            "--push",
+            "origin",
+            "https://github.com/example/first.git",
+        )
+        self.run_git(
+            repo,
+            "remote",
+            "set-url",
+            "--add",
+            "--push",
+            "origin",
+            "https://github.com/example/second.git",
+        )
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        with patch(
+            "git_push_utils.resolve_default_branch",
+            side_effect=["main", None],
+        ):
+            report = assess_repo(repo)
+
+        self.assertIsNone(report["default_branch"])
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_matching_push_mode_requires_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "work")
+        self.run_git(repo, "update-ref", "refs/remotes/origin/work", "HEAD")
+        self.run_git(repo, "branch", "--set-upstream-to=origin/work", "work")
+        self.run_git(repo, "config", "push.default", "matching")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertIsNone(report["effective_push_branch"])
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_malformed_github_url_fails_closed(self) -> None:
+        self.assertIsNone(resolve_default_branch("https://[github.com/example/project"))
+
+    def test_default_branch_changes_require_feature_branch(self) -> None:
+        repo = self.make_repo()
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertEqual(report["default_branch"], "main")
+        self.assertEqual(report["recommended_action"], "feature_branch_required")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_slash_containing_default_branch_is_preserved(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "release/main")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "release/main")
+
+        self.assertEqual(report["default_branch"], "release/main")
+        self.assertEqual(report["recommended_action"], "feature_branch_required")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_feature_branch_changes_can_reach_commit_then_push(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "docs/change")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertEqual(report["default_branch"], "main")
+        self.assertEqual(report["recommended_action"], "commit_then_push")
+        self.assertTrue(report["safe_to_push"])
+
+    def test_unpublished_default_branch_commit_requires_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): unpublished")
+
+        report = self.assess_with_default_branch(repo, "main")
+
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_unknown_default_branch_changes_require_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "develop")
+        self.run_git(repo, "branch", "-D", "main")
+        (repo / "change.md").write_text("pending change\n", encoding="utf-8")
+
+        report = self.assess_with_default_branch(repo, None)
+
+        self.assertIsNone(report["default_branch"])
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+    def test_unknown_default_branch_commit_requires_manual_review(self) -> None:
+        repo = self.make_repo()
+        self.run_git(repo, "switch", "-q", "-c", "trunk")
+        self.run_git(repo, "branch", "-D", "main")
+        self.run_git(repo, "commit", "--allow-empty", "-m", "docs(test): unpublished")
+
+        report = self.assess_with_default_branch(repo, None)
+
+        self.assertIsNone(report["default_branch"])
+        self.assertEqual(report["recommended_action"], "manual_review")
+        self.assertFalse(report["safe_to_push"])
+
+
+if __name__ == "__main__":
+    unittest.main()

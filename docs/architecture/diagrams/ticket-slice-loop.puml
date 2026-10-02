@@ -1,0 +1,49 @@
+@startuml
+!theme plain
+top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Ticket / Slice Loop — Implement, Verify, Diagnose, Re-plan
+
+state "Select dependency-ready Slice\nRead Plan + Ticket + shared branch evidence" as select
+state "Define Slice contract\nGoal / scope / exclusions / dependencies\nAcceptance / test strategy / level / cases / command" as contract
+state "Minimal implementation\nTest-first when useful\nBounded delegation optional" as implement
+state "Focused verification\nCheapest relevant checks first" as focused
+state "Mandatory risk dimensions\nBoundary / negative / integration / regression\nProperty / mutation / E2E / isolation when applicable" as dimensions
+state "Test Quality Gate" as gate
+state "Classify failure\nImplementation / test / regression / environment\nflaky / requirement conflict" as diagnose
+state "Fix in-scope defect" as fix
+state "Blocked\nRecord cause + exact resume point" as blocked
+state "Re-plan Slice / Ticket\nUpdate boundaries and acceptance" as replan
+state "Slice complete\nRecord executed evidence" as slice_done
+state "Ticket complete\nAll Slices + acceptance satisfied" as ticket_done
+
+[*] --> select
+select --> contract
+contract --> implement
+implement --> focused
+focused --> diagnose : failure
+focused --> dimensions : GREEN
+dimensions --> diagnose : missing / failed evidence
+dimensions --> gate : required dimensions satisfied
+gate --> diagnose : BLOCKED
+gate --> slice_done : PASS
+diagnose --> fix : implementation / test defect
+fix --> focused
+diagnose --> blocked : external dependency
+blocked --> select : cause resolved
+diagnose --> replan : requirement / design conflict
+implement --> replan : wrong assumption exposed
+replan --> select
+slice_done --> select : more Slices
+slice_done --> ticket_done : all Slices complete
+ticket_done --> [*]
+
+note right of gate
+A GREEN test level is not enough by itself.
+Every acceptance criterion needs executed evidence.
+Applicable dimensions must pass or have a concrete N/A reason.
+Retry cannot turn unexplained flaky failure into PASS.
+end note
+@enduml
