@@ -1,39 +1,22 @@
 ---
 name: publish-workflow
-description: "Decide WHEN to publish. Take a verified change through the documentation impact check, the staged redaction scan, and Conventional Commit, push, and pull-request readiness. Use when the request is to commit, push, open or update a pull request, or prepare a branch for review. It runs to PR ready and stops, and never merges."
+description: "Commit, push, open/update a PR or prepare review of a verified change through documentation impact, staged redaction and Conventional Commit readiness. Stops at PR ready; never merges."
 ---
 
 # Publish Workflow
 
-Stage workflow for the **verified change -> PR ready** transition.
+Owns **verified change -> PR ready**. Invoke these capabilities in order:
 
-## Responsibility
+1. `repo-documentation`: impact check; update canonical docs/index or record no
+   documentation change.
+2. `data-document-redaction`: stage intended files and scan. Proceed only on
+   `pass`, `noop` or recorded no-sensitive-surface skip. `findings`/`needs_review`
+   block: sanitize reported files, re-stage/re-scan; fix scanner `error` first.
+3. `github-push-when-ready`: one-purpose Conventional Commit, push branch,
+   create/update PR until ready. Validate any Plan metadata; a persisted Plan
+   is a planning decision, not a publication precondition.
 
-Compose the capability skills in this order, then stop:
-
-1. `repo-documentation` — run its documentation impact check. Update the
-   canonical owner document and the documentation index, or record that no
-   documentation change is needed.
-2. `data-document-redaction` — stage the intended change, run its staged scan,
-   and follow the redaction workflow that skill owns. Continue on `pass`,
-   `noop`, or a recorded no-sensitive-surface skip;
-   sanitize only the reported files and re-scan on `findings`, `needs_review`,
-   or `error`.
-3. `github-push-when-ready` — make one focused Conventional Commit, push the
-   branch, and create or update the pull request until it is ready to merge.
-
-Report the branch, the commit, and the pull request, then stop.
-
-## Boundaries
-
-- The stage ends at **PR ready**. It never merges, never deletes a branch, and
-  never closes an Issue; those belong to `integrate-workflow`.
-- It does not write product code. A failing check returns to
-  `develop-workflow` or `verify-workflow` instead of being patched here.
-- One commit carries one purpose, and the message follows Conventional
-  Commits.
-- When the branch carries Plan metadata, `github-push-when-ready` validates it.
-  When it does not, publication still proceeds: a persisted Plan is a planning
-  decision, not a publication precondition.
-- Branch, redaction, security, permission, and release gates are never weakened
-  to reduce friction.
+Report branch, commit and PR, then stop. No merge, branch deletion or Issue
+closure (`integrate-workflow`); no product edits. Failed checks return to
+`develop-workflow`/`verify-workflow`. Never weaken branch, redaction, security,
+permission or release gates.

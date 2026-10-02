@@ -1,146 +1,77 @@
 # Documentation File Standard
 
-Rules for content documents under `docs/`. Index files, the state snapshot, and
-ADRs follow the exceptions at the end of this file.
+Applies to created/modified content under `docs/`; bring legacy documents into
+compliance when next modified or explicitly normalized. Report noncompliance;
+never silently rename/restructure or rewrite meaning.
 
-## Naming
+## Naming, title and header
 
-- Use lowercase `kebab-case.md` for content documents.
-- Name the fact, not the format: `deployment-process.md`,
-  `database-migration.md`, `authentication-flow.md`.
-- Do not use `DeploymentProcess.md`, `deployment_process.md`, `doc1.md`, or
-  version suffixes such as `new-doc-final-v2.md`. Git holds history.
-- ADRs are the one exception: `NNNN-kebab-case.md` with a zero-padded sequence,
-  such as `0001-use-postgresql.md`, so the records stay ordered.
-
-## Title
-
-- The first line is the single `#` title.
-- One file has one `#` title. Several independent topics in one file mean the
-  file should be split.
-
-## Header
-
-Immediately after the title, add a blockquote header with the three required
-fields. Index files and `docs/Repo_Current_State.md` are exempt; see Exceptions.
+Use lowercase `kebab-case.md` naming the fact, e.g. `authentication-flow.md`;
+no CamelCase, underscores, meaningless names or version suffixes (Git holds
+history). First line is the single `#` title. Split independent topics.
+Immediately follow with:
 
 ```markdown
-# Authentication Architecture
-
 > Type: Architecture
 > Status: Active
-> Scope: OAuth authentication and session lifecycle
+> Scope: <facts this document owns>
 ```
 
-- `Type` is one of `Architecture`, `ADR`, `Guide`, `Runbook`, `Reference`, or
-  `State`. Type routing is defined in `document-types.md`.
-- `Status` is one of `Draft`, `Active`, `Deprecated`, or `Superseded`. ADRs use
-  `Proposed`, `Accepted`, `Deprecated`, or `Superseded`. Transitions are defined
-  in `documentation-lifecycle.md`.
-- `Scope` names the facts this document owns, not its audience. From `Scope`
-  alone, a reader or an agent must be able to decide whether this is the
-  document to change.
-- A superseded document adds one more field: `> Superseded by: <path>`.
+[Document types](document-types.md) defines Architecture/ADR/Guide/Runbook/
+Reference/State and routing. Ordinary statuses: Draft/Active/Deprecated/
+Superseded; ADRs: Proposed/Accepted/Deprecated/Superseded. Follow
+[lifecycle](documentation-lifecycle.md). Superseded headers also carry
+`> Superseded by: <path>`. Scope must identify ownership without needing audience
+context.
 
-## No Last Updated field
+No `Last updated`: Git records author/commit/date/diff; freshness comes from
+code/config/tests verification. Exceptions:
 
-Do not add `Last updated` to a content document. It becomes a false freshness
-signal: a document can be edited without becoming true, and Git already records
-author, commit, date, and diff.
+- `README.md` retains its conventional name as an entry/index page and no header.
+- `docs/Repo_Current_State.md` retains name/`Last verified`, following
+  `repo-current-state` instead of this header.
+- ADRs use zero-padded `NNNN-kebab-case.md` (e.g. `0001-use-postgresql.md`) and
+  ADR statuses; single title/header still required.
 
-Verify a document against code, configuration, and tests rather than against its
-date. `docs/Repo_Current_State.md` is the only exception, because it is a
-snapshot of what is true now and therefore keeps `Last verified`.
+All other `docs/` content follows this standard.
 
 ## Diagrams
 
-A diagram's editable source and rendered image are files, not documents, so
-they do not carry a title or a header.
+Sources/renders are files, not content documents: no title/header. Use both
+layers only when useful:
 
-Use two complementary diagram layers when both are useful:
+| Layer | Pair | Contract |
+|---|---|---|
+| Draw.io overview | `<name>.drawio` + `<name>.svg` | polished/editable human overview, hierarchy/readability; detailed edge cases stay in linked PlantUML/prose |
+| PlantUML detail | `<name>.puml` + `<name>.svg` | textual diffs, exact loops, deterministic regeneration |
 
-- **Draw.io overview** for polished, editable, human-facing architecture or
-  workflow summaries. Keep the uncompressed `.drawio` source with stable
-  semantic IDs and a same-basename SVG preview.
-- **PlantUML detailed view** for diagrams-as-code that benefit from textual diff,
-  exact workflow loops, and deterministic regeneration. Keep the `.puml`
-  source with a same-basename SVG render.
+- Place new diagrams in `diagrams/` beside their owner, named for the fact.
+  Shared repository overviews may use `docs/diagrams/drawio/`; keep existing
+  PlantUML locations unless deliberately migrating the owner.
+- Draw.io: fitting architecture/flowchart/C4 conventions; uncompressed XML,
+  stable semantic non-reserved IDs, every edge has
+  `<mxGeometry relative="1" as="geometry"/>`; no node overlap/edge-through-node.
+- PlantUML: activity for workflow, state for lifecycle, component for
+  responsibilities, sequence for messages; prefer `!theme plain` and Kroki-safe
+  features unless advanced features are necessary.
+- SVG is primary; existing PNGs may remain as compatibility artifacts.
+- Before claiming success, validate Draw.io XML/IDs/edges or PlantUML renderer
+  success with non-empty real SVG, then visually check overlap, clipping,
+  crossings, routing and labels.
+- Public Kroki uploads source to a third party: non-sensitive only. Internal,
+  secret, proprietary or unreleased architecture requires a local backend.
+- Owner embeds SVG with descriptive alt text and immediately links source;
+  [templates](templates.md) defines rendered/unrendered markup. Orphans must be
+  embedded or deleted. Never replace managed source with a flattened image.
 
-Rules:
+## Links, index and size
 
-- Keep new diagrams in a `diagrams/` directory beside the document they
-  illustrate. Shared repository-level overview views may live under
-  `docs/diagrams/drawio/`; existing PlantUML diagrams keep their current
-  location unless the owning document is deliberately migrated.
-- Name each source after the fact it draws. Draw.io pairs use
-  `<name>.drawio` + `<name>.svg`; PlantUML pairs use
-  `<name>.puml` + `<name>.svg`.
-- For Draw.io, prefer architecture/flowchart/C4 conventions that match the
-  subject, use stable non-reserved IDs, require
-  `<mxGeometry relative="1" as="geometry"/>` on every edge, keep XML
-  uncompressed, and avoid node overlap or edge-through-node routing.
-- Draw.io overview diagrams should optimize hierarchy and readability rather
-  than repeat every low-level branch. Preserve detailed edge cases in the
-  linked PlantUML view or prose.
-- For PlantUML, pick the diagram type that fits the fact (activity for workflow,
-  state for lifecycle, component for responsibilities, sequence for message
-  flow), prefer `!theme plain`, and stay within the Kroki-safe subset unless
-  a more advanced feature is necessary.
-- SVG is the primary documentation render because text remains crisp. Existing
-  PNG files may remain only as compatibility artifacts.
-- Validate before claiming success. Draw.io requires XML/ID/edge structural
-  checks plus a visual pass for overlap, clipping, crossings, routing, and
-  unreadable labels. PlantUML requires renderer success, non-empty real SVG,
-  then the same readability pass.
-- Public Kroki uploads PlantUML source to a third party. Use it only for
-  non-sensitive diagrams. Internal, secret, proprietary, or unreleased
-  architecture requires a local backend.
-- Reference the rendered SVG from the owning document with descriptive alt
-  text and link the editable source immediately beside it.
-- A diagram that exists in no document is an orphan: embed it or delete it.
-  Never replace a managed source diagram with a hand-made flattened image.
+Use repository-relative links to owners instead of copying facts; no in-repo
+branch/commit/absolute URLs. Update incoming links on rename/move/deprecation/
+supersession. Every document must be reachable from the one router, directly or
+through its linked parent index. Link orphans, or delete only when unauthoritative,
+unreferenced and without historical/decision value.
 
-## Links
-
-- Link to the owning document instead of repeating its fact.
-- Use repository-relative paths. Do not link in-repo content through a branch,
-  a commit, or an absolute URL.
-- Update incoming links when a document is renamed, moved, deprecated, or
-  superseded.
-
-## Index
-
-Every document is reachable from the repository's documentation router, or from
-a parent index that the router links to. A document that the router does not
-reach is an orphan: link it from the router, or delete it only when it is no
-longer authoritative, nothing references it, and it holds no historical or
-decision value.
-
-## Size
-
-- Prefer a few hundred tokens of dense, verifiable content.
-- Treat roughly 300 lines, or two unrelated topics in one file, as a signal to
-  split.
-- Move detail that only one reader group needs into a linked document.
-
-## Exceptions
-
-- A `README.md` page keeps its conventional name and does not carry the header.
-  README pages are entry or index pages for the repository, a directory, or a
-  documentation area.
-- `docs/Repo_Current_State.md` keeps its name and its `Last verified` field, and
-  follows `repo-current-state` instead of the header defined here.
-- An ADR is exempt only from the ordinary filename rule and the ordinary status
-  values. It still uses a single `#` title and the header, with the numbered
-  filename and the ADR status values defined above.
-
-Everything else under `docs/` is a content document and follows every rule in
-this file.
-
-## Adoption
-
-The standard applies to every content document a change creates or modifies.
-An existing document that predates the standard is brought into compliance when
-it is next modified, or during an explicit normalization pass. A normalization
-audit reports existing noncompliance and fixes what it can without rewriting
-meaning; it does not silently rename or restructure the tree.
+Prefer a few hundred tokens of dense verified content. Roughly 300 lines or two
+unrelated topics signals splitting; move audience-specific detail to a linked
+document.

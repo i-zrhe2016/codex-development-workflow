@@ -1,88 +1,72 @@
 ---
 name: plantuml
-description: Create, refactor, render, and review maintainable PlantUML diagrams for software architecture and engineering workflows. Use when architecture, runtime interaction, lifecycle, deployment, or another repository behavior is materially clearer as a diagram; when creating or editing .puml; when checking diagram readability or render drift; or when repo-documentation requires a PlantUML source/render pair. Optimize for focused scope, semantic relationships, Git-friendly diffs, and deterministic regeneration.
+description: "Create, refactor, render, and review PlantUML for architecture, runtime interactions, lifecycle, deployment, or workflows when diagrams clarify behavior. Use for .puml creation/edits, readability/render-drift checks, and repo-documentation source/render pairs; keep semantic, Git-friendly, deterministic diagrams."
 ---
 
 # PlantUML
 
-Create diagrams that answer one engineering question quickly and remain maintainable as code.
+Answer one engineering question per diagram. Identify audience/question, then
+choose the smallest view:
 
-## Workflow
+| Question | View |
+|---|---|
+| boundaries/external actors | system context |
+| services/deployables/data stores | container/service architecture |
+| request/auth/async/failover/deploy/message flow | sequence |
+| lifecycle | state |
+| workflow/decisions | activity |
+| hosts/regions/clusters/networks/runtime placement | deployment |
+| useful internal service decomposition | component |
+| domain/data structure | ERD/class |
 
-1. Identify the audience and the single question the diagram must answer.
-2. Choose the smallest useful view:
-   - system boundaries and external actors -> system context;
-   - services, deployables, data stores -> container/service architecture;
-   - request, auth, async, failover, deploy, message flow -> sequence;
-   - lifecycle -> state;
-   - workflow or decision path -> activity;
-   - runtime placement, hosts, regions, clusters, networks -> deployment;
-   - internal service decomposition -> component, only when useful;
-   - domain/data structure -> ERD or class.
-3. Split mixed concerns instead of building a master diagram.
-4. Inspect existing repository diagram conventions before changing dialect, aliases, includes, layout, or style.
-5. Produce complete compilable PlantUML.
-6. For repository changes, render and validate before claiming completion.
+Prefer context -> container -> focused detail; split mixed concerns, not a master
+graph. Static views describe structure; sequence/state/activity describe behavior.
+Inspect repository conventions first; preserve dialect, aliases, includes,
+layout, style, and placement unless a change is necessary.
 
-## Rules
+## Source and review
 
-- One diagram = one question.
-- Prefer context -> container -> focused detail over one giant graph.
-- Use static views for structure; sequence/state/activity for behavior.
-- Preserve existing project dialect and includes unless change is necessary.
-- Do not add C4-PlantUML or remote includes only for appearance.
-- Use stable semantic aliases such as api_gateway, routing_service, config_db.
-- Name nodes with nouns. Label important edges with meaningful verb phrases.
-- Show cross-process protocol/technology only when it adds operational meaning.
-- Minimize crossing arrows. Split by viewpoint before using layout hacks.
-- Use color/style only for consistent semantic meaning.
-- Prefer !theme plain or the repository shared theme for new diagrams.
-- Keep rationale in ADR/docs, not long diagram notes.
+Produce complete compilable, deterministic source with reviewable minimal churn.
+Do not add C4-PlantUML or remote includes for appearance. Use stable semantic
+aliases (e.g. `api_gateway`), noun nodes, and directed important edges labeled
+with meaningful verbs. Show cross-process protocols/technology where operationally
+useful. Split viewpoints before layout hacks; remove avoidable crossings and
+duplicate edges. Color/style must carry consistent meaning; for new diagrams,
+prefer `!theme plain` or the shared repository theme. Keep long notes/rationale
+in ADRs/docs.
 
-## Sequence convention
+Sequences use forward request/command arrows and dashed response arrows unless
+project conventions differ; `alt`, `opt`, `loop`, `par` must clarify real behavior.
 
-Use request/command arrows for forward actions and dashed return arrows for responses unless the project already defines another convention. Use alt, opt, loop, and par only when they clarify real behavior.
+Before finalizing, check clear title/scope, one answered question, justified
+abstraction mixing only, meaningful direction/labels/protocols, immediately obvious
+structure/flow, consistent styling, and deterministic Git-reviewable source.
 
-## Repository integration
+## Integration and rendering
 
-PlantUML is a capability skill, not a workflow stage.
+This is a capability, not a workflow stage. `repo-documentation` owns diagram
+need, canonical document, placement, naming, and lifecycle; this skill owns type,
+source quality, rendering, and semantic/readability validation. Architecture
+code and affected source/render share a PR. Never hand-edit rendered SVG to hide
+source problems.
 
-- repo-documentation owns whether documentation needs a diagram, the canonical owner document, placement, naming, and lifecycle.
-- plantuml owns diagram-type selection, .puml source quality, rendering, and semantic/readability validation.
-- Architecture-changing code and its affected diagram source/render belong in the same PR.
-- Never hand-edit a rendered SVG to hide a source problem.
+For codex-development-workflow, preserve locations unless migrating the owner;
+keep `.puml`/same-basename `.svg` synchronized where the documentation standard
+requires it:
 
-For codex-development-workflow itself:
+```bash
+bash scripts/render-diagrams.sh render
+bash scripts/render-diagrams.sh --check
+```
 
-- preserve existing diagram locations unless deliberately migrating the owning documentation;
-- keep .puml and same-basename .svg synchronized when required by the documentation standard;
-- run bash scripts/render-diagrams.sh render to regenerate diagrams;
-- run bash scripts/render-diagrams.sh --check to detect render drift;
-- public Kroki is for non-sensitive source only; use an approved local/private endpoint for sensitive or unreleased architecture.
+The first regenerates renders; the second detects drift. Public Kroki accepts
+only non-sensitive source; sensitive/unreleased architecture needs an approved
+local/private endpoint. Render and verify renderer success and visual readability
+before claiming repository completion. If unavailable or unsafe, retain valid
+`.puml` and report unverified/unrendered; never fabricate a render.
 
-If rendering cannot be performed safely or the renderer is unavailable, keep the valid .puml source and report the render as unverified/unrendered. Never fabricate a render.
+## Output
 
-## Output behavior
-
-For chat-only requests, return the complete PlantUML source first and keep explanation minimal.
-
-For repository changes:
-
-- preserve aliases, includes, style, and placement when reasonable;
-- minimize source churn so Git diffs remain reviewable;
-- validate renderer success and visual readability;
-- report changed source/render files, validation command/result, and unresolved limitations.
-
-## Review checklist
-
-Before finalizing, verify:
-
-- title and scope are clear;
-- one question is answered;
-- abstraction levels are not mixed without reason;
-- important relationships have direction and meaningful labels;
-- protocols appear where operationally relevant;
-- main structure or flow is obvious within seconds;
-- avoidable crossings and duplicate edges are removed;
-- styling semantics are consistent;
-- source is deterministic and suitable for Git review.
+Chat-only: complete PlantUML source first, minimal explanation. Repository work:
+report changed source/render files, validation command/result and unresolved
+limitations.

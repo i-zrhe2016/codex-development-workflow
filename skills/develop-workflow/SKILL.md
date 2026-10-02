@@ -1,50 +1,29 @@
 ---
 name: develop-workflow
-description: "Decide WHEN to implement. Take an executable work definition to Development Complete: understand the affected code, make the minimal change, and validate it locally. Use when the request is to implement, fix, refactor, or change repository content. It stops before publication and never commits, pushes, opens a pull request, merges, closes an Issue, or updates repository state."
+description: "Implement, fix, refactor or modify repository content from an executable Slice to Development Complete with focused local validation. Stops before delivery verification, publication, Issue closure and state refresh."
 ---
 
 # Develop Workflow
 
-Stage workflow for the **context -> implementation -> Development Complete**
-transition.
+Owns **context -> implementation -> Development Complete**.
 
-## Responsibility
+1. Load only affected files, direct dependencies, relevant tests and repository
+   state. Confirm the smallest useful local validation before editing.
+2. Apply `AGENTS.md` adaptive scheduling to ready Slices/tasks: choose self or
+   delegation, useful concurrency and available agents at runtime. Keep
+   overlapping writes, unresolved dependencies and shared interfaces/schemas/
+   migrations/config sequential.
+3. Where practical, use meaningful failing tests first for behavior changes,
+   bugs/regressions, APIs, core logic, data processing or high risk. Validate
+   docs/config/dependencies/styling/typos/simple refactors directly; no forced RED.
+4. Make the minimum change satisfying acceptance; run focused checks and fix
+   clear failures. Refactor only within the Slice after acceptance passes.
+5. Integrate each wave before the next; recompute readiness from fresh evidence.
+   Wrong design assumptions require re-planning, not patch expansion.
 
-- Load only the context the Slice needs: the affected files, their direct
-  dependencies, the relevant tests, and the current repository state.
-- When several dependency-ready Slices or bounded implementation tasks exist,
-  apply the adaptive execution-wave policy in `AGENTS.md`: the main agent
-  decides at runtime whether to work directly or delegate, how much concurrency
-  is useful, and which available agent best matches each task.
-- Confirm the smallest useful local validation before editing.
-- Use test-first development when a meaningful failing test can be written for
-  behavior changes, bug fixes, regressions, API behavior, core business logic,
-  data processing, or high-risk code. Use direct focused validation instead for
-  documentation, configuration, dependency, styling, typo, and simple refactor
-  work; do not force a RED test there.
-- Make the minimum change that satisfies the Slice acceptance criteria.
-- Run focused local validation and fix failures whose cause is clear.
-- Refactor only inside the Slice, and only after its acceptance criteria pass.
-- Integrate the material results of each execution wave before scheduling the
-  next wave; recompute dependency readiness from fresh evidence.
-- Keep overlapping writes, unresolved dependencies, and shared interface,
-  schema, migration, or configuration changes sequential.
-- Stop and re-plan when implementation exposes a wrong design assumption
-  instead of growing the patch.
+**Development Complete:** acceptance is implemented and local validation passes.
+Report Slice, changed files, commands/results, unresolved risks and follow-up work.
 
-## Development Complete
-
-A Slice reaches Development Complete when its acceptance criteria are
-implemented and its focused local validation passes. Report the Slice, the
-files changed, the commands run with their results, and any unresolved risk.
-
-## Not responsible for
-
-- choosing the verification breadth that acceptance requires — that is
-  `verify-workflow`;
-- committing, pushing, opening a pull request, or merging — those are
-  `publish-workflow` and `integrate-workflow`;
-- closing Issues, refreshing `docs/Repo_Current_State.md`, or running the
-  post-delivery process evaluation;
-- unrelated refactors, formatting sweeps, dependency upgrades, or future-Slice
-  work.
+`verify-workflow` owns delivery verification breadth; publish/integrate own
+commit/push/PR/merge, Issue closure and state refresh. No post-delivery evaluation,
+unrelated refactors, formatting sweeps, dependency upgrades or future-Slice work.

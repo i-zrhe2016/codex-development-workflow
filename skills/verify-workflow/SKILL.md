@@ -1,63 +1,31 @@
 ---
 name: verify-workflow
-description: "Decide WHEN to verify. Select the verification scope and level for a change, invoke the test-workflow capability, and return its conclusion. Use when the request is to verify, validate, check acceptance criteria, or confirm a branch before publication. It does not modify code and does not restate the quality gate."
+description: "Verify acceptance, regressions, incidents, review findings or branch/PR readiness. Select scope and level, invoke test-workflow and return PASS/FAIL/BLOCKED; never modify code or duplicate its quality gate."
 ---
 
 # Verify Workflow
 
-Thin stage workflow for the **trigger -> verification scope -> conclusion**
-transition. It decides *when* verification runs and *how much* of it the change
-warrants; the verification procedure and its quality gate belong to the
-`test-workflow` capability.
+Owns **trigger -> verification scope -> conclusion**; `test-workflow` owns
+procedure and Test Quality Gate.
 
-## Triggers
+Invoke for Development Complete acceptance before publication, explicit
+verification, regression/incident/review confirmation, or PR readiness. Exploratory
+implementation feedback belongs to `develop-workflow`.
 
-Invoke this stage when:
+1. Establish whether verification is warranted (record any skip reason), and
+   scope: Slice, Ticket, branch, Plan or single criterion.
+2. Choose `minimal`, `focused`, `regression` or `full` from behavior/risk.
+3. Invoke `test-workflow` for acceptance-to-test matrix, mandatory dimensions,
+   RED/GREEN, flaky/isolation policy and quality gate. Do not restate/relax it.
+4. Under `AGENTS.md`, independent checks may gather evidence concurrently only
+   without interference; the main agent synthesizes and judges it. Escalate
+   breadth only for evidence, acceptance or explicit requirements.
 
-- a Slice or Ticket has reached Development Complete and its acceptance must be
-  proven before publication;
-- the user asks to verify, validate, or confirm a branch, a change, or an
-  acceptance criterion;
-- a regression, an incident, or a review finding needs confirmation;
-- a pull request is about to be declared ready.
+Return exactly one conclusion with evidence, then stop:
 
-Do not invoke it for exploratory inspection during implementation; that local
-feedback belongs to `develop-workflow`.
+- `PASS`: selected level and all applicable mandatory dimensions passed.
+- `FAIL`: identify failing check/evidence; return fixes to `develop-workflow`.
+- `BLOCKED`: checks could not run; explain why.
 
-## Responsibility
-
-- Decide whether verification is warranted, and record the reason when it is
-  skipped.
-- Establish what is being verified: a Slice, a Ticket, a branch, a Plan, or a
-  single acceptance criterion.
-- Choose one bounded level — `minimal`, `focused`, `regression`, or `full` —
-  from the change's behavior and risk, not from habit.
-- Invoke `test-workflow` and let it own the acceptance-to-test matrix, the
-  mandatory test dimensions, the RED/GREEN loop, the flaky and isolation
-  policy, and the Test Quality Gate.
-- When verification contains independent bounded checks, the main agent may
-  schedule them adaptively under `AGENTS.md`. Parallel evidence gathering is
-  allowed only when the checks do not interfere with one another; the main
-  agent still synthesizes the evidence and owns the final conclusion.
-- Return the conclusion with its evidence. Escalate the level only when the
-  evidence, the acceptance criteria, or an explicit requirement justify it.
-
-## Result
-
-Return exactly one conclusion:
-
-- `PASS` — the selected level and every applicable mandatory dimension passed;
-- `FAIL` — a check failed, reported with the failing check and its evidence;
-- `BLOCKED` — verification could not run, reported with the reason.
-
-Return the result and stop.
-
-## Not responsible for
-
-- modifying code, tests, configuration, or documentation so a check passes —
-  return `FAIL` to `develop-workflow` instead;
-- duplicating, restating, or relaxing the quality gate;
-- letting a subagent advance the workflow, publish, merge, or replace the main
-  agent's PASS / FAIL / BLOCKED judgment;
-- committing, pushing, opening a pull request, or merging;
-- closing Issues or updating repository state.
+No code/test/config/docs edits to pass checks, commit/push/PR/merge, Issue closure
+or state updates. Subagents cannot advance stages or replace main-agent judgment.

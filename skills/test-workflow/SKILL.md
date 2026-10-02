@@ -1,206 +1,175 @@
 ---
 name: test-workflow
-description: "General repository verification and test-quality workflow. Use when validating feature work, bug fixes, refactors, or ticket acceptance criteria across backend, frontend, APIs, libraries, and CLI projects. Map acceptance criteria to evidence, choose mandatory test dimensions from risk, run the cheapest relevant checks first, use RED/GREEN for complex or risky behavior, add boundary/negative, property/fuzz, mutation, integration, regression, or browser checks when justified, detect flaky tests, and require an explicit Test Quality Gate before PASS."
+description: "Verify feature, bug-fix, refactor or Ticket acceptance across backend, frontend, API, library and CLI work. Map acceptance to risk-based evidence; use focused checks, justified RED/GREEN, boundary/negative, property/fuzz, mutation, integration, regression, browser and flake checks; require the Test Quality Gate before PASS."
 ---
 
 # Test Workflow
 
-Validate behavior with the lightest reliable test strategy. This skill owns the
-verification procedure and returns its result; deciding when verification runs
-and how much of it a change warrants belongs to `verify-workflow`. Prefer
-deterministic automated feedback over repeated agent inspection.
+Own verification procedure/results; `verify-workflow` chooses when and how
+broadly to verify. Stop at the result: no commit, push, PR or merge. Prefer the
+lightest reliable, deterministic automated evidence over repeated inspection.
 
-## Core rules
+## Strategy and bounded levels
 
-1. Derive tests from the requirement, ticket function checklist, acceptance criteria, and existing project contracts.
-2. Reuse the repository's existing test framework, scripts, fixtures, helpers, and conventions before adding new infrastructure.
-3. Run the smallest relevant check first; broaden only after the focused checks pass.
-4. Test observable behavior and stable contracts, not implementation details unless the implementation detail is itself the contract.
-5. Never weaken assertions, delete meaningful tests, add blind retries, or add fixed sleeps merely to obtain GREEN.
-6. Do not run expensive full-suite or browser validation repeatedly inside the inner implementation loop unless the repository requires it.
-7. A passing test does not prove an untested requirement. Map every acceptance criterion to evidence.
+Derive expectations from requirements, Function Checklist, acceptance and
+existing public contracts, never by mirroring implementation. Test observable
+behavior/stable contracts; implementation details only when themselves the
+contract. Reuse existing frameworks, scripts, fixtures/helpers and conventions.
 
-## Bounded verification levels
-
-Choose one level for the current Slice before running checks:
+Choose a Slice level **before checks**:
 
 | Level | Use |
 |---|---|
-| `minimal` | Tiny, documentation, configuration, styling, dependency, typo, or simple refactor changes. |
-| `focused` | Default; the smallest checks directly tied to the Slice acceptance criteria. |
-| `regression` | Bug fixes, cross-module changes, or demonstrated regression risk. |
-| `full` | High-risk changes, release gates, or an explicit full-suite requirement. |
+| `minimal` | Tiny/docs/config/styling/dependency/typo/simple-refactor work. |
+| `focused` | Default: smallest checks proving Slice acceptance. |
+| `regression` | Bug fix, cross-module change or demonstrated regression risk. |
+| `full` | High risk, release gate or explicit full-suite requirement. |
 
-The level limits breadth; it does not replace the quality gate. Before running
-checks, identify the mandatory test dimensions created by the changed behavior
-and risk profile. Stop only when every mandatory dimension is satisfied, or is
-recorded as N/A with a concrete reason. Escalate breadth when acceptance
-criteria, failure evidence, an affected boundary, release requirements, or the
-risk profile requires it.
+Level bounds breadth, never bypasses the quality gate. Identify mandatory risk
+dimensions first; satisfy each or record concrete N/A reasons. Escalate for
+acceptance, failures, affected boundaries, release policy or risk.
 
-## Choose the testing mode
+- **Tiny:** nearest existing checks after implementation; add regression tests
+  when fixing behavior that could recur. No ceremonial RED/GREEN for formatting,
+  docs or mechanically verifiable changes.
+- **Normal:** define/update focused changed-contract tests, implement, then run
+  them and relevant regression checks.
+- **Complex/high-risk:** meaningful RED -> GREEN before production work when
+  practical, especially permissions/authentication, money, state transitions,
+  concurrency, parsing, data integrity and regressions.
+- **Browser-visible:** smallest relevant user flow after lower-level checks.
 
-Use task risk and complexity to choose the test strategy. This skill returns a
-verification result and stops; it does not commit, push, open a pull request, or
-merge.
+Before complex/high-risk implementation, or ordinary validation, make a short
+checklist of success/contract, boundary/failure, transitions/invariants and
+regression risks, with relevant static, unit/component/API, integration and
+interaction-only browser evidence. Prefer high-signal cases, not fixed counts
+or exhaustive low-signal matrices.
 
-- **Tiny change:** run the closest existing checks after implementation. Add a regression test only when the change fixes behavior that could reasonably recur.
-- **Normal behavior change:** define or update focused tests around the changed contract, implement, then run focused tests and relevant regression checks.
-- **Complex/high-risk behavior:** use RED -> GREEN. Create or confirm a meaningful failing test before production implementation when practical, then implement the minimum change required to pass.
-- **Browser-visible behavior:** after lower-level checks pass, use the browser branch below for the smallest relevant user flow.
+## Acceptance-to-test matrix
 
-Strict test-first behavior is especially useful for permissions, authentication, money, state transitions, concurrency, parsing, data integrity, and bug regressions. Do not force ceremonial RED/GREEN for trivial formatting, documentation, or mechanically verifiable changes.
-
-## Build the test checklist
-
-Before implementation for complex/high-risk work, or before validation for ordinary work, create a short checklist:
-
-```text
-Behavior / contract
-- expected success path
-- important boundary or failure path
-- regression risk
-
-Evidence
-- static/type/lint check if relevant
-- focused unit/component/API test
-- integration test if boundaries are crossed
-- browser/E2E test only if user-visible interaction changed
-```
-
-Prefer a compact high-signal set over a large low-signal matrix, but do not use
-a fixed case count as a completeness rule. Cover contracts, boundaries, state
-transitions, and failure handling first.
-
-## Build the acceptance-to-test matrix
-
-Before declaring a Slice test-complete, map every acceptance criterion to
-executed evidence:
+Before Slice test-completion map **every** acceptance criterion to executed
+evidence. Untested requirements keep the gate open; unmapped passing tests
+prove no requirement.
 
 | Acceptance criterion | Risk | Required dimension | Evidence | Result |
 |---|---|---|---|---|
 | <criterion> | low/medium/high | unit/integration/negative/... | <command/test> | pass/fail/blocked |
 
-A passing test that is not mapped to a requirement does not prove the
-requirement. A requirement without evidence keeps the quality gate open.
-
 ## Select mandatory test dimensions
 
-Choose dimensions from the behavior and risk, not from habit. Use only
-applicable dimensions, but record why a high-value dimension is N/A when it
-would otherwise be expected.
+Select by behavior/risk, not habit. Record concrete N/A reasons for otherwise
+expected high-value dimensions:
 
-- **Happy path / contract:** expected observable behavior.
-- **Boundary:** empty, minimum/maximum, off-by-one, threshold, size, encoding,
-  ordering, timeout, or lifecycle boundaries relevant to the contract.
-- **Negative / failure:** invalid input, rejected state, permission failure,
-  dependency failure, rollback, partial failure, and useful error behavior.
-- **State transition / invariant:** before/after state, idempotency, uniqueness,
-  conservation, monotonicity, or other domain invariants.
-- **Integration / contract boundary:** database, filesystem, queue, network,
-  service, schema, serialization, CLI process, or public API boundaries.
-- **Regression:** a test that would fail for the defect or behavior being
-  protected when recurrence is plausible.
-- **Property / fuzz:** parsers, transformations, numerical logic, codecs,
-  validation, protocol handling, complex input spaces, or strong invariants.
-- **Mutation / test-strength:** high-risk business logic or suspiciously easy
-  tests where assertion quality matters more than line execution.
-- **Browser / E2E:** critical browser-visible user flow that lower layers cannot
-  prove.
-- **Isolation / flake:** tests involving concurrency, time, shared state,
-  external services, nondeterministic ordering, or prior intermittent failure.
+| Dimension | Relevant contracts/risks |
+|---|---|
+| Happy path/contract | Expected observable behavior. |
+| Boundary | Empty, min/max, off-by-one, thresholds, size, encoding, order, timeout, lifecycle. |
+| Negative/failure | Invalid input/state, permissions/dependencies, rollback/partial failure, useful errors. |
+| State transition/invariant | Before/after, idempotency, uniqueness, conservation, monotonicity/domain invariants. |
+| Integration/contract | Database, filesystem, queue, network/service, schema/serialization, CLI process/public API. |
+| Regression | Plausible recurrence: test fails for the protected defect/behavior. |
+| Property/fuzz | Parsers, transformations, numerics, codecs, validation/protocols, complex inputs/strong invariants. |
+| Mutation/test-strength | High-risk business logic or suspiciously easy tests/weak assertions. |
+| Browser/E2E | Critical visible flow lower layers cannot prove. |
+| Isolation/flake | Concurrency/time/shared state, external services, nondeterministic order, intermittent failures. |
 
-Coverage percentage is diagnostic evidence only. Never use a high line or branch
-coverage number as proof that assertions are meaningful or requirements are
-complete.
+Coverage percentage is diagnostic evidence only. High line/branch coverage
+never proves meaningful assertions or complete requirements; pursue contract
+coverage, not percentages.
 
 ## Test ladder
 
-Run checks in this order when applicable:
+Run the cheapest relevant check first, broaden after focused checks pass, and
+follow this applicable order:
 
-1. **Static feedback:** compiler, typecheck, lint, schema/config validation.
-2. **Focused automated tests:** the smallest unit/component/API/package tests covering the changed behavior.
-3. **Boundary and negative tests:** exercise contract edges and expected failure behavior.
-4. **Property/fuzz checks:** use the repository's existing generator/fuzzer when complex input spaces or invariants justify it.
-5. **Integration/contract tests:** service, database, filesystem, queue, network, schema, process, or multi-module boundaries touched by the change.
-6. **Mutation/test-strength checks:** use an existing mutation tool, or a small targeted manual mutation when practical, for high-risk logic or weak-test suspicion.
-7. **Affected regression:** run the affected package/module suite; use the full suite only when justified by scope, risk, or project policy.
-8. **Browser/E2E:** verify only critical browser-visible flows that lower layers cannot establish.
-9. **Isolation/flaky check:** repeat only for diagnosis when nondeterminism is suspected; a later pass does not erase an earlier unexplained failure.
+1. Static: compiler/type/lint/schema/config validation.
+2. Focused unit/component/API/package tests.
+3. **Boundary and negative tests** for edges/failures.
+4. Property/fuzz using existing generators/fuzzers when justified.
+5. Integration/contract tests for touched boundaries/multiple modules.
+6. Existing mutation tool or practical targeted manual mutation for high-risk
+   logic or weak-test suspicion.
+7. Affected module/package regression; full suite only for justified scope,
+   risk or policy.
+8. Critical browser/E2E flows lower layers cannot establish.
+9. Isolation/flaky checks: diagnostic repeats only when nondeterminism suspected.
 
-Stop at the first useful failure and diagnose it before spending resources on
-higher layers. After fixes, resume the ladder from the cheapest check that can
-disprove the fix.
+Stop at the first useful failure, diagnose before higher layers, then resume
+from the cheapest check that can disprove the fix. Avoid repeated expensive
+full-suite/browser checks in the inner loop unless required by repository
+policy; use cheaper deterministic unit/API tests when sufficient.
 
-## RED -> GREEN loop
+## RED -> GREEN
 
-For complex or risky Tickets/Slices:
+For complex/risky Tickets/Slices:
 
-1. Translate acceptance criteria into focused test cases.
-2. Write or identify the smallest meaningful test that should fail for the missing behavior.
-3. Run it and confirm **RED** for the expected reason. If it passes because the behavior already exists, do not manufacture a failure; verify the requirement and adjust the ticket.
-4. Implement the minimum production change.
-5. Run the same focused test and directly related checks until **GREEN**.
-6. Run the affected integration/regression layer.
-7. Refactor only while keeping the relevant tests GREEN.
+1. Translate acceptance into focused cases and identify/write the smallest
+   meaningful test for missing behavior.
+2. Confirm RED for the expected reason. If behavior already exists, verify it
+   and adjust the Ticket; never manufacture failure.
+3. Implement the minimum production change; rerun the same test and direct
+   checks until GREEN.
+4. Run affected integration/regression; refactor only with relevant tests GREEN.
 
-Do not batch many unrelated RED/GREEN cycles into one opaque agent loop. Keep the current behavior slice explicit.
+Keep the current behavior Slice explicit, never batch unrelated cycles into an
+opaque loop.
 
 ## Property, fuzz, and mutation rules
 
-Use property/fuzz testing to explore input combinations that example tests are
-unlikely to enumerate. Define the invariant or oracle before generation; do not
-treat "did not crash" as sufficient unless crash-freedom is the contract. Keep
-and minimize any failing seed as a deterministic regression test.
+Define an invariant/oracle before generating combinations example tests miss;
+“did not crash” suffices only when crash-freedom is the contract. Preserve and
+minimize failing seeds into deterministic regression tests.
 
-Use mutation testing to evaluate the tests, not the production implementation.
-Prefer changed or high-risk modules rather than repository-wide mutation in the
-inner loop. Surviving meaningful mutations indicate weak assertions, missing
-cases, or unreachable code; either strengthen the tests or document why the
-mutation is equivalent/not relevant. Do not chase a universal mutation-score
-target.
+Mutation evaluates **tests**, not production. Target changed/high-risk modules,
+not repository-wide inner-loop mutation. For meaningful survivors strengthen
+assertions/cases or explain equivalence/irrelevance or unreachable code; do not
+chase a universal mutation-score target.
 
 ## Flaky and isolation policy
 
-A retry is diagnostic evidence, never a PASS mechanism. If the same commit and
-test state produce FAIL then PASS without a verified external cause, classify
-the check as flaky and keep the quality gate blocked or partial until the
-nondeterminism is understood, quarantined by explicit project policy, or fixed.
+A retry is diagnostic evidence, never a PASS mechanism. Same commit/test state
+FAIL then PASS without verified external cause is flaky: keep the gate
+blocked/partial until understood, fixed or quarantined by explicit project
+policy. A later pass never erases an unexplained failure.
 
-Prefer deterministic clocks, seeded randomness, isolated fixtures, unique test
-data, event/state waits, and hermetic dependencies. Never add blind retries or
-fixed sleeps to convert flaky behavior into GREEN.
+Prefer deterministic clocks, seeded randomness, isolated fixtures, unique data,
+event/state waits and hermetic dependencies. Never weaken assertions, delete
+meaningful tests, add blind retries or fixed sleeps solely to obtain GREEN.
 
 ## Failure handling
 
-Classify a failure before changing code:
+Classify before editing:
 
-- **Implementation defect:** product behavior violates the requirement -> fix the smallest relevant production code.
-- **Test defect:** assertion, fixture, selector, or test setup contradicts the verified requirement -> fix the test, not the product.
-- **Regression:** unrelated expected behavior broke -> fix or stop if outside scope.
-- **Environment/data failure:** dependency, service, account, fixture, permission, network, or test data unavailable -> mark blocked; do not fake a code fix.
-- **Requirement/design conflict:** expected behavior is ambiguous or the architecture assumption is wrong -> stop expanding the patch and re-plan.
+| Failure | Action |
+|---|---|
+| Implementation defect | Smallest relevant production fix for violated requirement. |
+| Test defect | Fix assertion/fixture/selector/setup contradicting verified requirement, not product. |
+| Regression | Fix broken unrelated expected behavior or stop if outside scope. |
+| Environment/data | Missing dependency/service/account/fixture/permission/network/data: blocked, no fake code fix. |
+| Requirement/design conflict | Ambiguous behavior/wrong architecture assumption: stop patch expansion and re-plan. |
 
-For ordinary failures with a clear cause, fix and rerun the focused test. Escalate to targeted root-cause analysis when the same failure repeats without new evidence, the cause remains unclear, or the change is high-risk. Do not use code review as the first response to every red test.
+Clear ordinary causes: fix and rerun focused checks. Repeated failure without
+new evidence, unclear cause or high risk: targeted root-cause analysis. Code
+review is not the default first response to every red test.
 
 ## Browser branch
 
-Use this branch only when browser-visible interaction changed or the acceptance criteria explicitly require an end-to-end user flow.
+Use only for changed browser-visible interaction or explicit E2E acceptance.
+Prefer existing Playwright/Selenium/Cypress; without a harness, use real
+Chromium if Playwright CLI is available.
 
-Prefer the repository's existing Playwright/Selenium/Cypress setup. If no browser harness exists and Playwright CLI is available, use real Chromium.
+- Decide flow/assertions before exploratory clicks; prove the smallest flow.
+- Begin with known URL/session/data; use role/label/accessible name/stable test
+  IDs rather than CSS hierarchy/XPath/nth-child. Wait for application state,
+  never arbitrary sleeps or retry-based success.
+- On failure capture screenshot, URL, visible state, console/request errors,
+  and trace when useful.
+- Source inspection, `curl`, static HTML or screenshots alone cannot pass
+  browser behavior. Browser evidence complements unit/integration checks.
+- Avoid destructive production actions; writes/deletes/payments/messages need
+  a safe test environment or explicit authorization.
 
-Browser rules:
-
-- Test the smallest user flow that proves the changed behavior.
-- Separate test discovery from execution: decide the important flow and assertions before exploratory clicking.
-- Prefer role, label, accessible name, or stable test IDs over CSS hierarchy/XPath/nth-child selectors.
-- Wait for application state, not arbitrary time. Avoid fixed sleeps and retry-based success.
-- Start from known URL, session, and data state.
-- Capture screenshot, URL, visible state, console/request errors, and trace when useful on failure.
-- Never mark browser behavior passed from source inspection, `curl`, static HTML, or a screenshot alone.
-- Avoid destructive production actions. Use a safe test environment or explicit authorization for writes, deletes, payments, or message sending.
-
-When using Playwright CLI directly:
+Direct CLI procedure:
 
 ```bash
 playwright-cli open --browser=chromium <url>
@@ -210,74 +179,32 @@ playwright-cli screenshot
 playwright-cli close
 ```
 
-Browser tests complement unit/integration checks; they do not replace them.
+## Test Quality Gate and report
 
-## Efficiency guardrails
+Ticket Slices are test-complete only when:
 
-- Do not rerun the full suite after every small edit.
-- Do not use browser automation to validate behavior that a deterministic unit/API test can prove more cheaply.
-- Do not chase coverage percentage as the goal. Prefer meaningful contract coverage.
-- Do not generate tests after reading implementation merely to mirror the code. Derive expected behavior from requirements and existing public contracts.
-- Keep test state outside fragile conversational memory when the task spans many tickets; use repository test files and the authoritative GitHub Issue as the durable source of truth.
+- every acceptance criterion has concrete executed evidence;
+- every mandatory dimension is satisfied or explicitly N/A with reason;
+- selected level checks and every applicable dimension above are GREEN;
+- failures are resolved or explicitly blocked/out of scope, with no unexplained
+  flake promoted to PASS, no test weakened for GREEN, and coverage diagnostic
+  only.
 
-## Completion
+For multi-Ticket work keep inner checks focused per Ticket, then run appropriate
+integration/regression after dependency-related Tickets are GREEN. Later
+behavior fixes require affected reruns and an updated result. Across many
+Tickets keep state in repository tests and authoritative GitHub Issues, not
+fragile conversation memory.
 
-A Ticket's Slices are test-complete only when the Test Quality Gate closes:
+Return a concise `Test Report` containing scope, mode
+(`tiny / normal / RED-GREEN / browser`), level
+(`minimal / focused / regression / full`) and result
+(`pass / partial / fail / blocked`), the acceptance-to-test matrix above, and:
 
-- every acceptance criterion maps to concrete executed evidence;
-- every mandatory risk dimension is satisfied, or explicitly N/A with reason;
-- the selected checks for the chosen level are GREEN;
-- required boundary, negative, integration, regression, property/fuzz,
-  mutation, browser, and isolation checks are GREEN when applicable;
-- no unexplained flaky result is converted to PASS by rerun;
-- failures are resolved or explicitly classified as blocked/out of scope;
-- no test was weakened solely to make the suite pass;
-- coverage metrics, if reported, are treated as diagnostics rather than proof
-  of test quality.
+A `Test Quality Gate` table (`Dimension | Result | Evidence / N/A reason`)
+covers acceptance coverage and every dimension above. Use `pass/fail` for
+acceptance and `pass/fail/N/A` for other dimensions.
 
-For a multi-Ticket feature, keep inner-loop checks focused per Ticket, then run
-the appropriate integration/regression suite after all dependency-related
-Tickets are GREEN. When a later fix changes behavior, rerun the affected checks
-and return the updated verification result.
-
-## Report
-
-Return a concise report:
-
-```markdown
-## Test Report
-
-- Scope: <ticket/feature>
-- Mode: tiny / normal / RED-GREEN / browser
-- Level: minimal / focused / regression / full
-- Result: pass / partial / fail / blocked
-
-### Acceptance-to-test matrix
-
-| Acceptance criterion | Risk | Required dimension | Evidence | Result |
-|---|---|---|---|---|
-| ... | ... | ... | command/test/observed behavior | pass/fail/blocked |
-
-### Test Quality Gate
-
-| Dimension | Result | Evidence / N/A reason |
-|---|---|---|
-| Acceptance coverage | pass/fail | ... |
-| Boundary coverage | pass/fail/N/A | ... |
-| Negative-path coverage | pass/fail/N/A | ... |
-| Regression protection | pass/fail/N/A | ... |
-| Integration/contract | pass/fail/N/A | ... |
-| Property/fuzz | pass/fail/N/A | ... |
-| Mutation/test-strength | pass/fail/N/A | ... |
-| Browser/E2E | pass/fail/N/A | ... |
-| Flaky/isolation | pass/fail/N/A | ... |
-
-### Failures
-- <root cause, relevant evidence, and next action>
-```
-
-Report only checks actually executed. Never claim a test passed when the tool, environment, service, account, or test data was unavailable.
-
-## Community-derived practice
-
-This workflow incorporates recurring practitioner lessons from AI-coding discussions: strict TDD can help on complex/high-risk work but becomes costly when forced onto trivial tasks; focused tests should run before full suites; linters/type checks provide cheap feedback; browser automation is expensive and flaky when used as the default loop; and test expectations should be decided before exploratory execution so agents do not spend repeated rounds discovering what to assert.
+List failures with root cause, evidence and next action. Report **only executed
+checks**; unavailable tools, environment, services, accounts or data never count
+as passed.
