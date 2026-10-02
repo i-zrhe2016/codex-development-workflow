@@ -1,0 +1,50 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title install-all.sh — Destination, Ownership, Update and Retirement
+
+start
+:Parse target / dest / update / adopt-legacy options;
+
+if (Explicit dest provided?) then (yes)
+  :Use explicit skills destination;
+else (no)
+  :Resolve target default\nCodex: CODEX_HOME or HOME/.codex/skills\nClaude: HOME/.claude/skills;
+endif
+
+if (Destination is inside repository?) then (yes)
+  :Refuse installation;
+  stop
+endif
+
+:For each of 12 managed bundles;
+
+if (Destination exists?) then (no)
+  :Copy bundle;
+  :Write ownership marker;
+else (yes)
+  if (Update enabled?) then (no)
+    :Skip existing bundle;
+  else (yes)
+    if (Ownership marker matches?) then (yes)
+      :Replace managed bundle;
+    else (no)
+      if (Adopt legacy enabled?) then (yes)
+        :Move legacy bundle to recoverable backup;
+        :Install managed bundle;
+      else (no)
+        :Preserve path\nReport ownership unverified;
+      endif
+    endif
+  endif
+endif
+
+if (Update enabled?) then (yes)
+  :Prune owned retired skill destinations\nincluding context-efficiency and prior retired bundles;
+endif
+
+:Report installed / skipped / migrated\nand resolved destination;
+stop
+@enduml

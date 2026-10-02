@@ -1,0 +1,4 @@
+interface:
+  display_name: "Publish Workflow"
+  short_description: "Decide when to publish: docs, redaction, commit, push, PR"
+  default_prompt: "Use $publish-workflow to run the documentation impact check, scan the staged files for sensitive data, make one focused Conventional Commit, push the branch, and create or update the pull request until it is ready to merge."

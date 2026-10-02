@@ -1,213 +1,182 @@
 # AGENTS.md
 
-This repository uses **zero runtime Skills**. Codex owns normal reasoning and execution directly.
+This file defines repository-wide engineering principles, the development workflow stages, and when specialist Skills must be invoked.
+
+Detailed procedures belong in each Skill's `SKILL.md`. Do not duplicate them here.
 
-Do not create, install, discover, or invoke repository Skills. There must be no root `SKILL.md` and no `skills/**/SKILL.md`.
+## Principles
 
-## Native Codex responsibilities
+Priority:
 
-Use Codex natively for requirement understanding, planning and decomposition, architecture, implementation, refactoring, investigation, verification and testing, delegation, coordination, integration, ordinary Git/GitHub operations, and diagram authoring.
+`Correctness -> Simplicity -> Architecture Clarity -> Maintainability -> Extensibility`
+
+* Follow Occam's razor: prefer the simplest necessary and maintainable solution.
+* Understand the existing architecture before making non-trivial changes.
+* Prefer minimal changes, existing capabilities, mature frameworks, and clear interfaces.
+* Do not introduce speculative abstractions, services, features, or dependencies.
+* Keep responsibilities and module/service boundaries clear.
+* Fix root causes instead of hiding problems with additional complexity.
+
+## Documentation
+
+* Keep `README.md` as the project introduction and documentation index.
+* Put detailed documentation under `docs/`.
+* Keep documents focused on one module or topic.
+* Update documentation only when verified behavior, architecture, interfaces, dependencies, deployment, or important project state changes.
+
+## Development Workflow
+
+Use the lightest workflow that preserves correctness. Work is routed to the
+stage that owns it rather than running one fixed chain for every request.
 
-The rules below exist only because they are repository-specific contracts or deterministic gates that Codex does not inherently know.
+| Situation | Stage |
+| --- | --- |
+| A requirement needs understanding, design, or decomposition | `plan-workflow` |
+| Repository content must change | `develop-workflow` |
+| Acceptance, a regression, or a branch needs proof | `verify-workflow` |
+| A verified change must be committed, pushed, or turned into a PR | `publish-workflow` |
+| A ready PR must be merged, cleaned up, or reconciled | `integrate-workflow` |
+| The user explicitly authorizes a complete end-to-end delivery | the full orchestration in `codex-development-workflow` |
+
+Feature, bug fix, refactor, and documentation work are profiles of these stages,
+not separate workflows.
 
-## GitHub Issues are the task authority
+Persist a Plan Issue with one or more child Ticket Issues before branch work
+when the work is complex, must survive a session boundary, or the user asks for
+a persisted plan. A persisted Plan owns one branch, one PR, and one merge for
+all of its Tickets; split each Ticket into independently verifiable Slices.
 
-GitHub Issues are the sole authoritative development-task store.
-
-- Every development task must have an authoritative Issue before implementation.
-- Chat, PR bodies, local Markdown, TODO files, and model memory are non-authoritative views.
-- If the Issue cannot be created or updated, implementation is blocked.
-- A simple task may remain one Issue.
-- When durable hierarchy is useful, persist one Plan Issue plus the smallest useful set of child Ticket Issues. Codex decides the decomposition natively.
-
-### Durable Issue schema
-
-Use exact stable markers when a persisted hierarchy is needed:
-
-```text
-<!-- codex-plan-id: <stable-kebab-slug> -->
-<!-- codex-ticket-id: T0016 -->
-```
-
-Ticket IDs are repository-scoped: `T` plus four zero-padded digits. Allocate a value greater than every existing valid ticket marker and never reuse an ID.
-
-A Plan title is:
-
-```text
-[PLAN] <short title>
-```
-
-A Plan body starts with:
-
-```yaml
-Status: planned
-Branch: <type>/<plan-id>-<short-description>
-Base: <base-branch>
-PR: null
-Tickets: [T0001]
-```
-
-A Ticket title is:
-
-```text
-[T0001] <short behavior title>
-```
-
-A Ticket body starts with:
-
-```yaml
-Plan: <canonical Plan Issue URL>
-Status: planned
-Dependencies: []
-```
-
-Allowed status values are `planned`, `in_progress`, `blocked`, `in_review`, and `done`.
-
-A persisted Plan owns one implementation branch, one PR, and one merge. Child Tickets do not get independent delivery branches.
-
-Before creating a Plan or Ticket, search open and closed Issues for the exact stable marker. Reuse one exact match; if multiple records match, stop rather than guessing.
-
-Keep Plan Branch/Base/PR/Ticket index and child dependencies/status synchronized with repository reality. Mark records `done` only after the Plan PR is merged.
-
-## Required task records
-
-Every development Issue must keep these records current:
-
-- task status and branch / PR references when applicable;
-- verification evidence or a concrete reason verification was unnecessary;
-- `Documentation Impact: updated | no-change` plus documents or reason;
-- `Repo Current State: updated | no-change` plus document or reason.
-
-These records are mandatory even though no Skill exists for them.
-
-## Documentation contract
-
-One fact -> one canonical document -> other documents link to it.
-
-- Root `README.md` is the repository documentation router.
-- Detailed documentation lives under `docs/`.
-- Current verified truth belongs in `docs/Repo_Current_State.md`.
-- Planned work belongs in GitHub Issues.
-- Historical change information belongs in Git.
-- Update an existing canonical owner instead of creating a parallel document.
-- Every maintained document must be reachable from the documentation router.
-- When documentation changes, keep source diagrams and required renders synchronized.
-- Never hand-edit a rendered SVG to hide a source problem.
-- Public rendering services must not receive sensitive or unreleased architecture.
-
-Repository document standards live in:
-
-- `docs/reference/doc-file-standard.md`
-- `docs/reference/document-types.md`
-- `docs/reference/documentation-lifecycle.md`
-- `docs/reference/document-templates.md`
-
-For every development task, record:
-
-- `Documentation Impact: updated — <documents>`, or
-- `Documentation Impact: no-change — <concrete reason>`.
-
-## Repo Current State contract
-
-`docs/Repo_Current_State.md` is a compact recovery snapshot of verified repository truth, not a changelog, backlog, plan, test archive, or reasoning trace.
-
-Keep these sections:
-
-- `Last verified`
-- `Current Focus`
-- `Implemented`
-- `In Progress`
-- `Known Issues / Failing Checks`
-- `Constraints`
-- `Architecture Snapshot`
-- `Next`
-
-Only write claims supported by current repository evidence such as tracked files, configuration, Git/GitHub state, or authoritative Issues. Omit or qualify unverified claims.
-
-For every development task, record:
-
-- `Repo Current State: updated — docs/Repo_Current_State.md`, or
-- `Repo Current State: no-change — <concrete reason>`.
-
-Update the snapshot only when repository truth materially changed.
-
-## Staged sensitive-data gate
-
-When staged content may contain credentials, tokens, private/internal addresses, personal identifiers, or other sensitive values, run:
-
-```bash
-python3 scripts/redaction/scan_staged.py
-```
-
-Interpret results:
-
-- `pass` / `noop`: gate is clear.
-- `findings`: block publication, sanitize, re-stage, and re-run.
-- `needs_review`: block publication until the uninspectable surface is resolved.
-- `error`: block publication until the scanner can run successfully.
-
-Never print matched secret values; report only finding type, path, and line number.
-
-If a real secret was already committed or pushed, revoke or rotate it first, then handle history separately.
-
-## Publication policy
-
-Codex performs Git/GitHub operations natively, but repository publication must satisfy these guards:
-
-- publish from a non-default branch;
-- required verification and applicable redaction must already pass;
-- selected changes must belong to the intended task;
-- commit subjects follow Conventional Commits 1.0.0;
-- repository-local author/committer identity and configured GitHub account match policy;
-- GitHub repository description is non-empty;
-- unresolved conflicts and unsafe behind-upstream states block publication;
-- every published coherent change has a pull request;
-- force-push requires explicit user authorization.
-
-Deterministic publication tools live under `scripts/publication/`.
-
-Readiness:
-
-```bash
-python3 scripts/publication/assess_push_readiness.py --json
-```
-
-Guarded commit/push when appropriate:
-
-```bash
-python3 scripts/publication/push_if_ready.py \
-  --message "type(scope): description" \
-  --pathspec path/to/file \
-  --execute
-```
-
-Optional managed hooks:
-
-```bash
-python3 scripts/publication/install_post_commit_hook.py --repo .
-```
-
-A successful commit or push is not equivalent to PR readiness. Stop at `PR ready` unless merge is separately authorized.
-
-## Diagram repository rules
-
-Diagram reasoning and authoring are native Codex work.
-
-For PlantUML already used by repository documentation:
-
-```bash
-bash scripts/render-diagrams.sh render
-bash scripts/render-diagrams.sh --check
-```
-
-Keep `.puml` and same-basename `.svg` synchronized where the documentation standard requires it.
-
-## Hard guardrails
-
-Never weaken security, permissions, verification, redaction, branch, publication, or release controls to complete a task.
-
-Never commit credentials, tokens, private keys, `.env`, or other secrets.
+`codex-development-workflow` routes to these stages and carries the invariants
+that hold in all of them. Its full orchestration is the only path that runs
+several stages as one authorized delivery.
+
+## Multi-Agent Delegation
+
+Use a **fixed workflow / adaptive execution** model.
+
+The workflow topology and gates are static. Stage ownership, Plan -> Ticket -> Slice
+decomposition, dependency constraints, verification, publication, integration, and
+final completion rules do not change because multiple agents are available.
+
+Agent execution is dynamic. For the work owned by the current stage, the main
+agent decides at runtime whether to execute work itself or delegate it, how many
+subagents to use, which dependency-ready items may run concurrently, and which
+available agent best matches each delegated item.
+
+The main agent owns:
+
+* requirements;
+* architecture and design decisions;
+* planning and task decomposition;
+* dependency ordering;
+* execution-wave scheduling;
+* integration;
+* stage-gate decisions;
+* final judgment.
+
+### Adaptive execution waves
+
+Treat each dependency-ready Slice or other bounded stage task as a scheduling
+candidate. Before starting a wave, the main agent evaluates:
+
+* whether the task is independently executable;
+* whether its dependencies are satisfied;
+* whether its read/write ownership is clear;
+* whether it overlaps files, interfaces, schemas, migrations, or shared
+  configuration with another active task;
+* whether delegation materially improves speed, context isolation, independent
+  evidence, or implementation quality;
+* whether the task's risk makes main-agent execution preferable;
+* current host concurrency capacity.
+
+The main agent then chooses the smallest useful execution wave. It may execute
+all work itself, delegate one item, or run several independent items in
+parallel up to the host's configured concurrency limit. The concurrency limit
+is a ceiling, never a target.
+
+Do not pre-assign the whole Plan to agents. Recompute the ready set after each
+material result, failure, dependency change, or integration step. Keep dependent
+or overlapping work sequential.
+
+Parallel write tasks must have clearly separated ownership and must not modify
+the same files, interfaces, schemas, migrations, or shared configuration.
+Where safe write isolation is unavailable, delegate read-only investigation or
+return findings/patches for main-agent integration instead.
+
+Each delegated task must define:
+
+* goal;
+* scope and out-of-scope;
+* relevant files or ownership boundary;
+* dependencies;
+* acceptance criteria;
+* validation;
+* expected result summary.
+
+Subagents return material findings, changes, test results, and unresolved risks
+rather than raw logs. The main agent integrates each completed wave before the
+workflow crosses the next stage gate.
+
+A subagent may gather implementation or verification evidence, but it does not
+change the workflow topology, skip a gate, declare publication or integration
+complete, or override the main agent's final judgment.
+
+The main agent must not duplicate work already delegated to an active subagent.
+Prefer a single delegation level. Subagents should not create further subagents
+unless explicitly required.
+
+### Who chooses the subagent
+
+The host and main agent choose the best available subagent dynamically from the
+task contract; do not hard-code task classes to named agents in this repository.
+
+* Codex may use built-in agents and any project-defined agents under
+  `.codex/agents/`.
+* Claude Code may use built-in agents and project-defined agents under
+  `.claude/agents/`, using each definition's `description` as its selection
+  signal.
+
+Write an agent's `description` so that it states the exact trigger and operating
+boundary it serves. An agent that must not run on ordinary work has to say so in
+its description.
+
+This section owns the delegation and adaptive scheduling policy. Other
+documents link to it rather than restating it.
+
+## Skill Routing
+
+| Situation                                                              | Skill                        |
+| ---------------------------------------------------------------------- | ---------------------------- |
+| Routing a request to its stage, or an authorized end-to-end delivery   | `codex-development-workflow` |
+| Planning, designing, or decomposing before changes                     | `plan-workflow`              |
+| Implementing or modifying repository content                           | `develop-workflow`           |
+| Verifying acceptance, a regression, or a branch                        | `verify-workflow`            |
+| Committing, pushing, or preparing a pull request                       | `publish-workflow`           |
+| Merging, cleaning up, or reconciling after delivery                    | `integrate-workflow`         |
+| Complex, multi-step, dependent, or incremental work needs a Plan/Ticket/Slice breakdown | `plan-to-ticket` |
+| Feature, bug fix, regression, integration, or browser validation       | `test-workflow`              |
+| Architecture or flow visualization materially improves understanding   | `plantuml`                   |
+| Verified repository state materially changed                           | `repo-current-state`         |
+| Every change (documentation impact check), or docs need normalizing    | `repo-documentation`         |
+| Files staged for a commit or PR may contain credentials or personal data | `data-document-redaction`    |
+| Branch publication, Commit, Push, or PR readiness is required          | `github-push-when-ready`     |
+
+## Skill Rules
+
+* Invoke Skills only when their trigger applies.
+* Prefer the most specific applicable Skill.
+* Follow the invoked Skill's `SKILL.md`.
+* Do not duplicate Skill procedures here.
+* Multiple Skills may be invoked when independent triggers apply.
+* If a required Skill is unavailable, report it instead of inventing a replacement.
+
+## Repository Rules
+
+* Keep architecture and dependencies as simple as practical.
+* One commit should represent one clear purpose.
+* Never commit passwords, tokens, credentials, private keys, `.env`, or other secrets.
+* Do not commit local `AGENTS.md` or `CLAUDE.md` unless the repository intentionally versions them.
 
 ## Completion
 
-Finish when the user's requested outcome is satisfied, the authoritative Issue is current, required records are present, and applicable deterministic gates pass. Do not manufacture workflow stages, Skills, or artifacts for capabilities Codex already provides.
+A change is complete only after all applicable workflow gates have passed.
