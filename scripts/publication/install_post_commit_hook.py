@@ -59,8 +59,8 @@ def resolve_hook_path(repo: Path, hook_name: str = "post-commit") -> Path:
     return resolve_hooks_dir(repo) / hook_name
 
 
-def build_hook_body(skill_dir: Path) -> str:
-    auto_push_script = skill_dir / "scripts" / "auto_push_post_commit.py"
+def build_hook_body(script_dir: Path) -> str:
+    auto_push_script = script_dir / "auto_push_post_commit.py"
     script_arg = shlex.quote(str(auto_push_script))
     return "\n".join(
         [
@@ -78,8 +78,8 @@ def build_hook_body(skill_dir: Path) -> str:
     )
 
 
-def build_conventional_commit_hook_body(skill_dir: Path) -> str:
-    validator = skill_dir / "scripts" / "conventional_commits.py"
+def build_conventional_commit_hook_body(script_dir: Path) -> str:
+    validator = script_dir / "conventional_commits.py"
     script_arg = shlex.quote(str(validator))
     return "\n".join(
         [
@@ -141,18 +141,18 @@ def _install_hook(
 
 def main() -> int:
     args = build_parser().parse_args()
-    skill_dir = Path(__file__).resolve().parent.parent
+    script_dir = Path(__file__).resolve().parent
     repo = resolve_repo(args.repo)
     hooks = [
         (
             resolve_hook_path(repo, "commit-msg"),
-            build_conventional_commit_hook_body(skill_dir),
+            build_conventional_commit_hook_body(script_dir),
             CONVENTIONAL_COMMIT_MARKER,
             CONVENTIONAL_COMMIT_BACKUP_SUFFIX,
         ),
         (
             resolve_hook_path(repo, "post-commit"),
-            build_hook_body(skill_dir),
+            build_hook_body(script_dir),
             MANAGED_MARKER,
             BACKUP_SUFFIX,
         ),
