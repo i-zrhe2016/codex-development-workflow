@@ -1,67 +1,22 @@
 # Document Types and Canonical Owners
 
-Each document type owns a different kind of fact. Choose the type first; the
-type decides the directory, the allowed status values, and the template.
+Choose the type before its directory, status and template.
+Ordinary statuses: Draft, Active, Deprecated, Superseded.
 
-## Types
-
-| Type | Directory | Records | Does not record | Status values |
+| Type | Directory | Owns | Excludes | Status |
 |---|---|---|---|---|
-| Architecture | `docs/architecture/` | what exists and how the parts connect | why an option was chosen | Draft, Active, Deprecated, Superseded |
-| ADR | `docs/adr/` | one significant decision, its alternatives, and its consequences | implementation detail | Proposed, Accepted, Deprecated, Superseded |
-| Guide | `docs/guides/` | how a developer completes a task | exact value tables | Draft, Active, Deprecated, Superseded |
-| Runbook | `docs/runbooks/` | how to operate, verify, and recover a system | design rationale | Draft, Active, Deprecated, Superseded |
-| Reference | `docs/reference/` | exact facts: options, defaults, endpoints, commands | tutorials and rationale | Draft, Active, Deprecated, Superseded |
-| State | `docs/Repo_Current_State.md` | what is true now | history, plans, architecture detail | owned by `repo-current-state` |
+| Architecture | `docs/architecture/` | existing components, relationships, boundaries | choice rationale/alternatives | Ordinary |
+| ADR | `docs/adr/` | one significant choice, alternatives, consequences | implementation detail | Proposed, Accepted, Deprecated, Superseded |
+| Guide | `docs/guides/` | end-to-end developer tasks: setup/run/debug | exact value tables (link Reference) | Ordinary |
+| Runbook | `docs/runbooks/` | operation, verification, failure handling, rollback | design rationale | Ordinary |
+| Reference | `docs/reference/` | exact keys/defaults/constraints/endpoints/commands | tutorials/rationale | Ordinary |
+| State | `docs/Repo_Current_State.md` | implemented/current truth | history/plans/architecture detail | `repo-current-state` owns it |
 
-`State` is the one type that does not use this Skill's file header.
-`docs/Repo_Current_State.md` keeps its `Last verified` field and is maintained by
-`repo-current-state`; this Skill only routes to it.
+State uses `Last verified`, not this skill's header. Planned work belongs to
+GitHub Issues; change history belongs to Git. The router holds links/grouping,
+not detailed facts. Choices affecting no architecture/interface/deployment/
+operation are implementation details, not ADRs.
 
-## Canonical owner routing
-
-| Fact | Owner |
-|---|---|
-| component relationships and boundaries | Architecture |
-| why a technology or approach was chosen | ADR |
-| exact configuration keys, defaults, and constraints | Reference |
-| recovery or rollback procedure for a component | Runbook |
-| how to set up, run, or debug the project locally | Guide |
-| what is implemented right now | `docs/Repo_Current_State.md` |
-| what will be done next | GitHub Issue |
-| when something changed | Git |
-
-## Placement
-
-Suggested structure. Create only the directories that have content; an empty
-directory is not documentation.
-
-```text
-docs/
-├── README.md
-├── architecture/
-├── adr/
-├── guides/
-├── runbooks/
-├── reference/
-└── Repo_Current_State.md
-```
-
-This mapping applies to documents a change creates. An existing document keeps
-its location until a normalization pass moves it, so a legacy directory is
-reported as a finding rather than corrected automatically.
-
-## Boundaries between types
-
-- Architecture says what is; an ADR says why. Do not explain alternatives or
-  rejected options in an architecture document.
-- A Guide teaches a task end to end; a Reference lists exact values. Link to the
-  reference instead of copying tables into the guide.
-- A Runbook is a Guide for operations and must state verification, failure
-  handling, and rollback.
-- `Repo_Current_State.md` summarizes. It never becomes the detailed
-  architecture, decision, or procedure document.
-- The documentation router is an index, not a content document. It carries
-  links and grouping, never the facts themselves.
-- A choice that affects no architecture, interface, deployment, or operation is
-  an implementation detail. Do not write an ADR for it.
+Create only directories with content. This placement applies to new documents;
+report legacy locations and preserve them until an explicit normalization move.
+State remains a summary, never a detailed architecture, decision or procedure.

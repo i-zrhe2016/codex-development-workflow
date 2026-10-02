@@ -1,7 +1,6 @@
 # Document Templates
 
-Use the template that matches the document `Type`. Remove sections that do not
-apply; do not leave empty headings.
+Use the matching `Type`; remove inapplicable/empty sections.
 
 ## Architecture
 
@@ -22,8 +21,7 @@ apply; do not leave empty headings.
 ## Related Documentation
 ```
 
-Record what exists, how the parts connect, and where the boundaries are. Leave
-rationale to the ADR.
+Record existing relationships/boundaries; rationale belongs in ADRs.
 
 ## ADR
 
@@ -41,9 +39,8 @@ rationale to the ADR.
 ## Related Documentation
 ```
 
-One decision per record, in `docs/adr/NNNN-kebab-case.md`. Never edit an
-accepted ADR to describe a later decision; write a new ADR and mark the old one
-`Superseded`.
+One decision per `docs/adr/NNNN-kebab-case.md`; later decisions require new ADRs
+and supersede the old, never rewrite accepted records.
 
 ## Guide
 
@@ -79,8 +76,7 @@ accepted ADR to describe a later decision; write a new ADR and mark the old one
 ## Related Documentation
 ```
 
-A runbook answers four questions: how to perform the operation, how to know it
-succeeded, what to do when it fails, and how to undo it.
+Include operation, success verification, failure handling and rollback.
 
 ## Reference
 
@@ -99,12 +95,11 @@ succeeded, what to do when it fails, and how to undo it.
 ## Related Documentation
 ```
 
-Facts before explanation. Keep values exact and verifiable.
+Exact, verifiable facts before explanation.
 
 ## Diagrams
 
-Embed a diagram directly under the section it illustrates, using the image as
-the figure and the `.puml` source as the link:
+Under the illustrated section, embed the image and link editable source:
 
 ```markdown
 ![<what the diagram shows>](diagrams/<name>.svg)
@@ -112,21 +107,16 @@ the figure and the `.puml` source as the link:
 Source: [`diagrams/<name>.puml`](diagrams/<name>.puml)
 ```
 
-When the diagram could not be rendered, link the source instead of the image and
-say so, so no reader mistakes a missing figure for a broken link:
+If unrendered, link source instead of a missing image and say so:
 
 ```markdown
 Diagram (not yet rendered): [`diagrams/<name>.puml`](diagrams/<name>.puml)
 ```
 
-- Write alt text that states the fact the diagram carries, not the file name. A
-  reader who cannot see the image must still get the point.
-- Use a path relative to the document, so the image resolves on GitHub and in a
-  local checkout alike.
-- Keep the diagram in the document's own `diagrams/` directory; placement and
-  naming are defined in `doc-file-standard.md`.
-- Do not paste the PlantUML source into the document. The `.puml` file is the
-  editable artifact; the document carries the image and the link.
+Alt text states the fact, not filename, so it is useful without the image. Paths
+are document-relative for GitHub/local rendering. Follow
+[placement/naming](doc-file-standard.md) for the owner's `diagrams/` directory;
+never paste PlantUML source into prose.
 
 ## State
 

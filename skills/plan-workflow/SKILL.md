@@ -1,55 +1,27 @@
 ---
 name: plan-workflow
-description: "Decide WHEN to plan. Turn a requirement into an executable work definition: understand the affected repository area, settle architecture and scope, and decompose the work into Tickets and Slices. Use when the request is to plan, design, investigate, or decompose before any code changes. It does not edit code, run the delivery verification, or publish anything."
+description: "Plan, design, investigate or decompose a requirement into executable Tickets/Slices before changes. Owns architecture, scope and persistence decisions; never edits repository files, verifies delivery or publishes."
 ---
 
 # Plan Workflow
 
-Stage workflow for the **requirement -> executable work definition**
-transition. It decides *when* planning happens and *how much* planning the
-requirement warrants; the decomposition and persistence procedure itself
-belongs to the `plan-to-ticket` capability.
+Owns **requirement -> executable work definition**; `plan-to-ticket` owns the
+decomposition and persistence procedure.
 
-## Responsibility
+1. Read `docs/Repo_Current_State.md`, affected code and applicable `AGENTS.md`;
+   verify relevant claims, boundaries, interfaces and existing constraints.
+2. Choose the simplest sufficient design; record rejected alternatives only
+   when they explain a real decision.
+3. Invoke `plan-to-ticket` for behavior Tickets, dependency-ordered Slices,
+   acceptance criteria and planned verification breadth; do not execute checks.
+4. Persist Plan and child Issues when complex, cross-module, dependent,
+   multi-session/resumable by another agent, or explicitly requested. Keep small
+   single-session plans inline. Follow the capability's exact titles, markers,
+   ID allocation and branch contract.
 
-- Read `docs/Repo_Current_State.md` and the affected code before proposing
-  anything; verify the claims the request depends on.
-- Establish the affected boundary, the interfaces it touches, and the
-  constraints that already exist, including `AGENTS.md` rules in scope.
-- Choose the simplest design that satisfies the requirement. Record a rejected
-  alternative only when it explains a real decision.
-- Split the requirement into behavior Tickets and dependency-ordered Slices.
-- Name the acceptance criteria and the verification breadth each Slice will
-  need, without executing it.
-- Decide whether the work needs a persisted Plan Issue.
+Complete only when the persistence decision is recorded and every Slice has
+scope/exclusions, dependencies, acceptance, test strategy/level and validation
+command. Return the plan and stop; later implementation uses `develop-workflow`.
 
-## Persistence decision
-
-Persist a Plan and its child Tickets as GitHub Issues when any of these hold:
-
-- the work is complex, crosses modules, or has internal dependencies;
-- the work must survive a session boundary or be resumed by another agent;
-- the user explicitly asks for a persisted plan.
-
-Small, single-session work keeps its plan inline and moves straight to
-`develop-workflow`. Use `plan-to-ticket` for the decomposition and, when a
-trigger above applies, for its persistence contract. Title format, markers,
-Ticket ID allocation, and branch naming stay exactly as `plan-to-ticket`
-defines them.
-
-## Not responsible for
-
-- editing product, test, configuration, or documentation files;
-- running the acceptance verification — that is `verify-workflow`;
-- committing, pushing, opening a pull request, or merging — those are
-  `publish-workflow` and `integrate-workflow`;
-- closing Issues, or refreshing `docs/Repo_Current_State.md`, which happens
-  after integration;
-- the post-delivery process evaluation.
-
-## Completion
-
-Planning is complete when every Slice a later stage will execute carries a
-scope, an out-of-scope boundary, dependencies, acceptance criteria, a test
-strategy and level, and a validation command, and when the persistence decision
-above has been recorded. Return the plan and stop; do not start implementing.
+No product/test/config/docs edits, acceptance verification (`verify-workflow`),
+publication/integration, Issue closure, post-merge state refresh or evaluation.
