@@ -1,3 +1,0 @@
-interface:
-  display_name: "GitHub Issue Persistence"
-  short_description: "Persist repository task hierarchy and lifecycle in GitHub Issues"
