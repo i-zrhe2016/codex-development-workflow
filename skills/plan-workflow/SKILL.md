@@ -17,7 +17,11 @@ decomposition and persistence procedure.
 4. Persist Plan and child Issues when complex, cross-module, dependent,
    multi-session/resumable by another agent, or explicitly requested. Keep small
    single-session plans inline. Follow the capability's exact titles, markers,
-   ID allocation and branch contract.
+   ID allocation and branch contract. For newly requested functionality in an
+   unmerged Plan, use its scope-update contract before edits: append a Ticket,
+   update goal/scope/index/dependencies/validation, preserve branch/base/PR and
+   evidence, and invalidate impacted readiness. After merge, use a new Plan.
+   Planning new scope grants no publication authority.
 
 Complete only when the persistence decision is recorded and every Slice has
 scope/exclusions, dependencies, acceptance, test strategy/level and validation

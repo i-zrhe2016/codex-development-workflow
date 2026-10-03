@@ -17,15 +17,48 @@ implementation feedback belongs to `develop-workflow`.
 2. Choose `minimal`, `focused`, `regression` or `full` from behavior/risk.
 3. Invoke `test-workflow` for acceptance-to-test matrix, mandatory dimensions,
    RED/GREEN, flaky/isolation policy and quality gate. Do not restate/relax it.
-4. Under `AGENTS.md`, independent checks may gather evidence concurrently only
-   without interference; the main agent synthesizes and judges it. Escalate
-   breadth only for evidence, acceptance or explicit requirements.
+4. Follow the coordinator/worker boundary below. Independent Ticket checks may
+   run concurrently only without filesystem or shared test-state interference.
+   Escalate breadth only for evidence, acceptance or explicit requirements.
+
+## Coordinator and verification worker
+
+These minimum rules apply without `AGENTS.md` (not installed); when present,
+it owns the full scheduling policy.
+
+- Coordinator: dispatch one fresh independent verifier per Ticket after
+  Development Complete, including docs/config/test and inline one-Slice work.
+  It verifies all that Ticket's scenarios; never reuse its implementation agent or any
+  other Ticket's verifier, or split scenarios among workers.
+- Dispatched verifier: invoke `test-workflow`, gather evidence, return a result;
+  never spawn agents. Repository access is read-only except caches/temporary
+  evidence; do not fix code, tests, config or docs to pass checks.
+- Codex dispatch uses `spawn_agent` with `fork_turns="none"`; other hosts require
+  equivalent fresh agents and independent context. Otherwise report BLOCKED;
+  the main agent cannot substitute for the verifier.
+- Hand off only role, current Ticket goal/scope/non-goals, Slice dependencies/
+  acceptance, relevant files/ownership, Plan branch/base and verified prerequisite
+  results, validation commands and expected summary; no parent conversation or
+  unrelated history. Same-Ticket follow-up is allowed; interrupted/failed workers
+  require fresh replacements from verified checkpoints, never cross-Ticket reuse.
+- FAIL returns fixes to the implementation role. After fixes, dispatch a new
+  verifier for the affected function, preserving all prior failed evidence;
+  replacing agents cannot turn unexplained flakiness into PASS.
+- Context isolation does not isolate files or test state. Serialize interference
+  on the shared Plan branch; create no Ticket branch. The main agent synthesizes
+  evidence and owns the Test Quality Gate, stage transitions and final judgment.
 
 Return exactly one conclusion with evidence, then stop:
 
 - `PASS`: selected level and all applicable mandatory dimensions passed.
 - `FAIL`: identify failing check/evidence; return fixes to `develop-workflow`.
 - `BLOCKED`: checks could not run; explain why.
+
+PASS may end the requested work as local verified functionality; it grants no
+commit/push/PR/merge authority, and awaiting the user's publication decision is
+not BLOCKED. With expanded unmerged Plan scope, preserve prior evidence and
+recheck impacted acceptance plus batch readiness; an existing PR is not ready
+for that scope until those checks and an authorized update succeed.
 
 No code/test/config/docs edits to pass checks, commit/push/PR/merge, Issue closure
 or state updates. Subagents cannot advance stages or replace main-agent judgment.

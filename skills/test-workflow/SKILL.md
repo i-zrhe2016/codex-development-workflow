@@ -9,6 +9,31 @@ Own verification procedure/results; `verify-workflow` chooses when and how
 broadly to verify. Stop at the result: no commit, push, PR or merge. Prefer the
 lightest reliable, deterministic automated evidence over repeated inspection.
 
+## Execution roles
+
+These minimum rules work without `AGENTS.md` (not installed); it owns the full
+policy when present. Implementation workers may use this procedure for local
+feedback; independent acceptance is owned by a separate fresh verification
+agent per Ticket, including docs/config/test and inline one-Slice work. One
+implementer executes all dependency-ordered Slices; one verifier checks all
+Ticket scenarios. Neither is reused across Tickets, and workers never spawn agents.
+The coordinator dispatches them and owns the final Test Quality Gate and stages.
+
+Codex dispatch uses `spawn_agent` with `fork_turns="none"`; other hosts require
+equivalent fresh agents and independent context, or report BLOCKED without
+main-agent fallback. The manual contract contains only role, current Ticket
+goal/scope/non-goals, Slice dependencies/acceptance, relevant files/ownership,
+Plan branch/base and verified prerequisites, validation commands and expected
+summary; never the parent conversation or unrelated history. Same-Ticket
+follow-up is allowed; interrupted/failed workers use fresh replacements from
+verified checkpoints. Context isolation does not isolate filesystem/test state;
+serialize conflicts on the shared Plan branch, without Ticket branches.
+
+The independent verifier is read-only except caches/temporary evidence; code,
+test, config and docs fixes belong to implementation. After fixes, a new
+verifier rechecks the affected functionality and retains prior failures;
+agent replacement or retries never erase unexplained flakiness.
+
 ## Strategy and bounded levels
 
 Derive expectations from requirements, Function Checklist, acceptance and
@@ -138,7 +163,7 @@ meaningful tests, add blind retries or fixed sleeps solely to obtain GREEN.
 
 ## Failure handling
 
-Classify before editing:
+Classify before returning fixes to implementation (the independent verifier never edits):
 
 | Failure | Action |
 |---|---|
@@ -148,8 +173,10 @@ Classify before editing:
 | Environment/data | Missing dependency/service/account/fixture/permission/network/data: blocked, no fake code fix. |
 | Requirement/design conflict | Ambiguous behavior/wrong architecture assumption: stop patch expansion and re-plan. |
 
-Clear ordinary causes: fix and rerun focused checks. Repeated failure without
-new evidence, unclear cause or high risk: targeted root-cause analysis. Code
+For local implementation feedback, fix clear ordinary causes and rerun focused
+checks. Independent verification returns the failure to implementation, then a
+new verifier rechecks the affected function. Repeated failure without new
+evidence, unclear cause or high risk needs targeted root-cause analysis. Code
 review is not the default first response to every red test.
 
 ## Browser branch

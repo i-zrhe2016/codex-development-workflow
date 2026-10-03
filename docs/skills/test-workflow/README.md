@@ -2,8 +2,9 @@
 
 本目录迁移并维护 `test-workflow` specialist 的文档。运行时 skill 源码位于
 [`skills/test-workflow/`](../../../skills/test-workflow/)；它服务于本仓库的
-主 Agent / Slice workflow；它负责验证委派或主线程执行的 Slice，但不负责
-决定是否拆分 Agent 或如何并行实现。
+Ticket workflow：每个 Ticket（含文档、配置、测试）均由全新实现 worker 执行
+本地反馈，独立全新验证 worker 执行该 Ticket 全部 scenario；主代理保留最终门禁。调度与干净上下文规则由
+[AGENTS.md](../../../AGENTS.md#multi-agent-delegation) 定义，已派发 worker 不再创建代理。
 
 核心入口是 `test-workflow`：先建立 Acceptance-to-Test Matrix，再从变更风险
 选择 mandatory test dimensions，并按 `静态检查 -> focused -> boundary/negative

@@ -17,8 +17,9 @@ Core invariants:
 - work is routed to the stage workflow that owns it — `plan-workflow`,
   `develop-workflow`, `verify-workflow`, `publish-workflow`, or
   `integrate-workflow` — instead of one fixed chain for every request;
-- a persisted **Plan Issue** owns one implementation branch, one PR, and one
-  merge for all of its child **Ticket Issues**;
+- a **Plan** is an explicitly scoped delivery batch, which may include multiple
+  independent functionalities; a persisted **Plan Issue** owns one implementation
+  branch, one PR, and one merge for all of its child **Ticket Issues**;
 - Tickets decompose into dependency-ordered Slices that carry acceptance and
   validation contracts;
 - PASS requires the risk-aware **Test Quality Gate**, not merely a green focused
@@ -35,19 +36,26 @@ deployment, health-check, and rollback instructions. The external release
 owner performs and verifies the rollout or rollback. Completion evidence is
 the external release result or incident link recorded with the delivery.
 
-The macro workflow controls architecture and scope. A requirement that is
+The macro workflow controls architecture and scope. A delivery batch that is
 complex, must survive a session boundary, or is explicitly requested as a
 persisted plan is recorded as one GitHub Issue Plan with one or more child
-Ticket Issues before branch work starts, so a single-behavior requirement is one
-Plan with one Ticket and one implicit Slice while larger requirements add
-Tickets and Slices under that Plan. A persisted Plan owns the one branch, PR,
+Ticket Issues before branch work starts. A single behavior uses one Ticket and
+one implicit Slice; multiple planned functionalities retain their behavior
+Tickets under one Plan. See the [Plan scope contract](skills/plan-to-ticket/SKILL.md#scope-and-sizing)
+and [batch publication rules](skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
+for shared commit/PR scope and verification. A persisted Plan owns the one branch, PR,
 and merge. All Tickets and Slices share that branch; Ticket dependencies remain
 separate from Slice dependencies, and the PR head and base must match the Plan
-metadata.
-Verification breadth varies with risk, and published work follows one path:
+metadata. New user-requested functionality joins the same unmerged Plan as a
+new Ticket after its scope, index, dependencies and validation are updated;
+after merge it uses a new Plan. Local verified functionality is a normal
+stopping point. The user decides commit, push, PR creation/update and merge
+timing and scope; see [workflow usage](docs/workflow/usage.md#publication-decisions)
+for action boundaries and open-PR expansion.
+Verification breadth varies with risk. When the user elects final delivery:
 Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
-changes all use the branch, commit, push, PR, and merge path once they are
-published. Feature, Bug, Refactor, and Docs are profiles of the stage workflows,
+changes all use the branch, commit, push, PR, and merge path. Selected local,
+commit-only and push-only requests stop at their authorized boundary. Feature, Bug, Refactor, and Docs are profiles of the stage workflows,
 not separate workflows. The macro stage order and gates stay fixed; inside the
 current stage, the main agent chooses the smallest useful execution wave and may
 run dependency-ready, non-overlapping work concurrently.
@@ -56,11 +64,9 @@ After delivery, the main agent performs one lightweight workflow evaluation.
 It looks for reusable evidence such as avoidable rework, weak assumptions,
 unnecessary context loading, disproportionate validation, repeated manual work,
 or unclear workflow instructions. It records one highest-value improvement at
-most. A safe, low-risk improvement may start automatically as one separate
-follow-up change through the same branch/PR lifecycle; broad policy,
-security, permission, release, or scope changes are reported instead of
-self-applied. The follow-up cannot recursively create another automatic
-self-improvement change.
+most, for the user to choose. Evaluation grants no implementation or
+publication authority; a requested follow-up after merge starts a new Plan
+and runs only its authorized stages/actions, with the same gates.
 
 Verification is bounded by an explicit level (`minimal`, `focused`,
 `regression`, or `full`), but PASS is controlled by a risk-aware Test
@@ -71,33 +77,23 @@ or be explicitly N/A with reason. Coverage remains diagnostic rather than a
 quality target, and an unexplained flaky FAIL cannot become PASS through retry.
 The main agent owns requirements, architecture, decomposition, adaptive
 execution-wave scheduling, integration, evaluation, and final judgment.
-Exploration, Slice implementation, and verification evidence may be delegated
-when useful; the actual agent topology is chosen dynamically for each wave.
+Every Ticket, including docs/config/test, uses a fresh implementation worker
+for all its Slices and a separate fresh verifier for all its scenarios.
 
 ## Adaptive multi-agent execution
 
-The workflow uses a **fixed control plane / adaptive execution plane** model.
+The main agent schedules dependency-ready Tickets, integrates results and owns
+all stage gates. Each Ticket has its own fresh implementer and independent
+fresh verifier; workers start with only a manually scoped contract, never the
+parent conversation. Codex uses `fork_turns="none"`; hosts without equivalent
+fresh-agent/context support are BLOCKED. Workers do not create agents.
 
-- The fixed control plane is `plan -> develop -> verify -> publish -> integrate`
-  with the existing branch, Test Quality Gate, redaction, PR, and merge
-  boundaries unchanged.
-- The adaptive execution plane is selected by the main agent at runtime. It
-  decides whether delegation helps, which dependency-ready Slices can run in
-  parallel, how many subagents are useful, and which available agent best
-  matches each bounded task.
-- The configured concurrency is a ceiling, not a target. A wave may use zero,
-  one, or several subagents.
-- The ready set is recomputed after each material result, failure, dependency
-  change, or integration step. The Plan is never pre-assigned wholesale to
-  agents.
-- Publication, merge, stage-gate decisions, and final judgment remain with the
-  main agent.
-
-Codex reads `.codex/config.toml`, may use its built-in subagents, and may also
-use project-defined agents under `.codex/agents/` when present. Claude Code may
-use its built-in agents and project-defined agents under `.claude/agents/`.
-The shared scheduling and safety rules live in
-[`AGENTS.md`](AGENTS.md#multi-agent-delegation).
+Concurrency remains adaptive within dependency, filesystem and shared test-state
+constraints. The full policy is in
+[`AGENTS.md`](AGENTS.md#multi-agent-delegation); its
+[Context Management](AGENTS.md#context-management) section owns worker handoffs,
+durable checkpoints and recovery. Installed root/develop/verify/test
+Skills retain the minimum runtime rules because AGENTS.md is not installed.
 
 ## Workflow composition examples
 
@@ -130,15 +126,15 @@ Use when executable Tickets or Slices already exist and the request is only to
 make the repository changes.
 
 ```text
-Existing Slice
-  -> develop-workflow
+Existing Ticket / Slices
+  -> develop-workflow: fresh implementation worker
+  -> all dependency-ordered Slices + local validation
   -> Development Complete
   -> stop
 ```
 
-Codex may execute the Slice itself or dynamically schedule independent ready
-Slices across subagents. It still stops before delivery verification and
-publication.
+The coordinator dispatches the Ticket; its worker executes all Slices and
+stops before independent delivery verification and publication.
 
 ### 3. Implement and verify
 
@@ -146,14 +142,14 @@ Use for a local feature or bug-fix cycle where implementation and evidence are
 needed, but no commit or PR is requested.
 
 ```text
-develop-workflow
-  -> verify-workflow
+develop-workflow: fresh Ticket implementer
+  -> verify-workflow: separate fresh Ticket verifier
   -> PASS | FAIL | BLOCKED
   -> stop
 ```
 
-A failed verification returns to development for the affected Slice rather than
-advancing to publication.
+A failed verification returns fixes to implementation; a new verifier then
+rechecks the affected functionality with prior failure evidence retained.
 
 ### 4. Verify only
 
@@ -168,8 +164,8 @@ Existing change
   -> stop
 ```
 
-Independent checks may run concurrently, but the main agent owns the final
-verification conclusion.
+A fresh independent Ticket verifier runs all functionality scenarios; the main
+agent owns the final gate decision.
 
 ### 5. Verify and publish
 
@@ -198,11 +194,14 @@ that already has sufficient verification evidence.
 ```text
 Verified change
   -> publish-workflow
-  -> PR ready
-  -> stop
+  -> requested commit | push | create/update PR
+  -> stop at that boundary
 ```
 
-Publication still keeps documentation, redaction, branch, and PR gates intact.
+Commit-only creates no push or PR; push-only creates no commit or PR.
+Local verification grants no publication authority. Publication keeps
+documentation, redaction, branch, identity and PR gates intact; merge requires
+its own authorization or explicit full delivery scope.
 
 ### 7. Integrate only
 
@@ -238,8 +237,8 @@ The macro sequence is fixed, while execution inside eligible stages stays
 adaptive:
 
 ```text
-ready Slices
-  -> Codex chooses self / delegate / parallel wave
+ready Tickets
+  -> coordinator dispatches fresh Ticket workers within safe capacity
   -> integrate results
   -> recompute ready set
   -> continue current stage
@@ -247,22 +246,18 @@ ready Slices
 
 ### 9. Parallel implementation inside one fixed workflow
 
-For a Plan with independent Slices:
+For a Plan with independent Tickets and disjoint write/test-state ownership:
 
 ```text
-Plan
-  |
-  +-- Slice A: API --------> Worker / Main ---+
-  +-- Slice B: UI ---------> Worker / Main ---+--> integrate wave
-  +-- Slice C: docs -------> Worker / Main ---+
-                                                |
-                                                v
-                                         verify-workflow
+Plan coordinator
+  +-- Ticket A -> fresh implementer A: all Slices -> fresh verifier A: all scenarios
+  +-- Ticket B -> fresh implementer B: all Slices -> fresh verifier B: all scenarios
+  -> integrate evidence and decide gates
 ```
 
-Codex decides the actual topology at runtime. If Slice A and Slice B touch the
-same interface, schema, migration, shared configuration, or files, they stay
-sequential even when concurrency is available.
+Overlapping files, interfaces, schemas, migrations, configuration or shared test
+state require sequential work. Independent context does not isolate files;
+see the [scheduling policy](AGENTS.md#multi-agent-delegation).
 
 ### Composition rule
 
@@ -388,6 +383,7 @@ relevant bundle.
 - [Architecture overview](docs/architecture/overview.md)
 - [Installation and update guide](docs/deployment/installation.md)
 - [Workflow usage guide](docs/workflow/usage.md)
+- [Local package validation](docs/workflow/usage.md#local-package-validation)
 - [Redaction workflow](docs/workflow/redaction.md)
 - [Workflow process evaluation](docs/workflow/process-evaluation.md)
 - [Managed skill source map](references/skill-map.md)

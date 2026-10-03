@@ -4,32 +4,59 @@ top to bottom direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title Persisted Plan / Ticket Lifecycle — One Branch, One PR, One Merge
+title Persisted Plan / Ticket Lifecycle — Fresh Workers, Shared Plan Branch
 
-state "Plan Issue persisted\nChild Ticket Issues persisted" as persisted
-state "Plan branch active" as branch
-state "Select dependency-ready Ticket" as select
-state "Execute dependency-ready Slices" as slices
-state "Ticket acceptance + evidence complete" as accepted
+state "Plan + child Ticket Issues persisted" as persisted
+state "Shared Plan branch active" as branch
+state "Coordinator selects dependency-ready Ticket\nCheck ownership + test-state conflicts" as select
+state "Fresh Ticket implementer\nAll Slices in dependency order + local checks" as implement
+state "Development Complete" as developed
+state "Separate fresh Ticket verifier\nAll functionality scenarios; read-only" as verify
+state "Coordinator judges Ticket evidence" as accepted
 state "More Tickets?" as more
-state "Plan integration + Test Quality Gate" as gate
-state "Create / Update Plan PR" as publish
+state "Local verified checkpoint\nNormal stopping point; Issues stay open" as local
+state "Append user-requested Ticket before merge\nUpdate Plan scope/index/dependencies/validation" as expand
+state "Plan integration + Test Quality Gate\nCoordinator decides" as gate
+state "Authorized commit / push / Plan PR actions\nStop at selected boundary" as publish
 state "Merge Plan PR once" as merge
 state "Delete branch + Update main" as cleanup
 state "Close Plan + Tickets" as done
+state "BLOCKED\nNo main-agent fallback" as blocked
+state "Verification BLOCKED\nRecord cause + resume point" as verify_blocked
 
 [*] --> persisted
-persisted --> branch
-branch --> select
-select --> slices
-slices --> accepted
-accepted --> more
-more --> select : yes
-more --> gate : no
-gate --> slices : gap / failed evidence
-gate --> publish : PASS
-publish --> merge
-merge --> cleanup
-cleanup --> done
-done --> [*]
+persisted -down-> branch
+branch -down-> select
+select -down-> implement : fresh agent + clean context available
+select --> blocked : unavailable
+blocked -[norank]-> select : capability restored
+implement -down-> developed
+developed -down-> verify
+verify --> verify_blocked : checks cannot run
+verify_blocked -[norank]-> verify : cause resolved
+verify -down-> accepted : evidence complete
+verify -[norank]-> implement : FAIL: implementation repairs\nthen new verifier; retain failed evidence
+accepted -down-> more : Ticket evidence accepted
+more -[norank]-> select : yes; new workers for next Ticket
+more -down-> local : no
+local --> [*] : stop locally; not BLOCKED
+local -[norank]-> expand : new user-requested functionality
+publish -[norank]-> expand : new functionality before merge
+expand -[norank]-> select : same branch/PR; Plan in_progress\nretain evidence; invalidate impacted readiness
+local -down-> gate : publication authorized for current scope
+gate -[norank]-> implement : affected function needs repair\nthen new verifier
+gate -down-> publish : PASS
+publish --> [*] : commit-only / push-only / PR ready stop
+publish -down-> merge : current PR ready + merge authorized
+merge -down-> cleanup
+cleanup -down-> done
+done --> [*] : later functionality uses a new Plan
+
+note right of verify
+Codex: fork_turns="none"; other hosts: equivalent independent context.
+Manually scoped Ticket contract; no parent conversation.
+No cross-Ticket worker reuse or recursive agent creation.
+Fresh replacement from verified checkpoint if interrupted/failed.
+Unexplained flaky failure cannot become PASS by changing agents.
+end note
 @enduml

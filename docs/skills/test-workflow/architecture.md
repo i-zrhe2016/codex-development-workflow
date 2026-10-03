@@ -14,6 +14,12 @@
 
 Source: [`diagrams/test-workflow-flow.puml`](diagrams/test-workflow-flow.puml)
 
+独立验收由每个 Ticket（含文档、配置、测试）的全新 verifier 执行全部
+scenario；实现阶段的 RED/GREEN 与本地反馈仍由该 Ticket 的实现 worker 执行。verifier 只读仓库
+（允许缓存与临时证据），失败交还实现职责修复，再由新 verifier 重验受影响
+功能并保留先前失败。主代理拥有最终门禁；详见
+[调度政策](../../../AGENTS.md#multi-agent-delegation)。
+
 ## 核心数据流
 
 1. 从需求、Slice 验收标准和本次实际改动中确定行为契约。
@@ -72,7 +78,7 @@ surviving meaningful mutation 需要补强 assertion/case 或说明等价 mutati
 
 ## 失败处理
 
-失败先分类，再决定是否修改：实现缺陷修产品代码，测试缺陷修测试，回归问题修复或停止，环境/数据不可用则标记阻塞，需求或设计冲突则重新规划；同一提交和状态出现无法解释的 FAIL -> PASS 时标记 flaky，不能因重跑成功改成 PASS。修复应保持范围最小，并重新运行原失败点和受影响检查；不得通过放宽断言、删除测试、盲目重试或固定等待制造通过。
+失败先分类，由实现职责处理修改，独立 verifier 不代修代码或测试：实现缺陷修产品代码，测试缺陷修测试，回归问题修复或停止，环境/数据不可用则标记阻塞，需求或设计冲突则重新规划；同一提交和状态出现无法解释的 FAIL -> PASS 时标记 flaky，不能因重跑成功改成 PASS。修复应保持范围最小，并重新运行原失败点和受影响检查；不得通过放宽断言、删除测试、盲目重试或固定等待制造通过。
 
 ## Browser / E2E 分支
 

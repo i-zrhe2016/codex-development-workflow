@@ -17,4 +17,4 @@ Repository conventions:
 - public Kroki is used only for non-sensitive diagrams;
 - architecture-changing code and affected diagrams change in the same PR.
 
-Runtime instructions: ../../../skills/plantuml/SKILL.md
+Runtime instructions: [`SKILL.md`](../../../skills/plantuml/SKILL.md).

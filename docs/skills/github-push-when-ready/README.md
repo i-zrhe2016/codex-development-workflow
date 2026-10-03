@@ -2,8 +2,9 @@
 
 `github-push-when-ready` is the publication gate for feature branches, commits,
 pushes, and pull requests. It checks that the repository is ready to publish,
-that the change has one clear purpose, that the commit follows Conventional
-Commits 1.0.0, and that no secrets or unrelated changes are being shipped.
+that the change stays within its declared functionality or planned batch scope,
+that the commit follows Conventional Commits 1.0.0, and that no secrets or
+out-of-batch changes are being shipped.
 
 The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-ready/SKILL.md).
 
@@ -11,15 +12,20 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 
 - Inspect the branch, remote, diff, and repository checks before publishing.
 - Create or resume a non-default branch before publishing; every published
-  change uses the branch and PR path. When the branch carries Plan metadata, the
+  commit/push uses a non-default branch; final delivery uses a PR merge.
+  When the branch carries Plan metadata, the
   gate validates it; when it does not, publication proceeds normally.
-- Keep one coherent requirement or Plan per commit.
+- A planned multi-function batch may share one commit and PR. Single-function
+  commits remain valid; follow the runtime [batch publication rules](../../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
+  for full verification, selective staging and commit/PR descriptions.
 - Use a Conventional Commit message with the correct scope and intent.
 - For this repository, configure the approved non-root local identity and GitHub account `i-zrhe2016`; other target repositories must configure their own non-root identity.
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.
 - If the default branch cannot be determined from the actual GitHub push target, guarded publication fails closed and requires manual review.
 - The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a feature branch while still tracking an upstream default branch.
-- After the PR is created or updated, return `PR ready`; the parent workflow may merge once the existing validation and publication gates are satisfied.
+- Honor selected action boundaries: commit-only stops with auto-push suppressed;
+  push-only creates no commit or PR. Only authorized PR creation/update can
+  return `PR ready` after current-scope checks pass; merge also requires authority.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.
 - Check GitHub repository metadata when the task includes publishing or a pull
@@ -52,7 +58,9 @@ PYTHONDONTWRITEBYTECODE=1 python3 skills/github-push-when-ready/scripts/assess_p
 ```
 
 Use the exact command and authorization appropriate to the current task before
-running any commit or push action. Once the PR is ready, return control to the parent workflow for merge.
+running any commit or push action. Return at that boundary. If PR work is
+authorized and ready, return control to the parent workflow; readiness alone
+does not authorize merge.
 
 ## Maintenance
 

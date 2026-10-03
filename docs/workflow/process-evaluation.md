@@ -33,7 +33,8 @@ smaller change solves the same problem.
    controls merely to reduce friction.
 5. Do not update this file after every successful run. Persist a finding only
    when it is reusable, repeated, or high-impact.
-6. A self-improvement change follows the normal branch/PR lifecycle.
+6. A self-improvement change follows the normal stage routing and authorization
+   boundaries.
    Never modify the completed branch or default branch as a retrospective side
    effect.
 7. A self-improvement run must not recursively create another automatic
@@ -105,8 +106,11 @@ Decision: keep | simplify | merge | automate | remove | observe
 Action: none | follow-up change | report for later
 ```
 
-If `Action` is `follow-up change`, that change uses the same stages as any
-other published work: plan, develop, verify, publish, and integrate.
+If `Action` is `follow-up change` after merged work, start a new Plan. Route the
+change through only the requested stages and authorized actions; local verified,
+commit-only and push-only work may stop at those boundaries. A new improvement
+request alone does not authorize publication or merge. See
+[publication decisions](usage.md#publication-decisions).
 
 ## Current structural baseline
 
@@ -119,13 +123,13 @@ Use future real runs to confirm or reject them.
 | Branch/PR rules appear in the router, the usage guide, and the architecture overview | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
 | Post-delivery evaluation can itself create a documentation-only change every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
-| Plan/Ticket/Slice/delegation machinery | A plan is persisted only when the work is complex, must survive a session boundary, or the user asks for it; delegation remains optional | Keep persistence conditional and scale the plan's shape: one Ticket with one Slice for small work, extra Tickets or delegation only when complexity provides evidence |
+| Plan/Ticket/Slice/worker machinery | Persistence remains conditional; each functional Ticket uses fresh implementation and verification workers | Keep the smallest useful decomposition and scoped handoff under the [canonical scheduling policy](../../AGENTS.md#multi-agent-delegation) |
 | Stage routing versus one fixed chain | The five stage workflows are independently invocable; only an explicitly authorized delivery runs them all | Keep the router as the entry point and confirm each stage's non-responsibility still holds after every change |
 
 ## Improvement backlog discipline
 
 Do not turn this document into a backlog. When an improvement is actionable,
 record it as a normal plan before implementation; a small improvement is one
-Ticket with a single Slice that follows the same stages as any other published
-work. Remove or rewrite resolved baseline findings so this file stays a compact
+Ticket with a single Slice, routed through the requested stages and authorized
+actions. Remove or rewrite resolved baseline findings so this file stays a compact
 description of current process quality rather than a historical archive.

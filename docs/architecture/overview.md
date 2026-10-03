@@ -16,10 +16,10 @@ procedures remain inside their own `SKILL.md` files.
 | Component | Responsibility |
 |---|---|
 | `codex-development-workflow` | Routes each request to the stage workflow that owns it — `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, or `integrate-workflow` — carries the invariants shared by all stages, and provides the optional full orchestration for an explicitly authorized end-to-end delivery. |
-| Adaptive execution waves | Runtime scheduling of dependency-ready bounded tasks inside the current stage. The main agent may execute work itself or delegate non-overlapping tasks concurrently, then integrates the wave before the next gate. |
+| Adaptive execution waves | The main agent schedules dependency-ready Tickets with fresh implementation and independent verification workers, then integrates evidence before the next gate. |
 | Subagent selection | The main agent and host choose the best available built-in or project-defined subagent from the task contract and agent description; no task class is hard-coded to a named agent. |
 | `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). The cap is a ceiling, not a target. |
-| `plan-to-ticket` | Turns a requirement into one Plan, splits it into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
+| `plan-to-ticket` | Defines an explicitly scoped delivery batch as one Plan, splits its functionalities into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
 | `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
@@ -32,9 +32,9 @@ procedures remain inside their own `SKILL.md` files.
 
 The main agent centrally owns requirements, architecture, planning, dependency
 ordering, execution-wave scheduling, integration, stage-gate decisions, and
-final judgment. Adaptive execution may route independent exploration, testing,
-or isolated implementation to subagents, but it never changes the workflow
-topology. [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation) owns the
+final judgment. Fresh workers own every Ticket's implementation and
+independent verification without changing the workflow topology.
+[`AGENTS.md`](../../AGENTS.md#multi-agent-delegation) owns the
 scheduling policy. Dependent or overlapping work remains sequential, and the
 main agent must not duplicate active delegated work.
 
@@ -68,7 +68,7 @@ workflow loops and lower-level lifecycle detail.
 
 Source: [`diagrams/components.puml`](diagrams/components.puml)
 
-Skills are main-agent procedures, not independently running services. The
+Skills are procedures used by the coordinator and dispatched workers. The
 diagram separates lifecycle orchestration, specialist responsibilities, GitHub
 Issues as Plan/Ticket authority, GitHub as publication surface, and repository
 documentation as persisted project knowledge.
@@ -86,12 +86,16 @@ Requirement
   -> plan-workflow        understand, design, decompose, persistence decision
   -> develop-workflow     implement to Development Complete
   -> verify-workflow      verification scope, level, and conclusion
-  -> publish-workflow     documentation impact, redaction, commit, push, PR ready
+  -> publish-workflow     docs/redaction, requested commit/push/PR boundary
   -> integrate-workflow   merge once, cleanup, close Issues, state and docs
   -> Evaluate workflow
 ```
 
-The full orchestration runs these stages as one authorized delivery:
+Stage routing stops at the requested boundary. Local verified functionality is
+a normal checkpoint; the user controls publication/merge timing and scope. See
+[publication decisions](../workflow/usage.md#publication-decisions).
+The full orchestration runs these stages only for an explicitly authorized
+end-to-end delivery of the stated batch:
 
 ```text
 Create Plan branch
@@ -113,12 +117,14 @@ Create Plan branch
 
 Feature, Bug, Refactor, and Docs are profiles of these stages, not separate
 workflows: they change verification breadth and whether a plan is persisted.
-Planning depth and verification level may vary, but no category may direct-push
-around the PR gate for published work. A requirement that is complex, must
-survive a session boundary, or is explicitly requested as a persisted plan is
-recorded as one Plan Issue with one or more child Ticket Issues before branch
-work; split Ticket Slices only after each boundary is clear, and treat a
-single-behavior requirement as one Plan with one Ticket and one implicit Slice.
+Planning depth and verification level may vary. Authorized commits and pushes
+on a non-default branch may stop at their requested boundary; integration into
+the default branch still requires the guarded PR and merge path. A requirement
+that is complex, must survive a session boundary, or is explicitly requested as
+a persisted plan is recorded as one Plan Issue with one or more child Ticket
+Issues before branch work; split Ticket Slices only after each boundary is clear,
+and treat a single-behavior requirement as one Plan with one Ticket and one
+implicit Slice.
 
 When `plan-to-ticket` persists a plan, it creates the Plan Issue and all child
 Ticket Issues before the Plan branch is created. Each Slice loads only the
@@ -127,30 +133,16 @@ Plan or causes a Slice split.
 
 ### Fixed topology and adaptive execution waves
 
-The workflow and agent layers have different stability:
-
 ```text
-Static control plane
-  plan -> develop -> verify -> publish -> integrate
-            |
-            v
-Dynamic execution plane inside the current stage
-  ready set -> choose self/delegate -> execution wave -> integrate
-            -> recompute ready set
+Fixed stages: plan -> develop -> verify -> publish -> integrate
+Ticket execution: fresh implementer (all Slices) -> fresh verifier (all scenarios)
+Coordinator: readiness -> dispatch safe wave -> integrate evidence -> gates
 ```
 
-The stage order, stage ownership, Plan branch, Test Quality Gate, redaction,
-publication, and merge boundaries are fixed. The execution topology is not.
-For each wave the main agent derives the ready set from satisfied dependencies,
-removes tasks whose write ownership overlaps, and chooses the smallest useful
-combination of direct work and delegated work under the host concurrency
-ceiling.
-
-The scheduler is evidence-driven rather than pre-assigned. A result may expose
-a new dependency, conflict, failure, or safer sequential path, so the main agent
-recomputes the next wave after every material result or integration step.
-Subagents cannot advance stage gates, publish, merge, or replace the main
-agent's final judgment.
+Worker selection and concurrency adapt to dependencies and ownership. Ticket
+roles and independent context remain mandatory under the canonical
+[AGENTS.md policy](../../AGENTS.md#multi-agent-delegation); local development
+checks do not replace independent verification.
 
 ### Ticket-to-Slice hierarchy
 
@@ -173,8 +165,15 @@ There is no outer per-Ticket merge loop. `planned`, `in_progress`, `blocked`,
 and `in_review` remain open states; `Status` is workflow metadata, not a claim
 that GitHub provides these workflow states automatically.
 
-A Plan is one coherent requirement or feature delivery boundary and owns one branch, PR, and merge. A
-Ticket is an independently reviewable behavior or capability boundary inside
+A Plan is an explicitly scoped delivery batch that may include multiple
+independent functionalities and owns one branch and, if delivered, one PR and
+merge. Before merge, new user-requested functionality appends as a Ticket;
+after merge it starts a new Plan. An expanded Plan with an open PR retains
+its URL but returns to `in_progress`, invalidating impacted readiness until
+revalidation and an authorized PR update. See the
+[Plan scope contract](../../skills/plan-to-ticket/SKILL.md#scope-and-sizing) and
+[batch publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries).
+A Ticket is an independently reviewable behavior or capability boundary inside
 that Plan. A Slice is an execution-ready unit within a Ticket, with its own
 scope, dependencies, acceptance criteria, test strategy, test level, test
 cases, and validation command. Establish the Plan boundary, then Ticket
@@ -209,27 +208,20 @@ of its branch: record `Branch` and `Base` before editing, set Plan
 `Status: in_progress` when work starts, and require the Plan PR head/base to
 match those fields.
 
-### Adaptive delegation
+### Ticket worker boundaries
 
-Delegation is an execution decision inside the current stage, not a second
-workflow. The main agent schedules dependency-ready bounded tasks in execution
-waves and dynamically chooses direct execution, one subagent, or several
-non-overlapping subagents up to the host concurrency ceiling.
+The [canonical policy](../../AGENTS.md#multi-agent-delegation) owns clean-context
+contracts, fresh per-Ticket roles, safe waves and failure recovery. Root,
+develop, verify and test Skills retain minimum executable rules for installed
+use without AGENTS.md. A dispatched worker executes its role without recursive
+agent creation. Verifiers read the repository without repair edits; failures
+return to implementation and a new verifier checks the affected functionality.
+The coordinator retains integration, the Test Quality Gate and final judgment.
 
-The entire Plan is never assigned to agents in advance. After each material
-result, failure, dependency change, or integration step, the main agent
-recomputes the ready set and may choose a different topology for the next wave.
-
-Every delegated task has a clear goal, scope and exclusions, ownership
-boundary, dependencies, acceptance criteria, validation, and expected result
-summary. Parallel write tasks may not share files, interfaces, schemas,
-migrations, or shared configuration. When write isolation is uncertain, use
-sequential execution or read-only delegation.
-
-Subagents return findings, changes or patches, test evidence, and unresolved
-risks. The main agent integrates every wave and retains stage-gate, publication,
-merge, and final-judgment authority. Prefer one delegation level. The canonical
-policy lives in [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation).
+[Context Management](../../AGENTS.md#context-management) owns the thin
+coordinator, scoped worker context, concise handoffs and durable Issue
+checkpoints. The state snapshot remains repository recovery truth; it does not
+replace those checkpoints.
 
 ### Slice execution
 
@@ -303,7 +295,8 @@ procedure.
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
 - A persisted plan has one Plan Issue with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and a persisted Plan uses one branch and PR.
-- Tests provide evidence inside a Slice; the Plan PR remains the publication and merge boundary.
+- Tests provide evidence inside a Slice; local verification is a valid stop.
+  If delivery is elected, the Plan PR remains the final publication/merge boundary.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - `repo-documentation` owns documentation governance; `repo-current-state` owns
   only the recovery snapshot.

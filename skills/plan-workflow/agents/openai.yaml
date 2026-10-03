@@ -1,4 +1,4 @@
 interface:
   display_name: "Plan Workflow"
   short_description: "Decide when to plan: understand, design, and decompose"
-  default_prompt: "Use $plan-workflow to understand the requirement, settle architecture and scope, decompose it into Tickets and Slices, and decide whether the plan needs to be persisted as a GitHub Issue before implementation starts."
+  default_prompt: "Use $plan-workflow to understand the requirement, settle architecture and scope, decompose it into Tickets and Slices, and decide whether the plan needs to be persisted as a GitHub Issue before implementation starts. Append newly requested functionality as a Ticket in the same unmerged Plan after scope/index/dependency/validation updates; after merge use a new Plan. Planning grants no publication authority."

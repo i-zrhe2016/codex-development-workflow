@@ -21,16 +21,24 @@ changing planning depth and verification breadth without adding stages.
 | Merge, clean up, close Plan/Tickets, reconcile state | `integrate-workflow` |
 | Explicitly authorized complete delivery | Full orchestration below |
 
-Run only the requested stages, respecting their stopping boundaries. The main
+Run only the requested stages and publication actions, respecting their stopping
+boundaries. Local verified functionality is a normal stopping point; awaiting
+the user's publication decision is not BLOCKED. The user chooses commit, push,
+PR creation/update and merge timing and scope. Existing authorization persists
+for its stated batch; added feature scope alone never extends it. The main
 agent owns requirements, architecture, persistence, dependencies, scheduling,
 integration, gates, evaluation and final judgment.
 
 ## Shared invariants
 
 - Never weaken branch/PR, redaction, security, permission or release gates.
-- Published changes use a branch and PR, never direct default-branch delivery.
-  One purpose per Conventional Commit 1.0.0; acceptance and relevant integration
-  checks pass before publication. Readiness is separate from verified merge.
+- Commits and pushes use a non-default branch; final delivery uses a PR merge.
+  Never commit/push directly to default or force a PR after commit-only/push-only
+  work. Implementation/verification alone never triggers publication.
+  Use Conventional Commits 1.0.0 for one functionality or a clearly planned
+  multi-function batch per commit/PR. Every Ticket's acceptance and the batch's
+  relevant integration/regression checks pass before publication; any failure
+  blocks the batch. Readiness is separate from verified merge.
 - Verify branch and worktree before editing; preserve unrelated/uncommitted
   work. Preserve abandoned Ticket work and re-plan; never automatically reset
   user changes or delete unmerged branches.
@@ -50,11 +58,26 @@ Persist when complex, cross-module, dependent, multi-session/resumable, or
 explicitly requested; small single-session work stays inline. Planning controls
 scope; verification controls evidence, and neither replaces the other.
 
+A Plan is a delivery batch with explicitly listed scope; it may include one or
+multiple independent functionalities, each bounded by behavior Tickets. Follow
+`plan-to-ticket` for scope and `github-push-when-ready` for batch staging and
+message/PR requirements.
+
+Before merge, append new user-requested functionality to the same Plan as a
+new Ticket using `plan-to-ticket`'s scope-update contract; after merge use a new
+Plan. Preserve IDs, branch/base, existing PR and accepted evidence. Update
+goal/scope/index/dependencies/validation before edits. An open PR retains its
+URL but expanded scope returns the Plan to `in_progress`, invalidates impacted
+acceptance/batch readiness and requires revalidation before an authorized
+update. An existing PR is not ready for the expanded scope.
+
 A persisted Plan owns one Issue, one branch from the updated default branch
-(`<type>/<plan-id>-<short-description>`), one PR and one merge. Each Ticket owns
+(`<type>/<plan-id>-<short-description>`) and, if the user elects delivery, one PR
+and one merge. Each Ticket owns
 one child Issue and its tests/docs; every Ticket/Slice shares the Plan branch
 and base. Prerequisites are validated on that branch, without Ticket merges.
-Every required Issue must exist before branch creation; Issue failure blocks
+Every initially required Issue must exist before branch creation; appended
+Tickets and scope updates must persist before their edits. Issue failure blocks
 work with no local Markdown/chat-only fallback.
 
 Follow `plan-to-ticket` for identifiers, metadata, persistence and updates.
@@ -69,32 +92,47 @@ command. Execute dependency-ready Slices using `develop-workflow`; `verify-workf
 selects minimal/focused/regression/full and invokes `test-workflow` for evidence
 and the quality gate.
 
-## Adaptive execution
+## Ticket workers and adaptive execution
 
-Follow `AGENTS.md`'s delegation policy where available. Within the current
-stage, choose the smallest useful self/delegated wave by dependency readiness,
-clear ownership, speed, context isolation, evidence, quality, risk and host
-capacity; concurrency is a ceiling. Never pre-assign the entire Plan or hard-code
-task classes to agent names; select available built-in/project agents by their
-contract and description. Single-agent execution remains valid.
+The main agent coordinates design, dependencies, integration and gates; it does
+not implement Tickets or replace their independent verifiers. For every Ticket,
+including docs/config/test and inline one-Slice work, dispatch one fresh
+implementation agent for all dependency-ordered Slices, then a separate fresh verification
+agent for all functionality scenarios. Never reuse workers across Tickets or
+split a Ticket's Slices/scenarios across agents. Same-Ticket follow-up is
+allowed. Already-dispatched implementation/verification workers run only their
+assigned role, never spawn agents or run coordinator orchestration.
 
-Keep dependent or overlapping files/interfaces/schemas/migrations/shared config
-sequential. Parallel workers use isolated worktrees or return patches/findings
-for main-agent integration on the Plan branch; never switch a directory shared
-by active workers or create Ticket delivery branches. Uncertain write isolation
-means read-only delegation or returned patches.
+For Codex, every `spawn_agent` uses `fork_turns="none"`. Other hosts must provide
+equivalent fresh agents with independent context; otherwise report BLOCKED,
+without main-agent fallback. Manually hand off role, current Ticket goal/scope/
+non-goals, Slice dependencies/acceptance, relevant files/ownership, Plan branch/
+base and verified prerequisites, validation commands and expected summary.
+Never include the parent conversation or unrelated history. These minimum
+rules apply even without `AGENTS.md`; it owns the full repository policy when
+present and is not installed with the bundle.
 
-Delegations specify goal, scope/exclusions, files/ownership, dependencies,
-acceptance, validation and expected summary. Do not duplicate active delegated
-work. Return findings, changes/patches, test results, risks and follow-up work, not raw logs.
-Integrate each wave and recompute readiness after material results, failure,
-dependency changes or integration. Prefer one delegation level unless explicitly
-required. Subagents cannot reorder stages, advance gates, publish, merge or
-replace main-agent judgment.
+Verifiers are read-only except caches/temporary evidence. Failures return to
+implementation; after fixes dispatch a new verifier for the affected function,
+preserving failed evidence and the flaky-test gate. Interrupted/failed workers
+are replaced by fresh agents from verified checkpoints. The main agent owns
+the final Test Quality Gate and stage decisions.
+
+Schedule ready Tickets within host capacity; do not pre-assign the Plan. Keep
+dependent or overlapping writes/interfaces/schemas/migrations/config and shared
+test state sequential. Independent context does not isolate files: use safe
+ownership and isolated worktrees or returned patches on the shared Plan branch,
+never Ticket branches or directory switching under active workers. Integrate
+each wave, recompute readiness from results, and do not duplicate worker work.
+Agent selection and useful concurrency remain adaptive under `AGENTS.md`.
 
 ## Full orchestration
 
-Only for explicitly authorized end-to-end delivery. Full deliveries spanning
+Only for explicitly authorized end-to-end delivery of the stated batch, including
+publication and merge. Readiness alone grants neither action. Stop at any narrower
+authorized boundary, including local verification, commit-only or push-only;
+added scope returns to planning and does not inherit publication authority from
+the earlier batch. Full deliveries spanning
 multiple Tickets, dependencies or sessions persist before branch work:
 
 1. `plan-workflow`: work definition, persistence and single Plan branch.
@@ -107,7 +145,7 @@ multiple Tickets, dependencies or sessions persist before branch work:
    update -> Plan/Ticket closure -> `repo-current-state` and documentation
    reconciliation when verified state changed. Tracked post-merge updates use
    their own branch/PR gates.
-6. Evaluate delivery once; optionally run one bounded follow-up below.
+6. Evaluate delivery once; report any bounded follow-up below for a user decision.
 
 This order and its contracts/gates remain fixed under delegation. Read
 `docs/Repo_Current_State.md` at planning start; keep it a compact verified
@@ -158,15 +196,14 @@ Evidence: concrete delivery event
 Action: none | follow-up change | report for later
 ```
 
-Prefer simplifying/merging/removing before adding process or artifacts. Only
-concrete, reusable, low-risk improvements within current intent may start
-automatically. Report policy/permission/security/release/broad-scope changes
-instead. A follow-up starts from updated default branch and repeats the full
-Plan -> Branch -> Test -> applicable Redaction -> Commit -> Push -> PR -> Merge
-lifecycle; never edit completed/default branches or installed skills as an
-evaluation side effect. At most one automatic follow-up per user delivery; its
-evaluation cannot start another. Without evidence, finish without invented work
-or backlog noise.
+Prefer simplifying/merging/removing before adding process or artifacts. Report
+concrete, reusable improvements for the user to choose; evaluation
+authorizes no implementation or publication. A user-requested follow-up after
+merge starts a new Plan from the updated default branch and follows only its
+authorized stages/actions, preserving all applicable gates. Never edit
+completed/default branches or installed skills as an evaluation side effect.
+Evaluate at most one follow-up per user delivery without recursively starting
+another. Without evidence, finish without invented work or backlog noise.
 
 ## Requested timing
 

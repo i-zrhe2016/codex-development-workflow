@@ -1,4 +1,4 @@
 interface:
   display_name: "Develop Workflow"
   short_description: "Decide when to implement: minimal change, local validation"
-  default_prompt: "Use $develop-workflow to load the context the Slice needs, make the minimal change that satisfies its acceptance criteria, run focused local validation, and report Development Complete with the changed files and any unresolved risk."
+  default_prompt: "Use $develop-workflow as coordinator to dispatch a fresh implementation agent with independent context for each Ticket, or as the dispatched worker to execute all assigned Slices in dependency order without spawning agents; run focused local validation and report Development Complete."
