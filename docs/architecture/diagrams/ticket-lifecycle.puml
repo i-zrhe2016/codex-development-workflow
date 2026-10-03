@@ -14,8 +14,10 @@ state "Development Complete" as developed
 state "Separate fresh Ticket verifier\nAll functionality scenarios; read-only" as verify
 state "Coordinator judges Ticket evidence" as accepted
 state "More Tickets?" as more
+state "Local verified checkpoint\nNormal stopping point; Issues stay open" as local
+state "Append user-requested Ticket before merge\nUpdate Plan scope/index/dependencies/validation" as expand
 state "Plan integration + Test Quality Gate\nCoordinator decides" as gate
-state "Create / Update Plan PR" as publish
+state "Authorized commit / push / Plan PR actions\nStop at selected boundary" as publish
 state "Merge Plan PR once" as merge
 state "Delete branch + Update main" as cleanup
 state "Close Plan + Tickets" as done
@@ -36,13 +38,19 @@ verify -down-> accepted : evidence complete
 verify -[norank]-> implement : FAIL: implementation repairs\nthen new verifier; retain failed evidence
 accepted -down-> more : Ticket evidence accepted
 more -[norank]-> select : yes; new workers for next Ticket
-more -down-> gate : no
+more -down-> local : no
+local --> [*] : stop locally; not BLOCKED
+local -[norank]-> expand : new user-requested functionality
+publish -[norank]-> expand : new functionality before merge
+expand -[norank]-> select : same branch/PR; Plan in_progress\nretain evidence; invalidate impacted readiness
+local -down-> gate : publication authorized for current scope
 gate -[norank]-> implement : affected function needs repair\nthen new verifier
 gate -down-> publish : PASS
-publish -down-> merge
+publish --> [*] : commit-only / push-only / PR ready stop
+publish -down-> merge : current PR ready + merge authorized
 merge -down-> cleanup
 cleanup -down-> done
-done --> [*]
+done --> [*] : later functionality uses a new Plan
 
 note right of verify
 Codex: fork_turns="none"; other hosts: equivalent independent context.

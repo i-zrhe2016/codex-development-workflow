@@ -52,6 +52,10 @@ not install it); when present, it owns the full scheduling policy.
 
 **Development Complete:** acceptance is implemented and local validation passes.
 Report Slice, changed files, commands/results, unresolved risks and follow-up work.
+It does not trigger commit, push, PR creation/update or merge. After independent
+verification, local verified functionality may stop normally pending the user's
+publication decision; that wait is not BLOCKED. New scope in an unmerged Plan
+requires `plan-to-ticket`'s Plan/Ticket updates before implementation edits.
 
 `verify-workflow` owns delivery verification breadth; publish/integrate own
 commit/push/PR/merge, Issue closure and state refresh. No post-delivery evaluation,

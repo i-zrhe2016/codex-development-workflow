@@ -21,14 +21,20 @@ changing planning depth and verification breadth without adding stages.
 | Merge, clean up, close Plan/Tickets, reconcile state | `integrate-workflow` |
 | Explicitly authorized complete delivery | Full orchestration below |
 
-Run only the requested stages, respecting their stopping boundaries. The main
+Run only the requested stages and publication actions, respecting their stopping
+boundaries. Local verified functionality is a normal stopping point; awaiting
+the user's publication decision is not BLOCKED. The user chooses commit, push,
+PR creation/update and merge timing and scope. Existing authorization persists
+for its stated batch; added feature scope alone never extends it. The main
 agent owns requirements, architecture, persistence, dependencies, scheduling,
 integration, gates, evaluation and final judgment.
 
 ## Shared invariants
 
 - Never weaken branch/PR, redaction, security, permission or release gates.
-- Published changes use a branch and PR, never direct default-branch delivery.
+- Commits and pushes use a non-default branch; final delivery uses a PR merge.
+  Never commit/push directly to default or force a PR after commit-only/push-only
+  work. Implementation/verification alone never triggers publication.
   Use Conventional Commits 1.0.0 for one functionality or a clearly planned
   multi-function batch per commit/PR. Every Ticket's acceptance and the batch's
   relevant integration/regression checks pass before publication; any failure
@@ -57,11 +63,21 @@ multiple independent functionalities, each bounded by behavior Tickets. Follow
 `plan-to-ticket` for scope and `github-push-when-ready` for batch staging and
 message/PR requirements.
 
+Before merge, append new user-requested functionality to the same Plan as a
+new Ticket using `plan-to-ticket`'s scope-update contract; after merge use a new
+Plan. Preserve IDs, branch/base, existing PR and accepted evidence. Update
+goal/scope/index/dependencies/validation before edits. An open PR retains its
+URL but expanded scope returns the Plan to `in_progress`, invalidates impacted
+acceptance/batch readiness and requires revalidation before an authorized
+update. An existing PR is not ready for the expanded scope.
+
 A persisted Plan owns one Issue, one branch from the updated default branch
-(`<type>/<plan-id>-<short-description>`), one PR and one merge. Each Ticket owns
+(`<type>/<plan-id>-<short-description>`) and, if the user elects delivery, one PR
+and one merge. Each Ticket owns
 one child Issue and its tests/docs; every Ticket/Slice shares the Plan branch
 and base. Prerequisites are validated on that branch, without Ticket merges.
-Every required Issue must exist before branch creation; Issue failure blocks
+Every initially required Issue must exist before branch creation; appended
+Tickets and scope updates must persist before their edits. Issue failure blocks
 work with no local Markdown/chat-only fallback.
 
 Follow `plan-to-ticket` for identifiers, metadata, persistence and updates.
@@ -112,7 +128,11 @@ Agent selection and useful concurrency remain adaptive under `AGENTS.md`.
 
 ## Full orchestration
 
-Only for explicitly authorized end-to-end delivery. Full deliveries spanning
+Only for explicitly authorized end-to-end delivery of the stated batch, including
+publication and merge. Readiness alone grants neither action. Stop at any narrower
+authorized boundary, including local verification, commit-only or push-only;
+added scope returns to planning and does not inherit publication authority from
+the earlier batch. Full deliveries spanning
 multiple Tickets, dependencies or sessions persist before branch work:
 
 1. `plan-workflow`: work definition, persistence and single Plan branch.
@@ -125,7 +145,7 @@ multiple Tickets, dependencies or sessions persist before branch work:
    update -> Plan/Ticket closure -> `repo-current-state` and documentation
    reconciliation when verified state changed. Tracked post-merge updates use
    their own branch/PR gates.
-6. Evaluate delivery once; optionally run one bounded follow-up below.
+6. Evaluate delivery once; report any bounded follow-up below for a user decision.
 
 This order and its contracts/gates remain fixed under delegation. Read
 `docs/Repo_Current_State.md` at planning start; keep it a compact verified
@@ -176,15 +196,14 @@ Evidence: concrete delivery event
 Action: none | follow-up change | report for later
 ```
 
-Prefer simplifying/merging/removing before adding process or artifacts. Only
-concrete, reusable, low-risk improvements within current intent may start
-automatically. Report policy/permission/security/release/broad-scope changes
-instead. A follow-up starts from updated default branch and repeats the full
-Plan -> Branch -> Test -> applicable Redaction -> Commit -> Push -> PR -> Merge
-lifecycle; never edit completed/default branches or installed skills as an
-evaluation side effect. At most one automatic follow-up per user delivery; its
-evaluation cannot start another. Without evidence, finish without invented work
-or backlog noise.
+Prefer simplifying/merging/removing before adding process or artifacts. Report
+concrete, reusable improvements for the user to choose; evaluation
+authorizes no implementation or publication. A user-requested follow-up after
+merge starts a new Plan from the updated default branch and follows only its
+authorized stages/actions, preserving all applicable gates. Never edit
+completed/default branches or installed skills as an evaluation side effect.
+Evaluate at most one follow-up per user delivery without recursively starting
+another. Without evidence, finish without invented work or backlog noise.
 
 ## Requested timing
 

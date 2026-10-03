@@ -46,11 +46,16 @@ and [batch publication rules](skills/github-push-when-ready/SKILL.md#readiness-a
 for shared commit/PR scope and verification. A persisted Plan owns the one branch, PR,
 and merge. All Tickets and Slices share that branch; Ticket dependencies remain
 separate from Slice dependencies, and the PR head and base must match the Plan
-metadata.
-Verification breadth varies with risk, and published work follows one path:
+metadata. New user-requested functionality joins the same unmerged Plan as a
+new Ticket after its scope, index, dependencies and validation are updated;
+after merge it uses a new Plan. Local verified functionality is a normal
+stopping point. The user decides commit, push, PR creation/update and merge
+timing and scope; see [workflow usage](docs/workflow/usage.md#publication-decisions)
+for action boundaries and open-PR expansion.
+Verification breadth varies with risk. When the user elects final delivery:
 Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
-changes all use the branch, commit, push, PR, and merge path once they are
-published. Feature, Bug, Refactor, and Docs are profiles of the stage workflows,
+changes all use the branch, commit, push, PR, and merge path. Selected local,
+commit-only and push-only requests stop at their authorized boundary. Feature, Bug, Refactor, and Docs are profiles of the stage workflows,
 not separate workflows. The macro stage order and gates stay fixed; inside the
 current stage, the main agent chooses the smallest useful execution wave and may
 run dependency-ready, non-overlapping work concurrently.
@@ -59,11 +64,9 @@ After delivery, the main agent performs one lightweight workflow evaluation.
 It looks for reusable evidence such as avoidable rework, weak assumptions,
 unnecessary context loading, disproportionate validation, repeated manual work,
 or unclear workflow instructions. It records one highest-value improvement at
-most. A safe, low-risk improvement may start automatically as one separate
-follow-up change through the same branch/PR lifecycle; broad policy,
-security, permission, release, or scope changes are reported instead of
-self-applied. The follow-up cannot recursively create another automatic
-self-improvement change.
+most, for the user to choose. Evaluation grants no implementation or
+publication authority; a requested follow-up after merge starts a new Plan
+and runs only its authorized stages/actions, with the same gates.
 
 Verification is bounded by an explicit level (`minimal`, `focused`,
 `regression`, or `full`), but PASS is controlled by a risk-aware Test
@@ -191,11 +194,14 @@ that already has sufficient verification evidence.
 ```text
 Verified change
   -> publish-workflow
-  -> PR ready
-  -> stop
+  -> requested commit | push | create/update PR
+  -> stop at that boundary
 ```
 
-Publication still keeps documentation, redaction, branch, and PR gates intact.
+Commit-only creates no push or PR; push-only creates no commit or PR.
+Local verification grants no publication authority. Publication keeps
+documentation, redaction, branch, identity and PR gates intact; merge requires
+its own authorization or explicit full delivery scope.
 
 ### 7. Integrate only
 

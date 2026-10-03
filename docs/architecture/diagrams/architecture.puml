@@ -4,7 +4,7 @@ top to bottom direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title Codex Development Workflow — Full Orchestration, Requirement to Delivery
+title Codex Development Workflow — Explicitly Authorized Full Delivery
 
 state "Requirement" as Requirement
 state "plan-workflow\nUnderstand · Design · Decompose" as Understand
@@ -22,7 +22,7 @@ state "Delete branch + Update main" as Cleanup
 state "Close Plan + Tickets" as Close
 state "Update State / Docs" as State
 state "Evaluate workflow" as Evaluate
-state "Bounded follow-up improvement" as Improve
+state "Report improvement for user decision" as Improve
 
 [*] --> Requirement
 Requirement --> Understand
@@ -32,16 +32,16 @@ Issues --> Branch
 Branch --> Implement
 Implement --> Test
 Test --> Implement : BLOCKED / failed evidence
-Test --> Docs : PASS
+Test --> Docs : PASS; authorized batch only
 Docs --> Redact
 Redact --> Publish
 Publish --> PR
-PR --> Merge
+PR --> Merge : merge authorized for current scope
 Merge --> Cleanup
 Cleanup --> Close
 Close --> State
 State --> Evaluate
-Evaluate --> Improve : reusable low-risk improvement
-Improve --> [*] : run through the same workflow
+Evaluate --> Improve : evidence-backed improvement
+Improve --> [*] : no automatic work; requested follow-up uses new Plan
 Evaluate --> [*] : no improvement
 @enduml

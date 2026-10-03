@@ -47,8 +47,37 @@ Do not expose internal reasoning.
 - If implementation reveals a materially different design, new subsystem or
   unrelated behavior, stop expanding the Ticket, preserve valid work and
   re-plan/update dependencies. Add a Ticket only after explicitly updating the
-  batch's planned scope; work outside that scope belongs to a separate
-  Plan/delivery. Do not silently widen scope.
+  batch's planned scope. New user-requested functionality follows the scope-update
+  contract below; after merge it belongs to a new Plan. Do not silently widen scope.
+
+## Updating an unmerged Plan
+
+New user-requested functionality joins the same unmerged Plan as a new behavior
+Ticket, whether or not its PR already exists. Before implementation edits:
+
+1. Resolve the current Plan and confirm it has not merged; reuse its stable ID,
+   Issue, branch/base and existing PR. After verified merge, create a new Plan
+   with a new branch and eventual PR; never reopen the delivered Plan.
+2. Search exact markers and allocate new Ticket/Slice IDs under the naming rules.
+   Preserve existing Tickets and evidence; never duplicate a Plan or Ticket.
+3. Update the Plan goal, explicit functionality scope, linked Ticket index,
+   dependency order and batch validation; create the new Ticket Issue with its
+   scope/dependencies/acceptance/Slices/validation and update impacted contracts.
+   Verify every required write and index link before any new edits.
+4. Set the expanded Plan to `in_progress`. If a PR exists, retain its URL and
+   record that it is not ready for expanded scope. Preserve prior accepted and
+   failed evidence, identify impacted acceptance and invalidate affected
+   readiness; revalidate impacted Tickets and batch integration/regression before
+   user-authorized publication or PR update. No per-feature PR or automatic merge.
+5. Keep publication authority separate: prior authorization persists only for
+   its stated batch/actions. Adding feature scope authorizes its requested work,
+   not commit, push, PR update or merge of that scope. The user elects those
+   actions and timing; preserve the same one-Plan branch/PR/merge if delivered.
+
+Local verified functionality may stop with Plan/Tickets open and checkpointed.
+Keep `in_progress` before review, or existing `in_review` for unchanged review
+scope; awaiting a human publication decision is not `blocked`. Mark final
+`done` and close only after verified merge.
 
 ## Repository context and validation
 
@@ -80,7 +109,8 @@ survive a session/resume by another agent, or the user requests persistence.
 Small single-session work stays inline without Issues.
 
 A persisted Plan owns **one Plan Issue, one child Issue per Ticket, one
-branch, tests, applicable redaction, commits/push, one PR and one merge** for
+branch, tests and, when delivery is elected, applicable redaction, commits/push,
+one PR and one merge** for
 all Tickets/Slices/documents. GitHub Issues are authoritative; chat is only a
 linked convenience copy. No chat-only completion or local Markdown,
 `docs/plans/`, `docs/tickets/` mirror/fallback is allowed.
@@ -88,7 +118,8 @@ linked convenience copy. No chat-only completion or local Markdown,
 Use the available GitHub Issues connector and current repository remote's
 `owner/name`. Missing target, connector, authentication or write permission
 blocks persistence; do not use an unapproved ad-hoc API client. All required
-Issues must exist before creating the Plan branch.
+initial Issues must exist before creating the Plan branch; appended Tickets
+and Plan updates must persist before their implementation edits.
 
 ### Naming and idempotency
 
@@ -174,7 +205,9 @@ All except `done` remain open. Update Plan and child Tickets as work progresses:
 |---|---|
 | Branch work starts | Plan `Status: in_progress`; exact Branch/Base recorded. |
 | Blocking dependency/environment | Affected Plan/Ticket `Status: blocked`. |
-| One Plan PR opens | Head/base match Branch/Base; Plan `Status: in_review`, `PR` canonical URL or number; Tickets may enter `in_review`. |
+| Local verification passes; publication awaits user | Valid stopping point; keep Issues open with accepted evidence, not `blocked`. |
+| New functionality appended before merge | Update goal/scope/index/dependencies/validation; Plan `in_progress`, retain existing `PR`; affected readiness requires revalidation. |
+| One Plan PR opens or expanded PR is updated with authorization | Head/base match Branch/Base and current batch checks pass; Plan `Status: in_review`, `PR` canonical URL or number; Tickets may enter `in_review`. |
 | PR verified merged | Plan and **all** children `done` and closed; retain merged PR on Plan. |
 
 Keep `PR: null` until the PR exists and keep branch/base/PR references current.
@@ -182,8 +215,10 @@ Branch/PR existence alone never means done. Only after every Ticket's acceptance
 and the batch's relevant integration/regression checks pass is the Plan ready
 for its one PR; any failure blocks batch publication. The batch may use one
 commit for multiple functionalities under `github-push-when-ready`'s staging and
-message rules. The parent workflow publishes through
-Test/Redaction/Commit/Push/PR, fixes any blockers, and delivers only after the merge. When repository
+message rules. The parent workflow stops at the requested local or publication
+boundary; commit-only/push-only never forces a PR. Human-authorized delivery
+follows Test/Redaction/Commit/Push/PR and a separately authorized merge (or
+explicit full delivery scope). When repository
 state is updated, `docs/Repo_Current_State.md` holds a compact active-Issue
 pointer, never a copied Plan/backlog.
 

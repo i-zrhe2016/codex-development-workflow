@@ -5,9 +5,14 @@ description: "Merge a ready PR, clean up its branch, synchronize default branch,
 
 # Integrate Workflow
 
-Owns **PR ready -> delivered and reconciled**.
+Owns **authorized ready PR -> delivered and reconciled**. Subsequent functionality
+after verified merge uses a new Plan; never append to the delivered Plan.
 
-1. Confirm required verification passed and PR head/base match delivery metadata.
+1. Confirm merge authorization covers the current batch (an explicit full
+   delivery may already include it); PR readiness alone grants no merge authority.
+   Confirm required verification passed for the current scope and PR head/base
+   match delivery metadata. Expanded unmerged scope must be revalidated and
+   published to the same PR before merge; stale readiness is insufficient.
 2. Merge once under repository policy; delete source branch, update default.
 3. After verified merge, set Plan/child Tickets `done` and close them.
 4. Invoke `repo-current-state` if verified state changed, and `repo-documentation`

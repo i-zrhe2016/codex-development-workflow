@@ -86,12 +86,16 @@ Requirement
   -> plan-workflow        understand, design, decompose, persistence decision
   -> develop-workflow     implement to Development Complete
   -> verify-workflow      verification scope, level, and conclusion
-  -> publish-workflow     documentation impact, redaction, commit, push, PR ready
+  -> publish-workflow     docs/redaction, requested commit/push/PR boundary
   -> integrate-workflow   merge once, cleanup, close Issues, state and docs
   -> Evaluate workflow
 ```
 
-The full orchestration runs these stages as one authorized delivery:
+Stage routing stops at the requested boundary. Local verified functionality is
+a normal checkpoint; the user controls publication/merge timing and scope. See
+[publication decisions](../workflow/usage.md#publication-decisions).
+The full orchestration runs these stages only for an explicitly authorized
+end-to-end delivery of the stated batch:
 
 ```text
 Create Plan branch
@@ -113,12 +117,14 @@ Create Plan branch
 
 Feature, Bug, Refactor, and Docs are profiles of these stages, not separate
 workflows: they change verification breadth and whether a plan is persisted.
-Planning depth and verification level may vary, but no category may direct-push
-around the PR gate for published work. A requirement that is complex, must
-survive a session boundary, or is explicitly requested as a persisted plan is
-recorded as one Plan Issue with one or more child Ticket Issues before branch
-work; split Ticket Slices only after each boundary is clear, and treat a
-single-behavior requirement as one Plan with one Ticket and one implicit Slice.
+Planning depth and verification level may vary. Authorized commits and pushes
+on a non-default branch may stop at their requested boundary; integration into
+the default branch still requires the guarded PR and merge path. A requirement
+that is complex, must survive a session boundary, or is explicitly requested as
+a persisted plan is recorded as one Plan Issue with one or more child Ticket
+Issues before branch work; split Ticket Slices only after each boundary is clear,
+and treat a single-behavior requirement as one Plan with one Ticket and one
+implicit Slice.
 
 When `plan-to-ticket` persists a plan, it creates the Plan Issue and all child
 Ticket Issues before the Plan branch is created. Each Slice loads only the
@@ -160,7 +166,11 @@ and `in_review` remain open states; `Status` is workflow metadata, not a claim
 that GitHub provides these workflow states automatically.
 
 A Plan is an explicitly scoped delivery batch that may include multiple
-independent functionalities and owns one branch, PR, and merge. See the
+independent functionalities and owns one branch and, if delivered, one PR and
+merge. Before merge, new user-requested functionality appends as a Ticket;
+after merge it starts a new Plan. An expanded Plan with an open PR retains
+its URL but returns to `in_progress`, invalidating impacted readiness until
+revalidation and an authorized PR update. See the
 [Plan scope contract](../../skills/plan-to-ticket/SKILL.md#scope-and-sizing) and
 [batch publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries).
 A Ticket is an independently reviewable behavior or capability boundary inside
@@ -285,7 +295,8 @@ procedure.
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
 - A persisted plan has one Plan Issue with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and a persisted Plan uses one branch and PR.
-- Tests provide evidence inside a Slice; the Plan PR remains the publication and merge boundary.
+- Tests provide evidence inside a Slice; local verification is a valid stop.
+  If delivery is elected, the Plan PR remains the final publication/merge boundary.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - `repo-documentation` owns documentation governance; `repo-current-state` owns
   only the recovery snapshot.

@@ -117,10 +117,12 @@ Every Plan output includes the branch handoff:
 
 - main
 
-Plan planning is complete before implementation begins. The parent workflow
-then runs the Test -> applicable Redaction -> Commit -> Push -> Create / Update
-Plan PR -> Merge lifecycle once for the Plan, while its Tickets
-and Slices share that delivery boundary.
+Plan/Ticket contracts are updated before implementation edits. Newly requested
+functionality joins the same unmerged Plan as a new Ticket; after merge it uses
+a new Plan. Follow the runtime [scope-update contract](../../../skills/plan-to-ticket/SKILL.md#updating-an-unmerged-plan).
+The parent workflow may stop at local verification; the user chooses commit,
+push, PR creation/update and merge. If delivered, Tickets and Slices share the
+same one-Plan branch/PR/merge boundary.
 
 ## Repository layout
 

@@ -74,7 +74,8 @@ application infrastructure topology.
   historical duplicate IDs remain legacy records.
 - A persisted plan has one Plan Issue and at least one Ticket Issue; a
   single-behavior requirement is one Ticket with one Slice, and the Plan's
-  branch, PR, merge, and cleanup gates remain mandatory exactly once.
+  branch is shared. If the user elects delivery, PR/merge/cleanup gates apply
+  once for the Plan; local verification does not force publication.
 
 ## Ticket-to-Slice hierarchy
 
@@ -82,7 +83,10 @@ The Plan is an explicitly scoped delivery batch and may include multiple
 independent functionalities. The runtime
 [scope contract](../../../skills/plan-to-ticket/SKILL.md#scope-and-sizing) and
 [publication rules](../../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
-own its batch boundaries and shared commit/PR gates. Each Ticket is an
+own its batch boundaries, unmerged scope updates and shared commit/PR gates.
+New user-requested functionality appends as a Ticket before merge, updating
+contracts before edits while preserving branch/base/PR and evidence. After
+merge use a new Plan. Each Ticket is an
 independently reviewable behavior boundary inside that Plan and contains one or
 more execution-ready Slices. Ticket dependencies decide execution order on the
 Plan branch; Slice dependencies decide order inside a Ticket. All Tickets and

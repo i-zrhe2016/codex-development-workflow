@@ -1,17 +1,23 @@
 ---
 name: github-push-when-ready
-description: "Guard every commit, GitHub push, and PR creation/update; also use after coherent GitHub-repo work or requests to ship/sync. Enforce readiness, repository identity, Conventional Commits, declared batch scope, and GitHub About metadata."
+description: "Guard every commit, GitHub push, and PR creation/update; assess coherent work without automatically publishing, and honor user-selected action boundaries. Enforce readiness, repository identity, Conventional Commits, declared batch scope, and GitHub About metadata."
 ---
 
 # GitHub Push When Ready
 
 Invoke **before** every commit/push/PR action or equivalent script, including
-amend; never publish first and assess afterward. Every change type (Docs, Code,
-Tests, Config, Refactor, Bugfix, Feature, Dependency, CI/CD) follows:
-`feature branch -> implement -> verify -> applicable redaction -> commit -> push
--> create/update PR -> PR ready`. Publish only completed, validated task-owned
-work; prefer bundled guards. Commit/push alone never
-completes delivery; a PR is mandatory, with no direct-default-branch bypass.
+amend; never publish first and assess afterward. Readiness is evidence, not
+authorization. For every change type, publish only completed, validated
+task-owned work using the user-selected actions and scope; prefer bundled guards.
+Commit-only stops after a guarded commit, push-only after a guarded push, and
+PR creation/update requires authorization for that action. Neither local
+verification nor adding functionality automatically triggers publication. Prior
+authorization persists for its stated batch/actions; added scope alone does not
+extend it. Waiting for the human decision is a normal stop, not BLOCKED.
+
+All commits/pushes use a non-default branch. If the user elects final delivery,
+the batch uses one PR and a verified, authorized merge; no direct-default-branch
+bypass. Commit/push can complete the requested action without completing delivery.
 
 ## Identity
 
@@ -77,7 +83,12 @@ each diff and stage only the batch's verified functionality, tests and
 documentation paths/hunks. Prefer explicit `--pathspec`; never use
 `--allow-stage-all` when it would include out-of-batch or unverified work.
 Preserve user changes outside the Plan; mixed files require selective hunk
-staging. Scope expansion returns to planning and verification before publication.
+staging. For new user-requested functionality before merge, follow `plan-to-ticket`'s
+scope-update contract before edits; retain IDs, branch/base, existing PR and
+evidence. An open PR remains the same PR, but the expanded Plan returns to
+`in_progress`; invalidate impacted acceptance/batch readiness and revalidate
+before authorized publication/update. Do not report that PR ready for expanded
+scope. After merge, functionality starts a new Plan.
 
 Use clear messages tied to the completed task boundary. Every new/unpublished
 commit subject must follow Conventional Commits 1.0.0:
@@ -101,7 +112,14 @@ update/verification blocks push. Guarded scripts perform this automatically.
 1. Inspect `git status`/relevant diff, identify default branch, and create/resume
    a non-default branch **before editing**. Assess readiness and enforce the
    gates above.
-2. For the standard guarded commit/push, run:
+2. Select only authorized actions. For commit-only, do not run the combined
+   script: assess, stage verified paths/hunks, pass staged redaction, enforce
+   identity and Conventional Commits, then use equivalent guarded commit
+   commands with `CODEX_GITHUB_AUTO_PUSH_SKIP=1` to suppress a managed auto-push
+   hook. Preserve the existing metadata/identity guards; stop after the commit.
+   For push-only, require a clean, verified eligible branch and run only the
+   guarded push path with identity, commit-subject and About checks; no commit.
+   For an authorized combined commit/push, run:
 
    ```bash
    python3 <skill-dir>/scripts/push_if_ready.py \
@@ -116,7 +134,8 @@ update/verification blocks push. Guarded scripts perform this automatically.
    If one file mixes units, assess then manually stage intended hunks and use
    equivalent guarded commit/push commands. Existing upstream uses `git push`;
    missing upstream uses `git push -u <remote> <branch>`.
-3. After successful push, check for an existing PR; update with `gh pr edit` as
+3. Stop after push unless PR creation/update is authorized. For that action,
+   check for the existing Plan PR (retain its URL); update with `gh pr edit` as
    needed, never duplicate. If absent, verify CLI authentication/account and
    create against default:
 
@@ -129,6 +148,11 @@ update/verification blocks push. Guarded scripts perform this automatically.
    report branch/exact blocker; do not claim ready for review.
 4. For another unit, re-inspect remaining diff and restart assessment.
 
+Optional managed hooks require explicit authorization for recurring automatic
+pushes; do not install them merely because a commit was requested. For local-only
+or commit-only work, suppress their push using `CODEX_GITHUB_AUTO_PUSH_SKIP=1`.
+These hooks do not grant PR or merge authority.
+
 Optional managed hooks:
 
 ```bash
@@ -138,7 +162,7 @@ python3 <skill-dir>/scripts/install_post_commit_hook.py --repo .
 | Resource | Contract |
 | --- | --- |
 | `scripts/install_post_commit_hook.py` | Installs `commit-msg` (reject invalid Conventional Commits before creation) and `post-commit` (call `auto_push_post_commit.py` after every valid commit; exit cleanly on skipped push). Use `--force` only to intentionally replace an unmanaged hook; installer backs it up first. |
-| `scripts/auto_push_post_commit.py` | Fresh assessment after each valid commit; same identity and About guards; push only safe `push` on non-default. Never auto-commit leftovers or open PRs: hooks lack PR title/body/branch intent. Skip partial work, detached/conflicted/default/unknown-default branches, behind upstream, missing GitHub remote/About, or unverified identities. Use explicit PR step afterward. |
+| `scripts/auto_push_post_commit.py` | Fresh assessment after each valid commit; same identity and About guards; push only safe `push` on non-default. Never auto-commit leftovers or open PRs: hooks lack PR title/body/branch intent. Skip partial work, detached/conflicted/default/unknown-default branches, behind upstream, missing GitHub remote/About, or unverified identities. Use a PR step afterward only when authorized. |
 | `scripts/publish_identity.py` | Resolve local target policy; verify effective author/committer, unpublished commits and active CLI account; supply account-bound push credentials. |
 
 Set `CODEX_GITHUB_AUTO_PUSH_SKIP=1` to bypass one hook invocation.
@@ -146,7 +170,9 @@ Set `CODEX_GITHUB_AUTO_PUSH_SKIP=1` to bypass one hook invocation.
 
 ## Report
 
-State: GitHub connection; ready to commit/push or blocked; PR existing/created/
-blocked, with exact next command when applicable. Report each stage separately.
+State: requested action and completed boundary; GitHub connection and any real
+blocker; existing/created PR URL when present. Distinguish successful commit-only
+or push-only from final delivery; unrequested PR work is pending a user decision,
+not a blocker. Report each stage separately.
 For executed push include branch, remote and whether a commit was created first;
 for existing/created PR include URL; for skipped push give the precise blocker.

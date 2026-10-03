@@ -43,8 +43,20 @@ not separate workflows.
 
 Persist a Plan Issue with one or more child Ticket Issues before branch work
 when the work is complex, must survive a session boundary, or the user asks for
-a persisted plan. A persisted Plan owns one branch, one PR, and one merge for
-all of its Tickets; split each Ticket into independently verifiable Slices.
+a persisted plan. A persisted Plan owns one branch and, when the user elects delivery, one PR and
+one merge for all of its Tickets; split each Ticket into independently
+verifiable Slices. New user-requested functionality joins the same unmerged
+Plan as a new Ticket after its goal, scope, index, dependencies and validation
+are updated. Preserve IDs, branch/base, existing PR and evidence; after merge,
+start a new Plan. `plan-to-ticket` owns the scope-update procedure.
+
+Local verified functionality is a normal stopping point, not BLOCKED while
+publication awaits the user. The user controls commit, push, PR creation/update
+and merge timing and scope. Prior authorization persists for its stated batch;
+adding scope alone grants no publication authority. Commit-only and push-only
+requests stop at those boundaries. With an open PR, expanded scope returns the
+Plan to `in_progress`, retains its PR URL and requires impacted acceptance and
+batch readiness to be revalidated before authorized publication/update.
 
 `codex-development-workflow` routes to these stages and carries the invariants
 that hold in all of them. Its full orchestration is the only path that runs
@@ -223,4 +235,6 @@ natural boundary.
 
 ## Completion
 
-A change is complete only after all applicable workflow gates have passed.
+The requested work is complete when its authorized stage gates have passed.
+Local verification, commit, push and PR readiness are distinct stopping points;
+final Plan delivery is complete only after verified merge and reconciliation.

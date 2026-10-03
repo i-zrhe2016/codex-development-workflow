@@ -15,7 +15,7 @@ Requirement
   -> plan-workflow        understand, design, decompose, persistence decision
   -> develop-workflow     implement to Development Complete
   -> verify-workflow      verification scope, level, and conclusion
-  -> publish-workflow     documentation impact, redaction, commit, push, PR ready
+  -> publish-workflow     docs/redaction, requested commit/push/PR boundary
   -> integrate-workflow   merge once, cleanup, close Issues, state and docs
 ```
 
@@ -48,14 +48,15 @@ Create Plan branch
   -> Update State / Docs
   -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
-  -> Reusable improvement? -> one bounded follow-up change or finish
+  -> Report reusable improvement for a user decision or finish
 ```
 
 Feature, Bug, Refactor, and Docs are profiles of these stages, not additional
 workflows. They change verification breadth and whether a plan is persisted.
-Planning depth and verification level may vary, but published work always uses
-the branch and PR path: Docs, Code, Tests, Config, Refactor, Bugfix, Feature,
-Dependency, and CI/CD changes may not direct-push around the PR gate.
+Planning depth and verification level may vary. Commits/pushes use non-default
+branches; user-elected final delivery uses a PR merge. Docs, Code, Tests, Config,
+Refactor, Bugfix, Feature, Dependency and CI/CD changes never commit/push
+directly to default. Selected action boundaries remain valid.
 
 ## External deployment handoff
 
@@ -85,7 +86,13 @@ Ticket dependencies determine execution order within the Plan; Slice
 dependencies determine the execution order within a Ticket. A single-behavior
 requirement is one Ticket containing one Slice, and a persisted plan still uses
 one branch and one PR. The [Plan scope contract](../../skills/plan-to-ticket/SKILL.md#scope-and-sizing)
-owns batch boundaries.
+owns batch boundaries and the procedure for appending functionality to an
+unmerged Plan. Update goal/scope/index/dependencies/validation and persist the
+new Ticket before edits; preserve IDs, branch/base, PR and evidence. With an
+open PR, expanded scope returns the Plan to `in_progress`, retains the PR URL
+and invalidates impacted acceptance/batch readiness. Revalidate before an
+authorized update; the PR is not ready for expanded scope. After verified
+merge, subsequent functionality requires a new Plan.
 
 For every Slice, define:
 
@@ -130,14 +137,17 @@ stop; do not fall back to local Markdown or an unpersisted chat response.
 
 Update the Plan as work progresses: `in_progress` when its branch starts,
 `blocked` for a blocking dependency or environment problem, `in_review` when
-the PR is opened, and `done`/closed only after that PR is verified merged.
+the current-scope PR is ready for review, and `done`/closed only after that PR
+is verified merged. Local verified work may stop with Issues open; waiting for
+a human publication decision is not `blocked`. Scope expansion returns to
+`in_progress`, including when a PR already exists.
 Update child Ticket status and acceptance evidence during execution; set all
 child Tickets to `done` and close them with the Plan after the one merge.
 
 ## Branch and PR discipline
 
-Published work goes through a branch and a pull request. A persisted Plan owns
-exactly one branch, one PR, and one merge.
+Commits/pushes use a non-default branch; final delivery uses a pull request.
+A persisted Plan owns one branch and, if delivered, one PR and one merge.
 
 Use `<type>/<plan-id>-<short-description>` and create the branch from the
 updated default branch. Ticket dependencies are completed and validated on this
@@ -152,9 +162,9 @@ delivery branch for a Ticket. Before publishing, complete the Plan's acceptance
 and relevant integration/regression checks for every Ticket and the batch. A
 planned batch may share one commit and PR; follow the
 [publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
-for staging, batch commit bodies and complete PR evidence. After creating or
-updating the PR, merge it once the existing verification and publication gates
-are satisfied. The Plan
+for staging, batch commit bodies and complete PR evidence. Create/update the
+same Plan PR only when authorized and current-scope checks pass; merge once
+only with merge authorization and the existing gates satisfied. The Plan
 Issue and implementation branch are a one-to-one pair; record and verify the
 Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 
@@ -174,6 +184,31 @@ Codex dispatch uses `fork_turns="none"`; another host must provide equivalent
 fresh agents with independent context or report BLOCKED. Workers execute their
 role without spawning agents. The installable root/develop/verify/test Skills
 carry the minimum runtime rules even in repositories without AGENTS.md.
+
+## Publication decisions
+
+Local verification may end requested functionality work with a checkpoint and
+open Plan/Tickets. The user chooses when and what to commit, push, create/update
+as a PR or merge. Prior authorization persists for its stated batch/actions;
+new feature scope alone does not extend it. Readiness recommends actions and
+does not authorize them. Waiting for the user is a normal stop, not BLOCKED.
+
+| User request | Completed boundary |
+|---|---|
+| Implement and verify functionality | Local verified checkpoint; no automatic publication. |
+| Commit only | Guarded Conventional Commit; suppress managed auto-push with `CODEX_GITHUB_AUTO_PUSH_SKIP=1`; no push or PR. |
+| Push only | Guarded push of verified existing commits; no commit or PR. |
+| Create/update PR | Authorized same-Plan PR action after current-scope checks; stop at PR ready. |
+| Merge ready PR | Authorized merge and reconciliation; readiness alone grants no merge authority. |
+| Full end-to-end delivery | All gates/actions within the explicitly authorized batch. |
+
+For example, after verifying search locally, a user can request export as a
+new Ticket in the same unmerged Plan. Update its goal/scope/index/dependencies/
+validation before edits and keep the existing branch. If a PR already exists,
+retain its URL, return Plan to `in_progress` and revalidate impacted acceptance
+and batch readiness. Neither adding export nor finishing its checks triggers
+a PR update; publication awaits the user's chosen action. Once that Plan has
+merged, a later requested functionality starts a new Plan.
 
 ## Verification
 
@@ -245,17 +280,12 @@ Prefer simplifying or removing redundant steps before adding new process. Never
 weaken branch/PR, redaction, security, permission, or release
 gates for convenience.
 
-A low-risk improvement that stays within the existing workflow intent may start
-automatically as one separate follow-up repository change. It must begin from
-the updated default branch and repeat the normal branch, validation, redaction,
-PR and merge lifecycle. Policy, permission, security,
-release behavior, and broad project-scope changes are reported instead of
-self-applied.
-
-Only one automatic follow-up improvement may be created per delivered user
-request. Its own evaluation cannot recursively create another automatic
-improvement. If there is no meaningful evidence-backed improvement, finish
-without inventing work or backlog entries.
+Report an evidence-backed improvement for the user to choose. Evaluation
+authorizes no implementation, publication or merge. A user-requested follow-up
+after merge starts a new Plan from the updated default branch, runs only its
+authorized stages/actions and preserves the existing gates. Evaluate at most
+one follow-up without recursively starting another. If there is no meaningful
+evidence-backed improvement, finish without inventing work or backlog entries.
 
 ## Output classification and redaction
 
@@ -274,9 +304,13 @@ project-specific tooling and review.
 
 ## Completion order
 
-`plan-workflow -> develop-workflow -> verify-workflow -> publish-workflow -> integrate-workflow -> Evaluate workflow -> optional one bounded follow-up improvement`
+This complete sequence applies only to explicitly authorized end-to-end delivery;
+local verification and selected publication actions stop at their own boundary.
 
-`publish-workflow` stops at PR ready and never merges. `integrate-workflow`
+`plan-workflow -> develop-workflow -> verify-workflow -> publish-workflow -> integrate-workflow -> Evaluate workflow -> report bounded follow-up for user decision`
+
+`publish-workflow` stops at the requested commit, push or PR boundary and never
+merges. `integrate-workflow` requires merge authorization for the current scope and
 merges once, deletes the branch, updates the default branch, closes the Plan and
 its Tickets, refreshes `docs/Repo_Current_State.md`, and reconciles the
 documentation index. State and documentation updates that change tracked

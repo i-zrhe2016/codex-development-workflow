@@ -1,4 +1,4 @@
 interface:
   display_name: "Commit, Push & PR"
-  short_description: "Guard branches, PRs, merges, and cleanup"
-  default_prompt: "Use $github-push-when-ready to make a Conventional Commit for the verified functionality or planned batch, describe every included functionality and its Ticket and validation in a batch commit body, push the verified branch, and open or update one guarded pull request covering the full scope."
+  short_description: "Guard authorized commit, push and PR actions"
+  default_prompt: "Use $github-push-when-ready to guard only user-authorized commit, push or PR creation/update for verified functionality or a planned batch. Preserve branch, identity, About, staged redaction and Conventional Commit gates; describe all included Tickets and evidence. Commit-only suppresses auto-push hooks; push-only creates no commit or PR. Stop at the requested boundary."

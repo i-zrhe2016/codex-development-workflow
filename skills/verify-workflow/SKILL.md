@@ -54,5 +54,11 @@ Return exactly one conclusion with evidence, then stop:
 - `FAIL`: identify failing check/evidence; return fixes to `develop-workflow`.
 - `BLOCKED`: checks could not run; explain why.
 
+PASS may end the requested work as local verified functionality; it grants no
+commit/push/PR/merge authority, and awaiting the user's publication decision is
+not BLOCKED. With expanded unmerged Plan scope, preserve prior evidence and
+recheck impacted acceptance plus batch readiness; an existing PR is not ready
+for that scope until those checks and an authorized update succeed.
+
 No code/test/config/docs edits to pass checks, commit/push/PR/merge, Issue closure
 or state updates. Subagents cannot advance stages or replace main-agent judgment.
