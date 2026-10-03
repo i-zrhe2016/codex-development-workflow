@@ -10,6 +10,12 @@
 Slice 验收。目标是用最低成本的可靠检查证明验收标准，而不是追求无差别的
 全量测试。
 
+实现 worker 可直接运行本流程获得本地反馈；每个 Ticket（含文档、配置、测试）
+的正式验收使用独立全新 verifier，涵盖该 Ticket 全部 scenario，不逐个 Slice 创建 verifier。已派发 worker
+直接执行，不递归派发。verifier 只读仓库（允许缓存与临时证据）；修复交还
+实现职责，再由新 verifier 重验受影响功能并保留失败证据。调度、干净上下文
+和主代理门禁遵循 [AGENTS.md](../../../AGENTS.md#multi-agent-delegation)。
+
 ## 验收清单
 
 在执行前先从需求和现有契约提炼简短清单：
@@ -69,7 +75,7 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 
 ## RED -> GREEN
 
-复杂或高风险变更按以下顺序执行：
+实现 worker 对复杂或高风险变更按以下顺序执行；独立 verifier 不执行修复：
 
 1. 将验收标准转成 focused test。
 2. 运行并确认测试因预期缺失行为而失败；若已通过，不人为制造失败。

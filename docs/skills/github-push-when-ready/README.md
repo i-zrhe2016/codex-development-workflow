@@ -2,8 +2,9 @@
 
 `github-push-when-ready` is the publication gate for feature branches, commits,
 pushes, and pull requests. It checks that the repository is ready to publish,
-that the change has one clear purpose, that the commit follows Conventional
-Commits 1.0.0, and that no secrets or unrelated changes are being shipped.
+that the change stays within its declared functionality or planned batch scope,
+that the commit follows Conventional Commits 1.0.0, and that no secrets or
+out-of-batch changes are being shipped.
 
 The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-ready/SKILL.md).
 
@@ -13,7 +14,9 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - Create or resume a non-default branch before publishing; every published
   change uses the branch and PR path. When the branch carries Plan metadata, the
   gate validates it; when it does not, publication proceeds normally.
-- Keep one coherent requirement or Plan per commit.
+- A planned multi-function batch may share one commit and PR. Single-function
+  commits remain valid; follow the runtime [batch publication rules](../../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
+  for full verification, selective staging and commit/PR descriptions.
 - Use a Conventional Commit message with the correct scope and intent.
 - For this repository, configure the approved non-root local identity and GitHub account `i-zrhe2016`; other target repositories must configure their own non-root identity.
 - The guarded commit/push paths verify author, committer, unpublished commits, active GitHub account, and the credentials used for GitHub publication.

@@ -7,9 +7,9 @@
 ## Scope
 
 This repository packages the `plan-to-ticket` specialist inside a larger
-main-agent workflow. Its job is to convert a change request into one Plan,
-behavior Tickets, and small engineering Slices within each Ticket with
-boundaries that can support optional delegation, and to persist the Plan and its
+main-agent workflow. Its job is to convert an explicitly scoped delivery batch
+into one Plan, behavior Tickets, and small engineering Slices within each Ticket with
+boundaries for fresh Ticket workers, and to persist the Plan and its
 Tickets to GitHub Issues when the work is complex, must survive a session
 boundary, or the user asks for a persisted plan. There is no
 application runtime, custom API client, or local ticket database in this
@@ -35,7 +35,7 @@ application infrastructure topology.
 
 ## Request flow
 
-1. A requestor provides a requirement, including a feature idea, bug-fix plan, refactor plan, documentation, configuration, dependency, test, or CI/CD change.
+1. A requestor provides a delivery batch with one or more explicitly planned functionalities, including features, bug fixes, refactors, documentation, configuration, dependency, test, or CI/CD changes.
 2. Codex uses the frontmatter description in `SKILL.md` to determine whether this skill applies.
 3. The planning instructions use the available repository context to identify
    milestones, Ticket boundaries, Ticket dependencies, scope boundaries, and
@@ -51,9 +51,9 @@ application infrastructure topology.
 7. The successful output follows the contract in `SKILL.md`: a `Plan` section
    followed by Ticket sections containing nested Slices and canonical Issue
    links, with the Plan branch handoff fields on the Plan section.
-8. The main agent uses the Slices as implementation input, either executing
-   them sequentially or delegating independent, bounded work with disjoint
-   ownership.
+8. The coordinator dispatches each Ticket to a fresh implementer for all its
+   dependency-ordered Slices, then to a separate fresh verifier for all scenarios
+   under the [scheduling policy](../../../AGENTS.md#multi-agent-delegation).
 
 ## Design boundaries
 
@@ -63,8 +63,8 @@ application infrastructure topology.
 - Slice verification describes observable checks. It does not claim that implementation has already been completed.
 - For a persisted plan, a required GitHub Issue failure blocks completion; chat
   output and local Markdown are not persistence fallbacks.
-- The skill does not force multi-agent handoffs or parallel implementation; the
-  parent workflow decides whether an independent Slice is safe to delegate.
+- Planning defines worker-ready Ticket contracts; the coordinator dispatches
+  workers and chooses safe concurrency under the canonical scheduling policy.
 - Each Plan Issue maps to one implementation branch and one PR; all child
   Tickets and internal Slices share that branch, and the PR head/base must match
   the Plan Issue metadata.
@@ -78,7 +78,11 @@ application infrastructure topology.
 
 ## Ticket-to-Slice hierarchy
 
-The Plan is the independently deliverable requirement boundary. Each Ticket is an
+The Plan is an explicitly scoped delivery batch and may include multiple
+independent functionalities. The runtime
+[scope contract](../../../skills/plan-to-ticket/SKILL.md#scope-and-sizing) and
+[publication rules](../../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
+own its batch boundaries and shared commit/PR gates. Each Ticket is an
 independently reviewable behavior boundary inside that Plan and contains one or
 more execution-ready Slices. Ticket dependencies decide execution order on the
 Plan branch; Slice dependencies decide order inside a Ticket. All Tickets and

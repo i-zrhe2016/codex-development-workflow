@@ -69,13 +69,13 @@ completion evidence with the delivery.
 
 ## Ticket-to-Slice hierarchy
 
-A requirement that is complex, must survive a session boundary, or is
+A delivery batch that is complex, must survive a session boundary, or is
 explicitly requested as a persisted plan gets one Plan Issue and at least one
-Ticket Issue. When the requirement crosses multiple behaviors or has
+Ticket Issue. When the batch includes multiple functionalities or has
 dependencies, use this order:
 
-1. Define the single requirement boundary and create its Plan Issue.
-2. Split the requirement into independently reviewable behavior Tickets.
+1. Explicitly list the batch's planned functionalities and create its Plan Issue.
+2. Split its functionalities into independently reviewable behavior Tickets.
 3. Define each Ticket's scope, dependencies, acceptance boundary, and Issue.
 4. Split each Ticket into dependency-ordered, independently verifiable
    Slices.
@@ -84,7 +84,8 @@ All Tickets and Slices for one Plan share the Plan's implementation branch.
 Ticket dependencies determine execution order within the Plan; Slice
 dependencies determine the execution order within a Ticket. A single-behavior
 requirement is one Ticket containing one Slice, and a persisted plan still uses
-one branch and one PR.
+one branch and one PR. The [Plan scope contract](../../skills/plan-to-ticket/SKILL.md#scope-and-sizing)
+owns batch boundaries.
 
 For every Slice, define:
 
@@ -94,10 +95,9 @@ Relevant context/files, Test strategy, Test level, Test cases,
 Validation command
 ```
 
-Only start dependency-ready Slices. The main agent may execute a Slice itself
-or delegate independent Slices with disjoint ownership boundaries. If an
-implementation assumption is wrong, stop and return to Plan or split the
-Slice instead of growing the patch.
+The Ticket's fresh implementation worker executes dependency-ready Slices in
+order. If an assumption is wrong, return to planning rather than expanding the
+patch; the main agent owns that decision.
 
 ## Persistent plan and ticket handoff
 
@@ -111,13 +111,14 @@ branch starts. The Plan Issue retains:
 
 - `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
 - `Branch`, `Base`, `PR`, and child Ticket index metadata;
-- the requirement goal, milestones, completion rule, and delivery contract.
+- the batch goal, explicit functionality scope, milestones, completion rule,
+  and delivery contract.
 
 Each child Ticket Issue retains its Plan link, `Status`, `Dependencies`, goal,
 scope, acceptance criteria, Slice plan, and validation contract. It does not
 own `Branch`, `Base`, `PR`, or a separate merge.
 
-The Plan Issue contains the overall requirement plan and links to every Ticket
+The Plan Issue contains the overall batch plan and links to every Ticket
 Issue. Chat output contains convenience links only.
 `docs/Repo_Current_State.md` may link to the active Issue but must not become a
 duplicate plan or backlog.
@@ -148,53 +149,31 @@ Verify the current branch and working tree before editing and preserve
 unrelated or uncommitted work. Parallel workers use isolated worktrees or
 return patches/findings for integration on the branch; never create a second
 delivery branch for a Ticket. Before publishing, complete the Plan's acceptance
-and relevant integration checks. After creating or updating the PR, merge it
-once the existing verification and publication gates are satisfied. The Plan
+and relevant integration/regression checks for every Ticket and the batch. A
+planned batch may share one commit and PR; follow the
+[publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
+for staging, batch commit bodies and complete PR evidence. After creating or
+updating the PR, merge it once the existing verification and publication gates
+are satisfied. The Plan
 Issue and implementation branch are a one-to-one pair; record and verify the
 Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 
 ## Adaptive agent orchestration
 
-The main process is fixed while task execution is adaptive.
-
 ```text
-Fixed:
-plan -> develop -> verify -> publish -> integrate
-
-Dynamic inside the current stage:
-ready tasks -> choose self/delegate -> execution wave -> integrate -> reschedule
+ready Ticket -> fresh implementer: all dependency-ordered Slices + local checks
+             -> separate fresh verifier: all functionality scenarios
+             -> coordinator integrates evidence and decides gates
 ```
 
-The main agent computes a ready set from satisfied dependencies and clear
-ownership boundaries. It then chooses the smallest useful execution wave:
-
-- execute everything itself when delegation adds little value;
-- delegate one bounded task when context isolation or independent evidence helps;
-- run several independent tasks concurrently when their write boundaries do
-  not overlap and host capacity is available.
-
-Concurrency is a ceiling, not a utilization target. The main agent decides the
-actual count at runtime. It does not assign the entire Plan to agents in
-advance; after each material result, failure, dependency change, or integration
-step it recomputes the ready set and may choose a different topology for the
-next wave.
-
-Agent selection is also dynamic. The host and main agent choose among available
-built-in or project-defined agents from the task contract and agent description;
-this repository does not hard-code task categories to agent names.
-
-Every delegated task carries its goal, scope and exclusions, ownership
-boundary, dependencies, acceptance criteria, validation, and expected result
-summary. Parallel write tasks may not share files, interfaces, schemas,
-migrations, or shared configuration. When isolation is uncertain, use
-sequential execution or read-only delegation.
-
-Subagents return findings, changes or patches, test evidence, and unresolved
-risks. The main agent integrates each wave and retains ownership of stage-gate
-decisions, publication, merge, and final judgment.
-
-See [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation) for the canonical
-scheduling policy.
+Follow the canonical [scheduling policy](../../AGENTS.md#multi-agent-delegation)
+for worker roles, replacement, failure repair and safe waves, and
+[Context Management](../../AGENTS.md#context-management) for thin coordinator
+context, scoped handoffs, durable Issue checkpoints and recovery.
+Codex dispatch uses `fork_turns="none"`; another host must provide equivalent
+fresh agents with independent context or report BLOCKED. Workers execute their
+role without spawning agents. The installable root/develop/verify/test Skills
+carry the minimum runtime rules even in repositories without AGENTS.md.
 
 ## Verification
 
@@ -217,6 +196,26 @@ Run the smallest set that provides sufficient evidence. The level controls
 breadth, not PASS: stop only when the Test Quality Gate closes. Report the
 level, the acceptance-to-test matrix, the quality-gate dimensions, commands,
 results, evidence, N/A reasons, and any escalation reason.
+
+### Local package validation
+
+From this repository's checkout, run the existing package checks:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+git diff --check
+```
+
+These checks cover managed bundle/source contracts, Test Quality Gate references
+and Draw.io source structure and pairing. The
+[installer regression checks](../deployment/installation.md#installer-regression-checks)
+also exercise installation and update contents for both targets. They provide
+local package evidence; independent Ticket verification still maps acceptance
+to executed evidence before its coordinator decides the gate. Claude runtime
+execution and a real GitHub publication/merge flow require their own evidence.
+
+For PlantUML source/render changes, use the
+[PlantUML rendering procedure](../../skills/plantuml/SKILL.md#integration-and-rendering).
 
 ## Post-delivery workflow evaluation
 

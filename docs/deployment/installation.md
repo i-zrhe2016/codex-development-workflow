@@ -38,7 +38,7 @@ Select the host with `--target`. Codex is the default:
 bash scripts/install-all.sh --target claude
 ```
 
-Both targets install the same twelve managed bundles under the bare skill name; the
+Both targets install the same thirteen managed bundles under the bare skill name; the
 Claude target omits the Codex-only `agents/openai.yaml` metadata, so the two
 installations are not byte-for-byte identical. The destination root and that
 metadata are the only differences. `--dest PATH` overrides either destination.
@@ -123,6 +123,22 @@ find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 The installer prints the number of installed and skipped skills, the resolved
 destination, and the host to restart.
 
+### Installer regression checks
+
+From the repository checkout, run:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p 'test_install_all.py'
+```
+
+The tests use temporary destinations and cover target selection, destination
+precedence, invalid arguments, skip/update behavior, ownership protection and
+host-specific metadata. They compare every installed `SKILL.md` byte for byte
+with its root or specialist source for Codex and Claude, both on initial install
+and after replacing stale installed content with `--update`: 52 comparisons
+across 13 bundles. This verifies package contents; it does not execute Claude
+Code or publish a real GitHub PR.
+
 ## Host-specific configuration
 
 The installer copies managed skills only. Project-scoped runtime configuration
@@ -130,7 +146,7 @@ is not installed into another repository, and each host reads its own:
 
 | File | Read by | Purpose |
 |---|---|---|
-| `.codex/config.toml` | Codex | Enables subagents and caps concurrent spawned-agent threads at three, excluding the main thread. The cap is a ceiling; the main agent chooses actual wave concurrency dynamically. |
+| `.codex/config.toml` | Codex | Enables subagents and sets the project concurrency ceiling to three. The main agent chooses useful wave concurrency within the effective host capacity. |
 | `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The Codex target requires it and installs it; the Claude target installs the bundle without it, because Claude Code never reads it. |
 
 Codex may use built-in agents and project-defined agents under
@@ -156,9 +172,10 @@ hosts reach it differently:
   fallback applies here.
 
 When a target project already has its own `CLAUDE.md`, Claude Code will not fall
-back to that project's `AGENTS.md`. That project must then carry the delegation
-policy itself — copy the "Multi-Agent Delegation" section into its `CLAUDE.md`,
-or add a `CLAUDE.md` that links to it.
+back to that project's `AGENTS.md`. Link the project's authoritative delegation
+and context policy from `CLAUDE.md` when that policy lives in `AGENTS.md`;
+avoid maintaining a second copy. Installed root/develop/verify/test Skills
+retain the minimum worker/context rules when a target has no `AGENTS.md`.
 
 ## Installation behavior and trust boundary
 

@@ -157,6 +157,29 @@ class InstallerTargetTests(unittest.TestCase):
         self.assertEqual(third.returncode, 0, third.stderr)
         self.assertIn(f"Installed: {len(EXPECTED_SKILLS)}", third.stdout)
 
+    def test_install_and_update_copy_current_skill_bytes_for_every_target(self) -> None:
+        for target in ("codex", "claude"):
+            dest = self.tmp / target
+            for phase, extra_args in (("install", ()), ("update", ("--update",))):
+                with self.subTest(target=target, phase=phase):
+                    result = self.run_installer(
+                        "--target", target, "--dest", str(dest), *extra_args,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    for bundle in EXPECTED_SKILLS:
+                        with self.subTest(bundle=bundle):
+                            source = (
+                                REPO_ROOT if bundle == "codex-development-workflow"
+                                else REPO_ROOT / "skills" / bundle
+                            ) / "SKILL.md"
+                            self.assertEqual(
+                                (dest / bundle / "SKILL.md").read_bytes(),
+                                source.read_bytes(),
+                            )
+                    if phase == "install":
+                        for bundle in EXPECTED_SKILLS:
+                            (dest / bundle / "SKILL.md").write_bytes(b"stale installed skill\n")
+
     def test_update_leaves_unrelated_destination_untouched(self) -> None:
         dest = self.tmp / "dest"
         unrelated = dest / "local-custom-skill"

@@ -8,6 +8,11 @@ title install-all.sh — Destination, Ownership, Update and Retirement
 start
 :Parse target / dest / update / adopt-legacy options;
 
+if (Adopt legacy enabled without update?) then (yes)
+  :Refuse invalid option combination;
+  stop
+endif
+
 if (Explicit dest provided?) then (yes)
   :Use explicit skills destination;
 else (no)
@@ -19,7 +24,24 @@ if (Destination is inside repository?) then (yes)
   stop
 endif
 
-:For each of 12 managed bundles;
+if (Update enabled?) then (yes)
+  while (More retired skill destinations?) is (yes)
+    :Select next retired destination\nincluding context-efficiency and prior retired bundles;
+    if (Retired destination exists?) then (yes)
+      if (Ownership marker matches retired name?) then (yes)
+        :Remove owned retired destination;
+      else (no)
+        if (Adopt legacy enabled?) then (yes)
+          :Move retired destination into recoverable backup directory;
+        else (no)
+          :Preserve retired destination\nReport ownership unverified;
+        endif
+      endif
+    endif
+  endwhile (no)
+endif
+
+:For each of 13 managed bundles;
 
 if (Destination exists?) then (no)
   :Copy bundle;
@@ -39,10 +61,6 @@ else (yes)
       endif
     endif
   endif
-endif
-
-if (Update enabled?) then (yes)
-  :Prune owned retired skill destinations\nincluding context-efficiency and prior retired bundles;
 endif
 
 :Report installed / skipped / migrated\nand resolved destination;

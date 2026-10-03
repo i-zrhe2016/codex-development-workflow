@@ -1,6 +1,6 @@
 ---
 name: github-push-when-ready
-description: "Guard every commit, GitHub push, and PR creation/update; also use after coherent GitHub-repo work or requests to ship/sync. Enforce readiness, repository identity, Conventional Commits, atomic requirements, and GitHub About metadata."
+description: "Guard every commit, GitHub push, and PR creation/update; also use after coherent GitHub-repo work or requests to ship/sync. Enforce readiness, repository identity, Conventional Commits, declared batch scope, and GitHub About metadata."
 ---
 
 # GitHub Push When Ready
@@ -61,20 +61,33 @@ and `push.default`; block if the target is default or indeterminate. A
 pull-tracking upstream may intentionally belong to another repository. Unknown
 default requires manual review. Never force-push without an explicit user request.
 
-Use one PR per coherent published change. One commit owns one requirement or
-atomic Plan: keep its implementation,
-tests and documentation together, never split merely by file type or combine
-unrelated Plans/features because they share a session. Split independent units;
-review each diff and stage only its paths/hunks. Prefer explicit `--pathspec`;
-never `--allow-stage-all` with unrelated/independently committable work, and ask
-before combining unrelated user edits. Validate each unit. Plan metadata, when
-present, must validate; its absence permits normal publication—a persisted Plan
-is a planning decision, not a publication prerequisite.
+Use one PR per declared delivery batch. A Plan may explicitly include multiple
+independent functionalities, and they may share one commit and PR; a single
+functionality commit remains valid. Keep implementation, tests and documentation
+within that scope together. Do not require separate commits merely because
+functionalities are independent, or classify planned batch members as unrelated.
+Do not combine different existing Plans or out-of-Plan user edits merely because
+they share a session. Plan metadata, when present, must validate; its absence
+permits normal publication—a persisted Plan is a planning decision, not a
+publication prerequisite.
+
+Publish only after every Ticket's acceptance and the batch's relevant
+integration/regression checks pass. Any failure blocks the whole batch. Review
+each diff and stage only the batch's verified functionality, tests and
+documentation paths/hunks. Prefer explicit `--pathspec`; never use
+`--allow-stage-all` when it would include out-of-batch or unverified work.
+Preserve user changes outside the Plan; mixed files require selective hunk
+staging. Scope expansion returns to planning and verification before publication.
 
 Use clear messages tied to the completed task boundary. Every new/unpublished
 commit subject must follow Conventional Commits 1.0.0:
 `<type>[optional scope][!]: <description>`; lowercase type, non-empty description
-and non-empty scope when present. Specification-compliant bodies/footers allowed.
+and non-empty scope when present. For a multi-function commit, the subject
+summarizes the batch and the body lists each functionality, its Ticket ID, the
+behavior changes and validation results. Single-function commits remain valid;
+specification-compliant bodies/footers are allowed. The PR description covers
+all included functionalities/Tickets, behavior changes, per-Ticket evidence and
+batch integration/regression results.
 Before each push, verify all unpublished commit subjects comply; guarded
 scripts do this automatically.
 

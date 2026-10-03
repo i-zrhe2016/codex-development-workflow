@@ -4,46 +4,61 @@ top to bottom direction
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-title Ticket / Slice Loop — Implement, Verify, Diagnose, Re-plan
+title Ticket Execution — Local Slice Loop and Independent Function Verification
 
-state "Select dependency-ready Slice\nRead Plan + Ticket + shared branch evidence" as select
-state "Define Slice contract\nGoal / scope / exclusions / dependencies\nAcceptance / test strategy / level / cases / command" as contract
-state "Minimal implementation\nTest-first when useful\nBounded delegation optional" as implement
-state "Focused verification\nCheapest relevant checks first" as focused
-state "Mandatory risk dimensions\nBoundary / negative / integration / regression\nProperty / mutation / E2E / isolation when applicable" as dimensions
-state "Test Quality Gate" as gate
-state "Classify failure\nImplementation / test / regression / environment\nflaky / requirement conflict" as diagnose
-state "Fix in-scope defect" as fix
-state "Blocked\nRecord cause + exact resume point" as blocked
-state "Re-plan Slice / Ticket\nUpdate boundaries and acceptance" as replan
-state "Slice complete\nRecord executed evidence" as slice_done
-state "Ticket complete\nAll Slices + acceptance satisfied" as ticket_done
+state "Coordinator dispatches fresh Ticket implementer\nClean context + scoped contract; shared Plan branch" as dispatch
+state "Same implementer selects next ready Slice\nDependencies / acceptance / validation command" as select
+state "Minimal implementation\nTest-first when useful" as implement
+state "Local focused checks\nCheapest relevant checks first" as focused
+state "Diagnose failure" as diagnose
+state "Implementation worker fixes in-scope defect" as fix
+state "BLOCKED\nRecord cause + verified checkpoint" as blocked
+state "Coordinator re-plans Slice / Ticket" as replan
+state "Slice locally complete\nRecord evidence" as slice_done
+state "Development Complete\nAll Ticket Slices implemented + locally checked" as developed
+state "Coordinator dispatches separate fresh verifier\nRead-only; all functionality scenarios" as verify
+state "Verifier reports acceptance + mandatory dimensions\nExecuted evidence or concrete N/A reasons" as evidence
+state "Coordinator decides Test Quality Gate" as gate
+state "Implementation repairs affected function\nRun local checks; retain failed evidence" as repair
+state "Verification BLOCKED\nRecord verification resume point" as verify_blocked
+state "Ticket acceptance verified" as ticket_done
 
-[*] --> select
-select --> contract
-contract --> implement
+[*] --> dispatch
+dispatch --> select
+select --> implement
 implement --> focused
 focused --> diagnose : failure
-focused --> dimensions : GREEN
-dimensions --> diagnose : missing / failed evidence
-dimensions --> gate : required dimensions satisfied
-gate --> diagnose : BLOCKED
-gate --> slice_done : PASS
-diagnose --> fix : implementation / test defect
+focused --> slice_done : local checks pass
+diagnose --> fix : implementation / test / regression defect
 fix --> focused
-diagnose --> blocked : external dependency
+diagnose --> blocked : dependency / environment
 blocked --> select : cause resolved
 diagnose --> replan : requirement / design conflict
-implement --> replan : wrong assumption exposed
-replan --> select
-slice_done --> select : more Slices
-slice_done --> ticket_done : all Slices complete
+implement --> replan : wrong assumption
+replan --> select : updated contract
+slice_done --> select : more Slices; same implementer
+slice_done --> developed : all Slices locally complete
+developed --> verify
+verify --> evidence
+evidence --> repair : FAIL: return to implementation
+repair --> verify : repair locally validated\ncoordinator dispatches new verifier
+evidence --> verify_blocked : checks cannot run
+verify_blocked --> verify : cause resolved
+evidence --> gate : complete evidence
+gate --> ticket_done : PASS
+gate --> verify : evidence gap; no repair needed
 ticket_done --> [*]
 
+note right of developed
+Local RED/GREEN runs within the same implementation worker.
+Formal verification covers the whole function, not one agent per Slice.
+Workers never spawn agents; coordinator retains design and gates.
+Context isolation does not isolate files or shared test state.
+end note
+
 note right of gate
-A GREEN test level is not enough by itself.
 Every acceptance criterion needs executed evidence.
-Applicable dimensions must pass or have a concrete N/A reason.
-Retry cannot turn unexplained flaky failure into PASS.
+Mandatory dimensions pass or have concrete N/A reasons.
+Retry or agent replacement cannot erase unexplained flakiness.
 end note
 @enduml

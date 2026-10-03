@@ -6,7 +6,8 @@ description: "Decompose feature, bug-fix, refactor, docs/config, dependency, tes
 # Plan to Ticket
 
 Own decomposition and Issue persistence, not product/repository implementation.
-A **Plan** is one requirement/delivery boundary; a **Ticket** is a reviewable
+A **Plan** is a delivery batch with explicitly listed scope, which may include
+one or multiple independent functionalities; a **Ticket** is a reviewable
 behavior/capability within it; a **Slice** is an independently verifiable
 execution unit inside a Ticket. Every Plan has at least one Ticket and every
 Ticket at least one Slice. These terms are not interchangeable.
@@ -20,7 +21,9 @@ Do not expose internal reasoning.
 
 - Use the smallest useful decomposition. One behavior may be one Ticket/one
   Slice; add Tickets only when reduced implementation complexity outweighs
-  planning overhead. Never split the same requirement into multiple Plans.
+  planning overhead. Multiple planned functionalities may share one Plan while
+  retaining separate behavior Tickets and acceptance boundaries. Do not merge
+  different existing Plans merely because they share a session.
 - Split Tickets for independent behaviors, unrelated subsystems/architecture
   decisions or verification targets, independently completable parts, or parts
   whose failure makes the rest ambiguous. Each must be understandable,
@@ -34,14 +37,18 @@ Do not expose internal reasoning.
 - Use explicit Ticket/Slice dependency IDs and real dependencies only. Validate
   prerequisites on the shared Plan branch before dependents; no Ticket-level
   merge is required. Do not start blocked Tickets just to fill metadata.
-- Delegation is optional. Expose independently executable Slices with disjoint
-  ownership; sequence dependent/overlapping work and shared files, interfaces,
-  schemas, migrations, configuration or generated artifacts. Never name an
-  executing agent; the host/parent workflow chooses.
+- Every Ticket, including docs/config/test, is the worker ownership boundary:
+  one fresh implementer executes all its Slices in dependency order, and a separate fresh verifier
+  checks all functionality scenarios. Do not divide Slices/scenarios across
+  workers or reuse agents across Tickets. The coordinator chooses agents and
+  safe concurrency under `AGENTS.md` and the develop/verify runtime rules;
+  planning does not dispatch workers. Sequence dependent/overlapping files,
+  interfaces, schemas, migrations, configuration and shared test state.
 - If implementation reveals a materially different design, new subsystem or
   unrelated behavior, stop expanding the Ticket, preserve valid work and
-  re-plan/update dependencies. Add a Ticket if still the same requirement;
-  otherwise create a separate Plan/delivery. Do not silently widen scope.
+  re-plan/update dependencies. Add a Ticket only after explicitly updating the
+  batch's planned scope; work outside that scope belongs to a separate
+  Plan/delivery. Do not silently widen scope.
 
 ## Repository context and validation
 
@@ -117,9 +124,10 @@ PR: null
 Tickets: [T0001]
 ```
 
-It also contains its marker, overall goal/milestones, linked Ticket index,
-Ticket dependency order and one-merge completion rule. Do not duplicate mutable
-Ticket acceptance or Slice progress there.
+It also contains its marker, overall goal/milestones, explicit functionality
+scope, linked Ticket index, Ticket dependency order, batch integration/regression
+validation and one-merge completion rule. Do not duplicate mutable Ticket
+acceptance or Slice progress there.
 
 Every Ticket contains its stable marker and begins with actual execution metadata:
 
@@ -170,10 +178,12 @@ All except `done` remain open. Update Plan and child Tickets as work progresses:
 | PR verified merged | Plan and **all** children `done` and closed; retain merged PR on Plan. |
 
 Keep `PR: null` until the PR exists and keep branch/base/PR references current.
-Branch/PR existence alone never means done. Once all Ticket acceptance passes,
-the Plan is ready for its one PR. The parent workflow starts publication
-immediately after PR creation/update, fixes blockers through
-Test/Redaction/Commit/Push, and delivers only after the merge. When repository
+Branch/PR existence alone never means done. Only after every Ticket's acceptance
+and the batch's relevant integration/regression checks pass is the Plan ready
+for its one PR; any failure blocks batch publication. The batch may use one
+commit for multiple functionalities under `github-push-when-ready`'s staging and
+message rules. The parent workflow publishes through
+Test/Redaction/Commit/Push/PR, fixes any blockers, and delivers only after the merge. When repository
 state is updated, `docs/Repo_Current_State.md` holds a compact active-Issue
 pointer, never a copied Plan/backlog.
 

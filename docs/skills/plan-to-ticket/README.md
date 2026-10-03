@@ -1,9 +1,10 @@
 # Plan to Ticket
 
 `plan-to-ticket` is the planning specialist for the main-agent workflow. It
-turns a requirement, including a feature, bug fix, refactor, documentation,
-configuration, dependency, test, or CI/CD change, into one Plan, behavior
-Tickets, and dependency-ordered Slices within each Ticket, and persists the Plan
+turns an explicitly scoped delivery batch, including one or more features, bug
+fixes, refactors, documentation, configuration, dependency, test, or CI/CD changes,
+into one Plan, behavior Tickets, and dependency-ordered Slices within each
+Ticket, and persists the Plan
 and its Tickets to GitHub Issues when the work is complex, must survive a
 session boundary, or the user asks for a persisted plan.
 
@@ -32,11 +33,10 @@ The full explanation is in [architecture.md](architecture.md).
 When the skill is selected for a planning request, it:
 
 1. Identifies the desired outcome and the minimum implementation foundations.
-2. Splits complex or multi-behavior requirements into focused, independently
+2. Splits the batch's planned functionalities into focused, independently
    verifiable behavior Tickets.
-3. Splits each Ticket into dependency-ordered Slices that the main agent can
-   execute sequentially or delegate when they are independent, bounded, and
-   have disjoint ownership.
+3. Splits each Ticket into dependency-ordered Slices for that Ticket's fresh
+   implementation worker.
 4. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
 5. Persists one Plan Issue and one Issue per Ticket before the Plan branch
@@ -51,8 +51,8 @@ When the skill is selected for a planning request, it:
 The skill is intentionally implementation-neutral. It uses repository context
 and requires the available GitHub Issues connector for persisted planning, but it
 does not implement code, add dependencies, force parallel implementation, or
-invent commands for unknown tooling. The parent workflow decides whether any
-Slice is delegated. For a persisted plan, a required GitHub read/write failure
+invent commands for unknown tooling. The coordinator dispatches fresh Ticket
+workers under the [scheduling policy](../../../AGENTS.md#multi-agent-delegation). For a persisted plan, a required GitHub read/write failure
 blocks completion; the skill does not fall back to local Markdown or chat-only
 storage.
 
@@ -77,7 +77,7 @@ Issue and a child Ticket Issue, both using their canonical titles.
 ## Ticket-to-Slice hierarchy
 
 Plan decomposition comes before Ticket decomposition, and Ticket decomposition
-comes before Slice decomposition. A Plan is the requirement delivery boundary
+comes before Slice decomposition. A Plan is the explicitly scoped delivery batch
 represented by one GitHub Issue, one branch, one PR, and one merge. A Ticket is
 the behavior/capability boundary represented by one child Issue and no
 independent delivery branch. A Slice is a smaller execution-ready unit inside
@@ -85,6 +85,12 @@ that Ticket and inherits the Plan branch. Keep Ticket dependencies at the
 execution-order level within the Plan and Slice dependencies inside the Ticket.
 A persisted requirement is recorded as one Plan plus at least one Ticket; tiny
 work is one Plan containing one Ticket with one implicit Slice.
+
+Multiple independent functionalities may share the Plan's commit and PR while
+keeping their Ticket boundaries. The runtime
+[scope contract](../../../skills/plan-to-ticket/SKILL.md#scope-and-sizing) and
+[publication rules](../../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
+own batch scope, staging, commit descriptions and verification gates.
 
 ## Usage
 
