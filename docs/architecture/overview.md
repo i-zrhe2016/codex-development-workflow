@@ -40,27 +40,27 @@ main agent must not duplicate active delegated work.
 
 ## Development process
 
-### Curated editable views
+### Overview diagrams
 
-![Workflow components and responsibilities](../diagrams/drawio/components-overview.svg)
+![Workflow components and responsibilities](../diagrams/components-overview.svg)
 
-Editable source: [`components-overview.drawio`](../diagrams/drawio/components-overview.drawio)
+Source: [`components-overview.puml`](../diagrams/components-overview.puml)
 
-![Plan Ticket Slice work decomposition](../diagrams/drawio/plan-ticket-slice.svg)
+![Plan Ticket Slice work decomposition](../diagrams/plan-ticket-slice.svg)
 
-Editable source: [`plan-ticket-slice.drawio`](../diagrams/drawio/plan-ticket-slice.drawio)
+Source: [`plan-ticket-slice.puml`](../diagrams/plan-ticket-slice.puml)
 
-![Risk-aware Test Quality Gate](../diagrams/drawio/test-quality-gate.svg)
+![Risk-aware Test Quality Gate](../diagrams/test-quality-gate.svg)
 
-Editable source: [`test-quality-gate.drawio`](../diagrams/drawio/test-quality-gate.drawio)
+Source: [`test-quality-gate.puml`](../diagrams/test-quality-gate.puml)
 
-![Documentation and publication lifecycle](../diagrams/drawio/docs-publication-flow.svg)
+![Documentation and publication lifecycle](../diagrams/docs-publication-flow.svg)
 
-Editable source: [`docs-publication-flow.drawio`](../diagrams/drawio/docs-publication-flow.drawio)
+Source: [`docs-publication-flow.puml`](../diagrams/docs-publication-flow.puml)
 
-These curated Draw.io views optimize information hierarchy and readability.
-The detailed PlantUML views below remain the diagrams-as-code layer for exact
-workflow loops and lower-level lifecycle detail.
+These PlantUML overviews summarize responsibilities and major decisions.
+The detailed views below show exact workflow loops and lifecycle detail in the
+same source format.
 
 ### Component responsibilities and records
 

@@ -5,9 +5,9 @@ one fact, one canonical document, and other documents link to it. The managed
 runtime source is
 [`skills/repo-documentation/`](../../../skills/repo-documentation/).
 
-![Documentation and publication lifecycle overview](../../diagrams/drawio/docs-publication-flow.svg)
+![Documentation and publication lifecycle overview](../../diagrams/docs-publication-flow.svg)
 
-Editable overview: [`docs-publication-flow.drawio`](../../diagrams/drawio/docs-publication-flow.drawio)
+Overview source: [`docs-publication-flow.puml`](../../diagrams/docs-publication-flow.puml)
 
 Detailed documentation-governance flow:
 

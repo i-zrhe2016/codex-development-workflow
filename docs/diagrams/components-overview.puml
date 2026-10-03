@@ -1,0 +1,40 @@
+@startuml
+!theme plain
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
+
+title Workflow Components — Stage Workflows and Capability Skills
+
+component "codex-development-workflow\nWorkflow router + full orchestration" as router
+
+package "Stage workflows" {
+  component "plan-workflow\nRequirement to work definition" as stage_plan
+  component "develop-workflow\nImplement to Development Complete" as stage_develop
+  component "verify-workflow\nVerification scope + result" as stage_verify
+  component "publish-workflow\nDocs, redaction, publication readiness" as stage_publish
+  component "integrate-workflow\nMerge, cleanup, state, docs" as stage_integrate
+}
+
+package "Capability skills" {
+  component "plan-to-ticket\nPlan / Ticket / Slice" as planning
+  component "test-workflow\nTest Quality Gate" as testing
+  component "repo-documentation\nCanonical docs" as documentation
+  component "github-push-when-ready\nPublication readiness" as publication
+  component "data-document-redaction\nSensitive-data gate" as redaction
+  component "repo-current-state\nVerified recovery snapshot" as repository_state
+}
+
+router --> stage_plan : route
+router --> stage_develop : route
+router --> stage_verify : route
+router --> stage_publish : route
+router --> stage_integrate : route
+stage_plan --> planning : decompose
+stage_verify --> testing : verify evidence
+stage_publish --> documentation : check impact / update
+stage_publish --> publication : assess readiness
+stage_publish --> redaction : scan staged files
+stage_integrate --> repository_state : reconcile after merge
+@enduml

@@ -16,9 +16,9 @@ are the external durable store used by the planning workflow.
 
 ## Architecture
 
-![Plan Ticket Slice work decomposition](../../diagrams/drawio/plan-ticket-slice.svg)
+![Plan Ticket Slice work decomposition](../../diagrams/plan-ticket-slice.svg)
 
-Editable overview: [`plan-ticket-slice.drawio`](../../diagrams/drawio/plan-ticket-slice.drawio)
+Overview source: [`plan-ticket-slice.puml`](../../diagrams/plan-ticket-slice.puml)
 
 Detailed Plan-to-Ticket logical architecture:
 

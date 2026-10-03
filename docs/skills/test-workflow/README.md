@@ -12,17 +12,16 @@ Ticket workflow：每个 Ticket（含文档、配置、测试）均由全新实�
 -> isolation/flaky` 的成本梯度执行。复杂或高风险行为采用 RED -> GREEN；
 最终是否 PASS 由 Test Quality Gate 决定，而不是仅由某个 test level 变绿决定。
 
-![Test Quality Gate overview](../../diagrams/drawio/test-quality-gate.svg)
+![Test Quality Gate overview](../../diagrams/test-quality-gate.svg)
 
-Editable overview: [`test-quality-gate.drawio`](../../diagrams/drawio/test-quality-gate.drawio)
+Overview source: [`test-quality-gate.puml`](../../diagrams/test-quality-gate.puml)
 
 详细验证梯度继续由 PlantUML diagrams-as-code 维护：
 
 ![test-workflow 通用测试验证梯度](diagrams/test-workflow-flow.svg)
 
 图源：[test-workflow-flow.puml](diagrams/test-workflow-flow.puml)。规范产物使用
-[SVG](diagrams/test-workflow-flow.svg)；已有 PNG 仅作为兼容产物保留，不作为
-文档主引用。
+[SVG](diagrams/test-workflow-flow.svg)，与 PlantUML 图源保持同步。
 
 ## Managed skill
 

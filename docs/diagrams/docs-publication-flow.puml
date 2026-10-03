@@ -1,0 +1,18 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title publish-workflow — Documentation and Publication
+
+start
+:Documentation impact check;
+:Update canonical owner\nREADME / docs / diagrams (when affected);
+:Redaction scan when applicable;
+:Authorized commit / push / PR\nStop at selected boundary;
+if (Integration also authorized?) then (yes)
+  :Authorized integrate-workflow\nPost-merge state reconciliation;
+else (no)
+endif
+stop
+@enduml
