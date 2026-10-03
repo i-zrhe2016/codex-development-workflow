@@ -7,9 +7,9 @@ skills managed in this repository.
 
 ## At a glance
 
-![Codex Development Workflow delivery lifecycle](docs/diagrams/drawio/workflow-overview.svg)
+![Codex Development Workflow delivery lifecycle](docs/diagrams/workflow-overview.svg)
 
-Editable source: [`workflow-overview.drawio`](docs/diagrams/drawio/workflow-overview.drawio) ·
+Source: [`workflow-overview.puml`](docs/diagrams/workflow-overview.puml) ·
 Detailed diagrams-as-code: [`architecture.puml`](docs/architecture/diagrams/architecture.puml)
 
 Core invariants:
@@ -277,29 +277,27 @@ bypassing quality gates.
 
 ## Architecture
 
-The repository keeps two complementary diagram layers:
-
-- **Draw.io** for polished, editable, human-facing overview views.
-- **PlantUML** for detailed diagrams-as-code that are easy to diff and regenerate.
+All repository diagrams use **PlantUML** sources and generated SVG images.
+Overview and detailed views use the same format for review and regeneration.
 
 ### Components
 
-![Workflow components and responsibilities](docs/diagrams/drawio/components-overview.svg)
+![Workflow components and responsibilities](docs/diagrams/components-overview.svg)
 
-Editable source: [`components-overview.drawio`](docs/diagrams/drawio/components-overview.drawio) ·
+Source: [`components-overview.puml`](docs/diagrams/components-overview.puml) ·
 Detailed source: [`components.puml`](docs/architecture/diagrams/components.puml)
 
 ### Work decomposition
 
-![Plan Ticket Slice decomposition model](docs/diagrams/drawio/plan-ticket-slice.svg)
+![Plan Ticket Slice decomposition model](docs/diagrams/plan-ticket-slice.svg)
 
-Editable source: [`plan-ticket-slice.drawio`](docs/diagrams/drawio/plan-ticket-slice.drawio)
+Source: [`plan-ticket-slice.puml`](docs/diagrams/plan-ticket-slice.puml)
 
 ### Verification
 
-![Risk-aware Test Quality Gate](docs/diagrams/drawio/test-quality-gate.svg)
+![Risk-aware Test Quality Gate](docs/diagrams/test-quality-gate.svg)
 
-Editable source: [`test-quality-gate.drawio`](docs/diagrams/drawio/test-quality-gate.drawio) ·
+Source: [`test-quality-gate.puml`](docs/diagrams/test-quality-gate.puml) ·
 Detailed test flow: [`test-workflow-flow.puml`](docs/skills/test-workflow/diagrams/test-workflow-flow.puml)
 
 See the [architecture overview](docs/architecture/overview.md) for the detailed
@@ -388,4 +386,4 @@ relevant bundle.
 - [Workflow process evaluation](docs/workflow/process-evaluation.md)
 - [Managed skill source map](references/skill-map.md)
 - [Repository current state](docs/Repo_Current_State.md)
-- [Editable Draw.io overview diagrams](docs/diagrams/drawio/README.md)
+- [PlantUML overview diagrams](docs/diagrams/README.md)

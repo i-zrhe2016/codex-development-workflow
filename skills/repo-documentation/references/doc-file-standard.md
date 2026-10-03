@@ -37,26 +37,21 @@ All other `docs/` content follows this standard.
 
 ## Diagrams
 
-Sources/renders are files, not content documents: no title/header. Use both
-layers only when useful:
-
-| Layer | Pair | Contract |
-|---|---|---|
-| Draw.io overview | `<name>.drawio` + `<name>.svg` | polished/editable human overview, hierarchy/readability; detailed edge cases stay in linked PlantUML/prose |
-| PlantUML detail | `<name>.puml` + `<name>.svg` | textual diffs, exact loops, deterministic regeneration |
+Sources/renders are files, not content documents: no title/header. PlantUML is
+the sole diagram authoring format for both overviews and detailed views. Keep
+each `<name>.puml` canonical source paired with its generated `<name>.svg` for
+textual review and deterministic regeneration. Separate overview and detail
+only when each answers a useful question.
 
 - Place new diagrams in `diagrams/` beside their owner, named for the fact.
-  Shared repository overviews may use `docs/diagrams/drawio/`; keep existing
+  Shared repository overviews may use `docs/diagrams/`; keep existing
   PlantUML locations unless deliberately migrating the owner.
-- Draw.io: fitting architecture/flowchart/C4 conventions; uncompressed XML,
-  stable semantic non-reserved IDs, every edge has
-  `<mxGeometry relative="1" as="geometry"/>`; no node overlap/edge-through-node.
 - PlantUML: activity for workflow, state for lifecycle, component for
   responsibilities, sequence for messages; prefer `!theme plain` and Kroki-safe
   features unless advanced features are necessary.
-- SVG is primary; existing PNGs may remain as compatibility artifacts.
-- Before claiming success, validate Draw.io XML/IDs/edges or PlantUML renderer
-  success with non-empty real SVG, then visually check overlap, clipping,
+- SVG is the documentation image format; do not maintain separate raster copies.
+- Before claiming success, validate PlantUML renderer success with non-empty
+  real SVG, then visually check overlap, clipping,
   crossings, routing and labels.
 - Public Kroki uploads source to a third party: non-sensitive only. Internal,
   secret, proprietary or unreleased architecture requires a local backend.

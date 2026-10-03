@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
+import re
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
@@ -130,8 +132,7 @@ class WorkflowContractTests(unittest.TestCase):
             with self.subTest(source=source.relative_to(REPO_ROOT)):
                 rendered = source.with_suffix(".svg")
                 self.assertTrue(rendered.is_file(), f"Missing render for {source}")
-                svg = rendered.read_text(encoding="utf-8")
-                self.assertIn("<svg", svg)
+                self.assertEqual(ET.parse(rendered).getroot().tag, "{http://www.w3.org/2000/svg}svg")
 
     def test_plantuml_sources_follow_repository_contract(self) -> None:
         for source in sorted((REPO_ROOT / "docs").rglob("*.puml")):
@@ -145,49 +146,68 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertNotIn("PR review loop", text)
 
     def test_every_plantuml_source_is_referenced_by_documentation(self) -> None:
-        markdown = "\n".join(
-            path.read_text(encoding="utf-8")
-            for path in [README, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
-        )
+        references = {
+            target
+            for document in [README, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
+            for target in self.local_link_targets(document)
+        }
         for source in sorted((REPO_ROOT / "docs").rglob("*.puml")):
             with self.subTest(source=source.relative_to(REPO_ROOT)):
-                self.assertIn(source.name, markdown)
+                self.assertIn(source.resolve(), references)
+                self.assertIn(source.with_suffix(".svg").resolve(), references)
 
+    @staticmethod
+    def local_link_targets(document: Path) -> set[Path]:
+        targets = set()
+        markdown = document.read_text(encoding="utf-8")
+        # Fenced examples are source text, not rendered documentation links.
+        markdown = re.sub(r"(?ms)^```[^\n]*\n.*?^```[ \t]*$", "", markdown)
+        for link in re.findall(r"!?\[[^\]]*\]\(([^)]+)\)", markdown):
+            parsed = urlsplit(link.strip("<>"))
+            if parsed.scheme or parsed.netloc or not parsed.path:
+                continue
+            targets.add((document.parent / unquote(parsed.path)).resolve())
+        return targets
 
-    def test_drawio_overviews_are_structurally_valid_and_rendered(self) -> None:
-        sources = sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio"))
-        self.assertGreaterEqual(len(sources), 6)
-        for source in sources:
-            with self.subTest(source=source.name):
-                tree = ET.parse(source)
-                root = tree.getroot()
-                self.assertEqual(root.get("compressed"), "false")
+    def test_every_diagram_svg_has_canonical_plantuml_source(self) -> None:
+        renders = sorted(REPO_ROOT.rglob("*.svg"))
+        self.assertTrue(renders, "Expected repository diagram renders.")
+        for rendered in renders:
+            with self.subTest(render=rendered.relative_to(REPO_ROOT)):
+                self.assertTrue(rendered.with_suffix(".puml").is_file(), f"Missing source for {rendered}")
 
-                cells = root.findall(".//mxCell")
-                ids = [cell.get("id") for cell in cells]
-                self.assertEqual(len(ids), len(set(ids)), f"duplicate IDs in {source}")
-                by_id = {cell.get("id"): cell for cell in cells}
+    def test_diagrams_have_no_legacy_sources_or_raster_copies(self) -> None:
+        self.assertEqual(list(REPO_ROOT.rglob("*.drawio")), [])
+        for directory in (REPO_ROOT / "docs").rglob("diagrams"):
+            for image in directory.rglob("*"):
+                with self.subTest(path=image.relative_to(REPO_ROOT)):
+                    self.assertNotIn(image.suffix.lower(), {".png", ".jpg", ".jpeg", ".gif", ".webp"})
 
-                for cell in cells:
-                    if cell.get("edge") == "1":
-                        self.assertIn(cell.get("source"), by_id)
-                        self.assertIn(cell.get("target"), by_id)
-                        geometry = cell.find("mxGeometry")
-                        self.assertIsNotNone(geometry)
-                        self.assertEqual(geometry.get("relative"), "1")
+    def test_all_shared_overviews_are_present(self) -> None:
+        expected = {
+            "workflow-overview", "components-overview", "plan-ticket-slice",
+            "test-quality-gate", "docs-publication-flow", "installer-overview",
+        }
+        sources = (REPO_ROOT / "docs" / "diagrams").glob("*.puml")
+        self.assertEqual({source.stem for source in sources}, expected)
 
-                rendered = source.with_suffix(".svg")
-                self.assertTrue(rendered.is_file(), f"Missing SVG preview for {source}")
-                self.assertIn("<svg", rendered.read_text(encoding="utf-8"))
-
-    def test_drawio_overviews_are_referenced_by_documentation(self) -> None:
-        markdown = "\n".join(
-            path.read_text(encoding="utf-8")
-            for path in [README, *sorted((REPO_ROOT / "docs").rglob("*.md"))]
-        )
-        for source in sorted((REPO_ROOT / "docs" / "diagrams" / "drawio").glob("*.drawio")):
-            with self.subTest(source=source.name):
-                self.assertIn(source.name, markdown)
+    def test_documentation_links_exist_and_all_docs_are_reachable(self) -> None:
+        visited = set()
+        pending = [README]
+        while pending:
+            document = pending.pop().resolve()
+            if document in visited:
+                continue
+            visited.add(document)
+            for target in self.local_link_targets(document):
+                with self.subTest(document=document.relative_to(REPO_ROOT), target=target):
+                    self.assertTrue(target.exists(), f"Broken link in {document}: {target}")
+                if target.is_dir():
+                    target = target / "README.md"
+                if target.is_file() and target.suffix == ".md" and target not in visited:
+                    pending.append(target)
+        docs = {document.resolve() for document in (REPO_ROOT / "docs").rglob("*.md")}
+        self.assertEqual(docs - visited, set(), "Documents must be reachable from root README.")
 
 
 if __name__ == "__main__":

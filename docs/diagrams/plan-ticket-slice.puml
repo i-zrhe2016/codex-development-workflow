@@ -1,0 +1,28 @@
+@startuml
+!theme plain
+top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Plan → Ticket → Slice — Work Decomposition Model
+
+rectangle "1 Plan Issue (persisted)\nOwns branch + PR + merge" as plan
+rectangle "Ticket A\nBehavior boundary" as ticket_a
+rectangle "Ticket B\nBehavior boundary" as ticket_b
+rectangle "Ticket C\nBehavior boundary" as ticket_c
+rectangle "Slices\nSmall execution contracts" as slices_a
+rectangle "Slices\nSmall execution contracts" as slices_b
+rectangle "Slices\nSmall execution contracts" as slices_c
+
+plan --> ticket_a : contains
+plan --> ticket_b : contains
+plan --> ticket_c : contains
+ticket_a --> slices_a : decomposes into
+ticket_b --> slices_b : decomposes into
+ticket_c --> slices_c : decomposes into
+
+note bottom of plan
+  Publication and merge occur only when authorized.
+  Tickets and Slices execute in dependency order.
+end note
+@enduml

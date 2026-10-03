@@ -1,0 +1,26 @@
+@startuml
+!theme plain
+top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Risk-Aware Verification — Evidence Before PASS
+
+rectangle "Acceptance Criteria\n→ evidence matrix" as acceptance
+rectangle "Focused tests\nStatic / unit / component" as focused
+rectangle "Mandatory risk dimensions\nBoundary / negative / integration\nRegression / property / mutation / E2E" as risk
+rectangle "Isolation / flaky check\nRetry ≠ PASS" as isolation
+rectangle "TEST QUALITY GATE" as gate
+
+acceptance --> focused : map scenarios
+acceptance --> risk : select applicable dimensions
+acceptance --> isolation : assess repeatability
+focused --> gate : executed evidence
+risk --> gate : evidence / justified N/A
+isolation --> gate : no unexplained flakiness
+
+note bottom of gate
+  PASS requires evidence for every acceptance criterion
+  and every mandatory risk dimension.
+end note
+@enduml

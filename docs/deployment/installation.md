@@ -72,9 +72,9 @@ preserved and reported as `ownership unverified`. Retired skill destinations, in
 are removed under the same ownership check. Back up any local edits before
 using this option.
 
-![Installer overview: destination, ownership, and retirement decisions](../diagrams/drawio/installer-overview.svg)
+![Installer overview: destination, ownership, and retirement decisions](../diagrams/installer-overview.svg)
 
-Editable source: [`installer-overview.drawio`](../diagrams/drawio/installer-overview.drawio)
+Source: [`installer-overview.puml`](../diagrams/installer-overview.puml)
 
 Detailed diagrams-as-code view:
 

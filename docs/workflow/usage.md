@@ -242,7 +242,7 @@ git diff --check
 ```
 
 These checks cover managed bundle/source contracts, Test Quality Gate references
-and Draw.io source structure and pairing. The
+and PlantUML source/render pairing plus documentation reachability. The
 [installer regression checks](../deployment/installation.md#installer-regression-checks)
 also exercise installation and update contents for both targets. They provide
 local package evidence; independent Ticket verification still maps acceptance

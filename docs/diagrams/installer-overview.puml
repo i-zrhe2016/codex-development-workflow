@@ -1,0 +1,27 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Installer Decision Flow — Destination, Ownership, Retirement
+
+start
+:Resolve destination\nCodex / Claude / explicit dest;
+if (Destination inside repository?) then (yes)
+  :Reject unsafe destination;
+  stop
+else (no)
+endif
+:On update: process retired destinations\nOwned: remove; adopt legacy: move to backup\nOtherwise preserve;
+:For each of 13 managed skill bundles;
+if (Existing destination?) then (no)
+  :Install bundle;
+else (yes)
+  if (Update allowed by ownership / legacy adoption?) then (yes)
+    :Replace owned bundle\nBackup adopted legacy path before installation;
+  else (no)
+    :Skip existing bundle without update\nPreserve unverified existing path;
+  endif
+endif
+stop
+@enduml
