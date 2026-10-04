@@ -23,6 +23,8 @@ if (Useful failure?) then (yes)
 endif
 
 :Boundary + negative-path checks;
+:Assert failure/error contract
+format + structure + semantics + caller consumability;
 
 if (Complex input space or strong invariant?) then (yes)
   :Property / fuzz checks;
@@ -30,6 +32,10 @@ endif
 
 if (External or multi-module boundary touched?) then (yes)
   :Integration / contract checks;
+endif
+
+if (Real entrypoint / config / client policy risk?) then (yes)
+  :Real URL / proxy / TLS / cookie / header / cache checks;
 endif
 
 if (High-risk logic or weak-test suspicion?) then (yes)
@@ -48,7 +54,7 @@ endif
 
 :Evaluate Test Quality Gate;
 
-if (Every acceptance criterion and\nmandatory dimension satisfied?) then (yes)
+if (Every acceptance criterion, mandatory dimension\nand failure/error contract satisfied?) then (yes)
   :PASS;
 else (no)
   :FAIL / PARTIAL / BLOCKED;
@@ -58,6 +64,8 @@ stop
 note right
 Coverage is diagnostic only.
 N/A requires a concrete reason.
+Failure/status/exception occurrence alone is not PASS.
+Real boundary behavior must use real or production-like entrypoints.
 FAIL then retry PASS without a verified external cause is flaky, not PASS.
 end note
 @enduml

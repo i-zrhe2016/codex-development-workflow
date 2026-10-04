@@ -9,18 +9,26 @@ title Risk-Aware Verification — Evidence Before PASS
 rectangle "Acceptance Criteria\n→ evidence matrix" as acceptance
 rectangle "Focused tests\nStatic / unit / component" as focused
 rectangle "Mandatory risk dimensions\nBoundary / negative / integration\nRegression / property / mutation / E2E" as risk
+rectangle "Failure/error contract\nFormat / structure / semantics\nCaller-consumable response" as failure_contract
+rectangle "Real boundary evidence\nURL / proxy / TLS\nHeaders / cookies / cache" as real_boundary
 rectangle "Isolation / flaky check\nRetry ≠ PASS" as isolation
 rectangle "TEST QUALITY GATE" as gate
 
 acceptance --> focused : map scenarios
 acceptance --> risk : select applicable dimensions
+acceptance --> failure_contract : public-boundary failures
+acceptance --> real_boundary : entry/config/client rules
 acceptance --> isolation : assess repeatability
 focused --> gate : executed evidence
 risk --> gate : evidence / justified N/A
+failure_contract --> gate : not just occurrence
+real_boundary --> gate : real path evidence
 isolation --> gate : no unexplained flakiness
 
 note bottom of gate
   PASS requires evidence for every acceptance criterion
-  and every mandatory risk dimension.
+  and every mandatory risk dimension, including
+  caller-consumable failure/error contracts and
+  real entrypoint/config evidence when relevant.
 end note
 @enduml

@@ -11,6 +11,12 @@ Ticket workflow：每个 Ticket（含文档、配置、测试）均由全新实�
 -> property/fuzz -> integration/contract -> mutation -> regression -> browser/E2E
 -> isolation/flaky` 的成本梯度执行。复杂或高风险行为采用 RED -> GREEN；
 最终是否 PASS 由 Test Quality Gate 决定，而不是仅由某个 test level 变绿决定。
+公共边界上的成功、失败和异常路径属于同一 caller-consumable contract：错误或
+失败结果也必须断言格式、结构、语义和调用方可消费性，不能只证明出现了状态码、
+异常或进程失败。
+当行为依赖传输或部署边界时，测试应覆盖调用方真实经过的入口和客户端规则：
+协议、域名、端口、路径前缀、反代、TLS、redirect、cache、header、cookie、
+token、CORS 等都可能是契约的一部分。
 
 ![Test Quality Gate overview](../../diagrams/test-quality-gate.svg)
 
@@ -69,10 +75,15 @@ Focused automated tests
         v
 Boundary / Negative
         |
+        v
+Failure/error contract assertions
+        |
         +-- complex inputs/invariants --> Property / Fuzz
         |
         v
 Integration / Contract
+        |
+        +-- real entry/config risk --> Real Entrypoint / Config Matrix
         |
         +-- high-risk/weak-test suspicion --> Mutation
         |
@@ -88,14 +99,16 @@ Isolation / Flaky check
 Test Quality Gate
 ```
 
-原则：使用能可靠证明行为的最低成本测试层，不把浏览器 E2E 当默认反馈循环，也不为了 GREEN 放宽断言、增加盲目 retry 或固定 sleep。
+原则：使用能可靠证明行为的最低成本测试层，不把浏览器 E2E 当默认反馈循环，也不为了 GREEN 放宽断言、增加盲目 retry、固定 sleep，或把“发生了失败”当成失败契约已满足。
 
 ## 维护约定
 
 - 优先复用项目已有测试框架、fixture、helper 和命令。
 - 每个 Slice 的内循环保持 focused；多个 Slice 完成后再运行必要的集成/回归测试。
 - Coverage 只作为诊断信号，不能替代 assertion quality 或 acceptance evidence。
+- Failure/error paths 必须验证调用方看到的格式、结构、语义和可操作性；状态或异常发生本身不够。
+- Real entrypoint checks 覆盖真实 URL、协议、代理链、TLS、路径前缀、header/cookie/token、缓存和关键配置组合。
 - Retry 只能用于诊断；同一提交出现 FAIL -> PASS 且无已验证外因时必须标记 flaky。
 - Property/fuzz、mutation 和 Browser/E2E 按风险启用，不做所有变更的固定成本。
-- 浏览器验证只用于真实用户交互或明确要求的 E2E 行为。
+- 浏览器验证只用于真实用户交互、浏览器策略或明确要求的 E2E 行为。
 - 文档中的页面地址、账号、Cookie、Token 和测试数据使用占位符，不写入真实值。

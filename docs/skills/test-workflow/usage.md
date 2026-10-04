@@ -9,6 +9,12 @@
 适用于后端、前端、API、库、CLI 以及其他仓库级功能变更、缺陷修复、重构和
 Slice 验收。目标是用最低成本的可靠检查证明验收标准，而不是追求无差别的
 全量测试。
+公共边界上的成功、失败和异常路径按同一 caller-consumable contract 验证；
+失败路径必须断言调用方实际收到的格式、结构、语义和可操作性，不能只检查
+状态码、异常类型或进程退出。
+当行为依赖真实入口、部署配置或客户端策略时，把传输细节纳入测试范围：协议、
+域名、端口、路径前缀、反代、TLS、redirect、cache、header、cookie、token、
+CORS 和浏览器安全规则都可能决定用户路径是否可用。
 
 实现 worker 可直接运行本流程获得本地反馈；每个 Ticket（含文档、配置、测试）
 的正式验收使用独立全新 verifier，涵盖该 Ticket 全部 scenario，不逐个 Slice 创建 verifier。已派发 worker
@@ -24,13 +30,15 @@ Slice 验收。目标是用最低成本的可靠检查证明验收标准，而�
 行为 / 契约
 - 主要成功路径
 - 直接相关的边界或失败路径
+- 公共错误/异常是否保持调用方可消费的格式、结构、语义和处置方式
 - 可能的回归风险
 
 证据
 - 静态、类型、Lint 或配置检查（如适用）
 - 覆盖变更契约的 focused test
 - 跨模块边界时的集成检查
-- 仅在用户可见交互改变时执行 Browser / E2E
+- 入口、代理、TLS、cookie/header/token、缓存或配置敏感时的真实入口 / 配置矩阵检查
+- 仅在用户可见交互或浏览器策略改变时执行 Browser / E2E
 ```
 
 先建立 Acceptance-to-Test Matrix，再选择最小但完整的高价值测试集。不要把固定
@@ -55,23 +63,25 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 | 微小变更 | 运行最接近的现有检查；行为回归风险明确时补测试 |
 | 普通行为变更 | 定义或更新 focused tests，随后运行相关回归检查 |
 | 复杂 / 高风险行为 | 实际可行时使用 RED -> GREEN，再运行集成/回归检查 |
-| 浏览器可见行为 | 完成低层检查后，补充最小真实用户流程 |
+| 真实入口或配置敏感行为 | 用生产同类配置组合和真实入口执行最小 smoke/matrix checks |
+| 浏览器可见或浏览器策略敏感行为 | 完成低层检查后，补充最小真实用户流程 |
 
 ## 标准执行顺序
 
 1. 建立 Acceptance-to-Test Matrix，并根据风险选择 mandatory dimensions。
 2. 运行编译、类型、Lint、Schema 或配置等静态检查。
 3. 运行覆盖变更契约的最小 focused tests。
-4. 补齐适用的 boundary 和 negative-path checks。
+4. 补齐适用的 boundary 和 negative-path checks，并断言失败/错误/异常的格式、结构、语义和调用方可消费性。
 5. 复杂输入空间或强 invariant 场景运行 property/fuzz；失败 seed 固化为回归测试。
 6. 触及数据库、文件系统、队列、网络、Schema、进程或多模块边界时运行 integration/contract checks。
-7. 高风险逻辑或怀疑测试过弱时，对 changed/high-risk module 做 targeted mutation/test-strength check。
-8. 运行受影响模块回归；只有范围/风险确实要求时才运行 full suite。
-9. 浏览器可见关键流程且低层无法证明时执行 Browser / E2E。
-10. 涉及并发、时间、共享状态、随机性或出现间歇失败时执行 isolation/flaky diagnosis；重跑成功不能抹掉先前失败。
-11. 用 Test Quality Gate 汇总；只有所有 mandatory dimensions 满足才 PASS。
+7. 依赖部署入口、HTTP/HTTPS、反代、TLS、header/cookie/token、缓存或配置组合时运行 real entrypoint/config checks。
+8. 高风险逻辑或怀疑测试过弱时，对 changed/high-risk module 做 targeted mutation/test-strength check。
+9. 运行受影响模块回归；只有范围/风险确实要求时才运行 full suite。
+10. 浏览器可见关键流程或浏览器策略低层无法证明时执行 Browser / E2E。
+11. 涉及并发、时间、共享状态、随机性或出现间歇失败时执行 isolation/flaky diagnosis；重跑成功不能抹掉先前失败。
+12. 用 Test Quality Gate 汇总；只有所有 mandatory dimensions 满足，且失败已按契约表达给调用方，才 PASS。
 
-不要用固定 sleep、盲目 retry、弱化断言或删除测试来取得通过。出现第一个有用失败时先诊断根因，再决定是否扩大检查范围。
+不要用固定 sleep、盲目 retry、弱化断言、删除测试，或仅证明“失败发生”来取得通过。出现第一个有用失败时先诊断根因，再决定是否扩大检查范围。
 
 ## RED -> GREEN
 
@@ -96,7 +106,9 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 
 ## Browser / E2E 分支
 
-浏览器验证只证明低层检查无法充分覆盖的用户可见行为。测试应从已知 URL、会话和数据状态开始，优先使用 role、label、accessible name 或稳定 test ID，等待目标状态而不是固定时间，并在失败时保留 URL、页面状态和必要的截图、控制台、请求或 trace 证据。
+浏览器验证只证明低层检查无法充分覆盖的用户可见行为或浏览器强制策略。测试应从真实入口或生产同类 URL 开始，覆盖协议、域名、端口、反代、路径前缀和 TLS 等会影响客户端行为的边界；从已知会话和数据状态开始，优先使用 role、label、accessible name 或稳定 test ID，等待目标状态而不是固定时间，并在失败时保留 URL、页面状态和必要的截图、控制台、请求或 trace 证据。
+
+涉及 cookie、CSRF、CORS、mixed content、redirect 或缓存时，必须按浏览器规则验证最短闭环：GET 页面，保存 cookie，提取运行时 token，提交请求，断言最终页面或网络结果。只证明 token 生成、cookie 存在或服务端接口可调用，不足以证明浏览器路径可用。
 
 不对生产环境执行未授权的写入、删除、支付或消息发送操作。CLI、浏览器、服务、账号或测试数据不可用时如实标记 `blocked`，不能用源码、静态 HTML、`curl` 或截图代替真实浏览器通过。
 
@@ -123,8 +135,10 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 | Acceptance coverage | pass/fail | ... |
 | Boundary coverage | pass/fail/N/A | ... |
 | Negative-path coverage | pass/fail/N/A | ... |
+| Failure/error contract | pass/fail/N/A | format/structure/semantics/caller-consumability evidence |
 | Regression protection | pass/fail/N/A | ... |
 | Integration/contract | pass/fail/N/A | ... |
+| Real entrypoint/config | pass/fail/N/A | URL/protocol/proxy/TLS/header/cookie/token/cache/config evidence |
 | Property/fuzz | pass/fail/N/A | ... |
 | Mutation/test-strength | pass/fail/N/A | ... |
 | Browser/E2E | pass/fail/N/A | ... |
@@ -137,4 +151,5 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 
 只报告实际执行过的检查。所有验收标准和 mandatory dimensions 都应有对应证据；
 不适用必须给出 N/A 理由。Coverage 是 diagnostic signal，不是 PASS 条件；retry
-不能把 unexplained flaky failure 改写为成功。
+不能把 unexplained flaky failure 改写为成功；失败发生但未按公共契约表达给
+调用方时，Test Quality Gate 不能 PASS。

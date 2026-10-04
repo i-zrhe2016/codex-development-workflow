@@ -40,6 +40,19 @@ Derive expectations from requirements, Function Checklist, acceptance and
 existing public contracts, never by mirroring implementation. Test observable
 behavior/stable contracts; implementation details only when themselves the
 contract. Reuse existing frameworks, scripts, fixtures/helpers and conventions.
+At every public boundary (API, CLI, UI, file/schema, process, service or
+documented library interface), success, failure and exception paths share the
+same caller-consumable contract: the result or error must have the documented
+format, structure, semantics and recovery/actionability expected by callers.
+Observing only that an error status was returned, an exception was thrown, or a
+process failed is insufficient unless that is explicitly the whole public
+contract.
+When behavior depends on transport or deployment boundaries, test the caller's
+real path rather than only the inner function or container-local endpoint:
+protocol, host, port, path prefix, reverse proxy, TLS, redirects, cache,
+headers, cookies, tokens, CORS and equivalent client-enforced rules are part of
+the contract when callers rely on them. Use production-like configuration
+combinations for the affected risk, not only framework defaults.
 
 Choose a Slice level **before checks**:
 
@@ -62,13 +75,14 @@ acceptance, failures, affected boundaries, release policy or risk.
 - **Complex/high-risk:** meaningful RED -> GREEN before production work when
   practical, especially permissions/authentication, money, state transitions,
   concurrency, parsing, data integrity and regressions.
-- **Browser-visible:** smallest relevant user flow after lower-level checks.
+- **Browser-visible:** smallest relevant user flow through the real entrypoint
+  after lower-level checks.
 
 Before complex/high-risk implementation, or ordinary validation, make a short
-checklist of success/contract, boundary/failure, transitions/invariants and
-regression risks, with relevant static, unit/component/API, integration and
-interaction-only browser evidence. Prefer high-signal cases, not fixed counts
-or exhaustive low-signal matrices.
+checklist of success/contract, boundary/failure, real entrypoint/config/client
+rules, transitions/invariants and regression risks, with relevant static,
+unit/component/API, integration and interaction-only browser evidence. Prefer
+high-signal cases, not fixed counts or exhaustive low-signal matrices.
 
 ## Acceptance-to-test matrix
 
@@ -89,13 +103,14 @@ expected high-value dimensions:
 |---|---|
 | Happy path/contract | Expected observable behavior. |
 | Boundary | Empty, min/max, off-by-one, thresholds, size, encoding, order, timeout, lifecycle. |
-| Negative/failure | Invalid input/state, permissions/dependencies, rollback/partial failure, useful errors. |
+| Negative/failure | Invalid input/state, permissions/dependencies, rollback/partial failure, and useful caller-consumable errors with asserted format, structure, semantics and actionability. |
 | State transition/invariant | Before/after, idempotency, uniqueness, conservation, monotonicity/domain invariants. |
-| Integration/contract | Database, filesystem, queue, network/service, schema/serialization, CLI process/public API. |
+| Integration/contract | Database, filesystem, queue, network/service, schema/serialization, CLI process/public API, including success and failure/exception contract shape. |
+| Real entrypoint/config | Production-like protocol/host/port/path prefix, reverse proxy, TLS, redirects, headers, cookies/tokens, cache and critical config combinations. |
 | Regression | Plausible recurrence: test fails for the protected defect/behavior. |
 | Property/fuzz | Parsers, transformations, numerics, codecs, validation/protocols, complex inputs/strong invariants. |
 | Mutation/test-strength | High-risk business logic or suspiciously easy tests/weak assertions. |
-| Browser/E2E | Critical visible flow lower layers cannot prove. |
+| Browser/E2E | Critical visible flow and browser-enforced rules lower layers cannot prove, such as Secure/SameSite cookies, CORS, mixed content, redirects and cache behavior. |
 | Isolation/flake | Concurrency/time/shared state, external services, nondeterministic order, intermittent failures. |
 
 Coverage percentage is diagnostic evidence only. High line/branch coverage
@@ -109,15 +124,20 @@ follow this applicable order:
 
 1. Static: compiler/type/lint/schema/config validation.
 2. Focused unit/component/API/package tests.
-3. **Boundary and negative tests** for edges/failures.
+3. **Boundary and negative tests** for edges/failures, asserting not only that
+   failure occurred but that the public error/status/exception is formatted,
+   structured, semantically correct and consumable by the caller.
 4. Property/fuzz using existing generators/fuzzers when justified.
 5. Integration/contract tests for touched boundaries/multiple modules.
-6. Existing mutation tool or practical targeted manual mutation for high-risk
+6. Real entrypoint/config smoke or matrix checks when behavior depends on
+   deployed URL, proxy/TLS, headers, cookies/tokens, cache or client access
+   rules.
+7. Existing mutation tool or practical targeted manual mutation for high-risk
    logic or weak-test suspicion.
-7. Affected module/package regression; full suite only for justified scope,
+8. Affected module/package regression; full suite only for justified scope,
    risk or policy.
-8. Critical browser/E2E flows lower layers cannot establish.
-9. Isolation/flaky checks: diagnostic repeats only when nondeterminism suspected.
+9. Critical browser/E2E flows lower layers cannot establish.
+10. Isolation/flaky checks: diagnostic repeats only when nondeterminism suspected.
 
 Stop at the first useful failure, diagnose before higher layers, then resume
 from the cheapest check that can disprove the fix. Avoid repeated expensive
@@ -185,6 +205,15 @@ Use only for changed browser-visible interaction or explicit E2E acceptance.
 Prefer existing Playwright/Selenium/Cypress; without a harness, use real
 Chromium if Playwright CLI is available.
 
+- Test through the user's real entrypoint when that boundary matters: public URL,
+  protocol, domain, port, reverse proxy chain and path prefix, not just an
+  internal service URL.
+- Include browser-enforced policy in assertions when relevant: Secure/SameSite
+  cookies, CORS readability, mixed-content blocking, redirects, cache reuse and
+  whether headers/cookies/tokens are actually sent on the next request.
+- For end-to-end form or API flows, start at page load, preserve cookies,
+  extract runtime tokens, submit through the visible/client path and assert the
+  final user-visible or network result.
 - Decide flow/assertions before exploratory clicks; prove the smallest flow.
 - Begin with known URL/session/data; use role/label/accessible name/stable test
   IDs rather than CSS hierarchy/XPath/nth-child. Wait for application state,
@@ -212,10 +241,13 @@ Ticket Slices are test-complete only when:
 
 - every acceptance criterion has concrete executed evidence;
 - every mandatory dimension is satisfied or explicitly N/A with reason;
+- public-boundary success, failure and exception paths are verified against the
+  same caller-consumable contract, including format, structure, semantics and
+  actionability where applicable;
 - selected level checks and every applicable dimension above are GREEN;
 - failures are resolved or explicitly blocked/out of scope, with no unexplained
-  flake promoted to PASS, no test weakened for GREEN, and coverage diagnostic
-  only.
+  flake promoted to PASS, no failure accepted merely because a status/exception
+  occurred, no test weakened for GREEN, and coverage diagnostic only.
 
 For multi-Ticket work keep inner checks focused per Ticket, then run appropriate
 integration/regression after dependency-related Tickets are GREEN. Later
