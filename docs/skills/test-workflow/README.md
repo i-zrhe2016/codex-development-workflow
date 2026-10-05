@@ -14,6 +14,12 @@ Ticket workflow：每个 Ticket（含文档、配置、测试）均由全新实�
 公共边界上的成功、失败和异常路径属于同一 caller-consumable contract：错误或
 失败结果也必须断言格式、结构、语义和调用方可消费性，不能只证明出现了状态码、
 异常或进程失败。
+涉及身份、session、权限、租户或受保护操作时，AuthN/AuthZ 是 mandatory
+dimension，并且 authentication 与 authorization 分开证明：前者覆盖身份、
+session lifecycle、cookie/token 有效性，后者覆盖权限、tenant/object ownership、
+fail-closed 和 denied operation 的 protected side-effect absence。
+每个测试都必须是 falsifiable：它声称防护的缺陷出现时应失败；mock-called、
+value-exists、no-exception 或 status-only assertion 不能单独作为保护，除非这正是契约。
 当行为依赖传输或部署边界时，测试应覆盖调用方真实经过的入口和客户端规则：
 协议、域名、端口、路径前缀、反代、TLS、redirect、cache、header、cookie、
 token、CORS 等都可能是契约的一部分。
@@ -78,6 +84,8 @@ Boundary / Negative
         v
 Failure/error contract assertions
         |
+        +-- identity/permission risk --> AuthN / AuthZ
+        |
         +-- complex inputs/invariants --> Property / Fuzz
         |
         v
@@ -107,6 +115,8 @@ Test Quality Gate
 - 每个 Slice 的内循环保持 focused；多个 Slice 完成后再运行必要的集成/回归测试。
 - Coverage 只作为诊断信号，不能替代 assertion quality 或 acceptance evidence。
 - Failure/error paths 必须验证调用方看到的格式、结构、语义和可操作性；状态或异常发生本身不够。
+- AuthN/AuthZ 必须在相关时作为 mandatory dimension：分开验证身份/session/cookie-token 和权限/ownership/fail-closed，并确认拒绝操作没有受保护副作用。
+- Assertion strength 必须可证伪；mock-called、value-exists、no-exception、status-only 不能替代契约断言。
 - Real entrypoint checks 覆盖真实 URL、协议、代理链、TLS、路径前缀、header/cookie/token、缓存和关键配置组合。
 - Retry 只能用于诊断；同一提交出现 FAIL -> PASS 且无已验证外因时必须标记 flaky。
 - Property/fuzz、mutation 和 Browser/E2E 按风险启用，不做所有变更的固定成本。

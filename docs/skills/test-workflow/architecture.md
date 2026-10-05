@@ -12,6 +12,12 @@
 公共边界（API、CLI、UI、文件/Schema、进程、服务或公开库接口）上的成功、
 失败和异常路径共享同一调用方可消费契约；失败证据必须覆盖错误/状态/异常的
 格式、结构、语义和可操作性，而不只是证明失败发生。
+涉及身份、session、权限、租户或受保护操作时，AuthN/AuthZ 是显式 mandatory
+dimension：authentication 证明调用方是谁以及 session lifecycle、cookie/token
+是否正确；authorization 证明该身份能做什么，覆盖权限、tenant/object ownership、
+fail-closed，并断言 denied operation 没有 protected side effect。
+Assertion strength 也是门禁的一部分：测试必须能因其声称防护的缺陷而失败；
+mock-called、value-exists、no-exception 或 status-only 断言只有在它们本身就是完整契约时才足够。
 当行为依赖传输或部署边界时，真实入口也是契约的一部分：协议、域名、端口、
 路径前缀、反代、TLS、redirect、cache、header、cookie、token、CORS 和
 浏览器安全策略都可能改变调用方实际结果。
@@ -30,7 +36,7 @@ scenario；实现阶段的 RED/GREEN 与本地反馈仍由该 Ticket 的实现 w
 
 1. 从需求、Slice 验收标准和本次实际改动中确定行为契约，包含成功、失败和异常路径。
 2. 建立 Acceptance-to-Test Matrix，把每条验收标准映射到实际执行证据。
-3. 根据风险选择 mandatory dimensions：happy path、boundary、negative、state/invariant、integration/contract、real entrypoint/config、regression，以及按需的 property/fuzz、mutation、browser/E2E、isolation/flaky。
+3. 根据风险选择 mandatory dimensions：happy path、boundary、negative、AuthN/AuthZ、state/invariant、integration/contract、real entrypoint/config、regression，以及按需的 property/fuzz、mutation、browser/E2E、isolation/flaky。
 4. 从静态检查和 focused tests 开始，按成本逐级执行适用维度。
 5. 每个验收点和 mandatory dimension 都必须有 PASS 证据，或明确的 N/A 理由；未执行不能冒充通过，失败路径也不能只以状态/异常出现作为通过。
 6. Test Quality Gate 汇总结果并按 `pass`、`partial`、`fail` 或 `blocked` 分类。
@@ -55,6 +61,7 @@ Level 只限制 suite 的广度。Stop condition 是 mandatory risk dimensions �
 | 静态检查 | 尽早发现编译、类型、Lint、Schema 或配置问题 | 命令输出、错误位置和修复后的重新检查 |
 | Focused tests | 验证本次变更直接影响的单元、组件、API 或包契约 | 测试结果、断言和失败堆栈 |
 | Boundary / negative | 验证边界值、无效输入、失败路径和状态转换 | 明确输入、预期错误/状态/异常的格式、结构、语义和调用方可操作性断言 |
+| AuthN / AuthZ | 分开验证身份/session/token 与权限/ownership/tenant 边界 | 身份、session lifecycle、cookie/token、permission、tenant/object ownership、fail-closed、protected side-effect absence |
 | Property / fuzz | 对复杂输入空间或强 invariant 做生成式验证 | property、seed、最小失败样例 |
 | Integration / contract | 覆盖数据库、文件系统、队列、网络、Schema、进程或多模块边界 | 成功与失败/异常契约的集成/契约测试 |
 | Real entrypoint / config | 覆盖生产同类入口、传输边界和关键配置组合 | URL、协议、反代、TLS、路径前缀、header/cookie/token、缓存和配置矩阵证据 |
@@ -77,7 +84,8 @@ Level 只限制 suite 的广度。Stop condition 是 mandatory risk dimensions �
 
 最终 PASS 同时要求：所有 acceptance criteria 有执行证据；所有 mandatory
 dimensions 已通过或有具体 N/A 理由；公共边界的成功、失败和异常路径均按
-调用方可消费契约验证；不存在通过 retry 被掩盖的 unexplained flaky；没有为了
+调用方可消费契约验证；authentication 与 authorization 已分开证明或说明 N/A；
+测试可因防护缺陷而失败；不存在通过 retry 被掩盖的 unexplained flaky；没有为了
 GREEN 而弱化断言；coverage 只作诊断，不作为质量证明。发生失败但未按契约
 表达给调用方时，Test Quality Gate 必须保持 fail/partial/blocked，不能 PASS。
 

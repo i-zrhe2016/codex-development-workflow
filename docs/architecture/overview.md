@@ -137,6 +137,7 @@ Plan or causes a Slice split.
 ```text
 Fixed stages: plan -> develop -> verify -> publish -> integrate
 Ticket execution: fresh implementer (all Slices) -> fresh verifier (all scenarios)
+Final delivery verification: three fresh verifiers each check the whole Plan branch/PR scope
 Coordinator: readiness -> dispatch safe wave -> integrate evidence -> gates
 ```
 
@@ -217,6 +218,9 @@ develop, verify and test Skills retain minimum executable rules for installed
 use without AGENTS.md. A dispatched worker executes its role without recursive
 agent creation. Verifiers read the repository without repair edits; failures
 return to implementation and a new verifier checks the affected functionality.
+Ordinary per-Ticket verification uses one fresh verifier. Final Plan/branch/PR
+acceptance verification uses three fresh independent verifiers, each checking
+the whole current Plan scope.
 The coordinator retains integration, the Test Quality Gate and final judgment.
 
 [Context Management](../../AGENTS.md#context-management) owns the thin
@@ -297,7 +301,8 @@ procedure.
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
 - A persisted plan has one Plan Issue with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and a persisted Plan uses one branch and PR.
 - Tests provide evidence inside a Slice; local verification is a valid stop.
-  If delivery is elected, the Plan PR remains the final publication/merge boundary.
+  If delivery is elected, three-verifier Plan/branch/PR acceptance precedes the
+  final publication/merge boundary.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.
 - `repo-documentation` owns documentation governance; `repo-current-state` owns
   only the recovery snapshot.

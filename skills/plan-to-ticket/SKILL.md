@@ -45,11 +45,14 @@ Do not expose internal reasoning.
   merge is required. Do not start blocked Tickets just to fill metadata.
 - Every Ticket, including docs/config/test, is the worker ownership boundary:
   one fresh implementer executes all its Slices in dependency order, and a separate fresh verifier
-  checks all functionality scenarios. Do not divide Slices/scenarios across
-  workers or reuse agents across Tickets. The coordinator chooses agents and
-  safe concurrency under `AGENTS.md` and the develop/verify runtime rules;
-  planning does not dispatch workers. Sequence dependent/overlapping files,
-  interfaces, schemas, migrations, configuration and shared test state.
+  checks all functionality scenarios. This ordinary per-Ticket check uses one
+  verifier. Do not divide Slices/scenarios across workers or reuse agents across
+  Tickets. Final Plan/branch/PR acceptance later uses three fresh independent
+  verifiers for the whole current Plan scope. The coordinator chooses agents
+  and safe concurrency under `AGENTS.md` and the develop/verify runtime rules;
+  planning does not dispatch workers. Sequence
+  dependent/overlapping files, interfaces, schemas, migrations, configuration
+  and shared test state.
 - If implementation reveals a materially different design, new subsystem or
   unrelated behavior, stop expanding the Ticket, preserve valid work and
   re-plan/update dependencies. Add a Ticket only after explicitly updating the

@@ -18,6 +18,10 @@ agent per Ticket, including docs/config/test and inline one-Slice work. One
 implementer executes all dependency-ordered Slices; one verifier checks all
 Ticket scenarios. Neither is reused across Tickets, and workers never spawn agents.
 The coordinator dispatches them and owns the final Test Quality Gate and stages.
+Final Plan/branch/PR acceptance verification is separate: before deciding
+publication, PR update or merge readiness, dispatch three fresh independent
+verifiers. Each checks the whole current Plan branch/PR scope; all three must
+PASS.
 
 Codex dispatch uses `spawn_agent` with `fork_turns="none"`; other hosts require
 equivalent fresh agents and independent context, or report BLOCKED without
@@ -40,6 +44,11 @@ Derive expectations from requirements, Function Checklist, acceptance and
 existing public contracts, never by mirroring implementation. Test observable
 behavior/stable contracts; implementation details only when themselves the
 contract. Reuse existing frameworks, scripts, fixtures/helpers and conventions.
+Tests must be falsifiable: a test must fail for the defect or regression it
+claims to protect. Mock-called, value-exists, no-exception and status-only
+assertions are insufficient unless that observation is explicitly the public
+contract; otherwise assert the caller-visible state, output, side effect or
+denied side-effect that would be wrong if the defect existed.
 At every public boundary (API, CLI, UI, file/schema, process, service or
 documented library interface), success, failure and exception paths share the
 same caller-consumable contract: the result or error must have the documented
@@ -104,6 +113,7 @@ expected high-value dimensions:
 | Happy path/contract | Expected observable behavior. |
 | Boundary | Empty, min/max, off-by-one, thresholds, size, encoding, order, timeout, lifecycle. |
 | Negative/failure | Invalid input/state, permissions/dependencies, rollback/partial failure, and useful caller-consumable errors with asserted format, structure, semantics and actionability. |
+| AuthN/AuthZ | Authentication identity/session lifecycle/cookie-token validity and authorization permissions/tenant-object ownership/fail-closed behavior, including protected side-effect absence for denied operations. |
 | State transition/invariant | Before/after, idempotency, uniqueness, conservation, monotonicity/domain invariants. |
 | Integration/contract | Database, filesystem, queue, network/service, schema/serialization, CLI process/public API, including success and failure/exception contract shape. |
 | Real entrypoint/config | Production-like protocol/host/port/path prefix, reverse proxy, TLS, redirects, headers, cookies/tokens, cache and critical config combinations. |
@@ -117,6 +127,16 @@ Coverage percentage is diagnostic evidence only. High line/branch coverage
 never proves meaningful assertions or complete requirements; pursue contract
 coverage, not percentages.
 
+Authentication and authorization are separate mandatory dimensions whenever
+identity, sessions, permissions, ownership, tenancy or protected operations are
+involved. Authentication proves who/what the caller is and covers login/logout,
+session expiry/rotation, cookie flags, token audience/issuer/signature, refresh
+and revocation behavior. Authorization proves what that identity may do and
+covers role/permission boundaries, tenant or object ownership, default-deny and
+fail-closed behavior. Denied operations must also assert absence of protected
+side effects such as writes, state transitions, emitted messages, payments,
+audit mutations or data disclosure.
+
 ## Test ladder
 
 Run the cheapest relevant check first, broaden after focused checks pass, and
@@ -127,17 +147,20 @@ follow this applicable order:
 3. **Boundary and negative tests** for edges/failures, asserting not only that
    failure occurred but that the public error/status/exception is formatted,
    structured, semantically correct and consumable by the caller.
-4. Property/fuzz using existing generators/fuzzers when justified.
-5. Integration/contract tests for touched boundaries/multiple modules.
-6. Real entrypoint/config smoke or matrix checks when behavior depends on
+4. **AuthN/AuthZ checks** when identity or permissions matter: authentication
+   session/token behavior separately from authorization ownership/permission
+   decisions, including fail-closed denial and protected side-effect absence.
+5. Property/fuzz using existing generators/fuzzers when justified.
+6. Integration/contract tests for touched boundaries/multiple modules.
+7. Real entrypoint/config smoke or matrix checks when behavior depends on
    deployed URL, proxy/TLS, headers, cookies/tokens, cache or client access
    rules.
-7. Existing mutation tool or practical targeted manual mutation for high-risk
+8. Existing mutation tool or practical targeted manual mutation for high-risk
    logic or weak-test suspicion.
-8. Affected module/package regression; full suite only for justified scope,
+9. Affected module/package regression; full suite only for justified scope,
    risk or policy.
-9. Critical browser/E2E flows lower layers cannot establish.
-10. Isolation/flaky checks: diagnostic repeats only when nondeterminism suspected.
+10. Critical browser/E2E flows lower layers cannot establish.
+11. Isolation/flaky checks: diagnostic repeats only when nondeterminism suspected.
 
 Stop at the first useful failure, diagnose before higher layers, then resume
 from the cheapest check that can disprove the fix. Avoid repeated expensive
@@ -169,6 +192,13 @@ Mutation evaluates **tests**, not production. Target changed/high-risk modules,
 not repository-wide inner-loop mutation. For meaningful survivors strengthen
 assertions/cases or explain equivalence/irrelevance or unreachable code; do not
 chase a universal mutation-score target.
+
+Assertion strength is part of the gate. For each protective test, identify the
+behavioral defect it would catch and ensure at least one assertion would fail if
+that defect were present. Tests that only prove a mock was called, a value
+exists, no exception occurred or an HTTP status matched are weak unless that is
+the complete contract; strengthen them with observable payload, state,
+side-effect, permission, ordering or error-contract assertions.
 
 ## Flaky and isolation policy
 
@@ -244,10 +274,15 @@ Ticket Slices are test-complete only when:
 - public-boundary success, failure and exception paths are verified against the
   same caller-consumable contract, including format, structure, semantics and
   actionability where applicable;
+- authentication and authorization are separately proven or marked N/A with
+  reason, including identity/session/cookie-token evidence, permission or
+  tenant/object ownership decisions, fail-closed denials and protected
+  side-effect absence where relevant;
 - selected level checks and every applicable dimension above are GREEN;
 - failures are resolved or explicitly blocked/out of scope, with no unexplained
   flake promoted to PASS, no failure accepted merely because a status/exception
-  occurred, no test weakened for GREEN, and coverage diagnostic only.
+  occurred, no test weakened for GREEN, no unfalsifiable weak assertion accepted
+  as protection, and coverage diagnostic only.
 
 For multi-Ticket work keep inner checks focused per Ticket, then run appropriate
 integration/regression after dependency-related Tickets are GREEN. Later

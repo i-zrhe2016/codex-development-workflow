@@ -52,8 +52,10 @@ application infrastructure topology.
    followed by Ticket sections containing nested Slices and canonical Issue
    links, with the Plan branch handoff fields on the Plan section.
 8. The coordinator dispatches each Ticket to a fresh implementer for all its
-   dependency-ordered Slices, then to a separate fresh verifier for all scenarios
-   under the [scheduling policy](../../../AGENTS.md#multi-agent-delegation).
+   dependency-ordered Slices, then to one separate fresh verifier for all
+   scenarios under the [scheduling policy](../../../AGENTS.md#multi-agent-delegation).
+   Final Plan/branch/PR acceptance later uses three fresh independent verifiers
+   for the whole current Plan scope.
 
 ## Design boundaries
 

@@ -26,6 +26,13 @@ endif
 :Assert failure/error contract
 format + structure + semantics + caller consumability;
 
+if (Identity / permission / tenant risk?) then (yes)
+  :AuthN / AuthZ checks;
+  :Prove identity + session + token separately
+  from permission + ownership + fail-closed behavior;
+  :Assert denied operations have no protected side effects;
+endif
+
 if (Complex input space or strong invariant?) then (yes)
   :Property / fuzz checks;
 endif
@@ -42,6 +49,8 @@ if (High-risk logic or weak-test suspicion?) then (yes)
   :Targeted mutation / test-strength check;
 endif
 
+:Confirm assertions fail for protected defect;
+
 :Affected regression;
 
 if (Critical browser-visible flow?) then (yes)
@@ -54,7 +63,7 @@ endif
 
 :Evaluate Test Quality Gate;
 
-if (Every acceptance criterion, mandatory dimension\nand failure/error contract satisfied?) then (yes)
+if (Every acceptance criterion, mandatory dimension,\nAuthN/AuthZ separation, assertion strength\nand failure/error contract satisfied?) then (yes)
   :PASS;
 else (no)
   :FAIL / PARTIAL / BLOCKED;
@@ -65,6 +74,8 @@ note right
 Coverage is diagnostic only.
 N/A requires a concrete reason.
 Failure/status/exception occurrence alone is not PASS.
+Mock-called/value-exists/no-exception/status-only is weak unless it is the contract.
+Denied operations must prove protected side-effect absence.
 Real boundary behavior must use real or production-like entrypoints.
 FAIL then retry PASS without a verified external cause is flaky, not PASS.
 end note

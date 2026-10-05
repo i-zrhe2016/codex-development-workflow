@@ -53,7 +53,15 @@ next decision.
   upgrades. Load only needed context; record results before the next Slice.
 - PASS requires `test-workflow`'s risk-aware **Test Quality Gate**: every
   acceptance criterion has executed evidence; applicable dimensions pass or
-  carry concrete N/A reasons. Coverage is diagnostic only, and retry cannot convert an unexplained flaky failure to PASS.
+  carry concrete N/A reasons, including separate AuthN/AuthZ proof and
+  falsifiable assertion strength when relevant. Coverage is diagnostic only,
+  and retry cannot convert an unexplained flaky failure to PASS.
+- Verification must prove Same-Surface Verification: intended artifact, runtime
+  instance and user-facing surface match scope; runtime identity/doctor succeeds;
+  the verifier follows Launch -> Doctor -> Drive -> Evidence -> Cleanup. If the
+  artifact, instance or surface cannot be proven, report BLOCKED.
+  Repository-specific verification profiles or feature maps belong under
+  `docs/verification/`, not in a new workflow Skill.
 - Run the staged redaction gate before every commit. When verified repository
   state materially changes, update `docs/Repo_Current_State.md` on the same
   Plan branch before commit/PR creation so the PR carries the state change with
@@ -78,8 +86,9 @@ new Ticket using `plan-to-ticket`'s scope-update contract; after merge use a new
 Plan. Preserve IDs, branch/base, existing PR and accepted evidence. Update
 goal/scope/index/dependencies/validation before edits. An open PR retains its
 URL but expanded scope returns the Plan to `in_progress`, invalidates impacted
-acceptance/batch readiness and requires revalidation before an authorized
-update. An existing PR is not ready for the expanded scope.
+acceptance/batch readiness and requires revalidation, including final
+Plan/branch/PR acceptance, before an authorized update. An existing PR is not
+ready for the expanded scope.
 
 A persisted Plan owns one Issue, one branch from the updated default branch
 (`<type>/<plan-id>-<short-description>`) and, if the user elects delivery, one PR
@@ -108,10 +117,18 @@ The main agent coordinates design, dependencies, integration and gates; it does
 not implement Tickets or replace their independent verifiers. For every Ticket,
 including docs/config/test and inline one-Slice work, dispatch one fresh
 implementation agent for all dependency-ordered Slices, then a separate fresh verification
-agent for all functionality scenarios. Never reuse workers across Tickets or
-split a Ticket's Slices/scenarios across agents. Same-Ticket follow-up is
-allowed. Already-dispatched implementation/verification workers run only their
-assigned role, never spawn agents or run coordinator orchestration.
+agent for all functionality scenarios. Ordinary per-Ticket verification uses
+one verifier. Never reuse workers across Tickets or split a Ticket's
+Slices/scenarios across agents. Same-Ticket follow-up is allowed.
+Already-dispatched implementation/verification workers run only their assigned
+role, never spawn agents or run coordinator orchestration.
+
+Final Plan/branch/PR acceptance verification is separate. Before deciding
+publication, PR update or merge readiness, dispatch three fresh independent
+verifier agents.
+Each verifies the whole current Plan branch/PR scope. All three must PASS; any
+FAIL or BLOCKED blocks readiness and preserves evidence. Do not reuse Ticket
+implementers, Ticket verifiers or prior final verifiers for this gate.
 
 For Codex, every `spawn_agent` uses `fork_turns="none"`. Other hosts must provide
 equivalent fresh agents with independent context; otherwise report BLOCKED,
@@ -147,7 +164,9 @@ multiple Tickets, dependencies or sessions persist before branch work:
 
 1. `plan-workflow`: work definition, persistence and single Plan branch.
 2. `develop-workflow`: implementation to Development Complete.
-3. `verify-workflow`: selected verification and Test Quality Gate.
+3. `verify-workflow`: selected verification and Test Quality Gate, including
+   three-verifier final Plan/branch/PR acceptance when delivery readiness is
+   being decided.
 4. `publish-workflow`: `repo-documentation` impact check -> update
    `docs/Repo_Current_State.md` when represented state changed -> staged
    redaction -> `github-push-when-ready` commit/push/PR readiness. Update

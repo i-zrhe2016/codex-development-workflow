@@ -12,6 +12,12 @@ Slice 验收。目标是用最低成本的可靠检查证明验收标准，而�
 公共边界上的成功、失败和异常路径按同一 caller-consumable contract 验证；
 失败路径必须断言调用方实际收到的格式、结构、语义和可操作性，不能只检查
 状态码、异常类型或进程退出。
+涉及身份、session、权限、租户或受保护操作时，将 AuthN/AuthZ 作为 mandatory
+dimension，分开证明 authentication（identity、session lifecycle、cookie/token）
+和 authorization（permission、tenant/object ownership、fail-closed），并断言
+denied operation 没有 protected side effect。每个测试必须是 falsifiable：它
+声称防护的缺陷出现时会失败；mock-called、value-exists、no-exception、
+status-only assertion 只有在本身就是契约时才足够。
 当行为依赖真实入口、部署配置或客户端策略时，把传输细节纳入测试范围：协议、
 域名、端口、路径前缀、反代、TLS、redirect、cache、header、cookie、token、
 CORS 和浏览器安全规则都可能决定用户路径是否可用。
@@ -31,6 +37,8 @@ CORS 和浏览器安全规则都可能决定用户路径是否可用。
 - 主要成功路径
 - 直接相关的边界或失败路径
 - 公共错误/异常是否保持调用方可消费的格式、结构、语义和处置方式
+- AuthN/AuthZ 是否分别覆盖身份/session/cookie-token 与权限/ownership/fail-closed，并证明 denied operation 没有受保护副作用
+- 关键断言是否可证伪，能在防护缺陷存在时失败
 - 可能的回归风险
 
 证据
@@ -72,14 +80,15 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 2. 运行编译、类型、Lint、Schema 或配置等静态检查。
 3. 运行覆盖变更契约的最小 focused tests。
 4. 补齐适用的 boundary 和 negative-path checks，并断言失败/错误/异常的格式、结构、语义和调用方可消费性。
-5. 复杂输入空间或强 invariant 场景运行 property/fuzz；失败 seed 固化为回归测试。
-6. 触及数据库、文件系统、队列、网络、Schema、进程或多模块边界时运行 integration/contract checks。
-7. 依赖部署入口、HTTP/HTTPS、反代、TLS、header/cookie/token、缓存或配置组合时运行 real entrypoint/config checks。
-8. 高风险逻辑或怀疑测试过弱时，对 changed/high-risk module 做 targeted mutation/test-strength check。
-9. 运行受影响模块回归；只有范围/风险确实要求时才运行 full suite。
-10. 浏览器可见关键流程或浏览器策略低层无法证明时执行 Browser / E2E。
-11. 涉及并发、时间、共享状态、随机性或出现间歇失败时执行 isolation/flaky diagnosis；重跑成功不能抹掉先前失败。
-12. 用 Test Quality Gate 汇总；只有所有 mandatory dimensions 满足，且失败已按契约表达给调用方，才 PASS。
+5. 涉及身份或权限时运行 AuthN/AuthZ checks，分开证明 authentication 与 authorization，并断言 denied operation 没有 protected side effect。
+6. 复杂输入空间或强 invariant 场景运行 property/fuzz；失败 seed 固化为回归测试。
+7. 触及数据库、文件系统、队列、网络、Schema、进程或多模块边界时运行 integration/contract checks。
+8. 依赖部署入口、HTTP/HTTPS、反代、TLS、header/cookie/token、缓存或配置组合时运行 real entrypoint/config checks。
+9. 高风险逻辑或怀疑测试过弱时，对 changed/high-risk module 做 targeted mutation/test-strength check。
+10. 运行受影响模块回归；只有范围/风险确实要求时才运行 full suite。
+11. 浏览器可见关键流程或浏览器策略低层无法证明时执行 Browser / E2E。
+12. 涉及并发、时间、共享状态、随机性或出现间歇失败时执行 isolation/flaky diagnosis；重跑成功不能抹掉先前失败。
+13. 用 Test Quality Gate 汇总；只有所有 mandatory dimensions 满足，且失败已按契约表达给调用方，才 PASS。
 
 不要用固定 sleep、盲目 retry、弱化断言、删除测试，或仅证明“失败发生”来取得通过。出现第一个有用失败时先诊断根因，再决定是否扩大检查范围。
 
@@ -136,6 +145,8 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 | Boundary coverage | pass/fail/N/A | ... |
 | Negative-path coverage | pass/fail/N/A | ... |
 | Failure/error contract | pass/fail/N/A | format/structure/semantics/caller-consumability evidence |
+| AuthN/AuthZ | pass/fail/N/A | identity/session/cookie-token and permission/tenant-object ownership/fail-closed/protected side-effect absence evidence |
+| Assertion strength | pass/fail/N/A | why tests fail for the protected defect; weak assertion exceptions if that is the contract |
 | Regression protection | pass/fail/N/A | ... |
 | Integration/contract | pass/fail/N/A | ... |
 | Real entrypoint/config | pass/fail/N/A | URL/protocol/proxy/TLS/header/cookie/token/cache/config evidence |

@@ -16,6 +16,7 @@ state "Coordinator judges Ticket evidence" as accepted
 state "More Tickets?" as more
 state "Local verified checkpoint\nNormal stopping point; Issues stay open" as local
 state "Append user-requested Ticket before merge\nUpdate Plan scope/index/dependencies/validation" as expand
+state "Final Plan/branch/PR acceptance\n3 fresh verifiers check whole scope" as final_verify
 state "Plan integration + Test Quality Gate\nCoordinator decides" as gate
 state "Authorized commit / push / Plan PR actions\nStop at selected boundary" as publish
 state "Merge Plan PR once" as merge
@@ -43,7 +44,8 @@ local --> [*] : stop locally; not BLOCKED
 local -[norank]-> expand : new user-requested functionality
 publish -[norank]-> expand : new functionality before merge
 expand -[norank]-> select : same branch/PR; Plan in_progress\nretain evidence; invalidate impacted readiness
-local -down-> gate : publication authorized for current scope
+local -down-> final_verify : publication authorized for current scope
+final_verify -down-> gate : all 3 PASS
 gate -[norank]-> implement : affected function needs repair\nthen new verifier
 gate -down-> publish : PASS
 publish --> [*] : commit-only / push-only / PR ready stop
@@ -58,5 +60,11 @@ Manually scoped Ticket contract; no parent conversation.
 No cross-Ticket worker reuse or recursive agent creation.
 Fresh replacement from verified checkpoint if interrupted/failed.
 Unexplained flaky failure cannot become PASS by changing agents.
+end note
+
+note right of final_verify
+Separate from ordinary per-Ticket verification.
+Each final verifier checks the whole current Plan branch/PR scope.
+Do not split scenarios or reuse Ticket verifiers.
 end note
 @enduml

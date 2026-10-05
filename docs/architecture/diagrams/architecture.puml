@@ -12,7 +12,8 @@ state "Plan" as Plan
 state "Persist Plan + Tickets + Slices\nGitHub Issues (when required)" as Issues
 state "Create Plan branch" as Branch
 state "develop-workflow\nImplement all Plan Tickets" as Implement
-state "verify-workflow\nTest Quality Gate" as Test
+state "verify-workflow\nPer-Ticket Test Quality Gate" as Test
+state "Final Plan/branch/PR acceptance\n3 fresh independent verifiers" as FinalVerify
 state "Documentation impact check" as Docs
 state "Update State / Docs\nif represented state changed" as State
 state "Redaction scan\nwhen applicable" as Redact
@@ -32,7 +33,8 @@ Issues --> Branch
 Branch --> Implement
 Implement --> Test
 Test --> Implement : BLOCKED / failed evidence
-Test --> Docs : PASS; authorized batch only
+Test --> FinalVerify : delivery readiness requested
+FinalVerify --> Docs : all 3 PASS; authorized batch only
 Docs --> State
 State --> Redact
 Redact --> Publish

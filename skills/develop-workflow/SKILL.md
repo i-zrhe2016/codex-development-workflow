@@ -51,6 +51,8 @@ not install it); when present, it owns the full scheduling policy.
   never create Ticket branches. Do not duplicate active worker work.
 - After Development Complete, the coordinator uses a separate fresh verifier
   for all Ticket scenarios, never the implementer or another Ticket's verifier.
+  Ordinary per-Ticket verification uses one verifier; final Plan/branch/PR
+  acceptance later uses three fresh independent verifiers for the whole scope.
   Verification failures return here for fixes, then a new verifier rechecks the
   affected function, retaining prior failure evidence and the flaky-test gate.
   The coordinator owns integration, stage gates and final judgment.
