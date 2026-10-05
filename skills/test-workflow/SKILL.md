@@ -19,9 +19,8 @@ implementer executes all dependency-ordered Slices; one verifier checks all
 Ticket scenarios. Neither is reused across Tickets, and workers never spawn agents.
 The coordinator dispatches them and owns the final Test Quality Gate and stages.
 Final Plan/branch/PR acceptance verification is separate: before deciding
-publication, PR update or merge readiness, dispatch three fresh independent
-verifiers. Each checks the whole current Plan branch/PR scope; all three must
-PASS.
+publication, PR update or merge readiness, dispatch one fresh independent
+verifier. It checks the whole current Plan branch/PR scope and must PASS.
 
 Codex dispatch uses `spawn_agent` with `fork_turns="none"`; other hosts require
 equivalent fresh agents and independent context, or report BLOCKED without

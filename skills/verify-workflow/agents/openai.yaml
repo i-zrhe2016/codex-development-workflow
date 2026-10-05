@@ -1,4 +1,4 @@
 interface:
   display_name: "Verify Workflow"
   short_description: "Decide when to verify: scope, level, and a bounded result"
-  default_prompt: "Use $verify-workflow as coordinator to dispatch one fresh independent verifier per Ticket, and three fresh independent verifiers for final Plan/branch/PR acceptance; as a read-only dispatched worker, verify the whole assigned scope without spawning agents; invoke $test-workflow and return PASS, FAIL, or BLOCKED with evidence."
+  default_prompt: "Use $verify-workflow as coordinator to dispatch one fresh independent verifier per Ticket, and one fresh independent verifier for final Plan/branch/PR acceptance; as a read-only dispatched worker, verify the whole assigned scope without spawning agents; invoke $test-workflow and return PASS, FAIL, or BLOCKED with evidence."

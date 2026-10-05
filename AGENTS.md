@@ -93,11 +93,10 @@ Dispatched implementation/verification workers execute their assigned role and
 never create further agents; the main agent directly orchestrates them.
 
 Final Plan/branch/PR acceptance verification is separate. Before deciding
-publication, PR update or merge readiness, dispatch three fresh independent
-verifier agents.
-Each verifies the whole current Plan branch/PR scope. All three must PASS; any
+publication, PR update or merge readiness, dispatch one fresh independent
+verifier agent for the whole current Plan branch/PR scope. It must PASS; any
 FAIL or BLOCKED blocks readiness and preserves evidence. Do not reuse Ticket
-implementers, Ticket verifiers or prior final verifiers for this gate.
+implementers, Ticket verifiers or a prior final verifier for this gate.
 
 The verifier reads the repository without changing code, tests, configuration
 or documentation; caches and temporary evidence are allowed. Verification

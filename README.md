@@ -90,16 +90,16 @@ The main agent owns requirements, architecture, decomposition, adaptive
 execution-wave scheduling, integration, evaluation, and final judgment.
 Every Ticket, including docs/config/test, uses a fresh implementation worker
 for all its Slices and one separate fresh verifier for all its scenarios. Final
-Plan/branch/PR acceptance verification uses three fresh independent verifiers,
-each checking the whole current Plan branch/PR scope.
+Plan/branch/PR acceptance verification uses one fresh independent verifier for
+the whole current Plan branch/PR scope.
 
 ## Adaptive multi-agent execution
 
 The main agent schedules dependency-ready Tickets, integrates results and owns
 all stage gates. Each Ticket has its own fresh implementer and independent
 fresh verifier; workers start with only a manually scoped contract, never the
-parent conversation. Final Plan/branch/PR acceptance uses three fresh verifiers
-for the whole current scope. Codex uses
+parent conversation. Final Plan/branch/PR acceptance uses one fresh independent
+verifier for the whole current scope. Codex uses
 `fork_turns="none"`; hosts without equivalent fresh-agent/context support are
 BLOCKED. Workers do not create agents.
 
@@ -181,8 +181,8 @@ Existing change
 
 A fresh independent Ticket verifier runs all functionality scenarios; the main
 agent owns the final gate decision. If this verification is for final
-Plan/branch/PR acceptance, three fresh independent verifiers each check the
-whole current scope before readiness can pass.
+Plan/branch/PR acceptance, one fresh independent verifier checks the whole
+current scope before readiness can pass.
 
 ### 5. Verify and publish
 
@@ -269,7 +269,7 @@ For a Plan with independent Tickets and disjoint write/test-state ownership:
 Plan coordinator
   +-- Ticket A -> fresh implementer A: all Slices -> fresh verifier A: all scenarios
   +-- Ticket B -> fresh implementer B: all Slices -> fresh verifier B: all scenarios
-  -> final Plan/branch/PR acceptance: three fresh verifiers, whole scope each
+  -> final Plan/branch/PR acceptance: one fresh independent verifier, whole scope
   -> integrate evidence and decide gates
 ```
 

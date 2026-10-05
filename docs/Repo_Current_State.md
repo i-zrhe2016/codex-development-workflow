@@ -11,7 +11,7 @@ Last verified: 2026-10-05 @ working tree
   [worker policy](../AGENTS.md#multi-agent-delegation) and
   [Context Management](../AGENTS.md#context-management).
 - Ordinary per-Ticket verification uses one fresh verifier. Final
-  Plan/branch/PR acceptance verification uses three fresh independent verifiers
+  Plan/branch/PR acceptance verification uses one fresh independent verifier
   for the whole current Plan scope before readiness can pass.
 - Verification now requires Same-Surface proof: runtime identity/doctor,
   Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and

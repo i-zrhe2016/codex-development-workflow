@@ -25,7 +25,7 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - The guard evaluates the effective push remote/refspec separately from a pull-tracking upstream, so fork workflows can push a feature branch while still tracking an upstream default branch.
 - Honor selected action boundaries: commit-only stops with auto-push suppressed;
   push-only creates no commit or PR. Only authorized PR creation/update can
-  return `PR ready` after current-scope checks and the three-verifier final
+  return `PR ready` after current-scope checks and the single-verifier final
   Plan/branch/PR acceptance gate pass; merge also requires authority.
 - Run the smallest verification set that provides sufficient evidence, then
   escalate when risk or failures require it.

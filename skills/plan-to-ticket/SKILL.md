@@ -47,8 +47,8 @@ Do not expose internal reasoning.
   one fresh implementer executes all its Slices in dependency order, and a separate fresh verifier
   checks all functionality scenarios. This ordinary per-Ticket check uses one
   verifier. Do not divide Slices/scenarios across workers or reuse agents across
-  Tickets. Final Plan/branch/PR acceptance later uses three fresh independent
-  verifiers for the whole current Plan scope. The coordinator chooses agents
+  Tickets. Final Plan/branch/PR acceptance later uses one fresh independent
+  verifier for the whole current Plan scope. The coordinator chooses agents
   and safe concurrency under `AGENTS.md` and the develop/verify runtime rules;
   planning does not dispatch workers. Sequence
   dependent/overlapping files, interfaces, schemas, migrations, configuration
