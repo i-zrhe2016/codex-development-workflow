@@ -55,8 +55,9 @@ publication awaits the user. The user controls commit, push, PR creation/update
 and merge timing and scope. Prior authorization persists for its stated batch;
 adding scope alone grants no publication authority. Commit-only and push-only
 requests stop at those boundaries. With an open PR, expanded scope returns the
-Plan to `in_progress`, retains its PR URL and requires impacted acceptance and
-batch readiness to be revalidated before authorized publication/update.
+Plan to `in_progress`, retains its PR URL and requires impacted acceptance,
+batch readiness and final Plan/branch/PR acceptance to be revalidated before
+authorized publication/update.
 
 `codex-development-workflow` routes to these stages and carries the invariants
 that hold in all of them. Its full orchestration is the only path that runs
@@ -81,14 +82,22 @@ For every Ticket (including docs/config/test and one-Slice inline Tickets), crea
 * one fresh implementation agent, which executes **all** of that Ticket's
   Slices in dependency order and supplies local validation;
 * one separate fresh verification agent after Development Complete, which
-  checks **all** scenarios for that functionality. It must not be the
-  implementation agent or a verifier used for another Ticket.
+  checks **all** scenarios for that functionality. Ordinary per-Ticket
+  verification uses one verifier. It must not be the implementation agent or a
+  verifier used for another Ticket.
 
 Do not reuse either role across Tickets or split a Ticket's Slices/scenarios
 among agents. Same-Ticket follow-up is allowed. Interrupted or failed workers
 are replaced with a fresh agent and a handoff from verified checkpoints.
 Dispatched implementation/verification workers execute their assigned role and
 never create further agents; the main agent directly orchestrates them.
+
+Final Plan/branch/PR acceptance verification is separate. Before deciding
+publication, PR update or merge readiness, dispatch three fresh independent
+verifier agents.
+Each verifies the whole current Plan branch/PR scope. All three must PASS; any
+FAIL or BLOCKED blocks readiness and preserves evidence. Do not reuse Ticket
+implementers, Ticket verifiers or prior final verifiers for this gate.
 
 The verifier reads the repository without changing code, tests, configuration
 or documentation; caches and temporary evidence are allowed. Verification

@@ -81,10 +81,10 @@ they share a session. Plan metadata, when present, must validate; its absence
 permits normal publication—a persisted Plan is a planning decision, not a
 publication prerequisite.
 
-Publish only after every Ticket's acceptance and the batch's relevant
-integration/regression checks pass. Any failure blocks the whole batch. Review
-each diff and stage only the batch's verified functionality, tests and
-documentation paths/hunks. Prefer explicit `--pathspec`; never use
+Publish only after every Ticket's acceptance, relevant batch checks, and the
+three-verifier final Plan/branch/PR acceptance gate pass. Any failure blocks the
+whole batch. Review each diff and stage only the batch's verified functionality,
+tests and documentation paths/hunks. Prefer explicit `--pathspec`; never use
 `--allow-stage-all` when it would include out-of-batch or unverified work.
 Preserve user changes outside the Plan; mixed files require selective hunk
 staging. For new user-requested functionality before merge, follow `plan-to-ticket`'s
@@ -92,7 +92,8 @@ scope-update contract before edits; retain IDs, branch/base, existing PR and
 evidence. An open PR remains the same PR, but the expanded Plan returns to
 `in_progress`; invalidate impacted acceptance/batch readiness and revalidate
 before authorized publication/update. Do not report that PR ready for expanded
-scope. After merge, functionality starts a new Plan.
+scope until the final three-verifier gate passes for the expanded scope. After
+merge, functionality starts a new Plan.
 
 Use clear messages tied to the completed task boundary. Every new/unpublished
 commit subject must follow Conventional Commits 1.0.0:
@@ -148,8 +149,10 @@ update/verification blocks push. Guarded scripts perform this automatically.
    ```
 
    Scripts do not create PRs. Return canonical PR URL and `PR ready` only when
-   creation/update succeeds and publication checks pass. Failure after push:
-   report branch/exact blocker; do not claim ready for review.
+   creation/update succeeds, publication checks pass and the three-verifier
+   final Plan/branch/PR acceptance gate has passed for the current scope.
+   Failure after push: report branch/exact blocker; do not claim ready for
+   review.
 4. For another unit, re-inspect remaining diff and restart assessment.
 
 Optional managed hooks require explicit authorization for recurring automatic

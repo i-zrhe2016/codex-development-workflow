@@ -73,21 +73,35 @@ Verification is bounded by an explicit level (`minimal`, `focused`,
 `regression`, or `full`), but PASS is controlled by a risk-aware Test
 Quality Gate. The default is focused validation; each acceptance criterion maps
 to executed evidence, and applicable boundary, negative, integration,
-regression, property/fuzz, mutation, browser, or isolation dimensions must pass
-or be explicitly N/A with reason. Coverage remains diagnostic rather than a
-quality target, and an unexplained flaky FAIL cannot become PASS through retry.
+AuthN/AuthZ, regression, property/fuzz, mutation, browser, or isolation
+dimensions must pass or be explicitly N/A with reason. Authentication and
+authorization are proven separately when relevant, denied operations must show
+protected side-effect absence, and tests must be falsifiable rather than relying
+on mock-called, value-exists, no-exception or status-only assertions unless that
+is the contract. Coverage remains diagnostic rather than a quality target, and
+an unexplained flaky FAIL cannot become PASS through retry.
+Verification also follows Same-Surface Verification: prove runtime identity with
+a doctor/health signal, drive the intended artifact/instance/surface, report
+reproducible evidence, and treat unprovable artifact/instance/surface identity
+as `BLOCKED`. Target projects may keep verification profiles or feature maps in
+`docs/verification/`; that is repository-specific knowledge, not a new workflow
+Skill.
 The main agent owns requirements, architecture, decomposition, adaptive
 execution-wave scheduling, integration, evaluation, and final judgment.
 Every Ticket, including docs/config/test, uses a fresh implementation worker
-for all its Slices and a separate fresh verifier for all its scenarios.
+for all its Slices and one separate fresh verifier for all its scenarios. Final
+Plan/branch/PR acceptance verification uses three fresh independent verifiers,
+each checking the whole current Plan branch/PR scope.
 
 ## Adaptive multi-agent execution
 
 The main agent schedules dependency-ready Tickets, integrates results and owns
 all stage gates. Each Ticket has its own fresh implementer and independent
 fresh verifier; workers start with only a manually scoped contract, never the
-parent conversation. Codex uses `fork_turns="none"`; hosts without equivalent
-fresh-agent/context support are BLOCKED. Workers do not create agents.
+parent conversation. Final Plan/branch/PR acceptance uses three fresh verifiers
+for the whole current scope. Codex uses
+`fork_turns="none"`; hosts without equivalent fresh-agent/context support are
+BLOCKED. Workers do not create agents.
 
 Concurrency remains adaptive within dependency, filesystem and shared test-state
 constraints. The full policy is in
@@ -166,7 +180,9 @@ Existing change
 ```
 
 A fresh independent Ticket verifier runs all functionality scenarios; the main
-agent owns the final gate decision.
+agent owns the final gate decision. If this verification is for final
+Plan/branch/PR acceptance, three fresh independent verifiers each check the
+whole current scope before readiness can pass.
 
 ### 5. Verify and publish
 
@@ -253,6 +269,7 @@ For a Plan with independent Tickets and disjoint write/test-state ownership:
 Plan coordinator
   +-- Ticket A -> fresh implementer A: all Slices -> fresh verifier A: all scenarios
   +-- Ticket B -> fresh implementer B: all Slices -> fresh verifier B: all scenarios
+  -> final Plan/branch/PR acceptance: three fresh verifiers, whole scope each
   -> integrate evidence and decide gates
 ```
 

@@ -9,26 +9,37 @@ title Risk-Aware Verification — Evidence Before PASS
 rectangle "Acceptance Criteria\n→ evidence matrix" as acceptance
 rectangle "Focused tests\nStatic / unit / component" as focused
 rectangle "Mandatory risk dimensions\nBoundary / negative / integration\nRegression / property / mutation / E2E" as risk
+rectangle "AuthN / AuthZ\nIdentity / session / token\nPermission / tenant ownership" as auth
 rectangle "Failure/error contract\nFormat / structure / semantics\nCaller-consumable response" as failure_contract
 rectangle "Real boundary evidence\nURL / proxy / TLS\nHeaders / cookies / cache" as real_boundary
+rectangle "Runtime identity / doctor\nSame artifact / instance / surface" as runtime
+rectangle "Assertion strength\nFails for protected defect\nNo weak stand-ins" as assertion_strength
 rectangle "Isolation / flaky check\nRetry ≠ PASS" as isolation
 rectangle "TEST QUALITY GATE" as gate
 
 acceptance --> focused : map scenarios
 acceptance --> risk : select applicable dimensions
+acceptance --> auth : identity / permission risk
 acceptance --> failure_contract : public-boundary failures
 acceptance --> real_boundary : entry/config/client rules
+acceptance --> runtime : same-surface proof
+acceptance --> assertion_strength : falsifiable tests
 acceptance --> isolation : assess repeatability
 focused --> gate : executed evidence
 risk --> gate : evidence / justified N/A
+auth --> gate : separated proof / N/A
 failure_contract --> gate : not just occurrence
 real_boundary --> gate : real path evidence
+runtime --> gate : doctor evidence or BLOCKED
+assertion_strength --> gate : not mock/status-only
 isolation --> gate : no unexplained flakiness
 
 note bottom of gate
   PASS requires evidence for every acceptance criterion
   and every mandatory risk dimension, including
+  AuthN/AuthZ separation, falsifiable assertions,
   caller-consumable failure/error contracts and
   real entrypoint/config evidence when relevant.
+  Unproven artifact/instance/surface identity is BLOCKED.
 end note
 @enduml

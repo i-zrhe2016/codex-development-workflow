@@ -10,6 +10,17 @@ Last verified: 2026-10-05 @ working tree
   verification workers, with scoped context and durable Issue checkpoints. See
   [worker policy](../AGENTS.md#multi-agent-delegation) and
   [Context Management](../AGENTS.md#context-management).
+- Ordinary per-Ticket verification uses one fresh verifier. Final
+  Plan/branch/PR acceptance verification uses three fresh independent verifiers
+  for the whole current Plan scope before readiness can pass.
+- Verification now requires Same-Surface proof: runtime identity/doctor,
+  Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and
+  fresh verification-profile knowledge. If the intended artifact, instance or
+  surface cannot be proven, verification reports BLOCKED.
+- The Test Quality Gate includes explicit AuthN/AuthZ and assertion-strength
+  dimensions. Authentication and authorization are proven separately when
+  relevant, denied operations require protected side-effect absence, and tests
+  must fail for the defect they claim to protect.
 - Plans may batch functionalities under one branch, commit and PR with
   per-Ticket evidence. New functionality extends the same unmerged Plan with
   a new Ticket; after merge it starts a new Plan. See the

@@ -13,7 +13,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 README = REPO_ROOT / "README.md"
 ROOT_SKILL = REPO_ROOT / "SKILL.md"
+VERIFY_SKILL = REPO_ROOT / "skills" / "verify-workflow" / "SKILL.md"
 TEST_SKILL = REPO_ROOT / "skills" / "test-workflow" / "SKILL.md"
+WORKFLOW_USAGE = REPO_ROOT / "docs" / "workflow" / "usage.md"
 TEST_DOCS = (
     REPO_ROOT / "docs" / "skills" / "test-workflow" / "README.md",
     REPO_ROOT / "docs" / "skills" / "test-workflow" / "architecture.md",
@@ -119,11 +121,67 @@ class WorkflowContractTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, combined)
 
+    def test_verify_workflow_requires_same_surface_runtime_proof(self) -> None:
+        combined = "\n".join(
+            path.read_text(encoding="utf-8").lower()
+            for path in (ROOT_SKILL, README, VERIFY_SKILL, WORKFLOW_USAGE)
+        )
+        normalized = re.sub(r"\s+", " ", combined)
+        for marker in (
+            "same-surface verification",
+            "runtime identity/doctor",
+            "launch -> doctor -> drive -> evidence -> cleanup",
+            "reproducible evidence",
+            "verification profile freshness",
+            "intended artifact",
+            "instance or surface cannot be proven",
+            "docs/verification/",
+            "not a new workflow skill",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, normalized)
+
+    def test_test_workflow_requires_authz_and_falsifiable_assertions(self) -> None:
+        runtime = TEST_SKILL.read_text(encoding="utf-8").lower()
+        combined_docs = "\n".join(path.read_text(encoding="utf-8").lower() for path in TEST_DOCS)
+
+        for label, text in (("runtime", runtime), ("docs", combined_docs)):
+            with self.subTest(document=label):
+                for marker in (
+                    "authn/authz",
+                    "authentication",
+                    "authorization",
+                    "session lifecycle",
+                    "cookie-token",
+                    "tenant/object ownership",
+                    "fail-closed",
+                    "protected side-effect absence",
+                    "falsifiable",
+                    "mock-called",
+                    "value-exists",
+                    "no-exception",
+                    "status-only",
+                ):
+                    self.assertIn(marker, text)
+
     def test_root_workflow_requires_quality_gate(self) -> None:
         root_skill = ROOT_SKILL.read_text(encoding="utf-8")
         self.assertIn("Test Quality Gate", root_skill)
         self.assertIn("retry cannot convert an unexplained flaky failure to PASS", root_skill)
         self.assertIn("Coverage is", root_skill)
+
+    def test_final_acceptance_uses_three_fresh_verifiers(self) -> None:
+        root_skill = ROOT_SKILL.read_text(encoding="utf-8").lower()
+        verify_skill = VERIFY_SKILL.read_text(encoding="utf-8").lower()
+        for text in (root_skill, verify_skill):
+            normalized = re.sub(r"\s+", " ", text)
+            with self.subTest():
+                self.assertIn("ordinary per-ticket", normalized)
+                self.assertIn("one verifier", normalized)
+                self.assertIn("final plan/branch/pr acceptance", normalized)
+                self.assertIn("three fresh independent", normalized)
+                self.assertIn("verifier", normalized)
+                self.assertIn("all three must", normalized)
 
     def test_every_plantuml_source_has_same_basename_svg(self) -> None:
         sources = sorted((REPO_ROOT / "docs").rglob("*.puml"))

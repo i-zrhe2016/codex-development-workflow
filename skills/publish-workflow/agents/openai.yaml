@@ -1,4 +1,4 @@
 interface:
   display_name: "Publish Workflow"
   short_description: "Decide when to publish: docs, redaction, commit, push, PR"
-  default_prompt: "Use $publish-workflow for only the user-authorized commit, push or PR creation/update of verified functionality or a planned batch. Preserve documentation, staged redaction, identity and batch readiness gates; suppress auto-push hooks for commit-only. Stop at the selected action boundary; new feature scope grants no publication authority."
+  default_prompt: "Use $publish-workflow for only the user-authorized commit, push or PR creation/update of verified functionality or a planned batch. Preserve documentation, staged redaction, identity, batch readiness and three-verifier final Plan/branch/PR acceptance gates; suppress auto-push hooks for commit-only. Stop at the selected action boundary; new feature scope grants no publication authority."

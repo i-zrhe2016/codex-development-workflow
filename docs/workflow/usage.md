@@ -92,7 +92,8 @@ unmerged Plan. Update goal/scope/index/dependencies/validation and persist the
 new Ticket before edits; preserve IDs, branch/base, PR and evidence. With an
 open PR, expanded scope returns the Plan to `in_progress`, retains the PR URL
 and invalidates impacted acceptance/batch readiness. Revalidate before an
-authorized update; the PR is not ready for expanded scope. After verified
+authorized update; the PR is not ready for expanded scope until the
+three-verifier final Plan/branch/PR acceptance gate passes. After verified
 merge, subsequent functionality requires a new Plan.
 
 For every Slice, define:
@@ -160,8 +161,9 @@ Verify the current branch and working tree before editing and preserve
 unrelated or uncommitted work. Parallel workers use isolated worktrees or
 return patches/findings for integration on the branch; never create a second
 delivery branch for a Ticket. Before publishing, complete the Plan's acceptance
-and relevant integration/regression checks for every Ticket and the batch. A
-planned batch may share one commit and PR; follow the
+and relevant integration/regression checks for every Ticket and the batch, then
+pass three-verifier final Plan/branch/PR acceptance. A planned batch may share
+one commit and PR; follow the
 [publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
 for staging, batch commit bodies and complete PR evidence. Create/update the
 same Plan PR only when authorized and current-scope checks pass; merge once
@@ -176,6 +178,10 @@ ready Ticket -> fresh implementer: all dependency-ordered Slices + local checks
              -> separate fresh verifier: all functionality scenarios
              -> coordinator integrates evidence and decides gates
 ```
+
+Ordinary per-Ticket verification uses one fresh verifier. Final Plan/branch/PR
+acceptance verification uses three fresh independent verifiers, each checking
+the whole current Plan branch/PR scope.
 
 Follow the canonical [scheduling policy](../../AGENTS.md#multi-agent-delegation)
 for worker roles, replacement, failure repair and safe waves, and
@@ -199,7 +205,7 @@ does not authorize them. Waiting for the user is a normal stop, not BLOCKED.
 | Implement and verify functionality | Local verified checkpoint; no automatic publication. |
 | Commit only | Guarded Conventional Commit; suppress managed auto-push with `CODEX_GITHUB_AUTO_PUSH_SKIP=1`; no push or PR. |
 | Push only | Guarded push of verified existing commits; no commit or PR. |
-| Create/update PR | Authorized same-Plan PR action after current-scope checks; stop at PR ready. |
+| Create/update PR | Authorized same-Plan PR action after current-scope checks and three-verifier final acceptance; stop at PR ready. |
 | Merge ready PR | Authorized merge and reconciliation; readiness alone grants no merge authority. |
 | Full end-to-end delivery | All gates/actions within the explicitly authorized batch. |
 
@@ -209,13 +215,18 @@ same Plan PR. Missing required state or documentation updates return to
 publication on the Plan branch before merge; they do not create a separate
 post-merge state-only PR.
 
+Before final publication, PR update or merge readiness passes for a Plan,
+`verify-workflow` dispatches three fresh independent verifiers for the whole
+current Plan branch/PR scope. All three must PASS.
+
 For example, after verifying search locally, a user can request export as a
 new Ticket in the same unmerged Plan. Update its goal/scope/index/dependencies/
 validation before edits and keep the existing branch. If a PR already exists,
 retain its URL, return Plan to `in_progress` and revalidate impacted acceptance
-and batch readiness. Neither adding export nor finishing its checks triggers
-a PR update; publication awaits the user's chosen action. Once that Plan has
-merged, a later requested functionality starts a new Plan.
+and batch readiness, including three-verifier final Plan/branch/PR acceptance.
+Neither adding export nor finishing its checks triggers a PR update;
+publication awaits the user's chosen action. Once that Plan has merged, a later
+requested functionality starts a new Plan.
 
 ## Verification
 
@@ -238,6 +249,17 @@ Run the smallest set that provides sufficient evidence. The level controls
 breadth, not PASS: stop only when the Test Quality Gate closes. Report the
 level, the acceptance-to-test matrix, the quality-gate dimensions, commands,
 results, evidence, N/A reasons, and any escalation reason.
+
+Verification must prove it checked the intended artifact, runtime instance and
+surface. Use Same-Surface Verification: select or launch the intended instance,
+run a Runtime Identity/Doctor check, drive behavior through the user-facing
+surface, preserve reproducible evidence, then clean up sessions/test data and
+temporary state. Report `BLOCKED` when the artifact/build, process/container,
+URL/CLI/client, account/role/tenant, configuration or other required surface
+identity cannot be proven. Target projects may keep verification profiles and
+feature maps in `docs/verification/` so verifiers can find the right artifact,
+entrypoints, accounts, fixtures and doctor commands; this is repo-specific
+knowledge, not a new workflow Skill.
 
 ### Local package validation
 
