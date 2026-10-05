@@ -38,7 +38,7 @@ Select the host with `--target`. Codex is the default:
 bash scripts/install-all.sh --target claude
 ```
 
-Both targets install the same thirteen managed bundles under the bare skill name; the
+Both targets install the same fourteen managed bundles under the bare skill name; the
 Claude target omits the Codex-only `agents/openai.yaml` metadata, so the two
 installations are not byte-for-byte identical. The destination root and that
 metadata are the only differences. `--dest PATH` overrides either destination.
@@ -135,8 +135,8 @@ The tests use temporary destinations and cover target selection, destination
 precedence, invalid arguments, skip/update behavior, ownership protection and
 host-specific metadata. They compare every installed `SKILL.md` byte for byte
 with its root or specialist source for Codex and Claude, both on initial install
-and after replacing stale installed content with `--update`: 52 comparisons
-across 13 bundles. This verifies package contents; it does not execute Claude
+and after replacing stale installed content with `--update`: 56 comparisons
+across 14 bundles. This verifies package contents; it does not execute Claude
 Code or publish a real GitHub PR.
 
 ## Host-specific configuration
