@@ -22,7 +22,7 @@ procedures remain inside their own `SKILL.md` files.
 | `plan-to-ticket` | Defines an explicitly scoped delivery batch as one Plan, splits its functionalities into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
-| `repo-current-state` | Maintains the compact, verified recovery point after merge, branch cleanup, and default-branch synchronization. |
+| `repo-current-state` | Maintains the compact, verified recovery point on the same Plan branch and PR as the work it describes. |
 | `repo-documentation` | Governs documentation as one canonical document per fact: the documentation impact check, canonical ownership, the documentation index, duplicate and orphan detection, document lifecycle, and the diagram policy. |
 | `docs/skills/` | Specialist README, architecture, usage, and supporting documentation. |
 | `scripts/install-all.sh` | Installs the root orchestrator and local specialist bundles. |
@@ -102,6 +102,7 @@ Create Plan branch
   -> Implement all Plan Tickets
   -> Test Quality Gate
   -> Documentation impact check
+  -> Update Repo_Current_State.md if represented state changed
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
@@ -109,8 +110,8 @@ Create Plan branch
   -> Merge the PR once
   -> Delete branch
   -> Update main
+  -> Validate PR-included State / Docs
   -> Close Plan + Tickets
-  -> Update State / Docs
   -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
 ```
@@ -301,6 +302,6 @@ procedure.
 - `repo-documentation` owns documentation governance; `repo-current-state` owns
   only the recovery snapshot.
 - Redaction is conditional and scoped to the staged commit set; it is not a mandatory transformation of every artifact.
-- State / Docs are updated after merge, source-branch deletion, and default-branch synchronization.
+- State / Docs that belong to delivered work are updated before commit/PR creation and travel with that PR; integration validates the merged result.
 - The package does not own target-project source code, application data, or deployment infrastructure.
 - Specialist skills are vendored under `skills/` and updated through this repository's normal version-control process.

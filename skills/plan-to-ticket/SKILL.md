@@ -12,6 +12,12 @@ behavior/capability within it; a **Slice** is an independently verifiable
 execution unit inside a Ticket. Every Plan has at least one Ticket and every
 Ticket at least one Slice. These terms are not interchangeable.
 
+When the user controls the overall flow, present decomposition choices,
+dependency order, risks and validation options, but do not select scope,
+persistence, branch strategy, publication boundaries or delivery timing for the
+user. Persist only explicit user decisions or the minimum mechanics required by
+an already approved workflow.
+
 ## Scope and sizing
 
 Internally determine the desired outcome, necessary foundations, behavior

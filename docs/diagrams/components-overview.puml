@@ -13,8 +13,8 @@ package "Stage workflows" {
   component "plan-workflow\nRequirement to work definition" as stage_plan
   component "develop-workflow\nImplement to Development Complete" as stage_develop
   component "verify-workflow\nVerification scope + result" as stage_verify
-  component "publish-workflow\nDocs, redaction, publication readiness" as stage_publish
-  component "integrate-workflow\nMerge, cleanup, state, docs" as stage_integrate
+  component "publish-workflow\nDocs, state, redaction, publication readiness" as stage_publish
+  component "integrate-workflow\nMerge, cleanup, validate state/docs" as stage_integrate
 }
 
 package "Capability skills" {
@@ -34,7 +34,8 @@ router --> stage_integrate : route
 stage_plan --> planning : decompose
 stage_verify --> testing : verify evidence
 stage_publish --> documentation : check impact / update
+stage_publish --> repository_state : include with PR
 stage_publish --> publication : assess readiness
 stage_publish --> redaction : scan staged files
-stage_integrate --> repository_state : reconcile after merge
+stage_integrate --> repository_state : validate merged state
 @enduml

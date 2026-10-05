@@ -14,13 +14,13 @@ state "Create Plan branch" as Branch
 state "develop-workflow\nImplement all Plan Tickets" as Implement
 state "verify-workflow\nTest Quality Gate" as Test
 state "Documentation impact check" as Docs
+state "Update State / Docs\nif represented state changed" as State
 state "Redaction scan\nwhen applicable" as Redact
 state "Commit + Push branch" as Publish
 state "Create / Update Plan PR" as PR
 state "integrate-workflow\nMerge Plan PR once" as Merge
 state "Delete branch + Update main" as Cleanup
 state "Close Plan + Tickets" as Close
-state "Update State / Docs" as State
 state "Evaluate workflow" as Evaluate
 state "Report improvement for user decision" as Improve
 
@@ -33,14 +33,14 @@ Branch --> Implement
 Implement --> Test
 Test --> Implement : BLOCKED / failed evidence
 Test --> Docs : PASS; authorized batch only
-Docs --> Redact
+Docs --> State
+State --> Redact
 Redact --> Publish
 Publish --> PR
 PR --> Merge : merge authorized for current scope
 Merge --> Cleanup
 Cleanup --> Close
-Close --> State
-State --> Evaluate
+Close --> Evaluate
 Evaluate --> Improve : evidence-backed improvement
 Improve --> [*] : no automatic work; requested follow-up uses new Plan
 Evaluate --> [*] : no improvement

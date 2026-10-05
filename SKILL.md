@@ -29,6 +29,13 @@ for its stated batch; added feature scope alone never extends it. The main
 agent owns requirements, architecture, persistence, dependencies, scheduling,
 integration, gates, evaluation and final judgment.
 
+When the user states that they control the overall flow, preserve that control:
+prompt them with the main workflow, prerequisites, risks and available next
+actions, but do not choose scope, stage transitions, publication actions,
+timing or trade-offs on their behalf. Execute only decisions the user has made
+explicitly; otherwise stop at the current authorized boundary and ask for the
+next decision.
+
 ## Shared invariants
 
 - Never weaken branch/PR, redaction, security, permission or release gates.
@@ -47,8 +54,11 @@ integration, gates, evaluation and final judgment.
 - PASS requires `test-workflow`'s risk-aware **Test Quality Gate**: every
   acceptance criterion has executed evidence; applicable dimensions pass or
   carry concrete N/A reasons. Coverage is diagnostic only, and retry cannot convert an unexplained flaky failure to PASS.
-- Run the staged redaction gate before every commit; reconcile verified state
-  only after merge, branch cleanup and default-branch synchronization.
+- Run the staged redaction gate before every commit. When verified repository
+  state materially changes, update `docs/Repo_Current_State.md` on the same
+  Plan branch before commit/PR creation so the PR carries the state change with
+  the work; integration validates the merged state rather than creating a
+  separate state-only PR.
 
 ## Plan and Slice contracts
 
@@ -138,13 +148,15 @@ multiple Tickets, dependencies or sessions persist before branch work:
 1. `plan-workflow`: work definition, persistence and single Plan branch.
 2. `develop-workflow`: implementation to Development Complete.
 3. `verify-workflow`: selected verification and Test Quality Gate.
-4. `publish-workflow`: `repo-documentation` impact check -> staged redaction ->
-   `github-push-when-ready` commit/push/PR readiness. Update canonical docs/index
-   or record no documentation impact; fix blocking findings and revalidate.
+4. `publish-workflow`: `repo-documentation` impact check -> update
+   `docs/Repo_Current_State.md` when represented state changed -> staged
+   redaction -> `github-push-when-ready` commit/push/PR readiness. Update
+   canonical docs/index or record no documentation impact; fix blocking
+   findings and revalidate.
 5. `integrate-workflow`: merge once -> source-branch deletion -> default-branch
-   update -> Plan/Ticket closure -> `repo-current-state` and documentation
-   reconciliation when verified state changed. Tracked post-merge updates use
-   their own branch/PR gates.
+   update -> validate merged state/docs included in the PR -> Plan/Ticket
+   closure. Missing required state/docs changes return to publication on the
+   Plan branch instead of creating a post-merge state-only PR.
 6. Evaluate delivery once; report any bounded follow-up below for a user decision.
 
 This order and its contracts/gates remain fixed under delegation. Read

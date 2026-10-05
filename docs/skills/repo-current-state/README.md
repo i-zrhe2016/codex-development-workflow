@@ -20,15 +20,16 @@ backlog, test-report archive, or permissions record.
 1. Read `SKILL.md` and the current-state document at the beginning of work.
 2. Verify only the facts needed for the current task against repository
    evidence.
-3. After the work unit's PR is merged, its source branch is deleted, and the
-   default branch is synchronized, update `docs/Repo_Current_State.md` when the
-   snapshot materially changed.
+3. After the work unit passes required verification and before its Plan PR is
+   created or updated, update `docs/Repo_Current_State.md` when the snapshot
+   materially changed.
 4. Keep architecture detail, history, decisions, and future work in their
    appropriate documents or project systems.
 
-If the state update changes tracked content, make it through a new branch and
-the same publish and integrate stages as any other published change; do not
-commit directly to the default branch.
+If the state update changes tracked content, include it on the same Plan branch
+and PR as the work it describes. Integration validates the merged state instead
+of creating a separate post-merge state-only PR; never commit state directly to
+the default branch.
 
 ## Architecture
 

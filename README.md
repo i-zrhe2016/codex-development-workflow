@@ -24,8 +24,9 @@ Core invariants:
   validation contracts;
 - PASS requires the risk-aware **Test Quality Gate**, not merely a green focused
   test run;
-- documentation impact, applicable redaction, publication, merge cleanup, and
-  post-merge state reconciliation remain explicit stages.
+- documentation impact, applicable state refresh, redaction, publication, and
+  merge cleanup remain explicit gates; `Repo_Current_State.md` changes travel
+  with the PR they describe.
 
 
 An external deployment handoff is outside this repository's workflow and does
@@ -214,8 +215,8 @@ Ready PR
   -> merge once
   -> delete source branch
   -> update default branch
+  -> validate PR-included State / Docs
   -> close Plan / Tickets
-  -> reconcile State / Docs
   -> stop
 ```
 

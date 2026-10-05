@@ -15,6 +15,10 @@ verification nor adding functionality automatically triggers publication. Prior
 authorization persists for its stated batch/actions; added scope alone does not
 extend it. Waiting for the human decision is a normal stop, not BLOCKED.
 
+When the user controls the overall flow, this skill may report readiness,
+blockers and safe action choices, but must not select commit, push, PR, message
+scope, review timing or merge-related actions for the user.
+
 All commits/pushes use a non-default branch. If the user elects final delivery,
 the batch uses one PR and a verified, authorized merge; no direct-default-branch
 bypass. Commit/push can complete the requested action without completing delivery.

@@ -14,13 +14,14 @@ end note
 :plan-workflow;
 :develop-workflow;
 :verify-workflow;
+:State / Docs if changed;
 :publish-workflow;
 note right
   Publish only the authorized batch;
   stop at the selected commit / push / PR boundary.
 end note
 :integrate-workflow;
-:State / Docs;
+:Validate merged State / Docs;
 :Evaluate / follow-up;
 note right
   Report evidence-backed improvement for user decision.
