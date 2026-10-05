@@ -7,6 +7,11 @@ description: "Implement, fix, refactor or modify repository content from an exec
 
 Owns **context -> implementation -> Development Complete**.
 
+When the user controls the overall flow, development executes only the approved
+Slice/Ticket scope. It may surface the next workflow step, blockers, risks and
+available choices, but must not choose new scope, re-planning, verification,
+publication or merge actions for the user.
+
 1. Load only affected files, direct dependencies, relevant tests and repository
    state. Confirm the smallest useful local validation before editing.
 2. Follow the role boundary below. The coordinator dispatches ready Tickets;

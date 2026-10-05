@@ -8,6 +8,11 @@ description: "Plan, design, investigate or decompose a requirement into executab
 Owns **requirement -> executable work definition**; `plan-to-ticket` owns the
 decomposition and persistence procedure.
 
+When the user controls the overall flow, planning may present the main workflow,
+trade-offs, risks and recommended next decisions, but must not choose scope,
+persistence, stage transitions, publication timing or delivery boundaries for
+the user. Record explicit user decisions; otherwise return options and stop.
+
 1. Read `docs/Repo_Current_State.md`, affected code and applicable `AGENTS.md`;
    verify relevant claims, boundaries, interfaces and existing constraints.
 2. Choose the simplest sufficient design; record rejected alternatives only
@@ -28,4 +33,4 @@ scope/exclusions, dependencies, acceptance, test strategy/level and validation
 command. Return the plan and stop; later implementation uses `develop-workflow`.
 
 No product/test/config/docs edits, acceptance verification (`verify-workflow`),
-publication/integration, Issue closure, post-merge state refresh or evaluation.
+publication/integration, Issue closure, PR-bound state refresh or evaluation.

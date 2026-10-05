@@ -15,8 +15,8 @@ Requirement
   -> plan-workflow        understand, design, decompose, persistence decision
   -> develop-workflow     implement to Development Complete
   -> verify-workflow      verification scope, level, and conclusion
-  -> publish-workflow     docs/redaction, requested commit/push/PR boundary
-  -> integrate-workflow   merge once, cleanup, close Issues, state and docs
+  -> publish-workflow     docs/state/redaction, requested commit/push/PR boundary
+  -> integrate-workflow   merge once, cleanup, close Issues, validate state/docs
 ```
 
 Run one stage when that is all the request needs:
@@ -37,6 +37,7 @@ Create Plan branch
   -> Implement all Plan Tickets
   -> Test Quality Gate
   -> Documentation impact check
+  -> Update Repo_Current_State.md if represented state changed
   -> Redaction scan if applicable
   -> Commit
   -> Push branch
@@ -44,8 +45,8 @@ Create Plan branch
   -> Merge the PR once
   -> Delete branch
   -> Update main
+  -> Validate PR-included State / Docs
   -> Close Plan + Tickets
-  -> Update State / Docs
   -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Report reusable improvement for a user decision or finish
@@ -201,6 +202,12 @@ does not authorize them. Waiting for the user is a normal stop, not BLOCKED.
 | Create/update PR | Authorized same-Plan PR action after current-scope checks; stop at PR ready. |
 | Merge ready PR | Authorized merge and reconciliation; readiness alone grants no merge authority. |
 | Full end-to-end delivery | All gates/actions within the explicitly authorized batch. |
+
+When verified repository state materially changes, update
+`docs/Repo_Current_State.md` before commit/PR creation and include it in the
+same Plan PR. Missing required state or documentation updates return to
+publication on the Plan branch before merge; they do not create a separate
+post-merge state-only PR.
 
 For example, after verifying search locally, a user can request export as a
 new Ticket in the same unmerged Plan. Update its goal/scope/index/dependencies/

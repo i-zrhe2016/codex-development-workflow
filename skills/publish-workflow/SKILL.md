@@ -13,6 +13,11 @@ no permission. Local verification may stop normally without publication; waiting
 for the user's decision is not BLOCKED. Prior authorization persists within its
 stated batch/actions; added feature scope alone does not extend it.
 
+When the user controls the overall flow, publish-workflow may explain the safe
+publication sequence and consequences of each boundary, but must not pick
+commit/push/PR actions, message scope, review timing or merge readiness for the
+user without explicit authorization.
+
 A change may be one functionality or an explicitly planned multi-function batch.
 Before publication, every Ticket's acceptance and the batch's relevant
 integration/regression checks must pass; any failure blocks the batch. Expanded
@@ -25,14 +30,19 @@ Invoke applicable capabilities in order for the requested actions:
 
 1. `repo-documentation`: impact check; update canonical docs/index or record no
    documentation change.
-2. Before a commit, `data-document-redaction`: stage only the batch's verified
+2. `repo-current-state`: when the verified change materially affects the compact
+   repository recovery truth, update `docs/Repo_Current_State.md` on the same
+   Plan branch and include it in the PR-bound commit. If no represented state
+   changed, record that no state update is needed. Do not defer required state
+   updates to a separate post-merge PR.
+3. Before a commit, `data-document-redaction`: stage only the batch's verified
    functionality, tests and documentation, preserving out-of-Plan user changes;
    prefer explicit pathspecs/hunks under `github-push-when-ready`. Scan staged
    files. Proceed only on `pass`, `noop` or recorded no-sensitive-surface skip.
    `findings`/`needs_review` block: sanitize reported files, re-stage/re-scan; fix
    scanner `error` first. Push-only checks the prior staged gate evidence for
    commits being published; do not invent an empty commit or bypass the gate.
-3. `github-push-when-ready`: perform only authorized actions, using Conventional
+4. `github-push-when-ready`: perform only authorized actions, using Conventional
    Commits and its batch commit/PR description rules. For commit-only, suppress
    optional auto-push hooks and use equivalent guarded commit commands; do not
    use a combined commit/push script. Push-only must not create a commit or PR.

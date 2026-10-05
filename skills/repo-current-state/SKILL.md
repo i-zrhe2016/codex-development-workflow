@@ -1,6 +1,6 @@
 ---
 name: repo-current-state
-description: "Maintain verified, concise repository memory in docs/Repo_Current_State.md. Read at work start; create, refresh, reconcile, or validate on request; refresh material state after merge, cleanup, and default-branch sync. Exclude history, plans, detailed architecture, and approvals."
+description: "Maintain verified, concise repository memory in docs/Repo_Current_State.md. Read at work start; create, refresh, reconcile, or validate on request; include material state changes in the same PR as the work. Exclude history, plans, detailed architecture, and approvals."
 ---
 
 # Repo Current State
@@ -18,15 +18,16 @@ facts, reconciling material staleness before relying on them. No whole-repositor
 scan merely to validate every line.
 
 Refresh when capabilities, constraints, active work, or known failures materially
-change, after the Plan/coherent work unit passes required tests, its single PR
-merges, its source branch is cleaned up, and the default branch is synchronized.
-State / Docs is post-merge recovery, never a pre-PR shortcut:
+change, after the Plan/coherent work unit passes required tests and before the
+same Plan PR is created or updated. State is part of the publication batch, not
+a post-merge follow-up:
 
-`Implement Plan -> Test -> Redaction -> Commit/Push -> Create/Update Plan PR -> Automatic Review -> Fix loop if needed -> Merge once -> Cleanup -> Update Repo_Current_State.md`
+`Implement Plan -> Test -> Update Repo_Current_State.md if represented state changed -> Redaction -> Commit/Push -> Create/Update Plan PR -> Automatic Review -> Fix loop if needed -> Merge once -> Cleanup -> Validate merged state`
 
-Tracked post-merge updates need a new Plan branch and the same mandatory PR gate;
-never commit them directly to the default branch. Skip formatting-only or other
-changes that do not affect represented state.
+Do not create a separate post-merge state-only branch/PR for facts that belong
+to the delivered work; return missing state updates to the Plan branch before
+merge. Never commit state changes directly to the default branch. Skip
+formatting-only or other changes that do not affect represented state.
 
 ## Evidence priority
 
@@ -97,8 +98,8 @@ Always maintain `Last verified`:
 - For an update before the implementation commit, use `working tree`, never a
   guessed future SHA. Keep that marker in the update's commit; its own SHA is
   self-referential. Later clean-tree verification may substitute the actual SHA.
-- A separate post-merge Plan-branch state-only commit may retain `working tree`
-  or the verified base/parent SHA, never its own SHA.
+- A PR-bundled state update may retain `working tree` or the verified base/parent
+  SHA when the final commit SHA is not yet knowable, never a guessed future SHA.
 - Use today's date only on actual update/validation. Mark specific unverifiable
   items `Unverified` or remove them.
 

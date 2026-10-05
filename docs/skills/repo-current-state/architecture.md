@@ -35,12 +35,12 @@ Source: [`diagrams/repository-state.puml`](diagrams/repository-state.puml)
 1. The maintainer or main Codex agent reads the managed `SKILL.md` and the
    existing state snapshot.
 2. Only evidence relevant to the current task is inspected.
-3. After the change PR is merged, its source branch is deleted, and the default
-   branch is synchronized, verified facts are written to the target repository's
-   `docs/Repo_Current_State.md` when the snapshot changed.
-4. If that write changes tracked content, it uses a branch and the same
-   publish and integrate stages as any other published change, rather than a
-   direct default-branch commit.
+3. After the change passes required verification, verified facts are written to
+   the target repository's `docs/Repo_Current_State.md` when the snapshot
+   changed, before the Plan PR is created or updated.
+4. The state update travels on the same Plan branch and PR as the work it
+   describes; integration validates the merged state instead of creating a
+   separate post-merge state-only PR.
 5. Detailed architecture and entrypoint links remain in the appropriate
    documentation files.
 

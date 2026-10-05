@@ -12,8 +12,8 @@ component "codex-development-workflow\nWorkflow router + full orchestration" as 
 component "plan-workflow\nRequirement to work definition" as planw
 component "develop-workflow\nImplement to Development Complete" as devw
 component "verify-workflow\nVerification scope and conclusion" as verifyw
-component "publish-workflow\nDocs, redaction, commit, push, PR ready" as pubw
-component "integrate-workflow\nMerge, cleanup, state, docs" as intw
+component "publish-workflow\nDocs, state, redaction, commit, push, PR ready" as pubw
+component "integrate-workflow\nMerge, cleanup, validate state/docs" as intw
 component "plan-to-ticket\nPlan / Ticket / Slice decomposition" as plan
 component "test-workflow\nRisk-aware verification\nTest Quality Gate" as test
 component "repo-documentation\nDocumentation governance" as docs
@@ -36,10 +36,11 @@ plan --> issues : persist when required
 verifyw --> test : invoke
 pubw --> docs : impact / ownership
 docs --> docstore : update canonical docs
+pubw --> state : include with PR
 pubw --> redact : pre-publication scan
 pubw --> publish : publish branch
 publish --> github : commit / push / PR
 intw --> github : merge once
-intw --> state : post-merge reconciliation
+intw --> state : validate merged state
 state --> docstore : update snapshot
 @enduml

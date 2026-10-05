@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-10-03 @ 13ce1e1
+Last verified: 2026-10-05 @ working tree
 
 ## Implemented
 
@@ -18,6 +18,10 @@ Last verified: 2026-10-03 @ 13ce1e1
   and merge timing and scope; added scope requires impacted readiness checks
   and grants no new publication authority. See
   [publication decisions](workflow/usage.md#publication-decisions).
+- Material `docs/Repo_Current_State.md` updates are included on the same Plan
+  branch and PR as the work they describe, before commit/PR creation; integration
+  validates merged state instead of creating a post-merge state-only PR. See
+  [repo-current-state](../skills/repo-current-state/SKILL.md#read-and-update-triggers).
 - The installer packages 13 bundles for Codex and Claude. Regression checks
   compare installed `SKILL.md` bytes with current sources on install and stale
   update for both targets. See the

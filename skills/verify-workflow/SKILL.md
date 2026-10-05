@@ -8,6 +8,10 @@ description: "Verify acceptance, regressions, incidents, review findings or bran
 Owns **trigger -> verification scope -> conclusion**; `test-workflow` owns
 procedure and Test Quality Gate.
 
+When the user controls the overall flow, verification reports evidence, residual
+risks and available next actions, but must not choose fixes, expanded scope,
+publication, PR updates or merge timing for the user.
+
 Invoke for Development Complete acceptance before publication, explicit
 verification, regression/incident/review confirmation, or PR readiness. Exploratory
 implementation feedback belongs to `develop-workflow`.

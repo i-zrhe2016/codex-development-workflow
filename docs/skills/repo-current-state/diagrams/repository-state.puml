@@ -7,15 +7,15 @@ skinparam defaultFontName Arial
 title repo-current-state — Verified Recovery Snapshot
 
 actor "Maintainer / Agent" as maintainer
-rectangle "Merged Plan PR\nSource branch deleted\nDefault branch synchronized" as delivery
+rectangle "Verified Plan work\nBefore PR create/update" as delivery
 rectangle "Repository evidence\nGit state / files / config / issue status" as evidence
 rectangle "repo-current-state\nVerification rules" as skill
 rectangle "docs/Repo_Current_State.md\nCompact verified recovery point" as snapshot
 rectangle "Canonical documentation\nREADME + docs/" as docs
 database "GitHub Issues\nPlan / Ticket status" as issues
 
-maintainer --> skill : invoke after verified state change
-delivery --> evidence : post-merge truth
+maintainer --> skill : invoke before Plan PR
+delivery --> evidence : verified PR-bound truth
 issues --> evidence : durable work status
 skill --> evidence : verify only relevant facts
 evidence --> snapshot : replace stale facts with current facts
