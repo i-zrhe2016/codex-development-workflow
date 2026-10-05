@@ -54,7 +54,7 @@ application infrastructure topology.
 8. The coordinator dispatches each Ticket to a fresh implementer for all its
    dependency-ordered Slices, then to one separate fresh verifier for all
    scenarios under the [scheduling policy](../../../AGENTS.md#multi-agent-delegation).
-   Final Plan/branch/PR acceptance later uses three fresh independent verifiers
+   Final Plan/branch/PR acceptance later uses one fresh independent verifier
    for the whole current Plan scope.
 
 ## Design boundaries

@@ -72,11 +72,11 @@ it owns the full scheduling policy.
   Ticket's scenarios; never reuse its implementation agent or any other Ticket's
   verifier, or split scenarios among workers.
 - Final Plan/branch/PR acceptance verification is separate. Before deciding
-  publication, PR update or merge readiness, dispatch three fresh independent
-  verifier agents. Each verifies the whole current Plan branch/PR scope. All
-  three must PASS; any FAIL or BLOCKED blocks readiness.
-- Final verifiers must not be Ticket implementers, per-Ticket verifiers or prior
-  final verifiers. Do not split final scenarios across agents.
+  publication, PR update or merge readiness, dispatch one fresh independent
+  verifier agent for the whole current Plan branch/PR scope. It must PASS; any
+  FAIL or BLOCKED blocks readiness.
+- The final verifier must not be a Ticket implementer, per-Ticket verifier or
+  prior final verifier. Do not split final scenarios across agents.
 - Dispatched verifier: invoke `test-workflow`, gather evidence, return a result;
   never spawn agents. Repository access is read-only except caches/temporary
   evidence; do not fix code, tests, config or docs to pass checks.
@@ -105,7 +105,7 @@ PASS may end the requested work as local verified functionality; it grants no
 commit/push/PR/merge authority, and awaiting the user's publication decision is
 not BLOCKED. With expanded unmerged Plan scope, preserve prior evidence and
 recheck impacted acceptance plus batch readiness; an existing PR is not ready
-for that scope until those checks, the three-verifier final Plan/branch/PR
+for that scope until those checks, the single-verifier final Plan/branch/PR
 acceptance gate and an authorized update succeed.
 
 No code/test/config/docs edits to pass checks, commit/push/PR/merge, Issue closure

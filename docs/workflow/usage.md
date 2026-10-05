@@ -93,7 +93,7 @@ new Ticket before edits; preserve IDs, branch/base, PR and evidence. With an
 open PR, expanded scope returns the Plan to `in_progress`, retains the PR URL
 and invalidates impacted acceptance/batch readiness. Revalidate before an
 authorized update; the PR is not ready for expanded scope until the
-three-verifier final Plan/branch/PR acceptance gate passes. After verified
+single-verifier final Plan/branch/PR acceptance gate passes. After verified
 merge, subsequent functionality requires a new Plan.
 
 For every Slice, define:
@@ -162,7 +162,7 @@ unrelated or uncommitted work. Parallel workers use isolated worktrees or
 return patches/findings for integration on the branch; never create a second
 delivery branch for a Ticket. Before publishing, complete the Plan's acceptance
 and relevant integration/regression checks for every Ticket and the batch, then
-pass three-verifier final Plan/branch/PR acceptance. A planned batch may share
+pass the single-verifier final Plan/branch/PR acceptance gate. A planned batch may share
 one commit and PR; follow the
 [publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
 for staging, batch commit bodies and complete PR evidence. Create/update the
@@ -180,8 +180,8 @@ ready Ticket -> fresh implementer: all dependency-ordered Slices + local checks
 ```
 
 Ordinary per-Ticket verification uses one fresh verifier. Final Plan/branch/PR
-acceptance verification uses three fresh independent verifiers, each checking
-the whole current Plan branch/PR scope.
+acceptance verification uses one fresh independent verifier checking the whole
+current Plan branch/PR scope.
 
 Follow the canonical [scheduling policy](../../AGENTS.md#multi-agent-delegation)
 for worker roles, replacement, failure repair and safe waves, and
@@ -205,7 +205,7 @@ does not authorize them. Waiting for the user is a normal stop, not BLOCKED.
 | Implement and verify functionality | Local verified checkpoint; no automatic publication. |
 | Commit only | Guarded Conventional Commit; suppress managed auto-push with `CODEX_GITHUB_AUTO_PUSH_SKIP=1`; no push or PR. |
 | Push only | Guarded push of verified existing commits; no commit or PR. |
-| Create/update PR | Authorized same-Plan PR action after current-scope checks and three-verifier final acceptance; stop at PR ready. |
+| Create/update PR | Authorized same-Plan PR action after current-scope checks and single-verifier final acceptance; stop at PR ready. |
 | Merge ready PR | Authorized merge and reconciliation; readiness alone grants no merge authority. |
 | Full end-to-end delivery | All gates/actions within the explicitly authorized batch. |
 
@@ -216,14 +216,14 @@ publication on the Plan branch before merge; they do not create a separate
 post-merge state-only PR.
 
 Before final publication, PR update or merge readiness passes for a Plan,
-`verify-workflow` dispatches three fresh independent verifiers for the whole
-current Plan branch/PR scope. All three must PASS.
+`verify-workflow` dispatches one fresh independent verifier for the whole
+current Plan branch/PR scope. It must PASS.
 
 For example, after verifying search locally, a user can request export as a
 new Ticket in the same unmerged Plan. Update its goal/scope/index/dependencies/
 validation before edits and keep the existing branch. If a PR already exists,
 retain its URL, return Plan to `in_progress` and revalidate impacted acceptance
-and batch readiness, including three-verifier final Plan/branch/PR acceptance.
+and batch readiness, including the single-verifier final Plan/branch/PR acceptance gate.
 Neither adding export nor finishing its checks triggers a PR update;
 publication awaits the user's chosen action. Once that Plan has merged, a later
 requested functionality starts a new Plan.

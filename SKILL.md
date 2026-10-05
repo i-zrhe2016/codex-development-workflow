@@ -124,11 +124,10 @@ Already-dispatched implementation/verification workers run only their assigned
 role, never spawn agents or run coordinator orchestration.
 
 Final Plan/branch/PR acceptance verification is separate. Before deciding
-publication, PR update or merge readiness, dispatch three fresh independent
-verifier agents.
-Each verifies the whole current Plan branch/PR scope. All three must PASS; any
+publication, PR update or merge readiness, dispatch one fresh independent
+verifier agent for the whole current Plan branch/PR scope. It must PASS; any
 FAIL or BLOCKED blocks readiness and preserves evidence. Do not reuse Ticket
-implementers, Ticket verifiers or prior final verifiers for this gate.
+implementers, Ticket verifiers or a prior final verifier for this gate.
 
 For Codex, every `spawn_agent` uses `fork_turns="none"`. Other hosts must provide
 equivalent fresh agents with independent context; otherwise report BLOCKED,
@@ -165,7 +164,7 @@ multiple Tickets, dependencies or sessions persist before branch work:
 1. `plan-workflow`: work definition, persistence and single Plan branch.
 2. `develop-workflow`: implementation to Development Complete.
 3. `verify-workflow`: selected verification and Test Quality Gate, including
-   three-verifier final Plan/branch/PR acceptance when delivery readiness is
+   single-verifier final Plan/branch/PR acceptance when delivery readiness is
    being decided.
 4. `publish-workflow`: `repo-documentation` impact check -> update
    `docs/Repo_Current_State.md` when represented state changed -> staged

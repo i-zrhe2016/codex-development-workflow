@@ -170,7 +170,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("retry cannot convert an unexplained flaky failure to PASS", root_skill)
         self.assertIn("Coverage is", root_skill)
 
-    def test_final_acceptance_uses_three_fresh_verifiers(self) -> None:
+    def test_final_acceptance_uses_one_fresh_verifier(self) -> None:
         root_skill = ROOT_SKILL.read_text(encoding="utf-8").lower()
         verify_skill = VERIFY_SKILL.read_text(encoding="utf-8").lower()
         for text in (root_skill, verify_skill):
@@ -179,9 +179,34 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("ordinary per-ticket", normalized)
                 self.assertIn("one verifier", normalized)
                 self.assertIn("final plan/branch/pr acceptance", normalized)
-                self.assertIn("three fresh independent", normalized)
+                self.assertIn("one fresh independent verifier", normalized)
                 self.assertIn("verifier", normalized)
-                self.assertIn("all three must", normalized)
+                self.assertIn("it must pass", normalized)
+
+    def test_final_acceptance_rejects_old_three_verifier_policy(self) -> None:
+        scanned_suffixes = {".md", ".puml", ".py", ".svg", ".yaml", ".yml"}
+        ignored_paths = {Path(__file__).resolve()}
+        ignored_parts = {".git", ".pytest_cache", "__pycache__"}
+        rejected_patterns = (
+            r"three[- ]fresh(?:[- ]independent)?[- ]verifiers?",
+            r"three[- ]independent[- ]verifiers?",
+            r"three[- ]verifier",
+            r"3[- ]fresh",
+            r"3[- ]verifiers?",
+            r"all[- ]three[- ]must",
+            r"all[- ]3[- ](?:must|pass)",
+        )
+
+        for path in sorted(REPO_ROOT.rglob("*")):
+            if not path.is_file() or path.suffix not in scanned_suffixes:
+                continue
+            if path.resolve() in ignored_paths or ignored_parts.intersection(path.parts):
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore").lower()
+            normalized = re.sub(r"\s+", " ", text)
+            for pattern in rejected_patterns:
+                with self.subTest(path=path.relative_to(REPO_ROOT), pattern=pattern):
+                    self.assertIsNone(re.search(pattern, normalized))
 
     def test_every_plantuml_source_has_same_basename_svg(self) -> None:
         sources = sorted((REPO_ROOT / "docs").rglob("*.puml"))

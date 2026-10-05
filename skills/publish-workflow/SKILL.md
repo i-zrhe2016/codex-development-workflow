@@ -21,12 +21,12 @@ user without explicit authorization.
 A change may be one functionality or an explicitly planned multi-function batch.
 Before publication, every Ticket's acceptance and the batch's relevant
 integration/regression checks must pass; any failure blocks the batch. Final
-Plan/branch/PR acceptance uses three fresh independent verifiers for the whole
+Plan/branch/PR acceptance uses one fresh independent verifier for the whole
 current scope before publication or PR readiness can pass. Expanded
 unmerged Plan scope follows `plan-to-ticket`: retain branch/base/PR and evidence,
 set Plan `in_progress` and revalidate impacted acceptance plus batch readiness.
 The existing PR is not ready for expanded scope until revalidated, the final
-three-verifier gate passes and an authorized update succeeds; never create a
+single-verifier gate passes and an authorized update succeeds; never create a
 per-feature PR.
 
 Invoke applicable capabilities in order for the requested actions:
@@ -52,7 +52,7 @@ Invoke applicable capabilities in order for the requested actions:
    Validate any Plan metadata; persistence is a planning decision, not a
    publication precondition. Return `PR ready` only after an authorized PR
    creation/update succeeds and current-scope checks, including the final
-   three-verifier gate, pass.
+   single-verifier gate, pass.
 
 Report branch, action results and any existing PR URL, then stop at the requested
 boundary. No merge, branch deletion or Issue closure (`integrate-workflow`);
