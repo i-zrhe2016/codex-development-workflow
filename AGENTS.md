@@ -134,6 +134,15 @@ named agents. Codex may read `.codex/agents/`; Claude Code may read
 `.claude/agents/`. A definition's `description` must state its exact trigger and
 operating boundary, including when it must not run on ordinary work.
 
+Before every Codex worker dispatch, the coordinator must apply the
+[canonical model routing policy](docs/deployment/installation.md#codex-model-routing)
+to select and explicitly request the model and reasoning effort for that scope.
+Use a matching custom definition or explicit spawn settings as that policy
+permits; retain fresh context, role isolation and failure evidence. Final
+Plan/branch/PR acceptance dispatch must explicitly request the policy's final
+verifier settings. Report an actual unsupported/unavailable requirement without
+silent fallback or provider changes.
+
 The installer does not install this file. The root, develop, verify and test
 Skills therefore carry the minimum executable worker/context rules so this
 policy still operates in target repositories without `AGENTS.md`.

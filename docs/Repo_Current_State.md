@@ -2,6 +2,11 @@
 
 Last verified: 2026-10-06 @ working tree
 
+## Current Focus
+
+- [Plan #217](https://github.com/i-zrhe2016/codex-development-workflow/issues/217):
+  project-local Codex model routing; [Ticket #218](https://github.com/i-zrhe2016/codex-development-workflow/issues/218).
+
 ## Implemented
 
 - Five stage workflows route planning, development, verification, publication
@@ -13,6 +18,9 @@ Last verified: 2026-10-06 @ working tree
 - Ordinary per-Ticket verification uses one fresh verifier. Final
   Plan/branch/PR acceptance verification uses one fresh independent verifier
   for the whole current Plan scope before readiness can pass.
+- Project-local coordinator/worker model defaults and scoped Sol roles are
+  configured; AGENTS.md requires the coordinator to apply the
+  [model routing policy](deployment/installation.md#codex-model-routing) at dispatch.
 - Verification now requires Same-Surface proof: runtime identity/doctor,
   Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and
   fresh verification-profile knowledge. If the intended artifact, instance or
@@ -46,10 +54,8 @@ Last verified: 2026-10-06 @ working tree
 
 ## Constraints
 
-- `.codex/config.toml` sets default Codex subagents to `gpt-6-luna` with
-  `high` reasoning effort and a concurrency ceiling of three; effective host
-  capacity governs safe waves, and main/coordinator model choice remains
-  outside this config. Parallel-first scheduling is not implemented.
+- Model configuration and offline catalog evidence do not prove host/account
+  availability or live execution. Parallel-first scheduling is not implemented.
 - Installer evidence covers Claude packaging, not Claude runtime execution.
 - The installer does not copy project instructions or runtime configuration;
   Codex requires `agents/openai.yaml`, while Claude packages omit it.

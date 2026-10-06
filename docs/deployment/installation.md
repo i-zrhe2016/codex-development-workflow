@@ -146,14 +146,12 @@ is not installed into another repository, and each host reads its own:
 
 | File | Read by | Purpose |
 |---|---|---|
-| `.codex/config.toml` | Codex | Enables subagents, sets default spawned subagents to GPT-6 Luna with high reasoning effort, and sets the project concurrency ceiling to three. The main agent chooses useful wave concurrency within the effective host capacity. |
+| `.codex/config.toml` | Codex | Sets coordinator and worker defaults and the concurrency ceiling under [Codex model routing](#codex-model-routing). |
+| `.codex/agents/*.toml` | Codex | Optional scoped Sol implementation and independent verification definitions under [Codex model routing](#codex-model-routing). |
 | `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The Codex target requires it and installs it; the Claude target installs the bundle without it, because Claude Code never reads it. |
 
 Codex may use built-in agents and project-defined agents under
-`.codex/agents/` when present. This repository's Codex runtime defaults apply
-to spawned subagents only: default subagents use GPT-6 Luna with high reasoning
-effort, while the main/coordinator model choice remains outside this
-project-scoped runtime configuration. Claude Code may use built-in agents and
+`.codex/agents/` when present. Claude Code may use built-in agents and
 project-defined agents under `.claude/agents/`. Claude Code does **not** read
 `.codex/` and does not read `agents/openai.yaml`; Codex does **not** read
 `.claude/agents/`. Neither host reads the other's project-scoped
@@ -162,6 +160,59 @@ not bind task classes to named agents.
 
 Project-scoped runtime configuration stays in this checkout and is not installed
 by `scripts/install-all.sh`.
+
+### Codex model routing
+
+This section owns the project's model configuration and coordinator dispatch
+policy. [`AGENTS.md`](../../AGENTS.md#who-chooses-the-subagent) requires the
+coordinator to apply it before each dispatch.
+
+| Scope | Required model | Reasoning effort | Configuration / selection |
+|---|---|---|---|
+| Main/coordinator | `gpt-6.1-sol` | `high` | Root `model` and `model_reasoning_effort` in [`.codex/config.toml`](../../.codex/config.toml), before `[agents]`. |
+| Ordinary clear implementation or Ticket verification | `gpt-6-luna` | `high` | `[agents]` worker defaults; request these settings at dispatch. |
+| Demanding scoped implementation | `gpt-6.1-sol` | `xhigh` | Explicit spawn settings or matching [`sol_escalation`](../../.codex/agents/sol-escalation.toml). |
+| High-risk independent verification after development | `gpt-6.1-sol` | `high` | Explicit spawn settings or matching [`sol_verifier`](../../.codex/agents/sol-verifier.toml). |
+| Final Plan/branch/PR acceptance after development | `gpt-6.1-sol` | `high` | Explicitly request Sol/high for one fresh independent verifier of the whole scope; the custom role is optional. |
+
+Use Sol for API/schema changes, complex cross-module work, security/AuthZ
+high-risk checks, or after **two failed repair rounds**. Use `xhigh` for
+escalated implementation and `high` for verification. At dispatch, the
+coordinator evaluates scope, risk and retained repair evidence, selects an
+available capability matching the role, and explicitly requests the required
+model and effort. Do not bind Explore/Coding/Test task classes to named agents.
+If custom definitions are not exposed by the host, explicit spawn model and
+reasoning settings are a valid alternative with the same scoped instructions.
+
+Failures preserve verified checkpoints and prior evidence. Apply existing
+[fresh replacements and role isolation](../../AGENTS.md#roles-and-ticket-ownership);
+never reuse an implementation worker as its verifier or erase unexplained
+flakiness through a passing retry. If the required model or effort is unsupported
+or unavailable, report the actual condition and stop that dispatch; do not
+silently fall back or change providers.
+
+The TOML files do not detect repair failures or switch models automatically;
+the coordinator applies this policy at dispatch. `[agents]` remains enabled,
+with a concurrency ceiling of three, subject to effective host capacity and
+safe execution waves.
+
+Standalone agent files require `name`, `description` and
+`developer_instructions`. Their model/effort fields override explicit spawn
+settings; otherwise explicit spawn settings override `[agents]` defaults,
+then parent values. See the [official subagent schema and precedence](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+The two custom roles serve only their described escalation/verification triggers.
+
+The verifier sets `sandbox_mode = "read-only"` and explicitly forbids repository
+edits except caches and temporary evidence. Live parent permission overrides,
+including `--yolo`, can supersede its sandbox default, so its no-write
+instructions still apply. See [official subagent permissions](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+
+Root model and effort defaults are supported [configuration keys](https://learn.chatgpt.com/docs/config-file/config-reference).
+Session overrides can supersede coordinator defaults. Configuration applies to
+new sessions; editing these files does not change the current conversation's
+model mid-turn. These project-local files and instructions are not installed
+into target repositories. Config parsing and offline catalog checks do not
+prove account availability or successful model execution.
 
 ### Project instructions for each host
 
