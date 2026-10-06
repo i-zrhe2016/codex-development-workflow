@@ -1,6 +1,6 @@
 # Repository Current State
 
-Last verified: 2026-10-05 @ working tree
+Last verified: 2026-10-06 @ working tree
 
 ## Implemented
 
@@ -46,8 +46,10 @@ Last verified: 2026-10-05 @ working tree
 
 ## Constraints
 
-- `.codex/config.toml` still sets a concurrency ceiling of three; effective host
-  capacity governs safe waves. Parallel-first scheduling is not implemented.
+- `.codex/config.toml` sets default Codex subagents to `gpt-6-luna` with
+  `high` reasoning effort and a concurrency ceiling of three; effective host
+  capacity governs safe waves, and main/coordinator model choice remains
+  outside this config. Parallel-first scheduling is not implemented.
 - Installer evidence covers Claude packaging, not Claude runtime execution.
 - The installer does not copy project instructions or runtime configuration;
   Codex requires `agents/openai.yaml`, while Claude packages omit it.

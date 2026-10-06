@@ -146,16 +146,19 @@ is not installed into another repository, and each host reads its own:
 
 | File | Read by | Purpose |
 |---|---|---|
-| `.codex/config.toml` | Codex | Enables subagents and sets the project concurrency ceiling to three. The main agent chooses useful wave concurrency within the effective host capacity. |
+| `.codex/config.toml` | Codex | Enables subagents, sets default spawned subagents to GPT-6 Luna with high reasoning effort, and sets the project concurrency ceiling to three. The main agent chooses useful wave concurrency within the effective host capacity. |
 | `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The Codex target requires it and installs it; the Claude target installs the bundle without it, because Claude Code never reads it. |
 
 Codex may use built-in agents and project-defined agents under
-`.codex/agents/` when present. Claude Code may use built-in agents and
+`.codex/agents/` when present. This repository's Codex runtime defaults apply
+to spawned subagents only: default subagents use GPT-6 Luna with high reasoning
+effort, while the main/coordinator model choice remains outside this
+project-scoped runtime configuration. Claude Code may use built-in agents and
 project-defined agents under `.claude/agents/`. Claude Code does **not** read
 `.codex/` and does not read `agents/openai.yaml`; Codex does **not** read
 `.claude/agents/`. Neither host reads the other's project-scoped
-configuration. Agent selection is dynamic; the workflow does not require a
-fixed task-to-agent mapping.
+configuration. Agent selection and escalation remain dynamic; the workflow does
+not bind task classes to named agents.
 
 Project-scoped runtime configuration stays in this checkout and is not installed
 by `scripts/install-all.sh`.

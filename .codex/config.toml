@@ -1,4 +1,6 @@
 [agents]
 enabled = true
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "high"
 # Ceiling, not a target: the main agent chooses useful concurrency per execution wave.
 max_concurrent_threads_per_session = 3
