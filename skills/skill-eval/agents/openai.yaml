@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Eval"
+  short_description: "Evaluate skills with blind A/B real-outcome evidence"
+  default_prompt: "Use $skill-eval to evaluate whether a skill improves real task outcomes. Preserve blind A/B controls, compare baseline without the skill to treatment with the skill using the same task, repo state, tools, context and fixed candidate model, judge anonymized outputs with a judge-only rubric, and report Static, Trigger, Behavior, Outcome, Cost and PASS/FAIL/INCONCLUSIVE verdict evidence."

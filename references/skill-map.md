@@ -15,6 +15,7 @@ installs selected runtime files, not the whole checkout.
 | `integrate-workflow` | `skills/integrate-workflow/` | — |
 | `plan-to-ticket` | `skills/plan-to-ticket/` | `docs/skills/plan-to-ticket/` |
 | `test-workflow` | `skills/test-workflow/` | `docs/skills/test-workflow/` |
+| `skill-eval` | `skills/skill-eval/` | — |
 | `plantuml` | `skills/plantuml/` | `docs/skills/plantuml/` |
 | `repo-current-state` | `skills/repo-current-state/` | `docs/skills/repo-current-state/` |
 | `repo-documentation` | `skills/repo-documentation/` | `docs/skills/repo-documentation/` |
@@ -42,6 +43,8 @@ Read their `SKILL.md` for contracts. Capability skills own **how**:
   command); one branch/PR/merge per persisted Plan.
 - `test-workflow`: minimal/focused/regression/full validation and evidence;
   browser/E2E when browser-visible interaction changes.
+- `skill-eval`: blind A/B skill-effectiveness evaluation with Static, Trigger,
+  Behavior and outcome-decisive Outcome evidence.
 - `plantuml`: type/source/render/readability; `repo-documentation` owns canonical
   placement, naming, impact and lifecycle, plus router and duplicate/orphan checks.
 - `repo-current-state`: current-state snapshot only.

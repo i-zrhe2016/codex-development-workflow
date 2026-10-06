@@ -41,7 +41,7 @@ if (Update enabled?) then (yes)
   endwhile (no)
 endif
 
-:For each of 13 managed bundles;
+:For each of 14 managed bundles;
 
 if (Destination exists?) then (no)
   :Copy bundle;

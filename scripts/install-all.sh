@@ -92,6 +92,7 @@ SKILLS=(
   "skills/integrate-workflow|integrate-workflow"
   "skills/plan-to-ticket|plan-to-ticket"
   "skills/test-workflow|test-workflow"
+  "skills/skill-eval|skill-eval"
   "skills/plantuml|plantuml"
   "skills/repo-current-state|repo-current-state"
   "skills/repo-documentation|repo-documentation"

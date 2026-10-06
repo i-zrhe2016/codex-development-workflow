@@ -41,7 +41,8 @@ Last verified: 2026-10-06 @ working tree
   branch and PR as the work they describe, before commit/PR creation; integration
   validates merged state instead of creating a post-merge state-only PR. See
   [repo-current-state](../skills/repo-current-state/SKILL.md#read-and-update-triggers).
-- The installer packages 13 bundles for Codex and Claude. Regression checks
+- The installer packages 14 bundles for Codex and Claude, including
+  `skill-eval` for blind A/B skill-effectiveness evaluation. Regression checks
   compare installed `SKILL.md` bytes with current sources on install and stale
   update for both targets. See the
   [installation guide](deployment/installation.md#installer-regression-checks).

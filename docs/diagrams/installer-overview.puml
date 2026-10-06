@@ -13,7 +13,7 @@ if (Destination inside repository?) then (yes)
 else (no)
 endif
 :On update: process retired destinations\nOwned: remove; adopt legacy: move to backup\nOtherwise preserve;
-:For each of 13 managed skill bundles;
+:For each of 14 managed skill bundles;
 if (Existing destination?) then (no)
   :Install bundle;
 else (yes)

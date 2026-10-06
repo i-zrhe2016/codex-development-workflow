@@ -15,6 +15,7 @@ README = REPO_ROOT / "README.md"
 ROOT_SKILL = REPO_ROOT / "SKILL.md"
 VERIFY_SKILL = REPO_ROOT / "skills" / "verify-workflow" / "SKILL.md"
 TEST_SKILL = REPO_ROOT / "skills" / "test-workflow" / "SKILL.md"
+SKILL_EVAL = REPO_ROOT / "skills" / "skill-eval" / "SKILL.md"
 WORKFLOW_USAGE = REPO_ROOT / "docs" / "workflow" / "usage.md"
 TEST_DOCS = (
     REPO_ROOT / "docs" / "skills" / "test-workflow" / "README.md",
@@ -31,6 +32,7 @@ EXPECTED_SKILLS = {
     "integrate-workflow",
     "plan-to-ticket",
     "test-workflow",
+    "skill-eval",
     "plantuml",
     "repo-current-state",
     "repo-documentation",
@@ -163,6 +165,38 @@ class WorkflowContractTests(unittest.TestCase):
                     "status-only",
                 ):
                     self.assertIn(marker, text)
+
+    def test_skill_eval_contract_requires_blind_ab_and_outcome_proof(self) -> None:
+        runtime = SKILL_EVAL.read_text(encoding="utf-8").lower()
+        normalized = re.sub(r"\s+", " ", runtime)
+
+        for marker in (
+            "static",
+            "trigger",
+            "behavior",
+            "outcome",
+            "outcome is decisive",
+            "positive and negative prompt sets",
+            "recall and precision",
+            "observable traces and artifacts",
+            "agent claims are not evidence",
+            "same repository state, tools, permissions, task context",
+            "candidate model fixed",
+            "baseline runs without the new skill",
+            "treatment runs with the skill",
+            "do not tell candidates they are being evaluated",
+            "judge-only rubric",
+            "anonymize and randomize outputs",
+            "code changes build, tests run",
+            "ui changes are opened and operated",
+            "cli changes are executed",
+            "documentation changes are judged by the final document",
+            "workflow skills are checked through traces, files, artifacts",
+            "skill eval",
+            "verdict: pass | fail | inconclusive",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, normalized)
 
     def test_root_workflow_requires_quality_gate(self) -> None:
         root_skill = ROOT_SKILL.read_text(encoding="utf-8")

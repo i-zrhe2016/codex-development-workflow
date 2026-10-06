@@ -206,6 +206,7 @@ Invoke only on the applicable trigger, following the owner's procedure:
 |---|---|
 | `plan-to-ticket` | Plan/Ticket/Slice decomposition and persisted Issue contracts |
 | `test-workflow` | Selected validation, risk dimensions and bounded evidence |
+| `skill-eval` | Blind A/B skill-effectiveness evaluation using real task outcomes |
 | `repo-documentation` | Every change's impact check; docs normalization/audit/organization |
 | `plantuml` | Architecture/flow materially clearer as a diagram; `.puml` edits/review or required source/render pair |
 | `repo-current-state` | Verified state changes after integration/synchronization |
