@@ -18,7 +18,7 @@ procedures remain inside their own `SKILL.md` files.
 | `codex-development-workflow` | Routes each request to the stage workflow that owns it — `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, or `integrate-workflow` — carries the invariants shared by all stages, and provides the optional full orchestration for an explicitly authorized end-to-end delivery. |
 | Adaptive execution waves | The main agent schedules dependency-ready Tickets with fresh implementation and independent verification workers, then integrates evidence before the next gate. |
 | Subagent selection | The main agent and host choose the best available built-in or project-defined subagent from the task contract and agent description; no task class is hard-coded to a named agent. |
-| `.codex/config.toml` | Enables subagents and caps spawned-agent concurrency at three for this project (Codex only). The cap is a ceiling, not a target. |
+| `.codex/config.toml` | Enables Codex subagents, sets default spawned subagents to GPT-6 Luna with high reasoning effort, and caps spawned-agent concurrency at three for this project. The cap is a ceiling, not a target, and the main/coordinator model choice is outside this config. |
 | `plan-to-ticket` | Defines an explicitly scoped delivery batch as one Plan, splits its functionalities into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
@@ -261,11 +261,14 @@ risk profile justify it.
 
 Each host exposes its own agent runtime. Codex reads `.codex/config.toml`, may
 use built-in agents, and may also read project-defined agents from
-`.codex/agents/` when present. Claude Code may use its built-in agents and
+`.codex/agents/` when present. This repository's Codex defaults apply only to
+spawned subagents: default subagents use GPT-6 Luna with high reasoning effort,
+while the main/coordinator model choice remains outside this project-scoped
+runtime configuration. Claude Code may use its built-in agents and
 project-defined agents from `.claude/agents/`. Neither host reads the other's
-project-agent directory. Agent choice is dynamic and driven by the task
-contract plus the available agent descriptions; the repository does not
-hard-code task classes to agent names. The scheduling policy lives in
+project-agent directory. Agent choice and escalation are dynamic and driven by
+the task contract plus the available agent descriptions; the repository does
+not hard-code task classes to agent names. The scheduling policy lives in
 [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation), and
 [installation.md](../deployment/installation.md) owns the per-host
 configuration procedure.
