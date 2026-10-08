@@ -32,6 +32,21 @@ publication or merge actions for the user.
 These rules apply even when the target has no `AGENTS.md` (the installer does
 not install it); when present, it owns the full scheduling policy.
 
+- Codex coordinator, before dispatch: identify **this active entrypoint's** path
+  from the explicit user-selected/dispatched path first, otherwise its loaded
+  catalog location (resolve aliases). Project `.agents/skills` copies are valid
+  installed Skills. Read only the catalog-discovered
+  `codex-development-workflow/SKILL.md` sibling under that same installation root
+  (the parent of this Skill directory); duplicate names do not authorize
+  switching this stage or its root to another, possibly stale, global copy.
+  Apply that root's **Codex worker model routing** policy. Ambiguous active-copy
+  association, missing/unreadable sibling root, absent routing section or
+  unsupported settings blocks dispatch: name the paths/condition; request an
+  explicit path for ambiguity or update that bundle and restart discovery for
+  missing policy. Never inherit settings or evade the block through another
+  installation/provider. Inspect effective named-role settings only if selecting
+  that role; do not explore generic/global defaults. This coordinator-only hook
+  applies to direct invocation; workers do not route models. Claude selection is unchanged.
 - Coordinator: do not implement Tickets directly. Dispatch one fresh
   implementation agent per Ticket, including docs/config/test and inline
   one-Slice work; it owns all that Ticket's Slices in dependency order. Never

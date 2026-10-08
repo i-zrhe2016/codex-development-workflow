@@ -22,6 +22,22 @@ Final Plan/branch/PR acceptance verification is separate: before deciding
 publication, PR update or merge readiness, dispatch one fresh independent
 verifier. It checks the whole current Plan branch/PR scope and must PASS.
 
+Codex coordinator, before dispatch: identify **this active entrypoint's** path
+from the explicit user-selected/dispatched path first, otherwise its loaded
+catalog location (resolve aliases). Project `.agents/skills` copies are valid
+installed Skills. Read only the catalog-discovered
+`codex-development-workflow/SKILL.md` sibling under that same installation root
+(the parent of this Skill directory); duplicate names do not authorize switching
+this Skill or its root to another, possibly stale, global copy. Apply that root's
+**Codex worker model routing** policy. Ambiguous active-copy association,
+missing/unreadable sibling root, absent routing section or unsupported settings
+blocks dispatch: name the paths/condition; request an explicit path for ambiguity
+or update that bundle and restart discovery for missing policy. Never inherit
+settings or evade the block through another installation/provider. Inspect
+effective named-role settings only if selecting that role; do not explore
+generic/global defaults. This coordinator-only hook applies to direct invocation;
+workers do not route models. Claude selection is unchanged.
+
 Codex dispatch uses `spawn_agent` with `fork_turns="none"`; other hosts require
 equivalent fresh agents and independent context, or report BLOCKED without
 main-agent fallback. The manual contract contains only role, current Ticket

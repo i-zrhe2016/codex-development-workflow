@@ -152,6 +152,66 @@ never Ticket branches or directory switching under active workers. Integrate
 each wave, recompute readiness from results, and do not duplicate worker work.
 Agent selection and useful concurrency remain adaptive under `AGENTS.md`.
 
+## Codex worker model routing
+
+This is the canonical portable policy for Codex worker dispatch. The
+**coordinator** applies the copy associated with its active entrypoint: an
+explicit user-selected/dispatched Skill path takes priority; otherwise use the
+loaded entrypoint's resolved catalog location. Root invocation applies this
+loaded root copy. Direct develop/verify/test entrypoints read only the discovered
+`codex-development-workflow/SKILL.md` sibling under their own installation root
+(the parent of the active Skill directory). Resolve catalog aliases first;
+project-scoped `.agents/skills` copies are valid installed Skills. Duplicate
+global/project names do not authorize switching to another installation or
+replacing the active entrypoint with a stale global copy. If the active copy or
+same-installation association cannot be determined, block with the conflicting
+locations and ask for an explicit Skill path. No source checkout or repository
+documentation path is required. Already-dispatched workers do not select models or spawn agents.
+Claude Code keeps its own model selection; this policy does not apply to it.
+
+Apply **user instructions > explicit project model-routing policy > these
+bundle defaults**. A project policy must actually specify worker model routing;
+generic scheduling/delegation rules, parent model and runtime defaults alone
+do not override this policy. Select from the current role, scope/risk and retained
+repair evidence:
+
+| Dispatch scope | Model | Reasoning effort |
+|---|---|---|
+| Ordinary clear implementation or ordinary Ticket verification | `gpt-6-luna` | `high` |
+| Demanding implementation | `gpt-6.1-sol` | `xhigh` |
+| High-risk Ticket verification or final Plan/branch/PR acceptance | `gpt-6.1-sol` | `high` |
+
+Under these defaults, API/schema changes, complex cross-module work, security/AuthZ-sensitive scope,
+or **two failed repair rounds** require the demanding/high-risk row for the
+respective role. Final acceptance uses its row even for a small Plan.
+Preserve failure evidence/counts across worker replacement; do not restart the
+repair count or reuse workers to avoid escalation.
+
+Request both selected values explicitly in the dispatch tool's model and
+reasoning-effort arguments, with `fork_turns="none"` and the scoped role contract.
+Named/custom roles are optional. Only when selecting one, inspect that role's
+effective configuration because its model/effort can override explicit spawn
+arguments. Without a selected named role, explicit worker settings require no
+generic/global-default configuration exploration. Read explicit project routing
+references when applicable; do not inventory unrelated roles or defaults.
+Use a matching role or an available dispatch without conflicting role overrides; do not edit
+configuration to force a match. Generic agent selection cannot silently inherit
+different settings. Keep coordinator model, provider and permissions unchanged.
+
+If the associated root Skill cannot be discovered/read or lacks this routing
+section, report **BLOCKED** for that dispatch and identify the affected path and
+missing Skill/section. Install/update that complete bundle and start a new
+session to discover it; do not evade the block by reading a different installation.
+If the host/account/provider cannot request
+the selected model/effort, or an unavoidable role override conflicts, stop that
+dispatch and report the actual unsupported setting/override and the required
+pair. No silent fallback, provider change or main-agent implementation/verifier
+substitution. Offline catalog/config parsing is not proof of live availability.
+Record the policy source, selection reason and requested/effective settings in
+dispatch evidence; distinguish intended settings from observed runtime identity
+and successful inference. All fresh-context, role-isolation, read-only verifier,
+failure-preservation and Test Quality Gate rules still apply.
+
 ## Full orchestration
 
 Only for explicitly authorized end-to-end delivery of the stated batch, including

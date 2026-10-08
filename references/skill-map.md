@@ -33,6 +33,12 @@ target. Claude omits this Codex-only interface file. Project `.codex/`/`.claude/
 configuration is separate and never installed. This map ships in the root
 bundle; repository documentation paths above resolve only in a full checkout.
 
+The root bundle's `SKILL.md` owns **Codex worker model routing**. Direct
+develop/verify/test coordinators find that Skill in the host's discovered
+catalog at the same installation root as their active entrypoint; duplicate
+global/project names do not switch bundle association. No source-checkout path
+or copied project configuration is needed. Claude model selection remains host-specific.
+
 The five stage skills own **when** and stopping boundaries: planning/persistence
 decision, Development Complete, verification scope/conclusion, docs/redaction/
 commit/push/PR ready (never merge), and merge/cleanup/Issue closure/state/docs reconciliation.

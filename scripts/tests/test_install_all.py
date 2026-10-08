@@ -181,6 +181,49 @@ class InstallerTargetTests(unittest.TestCase):
                         for bundle in EXPECTED_SKILLS:
                             (dest / bundle / "SKILL.md").write_bytes(b"stale installed skill\n")
 
+    def test_install_skip_update_preserve_external_configuration_and_instructions(self) -> None:
+        """Shipping Skill policy must not install or rewrite runtime/project policy."""
+        home = self.tmp / "home"
+        codex_home = self.tmp / "codex-home"
+        project = self.tmp / "project"
+        protected = {
+            codex_home / "config.toml": b'model = "local-user-model"\n',
+            codex_home / "agents" / "local.toml": b'name = "local-role"\n',
+            home / ".claude" / "settings.json": b'{"model":"local-claude-model"}\n',
+            home / "AGENTS.md": b"User instructions\n",
+            project / ".codex" / "config.toml": b'model = "local-project-model"\n',
+            project / ".codex" / "agents" / "local.toml": b'name = "project-role"\n',
+            project / ".claude" / "settings.json": b'{"model":"project-claude-model"}\n',
+            project / "AGENTS.md": b"Project scheduling and model policy\n",
+            project / "CLAUDE.md": b"Project Claude instructions\n",
+        }
+        for path, content in protected.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+
+        for target in ("codex", "claude"):
+            dest = self.tmp / "arbitrary destinations" / target / "skills"
+            stale = b"previously installed root policy\n"
+            for phase, extra_args in (("install", ()), ("skip", ()), ("update", ("--update",))):
+                with self.subTest(target=target, phase=phase):
+                    result = self.run_installer(
+                        "--target", target, "--dest", str(dest), *extra_args,
+                        home=home, codex_home=codex_home,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    installed_root = dest / "codex-development-workflow" / "SKILL.md"
+                    expected = stale if phase == "skip" else (REPO_ROOT / "SKILL.md").read_bytes()
+                    self.assertEqual(installed_root.read_bytes(), expected)
+                    for path, content in protected.items():
+                        self.assertEqual(path.read_bytes(), content, str(path))
+                    # The source project's runtime config/instructions are outside every bundle.
+                    for name in ("config.toml", "AGENTS.md", "CLAUDE.md"):
+                        self.assertEqual(list(dest.rglob(name)), [])
+                    self.assertEqual(list(dest.rglob(".codex")), [])
+                    self.assertEqual(list(dest.rglob(".claude")), [])
+                    if phase == "install":
+                        installed_root.write_bytes(stale)
+
     def test_update_leaves_unrelated_destination_untouched(self) -> None:
         dest = self.tmp / "dest"
         unrelated = dest / "local-custom-skill"
@@ -193,15 +236,19 @@ class InstallerTargetTests(unittest.TestCase):
         self.assertEqual((unrelated / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
 
     def test_update_preserves_unverified_managed_destination(self) -> None:
-        dest = self.tmp / "dest"
-        unverified = dest / "test-workflow"
-        unverified.mkdir(parents=True)
-        (unverified / "SKILL.md").write_text("local work\n", encoding="utf-8")
+        for target in ("codex", "claude"):
+            with self.subTest(target=target):
+                dest = self.tmp / target
+                for bundle in ("codex-development-workflow", "test-workflow"):
+                    unverified = dest / bundle
+                    unverified.mkdir(parents=True)
+                    (unverified / "SKILL.md").write_bytes(b"local work\n")
 
-        result = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("preserve: test-workflow (ownership unverified)", result.stdout)
-        self.assertEqual((unverified / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
+                result = self.run_installer("--target", target, "--dest", str(dest), "--update")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                for bundle in ("codex-development-workflow", "test-workflow"):
+                    self.assertIn(f"preserve: {bundle} (ownership unverified)", result.stdout)
+                    self.assertEqual((dest / bundle / "SKILL.md").read_bytes(), b"local work\n")
 
 
 if __name__ == "__main__":
