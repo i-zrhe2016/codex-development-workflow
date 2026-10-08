@@ -1,11 +1,14 @@
 # Repository Current State
 
-Last verified: 2026-10-06 @ working tree
+Last verified: 2026-10-08 @ working tree
 
 ## Current Focus
 
-- [Plan #217](https://github.com/i-zrhe2016/codex-development-workflow/issues/217):
-  project-local Codex model routing; [Ticket #218](https://github.com/i-zrhe2016/codex-development-workflow/issues/218).
+- [Plan #221](https://github.com/i-zrhe2016/codex-development-workflow/issues/221):
+  portable installed-Skill Codex worker routing;
+  [Ticket #224](https://github.com/i-zrhe2016/codex-development-workflow/issues/224)
+  covers synchronization of global coordinator instructions, project worker
+  role instructions, and installed Codex bundles.
 
 ## Implemented
 
@@ -18,9 +21,13 @@ Last verified: 2026-10-06 @ working tree
 - Ordinary per-Ticket verification uses one fresh verifier. Final
   Plan/branch/PR acceptance verification uses one fresh independent verifier
   for the whole current Plan scope before readiness can pass.
-- Project-local coordinator/worker model defaults and scoped Sol roles are
-  configured; AGENTS.md requires the coordinator to apply the
-  [model routing policy](deployment/installation.md#codex-model-routing) at dispatch.
+- Root and direct develop/verify/test coordinators read the portable
+  [worker model policy](../SKILL.md#codex-worker-model-routing) through the
+  discovered Skill catalog within the active entrypoint's installation.
+  Independent Ticket acceptance passed, and all 14 local Codex bundles are
+  updated with source-matching packaged files.
+  Project-local configuration remains separate; see
+  [installation boundaries](deployment/installation.md#codex-model-routing).
 - Verification now requires Same-Surface proof: runtime identity/doctor,
   Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and
   fresh verification-profile knowledge. If the intended artifact, instance or
@@ -44,7 +51,8 @@ Last verified: 2026-10-06 @ working tree
 - The installer packages 14 bundles for Codex and Claude, including
   `skill-eval` for blind A/B skill-effectiveness evaluation. Regression checks
   compare installed `SKILL.md` bytes with current sources on install and stale
-  update for both targets. See the
+  update for both targets, preserve skipped/unverified roots, and keep external
+  configuration and instructions unchanged. See the
   [installation guide](deployment/installation.md#installer-regression-checks).
 
 ## Known Issues / Failing Checks
@@ -57,6 +65,10 @@ Last verified: 2026-10-06 @ working tree
 
 - Model configuration and offline catalog evidence do not prove host/account
   availability or live execution. Parallel-first scheduling is not implemented.
+- Bounded diagnostics completed a direct CLI session requesting Luna/high with
+  matching session metadata; this does not prove Luna collaboration-worker
+  dispatch/inference, which is not exposed by the current dispatch model list.
+  Session metadata does not establish the underlying provider engine identity.
 - Installer evidence covers Claude packaging, not Claude runtime execution.
 - The installer does not copy project instructions or runtime configuration;
   Codex requires `agents/openai.yaml`, while Claude packages omit it.

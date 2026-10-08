@@ -18,7 +18,8 @@ procedures remain inside their own `SKILL.md` files.
 | `codex-development-workflow` | Routes each request to the stage workflow that owns it — `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, or `integrate-workflow` — carries the invariants shared by all stages, and provides the optional full orchestration for an explicitly authorized end-to-end delivery. |
 | Adaptive execution waves | The main agent schedules dependency-ready Tickets with fresh implementation and independent verification workers, then integrates evidence before the next gate. |
 | Subagent selection | The main agent and host choose the best available built-in or project-defined subagent from the task contract and agent description; no task class is hard-coded to a named agent. |
-| `.codex/config.toml` and `.codex/agents/` | Project-local coordinator/worker configuration and scoped agent definitions; [installation.md](../deployment/installation.md#codex-model-routing) owns model defaults, escalation and dispatch policy. |
+| Codex worker model routing | Root [`SKILL.md`](../../SKILL.md#codex-worker-model-routing) owns portable worker defaults, precedence and escalation; direct develop/verify/test coordinators read the corresponding root from their active installation through the discovered Skill catalog. |
+| `.codex/config.toml` and `.codex/agents/` | Separate project-local coordinator/worker configuration and optional scoped agent definitions; [installation.md](../deployment/installation.md#codex-model-routing) owns configuration and installation boundaries. |
 | `plan-to-ticket` | Defines an explicitly scoped delivery batch as one Plan, splits its functionalities into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
@@ -261,10 +262,15 @@ risk profile justify it.
 
 Each host exposes its own agent runtime. Codex reads `.codex/config.toml`, may
 use built-in agents, and may also read project-defined agents from
-`.codex/agents/` when present. The canonical
-[Codex model routing policy](../deployment/installation.md#codex-model-routing)
-owns coordinator and worker defaults, scoped escalation and final acceptance
-selection. Claude Code may use its built-in agents and
+`.codex/agents/` when present. The root Skill's canonical
+[Codex worker model routing policy](../../SKILL.md#codex-worker-model-routing)
+travels with installation and is read by coordinators before dispatch, including
+direct stage invocation. Its discovery uses the host catalog rather than
+checkout-dependent paths and retains the active entrypoint's installation
+association when global/project catalog names overlap. Workers execute their assigned role without routing
+models or spawning agents. Separate repository-local configuration is documented
+in the [installation guide](../deployment/installation.md#codex-model-routing).
+Claude Code may use its built-in agents and
 project-defined agents from `.claude/agents/`. Neither host reads the other's
 project-agent directory. Agent choice and escalation are dynamic and driven by
 the task contract plus the available agent descriptions; the repository does

@@ -136,8 +136,10 @@ precedence, invalid arguments, skip/update behavior, ownership protection and
 host-specific metadata. They compare every installed `SKILL.md` byte for byte
 with its root or specialist source for Codex and Claude, both on initial install
 and after replacing stale installed content with `--update`: 56 comparisons
-across 14 bundles. This verifies package contents; it does not execute Claude
-Code or publish a real GitHub PR.
+across 14 bundles. They also preserve stale bundles on a skip and check that
+user/project configuration and instructions stay unchanged through install,
+skip and update. This verifies package contents and the installer's write
+boundary; it does not prove model availability or execute Claude Code.
 
 ## Host-specific configuration
 
@@ -163,44 +165,44 @@ by `scripts/install-all.sh`.
 
 ### Codex model routing
 
-This section owns the project's model configuration and coordinator dispatch
-policy. [`AGENTS.md`](../../AGENTS.md#who-chooses-the-subagent) requires the
-coordinator to apply it before each dispatch.
+The portable worker defaults, escalation triggers, precedence and dispatch
+requirements have one canonical owner:
+[`codex-development-workflow`'s model routing policy](../../SKILL.md#codex-worker-model-routing).
+The installer already copies that root `SKILL.md`. Root and direct
+develop/verify/test coordinators read the discovered root Skill through the
+host catalog's location/access mechanism, so arbitrary projects need neither
+this checkout nor this repository-only guide. The stages link to that policy
+at runtime rather than carrying copies of its model table. Each stage is
+associated with the root in its active installation, including project-scoped
+`.agents/skills` installations; duplicate global/project catalog names do not
+change that association. The canonical policy defines explicit-path priority
+and actionable missing/ambiguous/stale-policy handling.
 
-| Scope | Required model | Reasoning effort | Configuration / selection |
-|---|---|---|---|
-| Main/coordinator | `gpt-6.1-sol` | `high` | Root `model` and `model_reasoning_effort` in [`.codex/config.toml`](../../.codex/config.toml), before `[agents]`. |
-| Ordinary clear implementation or Ticket verification | `gpt-6-luna` | `high` | `[agents]` worker defaults; request these settings at dispatch. |
-| Demanding scoped implementation | `gpt-6.1-sol` | `xhigh` | Explicit spawn settings or matching [`sol_escalation`](../../.codex/agents/sol-escalation.toml). |
-| High-risk independent verification after development | `gpt-6.1-sol` | `high` | Explicit spawn settings or matching [`sol_verifier`](../../.codex/agents/sol-verifier.toml). |
-| Final Plan/branch/PR acceptance after development | `gpt-6.1-sol` | `high` | Explicitly request Sol/high for one fresh independent verifier of the whole scope; the custom role is optional. |
+Install or update the complete bundle and start a new host session for discovery.
+A skip preserves the installed version, including its policy; an ownership
+unverified destination is also preserved. Check the installer output and
+installed `SKILL.md` before assuming the new policy is active. A session that
+has already loaded a Skill is not evidence that an update changed its guidance.
 
-Use Sol for API/schema changes, complex cross-module work, security/AuthZ
-high-risk checks, or after **two failed repair rounds**. Use `xhigh` for
-escalated implementation and `high` for verification. At dispatch, the
-coordinator evaluates scope, risk and retained repair evidence, selects an
-available capability matching the role, and explicitly requests the required
-model and effort. Do not bind Explore/Coding/Test task classes to named agents.
-If custom definitions are not exposed by the host, explicit spawn model and
-reasoning settings are a valid alternative with the same scoped instructions.
-
-Failures preserve verified checkpoints and prior evidence. Apply existing
-[fresh replacements and role isolation](../../AGENTS.md#roles-and-ticket-ownership);
-never reuse an implementation worker as its verifier or erase unexplained
-flakiness through a passing retry. If the required model or effort is unsupported
-or unavailable, report the actual condition and stop that dispatch; do not
-silently fall back or change providers.
-
-The TOML files do not detect repair failures or switch models automatically;
-the coordinator applies this policy at dispatch. `[agents]` remains enabled,
-with a concurrency ceiling of three, subject to effective host capacity and
-safe execution waves.
+This guide owns the separate, repository-local configuration. In this checkout,
+[`.codex/config.toml`](../../.codex/config.toml) sets the coordinator to
+`gpt-6.1-sol`/`high`, mirrors the portable worker defaults, enables agents and
+sets a concurrency ceiling of three. The optional
+[`sol_escalation`](../../.codex/agents/sol-escalation.toml) and
+[`sol_verifier`](../../.codex/agents/sol-verifier.toml) roles match the policy's
+scoped implementation and verification settings. The coordinator applies the
+policy; TOML does not detect repair failures or switch models automatically.
+The installed policy does not force a coordinator model, edit user/project
+configuration or change provider/permissions. Explicit target-project model
+routing takes precedence as defined by the canonical policy; generic
+scheduling instructions and runtime defaults alone do not replace it.
 
 Standalone agent files require `name`, `description` and
-`developer_instructions`. Their model/effort fields override explicit spawn
-settings; otherwise explicit spawn settings override `[agents]` defaults,
-then parent values. See the [official subagent schema and precedence](https://learn.chatgpt.com/docs/agent-configuration/subagents).
-The two custom roles serve only their described escalation/verification triggers.
+`developer_instructions`. A selected named role's effective configuration must
+be checked before dispatch, as required by the portable policy; explicit
+dispatch settings do not require exploring unrelated/global model defaults. See the
+[official subagent schema and precedence](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+The two local custom roles serve only their described triggers.
 
 The verifier sets `sandbox_mode = "read-only"` and explicitly forbids repository
 edits except caches and temporary evidence. Live parent permission overrides,
@@ -210,9 +212,11 @@ instructions still apply. See [official subagent permissions](https://learn.chat
 Root model and effort defaults are supported [configuration keys](https://learn.chatgpt.com/docs/config-file/config-reference).
 Session overrides can supersede coordinator defaults. Configuration applies to
 new sessions; editing these files does not change the current conversation's
-model mid-turn. These project-local files and instructions are not installed
-into target repositories. Config parsing and offline catalog checks do not
-prove account availability or successful model execution.
+model mid-turn. Project-local files and instructions stay in this checkout;
+only Skill guidance is copied into the destination. Config parsing, discovery,
+offline catalog checks and a proposed dispatch do not prove account availability
+or successful inference. Runtime evidence must identify requested versus
+effective settings and distinguish a refusal from successful execution.
 
 ### Project instructions for each host
 

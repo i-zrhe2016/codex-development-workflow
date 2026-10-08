@@ -128,20 +128,31 @@ agent must not duplicate active worker implementation or verification.
 
 ### Who chooses the subagent
 
-The host and main agent dynamically select available built-in or project-defined
-agents by the task contract and description; do not hard-code task classes to
-named agents. Codex may read `.codex/agents/`; Claude Code may read
-`.claude/agents/`. A definition's `description` must state its exact trigger and
-operating boundary, including when it must not run on ordinary work.
+The coordinator alone selects the model and reasoning effort for each Codex
+worker; workers execute their assignment without routing models. The host and
+coordinator dynamically select available built-in or project-defined agents by
+the task contract and description; do not hard-code task classes to named
+agents. Codex may read `.codex/agents/`; Claude Code may read `.claude/agents/`.
+A definition's `description` must state its exact trigger and operating
+boundary, including when it must not run on ordinary work.
 
-Before every Codex worker dispatch, the coordinator must apply the
-[canonical model routing policy](docs/deployment/installation.md#codex-model-routing)
-to select and explicitly request the model and reasoning effort for that scope.
-Use a matching custom definition or explicit spawn settings as that policy
-permits; retain fresh context, role isolation and failure evidence. Final
-Plan/branch/PR acceptance dispatch must explicitly request the policy's final
-verifier settings. Report an actual unsupported/unavailable requirement without
-silent fallback or provider changes.
+Before every Codex worker dispatch, the coordinator applies the [Codex worker
+model routing policy](SKILL.md#codex-worker-model-routing) from the root Skill
+associated with its active installed entrypoint. Follow its active-copy
+resolution rules and apply **user instructions > explicit project model-routing
+policy > Skill defaults**; generic scheduling defaults do not override this
+priority. Explicitly request the selected model, reasoning effort, and
+`fork_turns="none"`. Preserve one fresh implementer and a separate fresh
+verifier for each Ticket, plus a fresh independent verifier for final
+Plan/branch/PR acceptance. Preserve failure evidence across worker replacements
+and verification retries.
+
+If the required model or effort is unsupported, or an unavoidable role
+configuration conflicts with the requested settings, stop that dispatch as
+**BLOCKED**. Do not silently fall back, switch providers, or substitute the
+coordinator for an implementation or verification worker. For `skill-eval`,
+keep the candidate model fixed across baseline and treatment; the experiment
+chooses that model, so the worker-routing defaults do not mandate Sol/high.
 
 The installer does not install this file. The root, develop, verify and test
 Skills therefore carry the minimum executable worker/context rules so this

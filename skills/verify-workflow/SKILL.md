@@ -66,6 +66,21 @@ runtime instance or surface cannot be proven.
 These minimum rules apply without `AGENTS.md` (not installed); when present,
 it owns the full scheduling policy.
 
+- Codex coordinator, before dispatch: identify **this active entrypoint's** path
+  from the explicit user-selected/dispatched path first, otherwise its loaded
+  catalog location (resolve aliases). Project `.agents/skills` copies are valid
+  installed Skills. Read only the catalog-discovered
+  `codex-development-workflow/SKILL.md` sibling under that same installation root
+  (the parent of this Skill directory); duplicate names do not authorize
+  switching this stage or its root to another, possibly stale, global copy.
+  Apply that root's **Codex worker model routing** policy. Ambiguous active-copy
+  association, missing/unreadable sibling root, absent routing section or
+  unsupported settings blocks dispatch: name the paths/condition; request an
+  explicit path for ambiguity or update that bundle and restart discovery for
+  missing policy. Never inherit settings or evade the block through another
+  installation/provider. Inspect effective named-role settings only if selecting
+  that role; do not explore generic/global defaults. This coordinator-only hook
+  applies to direct invocation; workers do not route models. Claude selection is unchanged.
 - Coordinator: dispatch one fresh independent verifier per Ticket after
   Development Complete, including docs/config/test and inline one-Slice work.
   This ordinary per-Ticket check uses one verifier. It verifies all that

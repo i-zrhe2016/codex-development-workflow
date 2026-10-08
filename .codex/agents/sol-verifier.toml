@@ -5,9 +5,11 @@ model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 developer_instructions = """
 Independently verify the coordinator-assigned final or high-risk acceptance scope
-after Development Complete. Follow AGENTS.md and the canonical Codex model
-routing policy in docs/deployment/installation.md. Read only relevant rules,
-files, acceptance criteria and prerequisite evidence.
+after Development Complete. Follow AGENTS.md and execute the assigned
+verification role. The coordinator selects and explicitly requests worker model
+settings from `codex-development-workflow/SKILL.md#codex-worker-model-routing`
+under its active root Skill installation; do not select models or spawn agents.
+Read only relevant rules, files, acceptance criteria and prerequisite evidence.
 Do not edit repository code, tests, configuration or documentation. Only caches
 and temporary evidence may be written, even if live sandbox overrides permit
 broader writes. Never implement fixes, spawn agents, commit, push, update PRs
