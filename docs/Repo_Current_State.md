@@ -1,13 +1,14 @@
 # Repository Current State
 
-Last verified: 2026-10-07 @ working tree
+Last verified: 2026-10-08 @ working tree
 
 ## Current Focus
 
 - [Plan #221](https://github.com/i-zrhe2016/codex-development-workflow/issues/221):
   portable installed-Skill Codex worker routing;
-  [Ticket #222](https://github.com/i-zrhe2016/codex-development-workflow/issues/222).
-  Both remain open/in_progress; local acceptance and installation are complete.
+  [Ticket #224](https://github.com/i-zrhe2016/codex-development-workflow/issues/224)
+  covers synchronization of global coordinator instructions, project worker
+  role instructions, and installed Codex bundles.
 
 ## Implemented
 
