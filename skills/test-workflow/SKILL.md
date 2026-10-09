@@ -11,18 +11,23 @@ lightest reliable, deterministic automated evidence over repeated inspection.
 
 ## Execution roles
 
-These minimum rules work without `AGENTS.md` (not installed); it owns the full
-policy when present. Implementation workers may use this procedure for local
-feedback; independent acceptance is owned by a separate fresh verification
-agent per Ticket, including docs/config/test and inline one-Slice work. One
-implementer executes all dependency-ordered Slices; one verifier checks all
-Ticket scenarios. Neither is reused across Tickets, and workers never spawn agents.
-The coordinator dispatches them and owns the final Test Quality Gate and stages.
-Final Plan/branch/PR acceptance verification is separate: before deciding
-publication, PR update or merge readiness, dispatch one fresh independent
-verifier. It checks the whole current Plan branch/PR scope and must PASS.
+These minimum rules work without `AGENTS.md`; when present, it owns the full
+policy. Implementers may use this procedure for local feedback. The main agent
+dispatches one fresh independent Sol/high verifier per Ticket, including
+docs/config/test and inline work. Verifiers cover every Ticket scenario, are
+read-only except caches/temporary evidence, and never spawn or implement fixes.
+Final Plan acceptance uses a separate fresh Sol/high verifier unless one NEW
+verifier can cover both gates for a one-Ticket Plan with exactly matching full
+scope, artifact/version, configuration and deployment surface. Any changed
+surface or multi-Ticket Plan requires a separate final verifier.
 
-Codex coordinator, before dispatch: identify **this active entrypoint's** path
+The main agent applies the associated root routing policy, requests model,
+effort and `fork_turns="none"` explicitly, and distinguishes requested settings
+from observed identity. Count all active agents against actual host capacity;
+there is no project concurrency cap or lifetime quota, and direct main-to-worker
+dispatch requires two available slots. Queue when capacity is exhausted.
+
+Main agent, before dispatch: identify **this active entrypoint's** path
 from the explicit user-selected/dispatched path first, otherwise its loaded
 catalog location (resolve aliases). Project `.agents/skills` copies are valid
 installed Skills. Read only the catalog-discovered
@@ -35,23 +40,31 @@ blocks dispatch: name the paths/condition; request an explicit path for ambiguit
 or update that bundle and restart discovery for missing policy. Never inherit
 settings or evade the block through another installation/provider. Inspect
 effective named-role settings only if selecting that role; do not explore
-generic/global defaults. This coordinator-only hook applies to direct invocation;
-workers do not route models. Claude selection is unchanged.
+generic/global defaults. This coordinator-only hook applies to direct invocation.
+The main agent applies the associated root policy to each direct dispatch;
+dispatched workers do not route models. Claude selection is unchanged.
 
-Codex dispatch uses `spawn_agent` with `fork_turns="none"`; other hosts require
-equivalent fresh agents and independent context, or report BLOCKED without
-main-agent fallback. The manual contract contains only role, current Ticket
-goal/scope/non-goals, Slice dependencies/acceptance, relevant files/ownership,
-Plan branch/base and verified prerequisites, validation commands and expected
-summary; never the parent conversation or unrelated history. Same-Ticket
-follow-up is allowed; interrupted/failed workers use fresh replacements from
-verified checkpoints. Context isolation does not isolate filesystem/test state;
-serialize conflicts on the shared Plan branch, without Ticket branches.
+The main agent explicitly requests the policy-selected model and effort with
+`fork_turns="none"`; other hosts require equivalent fresh agents and independent
+context, or report BLOCKED without main-agent fallback. A coordinator's handoff
+contains only role, current Ticket/Slice goal/scope/non-goals, dependencies and
+acceptance, relevant files/ownership, Plan branch/base and verified
+prerequisites, validation commands and expected summary; never the parent
+conversation or unrelated history. Same-Ticket follow-up is allowed;
+interrupted/failed workers use fresh replacements from verified checkpoints.
+Context isolation does not isolate filesystem/test state; serialize conflicts
+on the shared Plan branch, without Ticket branches.
 
 The independent verifier is read-only except caches/temporary evidence; code,
-test, config and docs fixes belong to implementation. After fixes, a new
-verifier rechecks the affected functionality and retains prior failures;
-agent replacement or retries never erase unexplained flakiness.
+test, config and docs fixes belong to implementation. A failed Ticket check
+returns affected functionality to a fresh implementation worker, followed by a
+new verifier for all affected Ticket scenarios. The initial implementation
+failure is not a repair round. After two consecutive failed same-problem repair
+rounds, stop Luna writes to that problem and dispatch a fresh Sol/high repair
+implementer. Preserve counts and every failure; later unrelated work remains
+Luna. If Sol cannot fix the problem, the main agent diagnoses and replans.
+Unavailable independent verifiers block acceptance; retries cannot erase
+unexplained flakiness.
 
 ## Strategy and bounded levels
 

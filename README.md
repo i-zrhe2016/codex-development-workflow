@@ -86,29 +86,33 @@ reproducible evidence, and treat unprovable artifact/instance/surface identity
 as `BLOCKED`. Target projects may keep verification profiles or feature maps in
 `docs/verification/`; that is repository-specific knowledge, not a new workflow
 Skill.
-The main agent owns requirements, architecture, decomposition, adaptive
-execution-wave scheduling, integration, evaluation, and final judgment.
-Every Ticket, including docs/config/test, uses a fresh implementation worker
-for all its Slices and one separate fresh verifier for all its scenarios. Final
-Plan/branch/PR acceptance verification uses one fresh independent verifier for
-the whole current Plan branch/PR scope.
+The main agent owns requirements, architecture, decomposition, scheduling,
+integration, evaluation, and final judgment. It directly dispatches a fresh
+owner for each Ticket; that owner retains context across dependency-ordered
+Slices, then a fresh verifier checks all Ticket scenarios. Final Plan
+acceptance normally uses a separate fresh verifier. One new Sol/high verifier
+may cover both gates only for a one-Ticket Plan with identical full scope,
+artifact/version, configuration, and deployment surface. Optional
+independent-module helpers may work in parallel only with fixed interfaces,
+isolated workspaces, and independent verification. Workers never dispatch
+workers. The root [`SKILL.md`](SKILL.md#codex-worker-model-routing) owns model
+and effort defaults; [`AGENTS.md`](AGENTS.md#multi-agent-delegation) owns the
+execution contract, capacity, and scheduling.
 
 ## Adaptive multi-agent execution
 
-The main agent schedules dependency-ready Tickets, integrates results and owns
-all stage gates. Each Ticket has its own fresh implementer and independent
-fresh verifier; workers start with only a manually scoped contract, never the
-parent conversation. Final Plan/branch/PR acceptance uses one fresh independent
-verifier for the whole current scope. Codex uses
-`fork_turns="none"`; hosts without equivalent fresh-agent/context support are
-BLOCKED. Workers do not create agents.
-
-Concurrency remains adaptive within dependency, filesystem and shared test-state
-constraints. The full policy is in
-[`AGENTS.md`](AGENTS.md#multi-agent-delegation); its
-[Context Management](AGENTS.md#context-management) section owns worker handoffs,
-durable checkpoints and recovery. Installed root/develop/verify/test
-Skills retain the minimum runtime rules because AGENTS.md is not installed.
+The main agent dispatches fresh Ticket owners and independent verifiers directly;
+all workers are leaves and never spawn agents. Owners retain context across
+Slices and local repairs. Dependent Tickets may be prepared read-only, while
+writes wait for prerequisite acceptance. Optional module helpers require
+independent modules, fixed interfaces, non-overlapping ownership, and isolated
+workspaces or returned patches. Admission uses actual host capacity: main plus
+one worker requires two slots, and work queues when capacity is exhausted; no
+project concurrency or lifetime quota applies. The canonical
+[`AGENTS.md` policy](AGENTS.md#multi-agent-delegation) defines model routing,
+repair escalation, exact-scope verification reuse, checkpoints, and recovery.
+Installed root/develop/verify/test Skills retain minimum runtime rules because
+AGENTS.md is not installed.
 
 ## Workflow composition examples
 
@@ -142,14 +146,14 @@ make the repository changes.
 
 ```text
 Existing Ticket / Slices
-  -> develop-workflow: fresh implementation worker
-  -> all dependency-ordered Slices + local validation
+  -> develop-workflow: main dispatches fresh Ticket owner
+  -> same owner implements dependency-ready Slices + local validation
   -> Development Complete
   -> stop
 ```
 
-The coordinator dispatches the Ticket; its worker executes all Slices and
-stops before independent delivery verification and publication.
+The main agent dispatches the Ticket owner, who stops after local validation,
+before independent Ticket acceptance verification or publication.
 
 ### 3. Implement and verify
 
@@ -157,8 +161,8 @@ Use for a local feature or bug-fix cycle where implementation and evidence are
 needed, but no commit or PR is requested.
 
 ```text
-develop-workflow: fresh Ticket implementer
-  -> verify-workflow: separate fresh Ticket verifier
+main -> fresh Ticket owner across Slices
+  -> verify-workflow: separate fresh verifier for all Ticket scenarios
   -> PASS | FAIL | BLOCKED
   -> stop
 ```
@@ -255,7 +259,8 @@ adaptive:
 
 ```text
 ready Tickets
-  -> coordinator dispatches fresh Ticket workers within safe capacity
+  -> main dispatches fresh Ticket owners within actual host capacity
+  -> each owner implements its Slices and reports Development Complete
   -> integrate results
   -> recompute ready set
   -> continue current stage
@@ -266,16 +271,19 @@ ready Tickets
 For a Plan with independent Tickets and disjoint write/test-state ownership:
 
 ```text
-Plan coordinator
-  +-- Ticket A -> fresh implementer A: all Slices -> fresh verifier A: all scenarios
-  +-- Ticket B -> fresh implementer B: all Slices -> fresh verifier B: all scenarios
-  -> final Plan/branch/PR acceptance: one fresh independent verifier, whole scope
+Main agent
+  +-- fresh Ticket owner A -> dependency-ordered Slices -> fresh verifier A
+  +-- fresh Ticket owner B -> dependency-ordered Slices -> fresh verifier B
   -> integrate evidence and decide gates
+  -> final Plan acceptance: separate fresh verifier unless exact-scope coalescing applies
 ```
 
-Overlapping files, interfaces, schemas, migrations, configuration or shared test
-state require sequential work. Independent context does not isolate files;
-see the [scheduling policy](AGENTS.md#multi-agent-delegation).
+Ticket concurrency is allowed only when scopes, interfaces, files, configuration,
+and shared test state do not conflict; parallel writers need isolated workspaces
+or returned patches. Every active role counts against actual host capacity.
+Read-only preparation may proceed across dependencies, but dependent writes wait
+for prerequisite independent PASS. See the
+[scheduling policy](AGENTS.md#multi-agent-delegation).
 
 ### Composition rule
 

@@ -123,7 +123,7 @@ Use future real runs to confirm or reject them.
 | Branch/PR rules appear in the router, the usage guide, and the architecture overview | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
 | Post-delivery evaluation can itself create a documentation-only change every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
-| Plan/Ticket/Slice/worker machinery | Persistence remains conditional; each functional Ticket uses fresh implementation and verification workers | Keep the smallest useful decomposition and scoped handoff under the [canonical scheduling policy](../../AGENTS.md#multi-agent-delegation) |
+| Plan/Ticket/Slice/worker machinery | Persistence remains conditional; the main agent directly dispatches fresh Ticket owners and independent verification | Keep the smallest useful decomposition and scoped handoff under the [canonical scheduling policy](../../AGENTS.md#multi-agent-delegation) |
 | Stage routing versus one fixed chain | The five stage workflows are independently invocable; only an explicitly authorized delivery runs them all | Keep the router as the entry point and confirm each stage's non-responsibility still holds after every change |
 
 ## Improvement backlog discipline

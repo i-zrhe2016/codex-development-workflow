@@ -6,20 +6,21 @@ skinparam defaultFontName Arial
 
 title Ticket Execution — Local Slice Loop and Independent Function Verification
 
-state "Coordinator dispatches fresh Ticket implementer\nClean context + scoped contract; shared Plan branch" as dispatch
-state "Same implementer selects next ready Slice\nDependencies / acceptance / validation command" as select
-state "Minimal implementation\nTest-first when useful" as implement
+state "Main dispatches fresh Ticket owner\nClean context + scoped contract; shared Plan branch" as dispatch
+state "Owner selects next ready Slice\nDependencies / acceptance / validation command" as select
+state "Owner implements Slice\nRetain context across Slices; test-first when useful" as implement
 state "Local focused checks\nCheapest relevant checks first" as focused
 state "Diagnose failure" as diagnose
 state "Implementation worker fixes in-scope defect" as fix
 state "BLOCKED\nRecord cause + verified checkpoint" as blocked
-state "Coordinator re-plans Slice / Ticket" as replan
+state "Owner returns to main for re-planning" as replan
 state "Slice locally complete\nRecord evidence" as slice_done
 state "Development Complete\nAll Ticket Slices implemented + locally checked" as developed
-state "Coordinator dispatches separate fresh verifier\nRead-only; all functionality scenarios" as verify
+state "Main dispatches separate fresh Sol/high verifier\nRead-only; all Ticket scenarios" as verify
 state "Verifier reports acceptance + mandatory dimensions\nExecuted evidence or concrete N/A reasons" as evidence
-state "Coordinator decides Test Quality Gate" as gate
-state "Implementation repairs affected function\nRun local checks; retain failed evidence" as repair
+state "Main coordinator decides Test Quality Gate" as gate
+state "Fresh Luna implementation repair\nRun checks; retain evidence and round count" as repair
+state "Fresh Sol/high repair owner\nOnly after two consecutive failed repair rounds" as sol_repair
 state "Verification BLOCKED\nRecord verification resume point" as verify_blocked
 state "Ticket acceptance verified" as ticket_done
 
@@ -35,13 +36,17 @@ diagnose --> blocked : dependency / environment
 blocked --> select : cause resolved
 diagnose --> replan : requirement / design conflict
 implement --> replan : wrong assumption
-replan --> select : updated contract
-slice_done --> select : more Slices; same implementer
+replan --> select
+slice_done --> select : more Slices; same owner continues
 slice_done --> developed : all Slices locally complete
 developed --> verify
 verify --> evidence
 evidence --> repair : FAIL: return to implementation
-repair --> verify : repair locally validated\ncoordinator dispatches new verifier
+repair --> verify : repaired + locally checked; dispatch new verifier
+repair --> repair : same problem fails; repair rounds below 2
+repair --> sol_repair : same problem fails after repair round 2
+sol_repair --> verify : repaired + locally checked; dispatch new verifier
+sol_repair --> replan : Sol cannot fix; main diagnoses and replans
 evidence --> verify_blocked : checks cannot run
 verify_blocked --> verify : cause resolved
 evidence --> gate : complete evidence
@@ -50,9 +55,10 @@ gate --> verify : evidence gap; no repair needed
 ticket_done --> [*]
 
 note right of developed
-Local RED/GREEN runs within the same implementation worker.
+Local RED/GREEN runs within the same Slice implementer.
 Formal verification covers the whole function, not one agent per Slice.
-Workers never spawn agents; coordinator retains design and gates.
+The Ticket owner retains context across Slices; no per-Slice main acknowledgment.
+All workers are leaves and never spawn agents. Main retains design, integration and gates.
 Context isolation does not isolate files or shared test state.
 end note
 
@@ -60,5 +66,8 @@ note right of gate
 Every acceptance criterion needs executed evidence.
 Mandatory dimensions pass or have concrete N/A reasons.
 Retry or agent replacement cannot erase unexplained flakiness.
+The initial implementation failure is not a repair round.
+After two failed repair checks for the same problem, stop Luna edits there;
+use a fresh Sol/high repair worker. Unrelated development remains Luna-routed.
 end note
 @enduml

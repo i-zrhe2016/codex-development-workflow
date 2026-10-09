@@ -4,30 +4,30 @@ Last verified: 2026-10-08 @ working tree
 
 ## Current Focus
 
-- [Plan #221](https://github.com/i-zrhe2016/codex-development-workflow/issues/221):
-  portable installed-Skill Codex worker routing;
-  [Ticket #224](https://github.com/i-zrhe2016/codex-development-workflow/issues/224)
-  covers synchronization of global coordinator instructions, project worker
-  role instructions, and installed Codex bundles.
+- [Plan #226](https://github.com/i-zrhe2016/codex-development-workflow/issues/226):
+  portable two-level owner implementation with independent Sol acceptance;
+  [Ticket #230](https://github.com/i-zrhe2016/codex-development-workflow/issues/230)
+  covers global instruction and managed-Skill synchronization.
 
 ## Implemented
 
 - Five stage workflows route planning, development, verification, publication
   and integration; full orchestration requires explicit end-to-end scope.
-- Every Ticket requires fresh implementation and independent
-  verification workers, with scoped context and durable Issue checkpoints. See
+- The main agent directly dispatches a fresh owner per Ticket, who retains
+  context across dependent Slices and local repairs without dispatching workers.
+  Optional module assistants require fixed interfaces and isolated ownership;
+  fresh independent verifiers and repair replacements remain main-dispatched.
+  Final Plan acceptance uses a separate fresh verifier, with a one-Ticket
+  exact-scope coalescing exception. See
   [worker policy](../AGENTS.md#multi-agent-delegation) and
   [Context Management](../AGENTS.md#context-management).
-- Ordinary per-Ticket verification uses one fresh verifier. Final
-  Plan/branch/PR acceptance verification uses one fresh independent verifier
-  for the whole current Plan scope before readiness can pass.
-- Root and direct develop/verify/test coordinators read the portable
-  [worker model policy](../SKILL.md#codex-worker-model-routing) through the
-  discovered Skill catalog within the active entrypoint's installation.
-  Independent Ticket acceptance passed, and all 14 local Codex bundles are
-  updated with source-matching packaged files.
-  Project-local configuration remains separate; see
+- Root and direct develop/verify/test entrypoints use the portable worker model
+  policy from the root Skill associated with the active installation. Global
+  instructions now carry the same two-level execution contract, and all 14
+  managed Codex bundles match installer-selected source files and ownership
+  markers. See
   [installation boundaries](deployment/installation.md#codex-model-routing).
+  Project-local configuration remains separate.
 - Verification now requires Same-Surface proof: runtime identity/doctor,
   Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and
   fresh verification-profile knowledge. If the intended artifact, instance or
@@ -60,15 +60,24 @@ Last verified: 2026-10-08 @ working tree
 - Inherited publication guidance has unresolved non-default-base and
   changed-content revalidation ambiguity; evidence remains in closed
   [Plan #196](https://github.com/i-zrhe2016/codex-development-workflow/issues/196).
+- Global diagram `--check` remains failing for 13 unchanged source/render pairs
+  with known renderer drift; all 13 remain HEAD-identical. The two changed
+  pairs passed source/render review and tracked-SVG visual review. No global
+  diagram check PASS is claimed.
 
 ## Constraints
 
-- Model configuration and offline catalog evidence do not prove host/account
-  availability or live execution. Parallel-first scheduling is not implemented.
-- Bounded diagnostics completed a direct CLI session requesting Luna/high with
-  matching session metadata; this does not prove Luna collaboration-worker
-  dispatch/inference, which is not exposed by the current dispatch model list.
-  Session metadata does not establish the underlying provider engine identity.
+- Scheduling follows actual host capacity, without a project-set concurrency
+  ceiling or total/lifetime agent quota.
+- Ordinary development, docs and synchronization use Luna/medium; API/schema,
+  security and complex logic use Luna/high. After two failed repair rounds on
+  the same problem, a fresh Sol/high repair owner takes over that problem.
+- Ticket and final acceptance use Sol/high. One new verifier may cover both
+  only for a one-Ticket Plan with exactly matching scope, artifact/version,
+  configuration and deployment surface. Requested settings do not establish
+  underlying inference-engine identity or general host availability.
+- Static configuration and package metadata do not establish the underlying
+  inference-engine identity or general host/account availability.
 - Installer evidence covers Claude packaging, not Claude runtime execution.
 - The installer does not copy project instructions or runtime configuration;
   Codex requires `agents/openai.yaml`, while Claude packages omit it.

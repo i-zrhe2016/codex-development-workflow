@@ -19,12 +19,57 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.event.pull_request.head.sha || github.ref_name }}
+          fetch-depth: 0
 
-      - name: Render and validate SVGs via public Kroki
+      - name: Check changed PR diagrams via public Kroki
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$PR_BASE_SHA" || -z "$PR_HEAD_SHA" ]]; then
+            echo "pull request base/head SHA is missing" >&2
+            exit 1
+          fi
+          git cat-file -e "$PR_BASE_SHA^{commit}"
+          git cat-file -e "$PR_HEAD_SHA^{commit}"
+
+          changed_list="$(mktemp)"
+          check_root=""
+          trap 'rm -f "$changed_list"; if [[ -n "$check_root" ]]; then rm -rf "$check_root"; fi' EXIT
+          git diff --name-only --diff-filter=ACMR -z \
+            "$PR_BASE_SHA" "$PR_HEAD_SHA" -- ':(glob)docs/**/*.puml' > "$changed_list"
+          mapfile -d '' changed_diagrams < "$changed_list"
+          if (( ${#changed_diagrams[@]} == 0 )); then
+            echo "No changed PlantUML sources."
+            exit 0
+          fi
+
+          check_root="$(mktemp -d)"
+          for source in "${changed_diagrams[@]}"; do
+            mkdir -p "$check_root/$(dirname "$source")"
+            cp -- "$source" "$check_root/$source"
+            for extension in svg png; do
+              render="${source%.puml}.$extension"
+              if [[ -f "$render" ]]; then
+                cp -- "$render" "$check_root/$render"
+              fi
+            done
+          done
+
+          (
+            cd "$check_root"
+            bash "$GITHUB_WORKSPACE/scripts/render-diagrams.sh" --check
+          )
+
+      - name: Render all diagrams via public Kroki
+        if: github.event_name == 'workflow_dispatch'
         run: bash scripts/render-diagrams.sh render
 
       - name: Commit regenerated diagrams
+        if: github.event_name == 'workflow_dispatch'
         run: |
           if git diff --quiet -- 'docs/**/*.svg' 'docs/**/*.png'; then
             echo "All rendered SVGs are current."

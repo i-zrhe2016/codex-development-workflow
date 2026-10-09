@@ -123,6 +123,15 @@ find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 The installer prints the number of installed and skipped skills, the resolved
 destination, and the host to restart.
 
+### Diagram checks in pull requests
+
+The diagram workflow checks only `.puml` sources added, copied, modified, or
+renamed in a pull request. It validates their committed SVGs and any existing
+same-name PNGs in a temporary tree, leaving the checkout read-only. Missing or
+out-of-date renders fail the check. A manual `workflow_dispatch` still renders
+the complete diagram set and commits regenerated outputs to the selected
+branch.
+
 ### Installer regression checks
 
 From the repository checkout, run:
@@ -148,8 +157,8 @@ is not installed into another repository, and each host reads its own:
 
 | File | Read by | Purpose |
 |---|---|---|
-| `.codex/config.toml` | Codex | Sets coordinator and worker defaults and the concurrency ceiling under [Codex model routing](#codex-model-routing). |
-| `.codex/agents/*.toml` | Codex | Optional scoped Sol implementation and independent verification definitions under [Codex model routing](#codex-model-routing). |
+| `.codex/config.toml` | Codex | Enables agents and sets project-local runtime defaults under [Codex model routing](#codex-model-routing). |
+| `.codex/agents/*.toml` | Codex | Optional scoped Sol repair and independent-verification definitions under [Codex model routing](#codex-model-routing). |
 | `agents/openai.yaml` (in each bundle) | Codex | Skill interface metadata. The Codex target requires it and installs it; the Claude target installs the bundle without it, because Claude Code never reads it. |
 
 Codex may use built-in agents and project-defined agents under
@@ -185,24 +194,22 @@ installed `SKILL.md` before assuming the new policy is active. A session that
 has already loaded a Skill is not evidence that an update changed its guidance.
 
 This guide owns the separate, repository-local configuration. In this checkout,
-[`.codex/config.toml`](../../.codex/config.toml) sets the coordinator to
-`gpt-6.1-sol`/`high`, mirrors the portable worker defaults, enables agents and
-sets a concurrency ceiling of three. The optional
-[`sol_escalation`](../../.codex/agents/sol-escalation.toml) and
-[`sol_verifier`](../../.codex/agents/sol-verifier.toml) roles match the policy's
-scoped implementation and verification settings. The coordinator applies the
-policy; TOML does not detect repair failures or switch models automatically.
-The installed policy does not force a coordinator model, edit user/project
-configuration or change provider/permissions. Explicit target-project model
-routing takes precedence as defined by the canonical policy; generic
-scheduling instructions and runtime defaults alone do not replace it.
+[`.codex/config.toml`](../../.codex/config.toml) enables agents and sets no
+concurrency ceiling. Execution follows actual host capacity, with no project-set
+upper cap or total/lifetime agent quota. The optional Sol repair and verifier
+roles support the canonical policy's restricted repair trigger and independent
+acceptance checks; configuration does not count failed repair rounds or switch
+models automatically. The installed policy leaves the main agent's model,
+provider and permissions unchanged and explicitly selects each dispatched
+worker's model and effort. Explicit target-project routing applies as defined
+by that canonical policy.
 
 Standalone agent files require `name`, `description` and
 `developer_instructions`. A selected named role's effective configuration must
 be checked before dispatch, as required by the portable policy; explicit
 dispatch settings do not require exploring unrelated/global model defaults. See the
 [official subagent schema and precedence](https://learn.chatgpt.com/docs/agent-configuration/subagents).
-The two local custom roles serve only their described triggers.
+The local custom roles serve only their described triggers.
 
 The verifier sets `sandbox_mode = "read-only"` and explicitly forbids repository
 edits except caches and temporary evidence. Live parent permission overrides,

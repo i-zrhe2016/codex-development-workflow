@@ -113,21 +113,23 @@ and the quality gate.
 
 ## Ticket workers and adaptive execution
 
-The main agent coordinates design, dependencies, integration and gates; it does
-not implement Tickets or replace their independent verifiers. For every Ticket,
-including docs/config/test and inline one-Slice work, dispatch one fresh
-implementation agent for all dependency-ordered Slices, then a separate fresh verification
-agent for all functionality scenarios. Ordinary per-Ticket verification uses
-one verifier. Never reuse workers across Tickets or split a Ticket's
-Slices/scenarios across agents. Same-Ticket follow-up is allowed.
-Already-dispatched implementation/verification workers run only their assigned
-role, never spawn agents or run coordinator orchestration.
+The main agent owns requirements, architecture, Plan/Ticket decomposition,
+cross-Ticket dependencies and scheduling, integration, stage gates and final
+judgment. It directly dispatches one fresh implementation owner per Ticket.
+Each owner retains context across that Ticket's dependency-ordered Slices and
+local repairs, and never spawns agents. The main agent may dispatch optional
+independent-module assistants for fixed interfaces and non-overlapping
+ownership; parallel writers use isolated workspaces and return patches for main
+integration. The main agent directly dispatches fresh independent verifiers and
+fresh repair replacements. Workers are never reused across Tickets or roles.
 
-Final Plan/branch/PR acceptance verification is separate. Before deciding
-publication, PR update or merge readiness, dispatch one fresh independent
-verifier agent for the whole current Plan branch/PR scope. It must PASS; any
-FAIL or BLOCKED blocks readiness and preserves evidence. Do not reuse Ticket
-implementers, Ticket verifiers or a prior final verifier for this gate.
+Ticket acceptance uses one fresh independent verifier for all Ticket scenarios.
+Final Plan/branch/PR acceptance uses a separate fresh verifier for the whole
+current Plan scope, except that one NEW verifier may satisfy both gates for a
+one-Ticket Plan only when Ticket and final scopes have exactly the same full
+scope, artifact/version, configuration and deployment surface. Any FAIL or
+BLOCKED blocks readiness and preserves evidence. Never reuse a verifier after
+code, test, configuration or documentation changes.
 
 For Codex, every `spawn_agent` uses `fork_turns="none"`. Other hosts must provide
 equivalent fresh agents with independent context; otherwise report BLOCKED,
@@ -144,18 +146,26 @@ preserving failed evidence and the flaky-test gate. Interrupted/failed workers
 are replaced by fresh agents from verified checkpoints. The main agent owns
 the final Test Quality Gate and stage decisions.
 
-Schedule ready Tickets within host capacity; do not pre-assign the Plan. Keep
-dependent or overlapping writes/interfaces/schemas/migrations/config and shared
-test state sequential. Independent context does not isolate files: use safe
-ownership and isolated worktrees or returned patches on the shared Plan branch,
-never Ticket branches or directory switching under active workers. Integrate
-each wave, recompute readiness from results, and do not duplicate worker work.
-Agent selection and useful concurrency remain adaptive under `AGENTS.md`.
+Schedule dependency-ready Tickets and bounded owner/module/verifier work in
+adaptive waves within actual host capacity. Count all active main agents and
+workers together; the repository imposes no fixed concurrency cap or
+total/lifetime agent quota. A direct main-to-worker dispatch needs two available
+slots; queue work when capacity is exhausted. No additional leaf-slot
+reservation applies. A dependent Ticket may prepare read-only, but delivery
+writes wait until its prerequisite independently passes. Integrate completed
+waves and recompute readiness after material results, failures, dependency
+changes or integration steps.
+Keep dependent or overlapping writes/interfaces/schemas/migrations/config and
+shared test state sequential. Parallel writers require non-overlapping
+ownership and isolated worktrees or returned patches for integration on the
+shared Plan branch. Never create Ticket branches or switch a directory used by
+active workers. Integrate results and recompute readiness after each material
+change.
 
 ## Codex worker model routing
 
 This is the canonical portable policy for Codex worker dispatch. The
-**coordinator** applies the copy associated with its active entrypoint: an
+**main agent** applies the copy associated with its active entrypoint: an
 explicit user-selected/dispatched Skill path takes priority; otherwise use the
 loaded entrypoint's resolved catalog location. Root invocation applies this
 loaded root copy. Direct develop/verify/test entrypoints read only the discovered
@@ -166,37 +176,44 @@ global/project names do not authorize switching to another installation or
 replacing the active entrypoint with a stale global copy. If the active copy or
 same-installation association cannot be determined, block with the conflicting
 locations and ask for an explicit Skill path. No source checkout or repository
-documentation path is required. Already-dispatched workers do not select models or spawn agents.
+documentation path is required. Dispatched workers do not select models or
+spawn agents; the main agent applies this policy to each direct dispatch.
 Claude Code keeps its own model selection; this policy does not apply to it.
 
 Apply **user instructions > explicit project model-routing policy > these
 bundle defaults**. A project policy must actually specify worker model routing;
 generic scheduling/delegation rules, parent model and runtime defaults alone
-do not override this policy. Select from the current role, scope/risk and retained
-repair evidence:
+do not override this policy. The main agent selects each Ticket owner, optional
+module assistant, verifier or repair implementer, and retains repair history
+across fresh workers:
 
 | Dispatch scope | Model | Reasoning effort |
 |---|---|---|
-| Ordinary clear implementation or ordinary Ticket verification | `gpt-6-luna` | `high` |
-| Demanding implementation | `gpt-6.1-sol` | `xhigh` |
-| High-risk Ticket verification or final Plan/branch/PR acceptance | `gpt-6.1-sol` | `high` |
+| Ordinary development, docs or synchronization | `gpt-6-luna` | `medium` |
+| API/schema, security or complex logic | `gpt-6-luna` | `high` |
+| Repair implementation after two consecutive failed repair rounds on the same problem | `gpt-6.1-sol` | `high` |
+| Ticket acceptance verification or final Plan/branch/PR acceptance | `gpt-6.1-sol` | `high` |
 
-Under these defaults, API/schema changes, complex cross-module work, security/AuthZ-sensitive scope,
-or **two failed repair rounds** require the demanding/high-risk row for the
-respective role. Final acceptance uses its row even for a small Plan.
-Preserve failure evidence/counts across worker replacement; do not restart the
-repair count or reuse workers to avoid escalation.
+The initial implementation failure does not count as a repair round. A failed
+repair round is a fresh repair implementation followed by a same-problem check
+that still fails. After two consecutive failed repair rounds, stop Luna writes
+to that problem and dispatch a fresh Sol/high repair implementer. Preserve the
+failure evidence and count across replacement or context reset. If Sol cannot
+fix the problem, the main agent diagnoses and replans; do not silently fall back.
+Later unrelated development continues on Luna. Ticket and final acceptance use
+Sol/high. One new verifier can cover both gates only for a one-Ticket Plan with
+exactly matching full scope, artifact/version, configuration and deployment
+surface; all other final Plan checks use a separate fresh verifier.
 
-Request both selected values explicitly in the dispatch tool's model and
-reasoning-effort arguments, with `fork_turns="none"` and the scoped role contract.
-Named/custom roles are optional. Only when selecting one, inspect that role's
-effective configuration because its model/effort can override explicit spawn
-arguments. Without a selected named role, explicit worker settings require no
-generic/global-default configuration exploration. Read explicit project routing
-references when applicable; do not inventory unrelated roles or defaults.
-Use a matching role or an available dispatch without conflicting role overrides; do not edit
-configuration to force a match. Generic agent selection cannot silently inherit
-different settings. Keep coordinator model, provider and permissions unchanged.
+Request both selected values explicitly in every dispatch's model and
+reasoning-effort arguments, with `fork_turns="none"` and the scoped role
+contract. Named/custom roles are optional. When one is selected, inspect its
+effective settings and ensure they match the table; do not allow role overrides
+to silently change the requested pair. Without a selected named role, explicit
+worker settings require no generic/global-default configuration exploration.
+Read explicit project routing references when applicable; do not inventory
+unrelated roles or defaults. Keep the main agent's model, provider and
+permissions unchanged.
 
 If the associated root Skill cannot be discovered/read or lacks this routing
 section, report **BLOCKED** for that dispatch and identify the affected path and
@@ -224,8 +241,9 @@ multiple Tickets, dependencies or sessions persist before branch work:
 1. `plan-workflow`: work definition, persistence and single Plan branch.
 2. `develop-workflow`: implementation to Development Complete.
 3. `verify-workflow`: selected verification and Test Quality Gate, including
-   single-verifier final Plan/branch/PR acceptance when delivery readiness is
-   being decided.
+   final Plan/branch/PR acceptance when delivery readiness is being decided;
+   coalesce with Ticket acceptance only under the exact one-Ticket condition
+   above.
 4. `publish-workflow`: `repo-documentation` impact check -> update
    `docs/Repo_Current_State.md` when represented state changed -> staged
    redaction -> `github-push-when-ready` commit/push/PR readiness. Update

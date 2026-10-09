@@ -92,8 +92,8 @@ unmerged Plan. Update goal/scope/index/dependencies/validation and persist the
 new Ticket before edits; preserve IDs, branch/base, PR and evidence. With an
 open PR, expanded scope returns the Plan to `in_progress`, retains the PR URL
 and invalidates impacted acceptance/batch readiness. Revalidate before an
-authorized update; the PR is not ready for expanded scope until the
-single-verifier final Plan/branch/PR acceptance gate passes. After verified
+authorized update; the PR is not ready for expanded scope until the fresh
+whole-Plan acceptance gate passes. After verified
 merge, subsequent functionality requires a new Plan.
 
 For every Slice, define:
@@ -104,9 +104,11 @@ Relevant context/files, Test strategy, Test level, Test cases,
 Validation command
 ```
 
-The Ticket's fresh implementation worker executes dependency-ready Slices in
-order. If an assumption is wrong, return to planning rather than expanding the
-patch; the main agent owns that decision.
+The main agent dispatches a fresh Ticket owner, who retains context across
+dependency-ordered Slices and local repairs. Workers never dispatch workers.
+Independent module helpers are optional and require isolated ownership, fixed
+interfaces, and independent verification. If an assumption is wrong, return to
+planning rather than expanding the patch; the main agent owns that decision.
 
 ## Persistent plan and ticket handoff
 
@@ -162,8 +164,8 @@ unrelated or uncommitted work. Parallel workers use isolated worktrees or
 return patches/findings for integration on the branch; never create a second
 delivery branch for a Ticket. Before publishing, complete the Plan's acceptance
 and relevant integration/regression checks for every Ticket and the batch, then
-pass the single-verifier final Plan/branch/PR acceptance gate. A planned batch may share
-one commit and PR; follow the
+pass the fresh whole-Plan acceptance gate. A planned batch may share one commit
+and PR; follow the
 [publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
 for staging, batch commit bodies and complete PR evidence. Create/update the
 same Plan PR only when authorized and current-scope checks pass; merge once
@@ -174,23 +176,27 @@ Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 ## Adaptive agent orchestration
 
 ```text
-ready Ticket -> fresh implementer: all dependency-ordered Slices + local checks
-             -> separate fresh verifier: all functionality scenarios
-             -> coordinator integrates evidence and decides gates
+main -> fresh Ticket owner across dependency-ordered Slices + local checks
+     -> separate fresh verifier for all Ticket scenarios
+     -> main integrates evidence and decides gates
 ```
 
 Ordinary per-Ticket verification uses one fresh verifier. Final Plan/branch/PR
-acceptance verification uses one fresh independent verifier checking the whole
-current Plan branch/PR scope.
+acceptance uses a fresh independent verifier for the whole current scope. One
+new Sol/high verifier may satisfy both gates only when the Plan has one Ticket
+and the full scope, artifact/version, configuration, and deployment surface
+match exactly. Otherwise dispatch a separate fresh final verifier.
 
-Follow the canonical [scheduling policy](../../AGENTS.md#multi-agent-delegation)
-for worker roles, replacement, failure repair and safe waves, and
-[Context Management](../../AGENTS.md#context-management) for thin coordinator
-context, scoped handoffs, durable Issue checkpoints and recovery.
-Codex dispatch uses `fork_turns="none"`; another host must provide equivalent
-fresh agents with independent context or report BLOCKED. Workers execute their
-role without spawning agents. The installable root/develop/verify/test Skills
-carry the minimum runtime rules even in repositories without AGENTS.md.
+The canonical [scheduling and context policy](../../AGENTS.md#multi-agent-delegation)
+defines direct main-agent dispatch, fresh worker contracts, repair replacement,
+capacity, exact-scope verifier reuse, and durable checkpoints. Codex dispatch
+uses `fork_turns="none"`; another host must provide equivalent independent
+context or report BLOCKED. All workers are leaves. Admission uses actual host
+capacity: main plus one worker requires two slots, with work queued when full;
+there is no project concurrency or lifetime quota. Dependent Tickets may be
+prepared read-only, but delivery writes wait for prerequisite independent PASS.
+The installable root/develop/verify/test Skills carry minimum runtime rules in
+repositories without AGENTS.md.
 
 ## Publication decisions
 
@@ -223,7 +229,7 @@ For example, after verifying search locally, a user can request export as a
 new Ticket in the same unmerged Plan. Update its goal/scope/index/dependencies/
 validation before edits and keep the existing branch. If a PR already exists,
 retain its URL, return Plan to `in_progress` and revalidate impacted acceptance
-and batch readiness, including the single-verifier final Plan/branch/PR acceptance gate.
+and batch readiness, including the fresh whole-Plan acceptance gate.
 Neither adding export nor finishing its checks triggers a PR update;
 publication awaits the user's chosen action. Once that Plan has merged, a later
 requested functionality starts a new Plan.

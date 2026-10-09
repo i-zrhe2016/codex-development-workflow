@@ -21,12 +21,15 @@ user without explicit authorization.
 A change may be one functionality or an explicitly planned multi-function batch.
 Before publication, every Ticket's acceptance and the batch's relevant
 integration/regression checks must pass; any failure blocks the batch. Final
-Plan/branch/PR acceptance uses one fresh independent verifier for the whole
-current scope before publication or PR readiness can pass. Expanded
+Plan/branch/PR acceptance uses a fresh independent verifier for the whole
+current scope before publication or PR readiness can pass. That verifier may
+also satisfy Ticket acceptance only for a one-Ticket Plan with exactly matching
+full scope, artifact/version, configuration and deployment surface; otherwise
+the gates require separate fresh verifiers. Expanded
 unmerged Plan scope follows `plan-to-ticket`: retain branch/base/PR and evidence,
 set Plan `in_progress` and revalidate impacted acceptance plus batch readiness.
 The existing PR is not ready for expanded scope until revalidated, the final
-single-verifier gate passes and an authorized update succeeds; never create a
+final-verifier gate passes and an authorized update succeeds; never create a
 per-feature PR.
 
 Invoke applicable capabilities in order for the requested actions:

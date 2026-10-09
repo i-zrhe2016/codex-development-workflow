@@ -35,8 +35,8 @@ When the skill is selected for a planning request, it:
 1. Identifies the desired outcome and the minimum implementation foundations.
 2. Splits the batch's planned functionalities into focused, independently
    verifiable behavior Tickets.
-3. Splits each Ticket into dependency-ordered Slices for that Ticket's fresh
-   implementation worker.
+3. Splits each Ticket into dependency-ordered Slices for its fresh Ticket
+   owner to implement across one retained context.
 4. Defines scope boundaries, acceptance criteria, relevant context, test
    strategy, bounded test level, test cases, and validation for each Slice.
 5. Persists one Plan Issue and one Issue per Ticket before the Plan branch
@@ -51,8 +51,9 @@ When the skill is selected for a planning request, it:
 The skill is intentionally implementation-neutral. It uses repository context
 and requires the available GitHub Issues connector for persisted planning, but it
 does not implement code, add dependencies, force parallel implementation, or
-invent commands for unknown tooling. The coordinator dispatches fresh Ticket
-workers under the [scheduling policy](../../../AGENTS.md#multi-agent-delegation). For a persisted plan, a required GitHub read/write failure
+invent commands for unknown tooling. The main agent dispatches fresh Ticket
+owners under the
+[scheduling policy](../../../AGENTS.md#multi-agent-delegation). For a persisted plan, a required GitHub read/write failure
 blocks completion; the skill does not fall back to local Markdown or chat-only
 storage.
 

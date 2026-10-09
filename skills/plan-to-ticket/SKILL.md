@@ -8,9 +8,9 @@ description: "Decompose feature, bug-fix, refactor, docs/config, dependency, tes
 Own decomposition and Issue persistence, not product/repository implementation.
 A **Plan** is a delivery batch with explicitly listed scope, which may include
 one or multiple independent functionalities; a **Ticket** is a reviewable
-behavior/capability within it; a **Slice** is an independently verifiable
-execution unit inside a Ticket. Every Plan has at least one Ticket and every
-Ticket at least one Slice. These terms are not interchangeable.
+behavior/capability within it; a **Slice** is an independently deliverable,
+verifiable execution unit inside a Ticket. Every Plan has at least one Ticket
+and every Ticket at least one Slice. These terms are not interchangeable.
 
 When the user controls the overall flow, present decomposition choices,
 dependency order, risks and validation options, but do not select scope,
@@ -38,19 +38,28 @@ Do not expose internal reasoning.
 - Keep tests with their behavior; a separate test Ticket is justified only when
   test infrastructure is the deliverable. Avoid unrelated refactors, upgrades,
   formatting, speculative abstractions and future features/edge-case Tickets.
+- Give each Slice one independently deliverable outcome. Keep its related
+  implementation and behavior tests together; split work only when a later
+  outcome has a real dependency on an earlier Slice, not merely by file or
+  implementation phase.
 - Establish Ticket boundaries/dependencies before Slices. Slices stay nested in
   their Ticket: no separate Issue, branch, PR, merge or delivery metadata.
 - Use explicit Ticket/Slice dependency IDs and real dependencies only. Validate
   prerequisites on the shared Plan branch before dependents; no Ticket-level
   merge is required. Do not start blocked Tickets just to fill metadata.
-- Every Ticket, including docs/config/test, is the worker ownership boundary:
-  one fresh implementer executes all its Slices in dependency order, and a separate fresh verifier
-  checks all functionality scenarios. This ordinary per-Ticket check uses one
-  verifier. Do not divide Slices/scenarios across workers or reuse agents across
-  Tickets. Final Plan/branch/PR acceptance later uses one fresh independent
-  verifier for the whole current Plan scope. The coordinator chooses agents
-  and safe concurrency under `AGENTS.md` and the develop/verify runtime rules;
-  planning does not dispatch workers. Sequence
+- The main agent directly dispatches one fresh implementation owner per Ticket,
+  including docs/config/test and one-Slice Tickets. The owner retains context
+  across dependency-ordered Slices and local repairs and never spawns agents.
+  The main agent separately dispatches fresh independent verifiers and repair
+  replacements. Verifiers are leaves. Optional module assistants require fixed
+  interfaces, non-overlapping ownership, isolated workspaces and returned
+  patches. Do not split a Slice or verification scope across workers, or reuse
+  agents across Tickets or roles. Final Plan acceptance uses a separate fresh
+  verifier except one NEW verifier may cover both gates for a one-Ticket Plan
+  with exactly matching full scope, artifact/version, configuration and
+  deployment surface. Main-agent capacity, read-only dependency prefetch and
+  direct-dispatch queuing follow `AGENTS.md` and workflow entrypoints. Planning
+  does not dispatch workers. Sequence
   dependent/overlapping files, interfaces, schemas, migrations, configuration
   and shared test state.
 - If implementation reveals a materially different design, new subsystem or
