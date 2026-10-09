@@ -1,4 +1,4 @@
 interface:
   display_name: "Integrate Workflow"
   short_description: "Decide when to integrate: merge once, clean up, reconcile"
-  default_prompt: "Use $integrate-workflow to confirm merge authorization covers the current Plan scope, verify the pull request is ready for that scope including the single-verifier final Plan/branch/PR acceptance gate, merge it once, delete the source branch, update the default branch, close the Plan and its Tickets, and refresh the repository state and documentation index."
+  default_prompt: "Use $integrate-workflow to confirm authorization and current-scope readiness, including a final Plan verifier (coalesced with Ticket verification only for an exactly matching one-Ticket scope and surface), merge once, clean up, close the Plan/Tickets, and refresh repository state and documentation index."

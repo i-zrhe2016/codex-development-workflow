@@ -15,7 +15,10 @@ timing, cleanup timing, follow-up scope or post-merge work for the user.
 1. Confirm merge authorization covers the current batch (an explicit full
    delivery may already include it); PR readiness alone grants no merge authority.
    Confirm required verification passed for the current scope, including the
-   single-verifier final Plan/branch/PR acceptance gate, and PR head/base match
+   final Plan/branch/PR acceptance gate. It may coalesce with Ticket
+   verification only for a one-Ticket Plan with exactly matching scope,
+   artifact/version, configuration and deployment surface. PR head/base must
+   match
    delivery metadata. Expanded unmerged scope must be revalidated and published
    to the same PR before merge; stale readiness is insufficient.
 2. Confirm required `docs/Repo_Current_State.md` and documentation updates are

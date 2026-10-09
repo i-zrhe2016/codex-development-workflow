@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import tomllib
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -13,8 +14,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
 README = REPO_ROOT / "README.md"
 ROOT_SKILL = REPO_ROOT / "SKILL.md"
+AGENTS = REPO_ROOT / "AGENTS.md"
+CODEX_CONFIG = REPO_ROOT / ".codex" / "config.toml"
+CODEX_AGENTS = REPO_ROOT / ".codex" / "agents"
 VERIFY_SKILL = REPO_ROOT / "skills" / "verify-workflow" / "SKILL.md"
 TEST_SKILL = REPO_ROOT / "skills" / "test-workflow" / "SKILL.md"
+PLAN_TO_TICKET = REPO_ROOT / "skills" / "plan-to-ticket" / "SKILL.md"
 SKILL_EVAL = REPO_ROOT / "skills" / "skill-eval" / "SKILL.md"
 WORKFLOW_USAGE = REPO_ROOT / "docs" / "workflow" / "usage.md"
 TEST_DOCS = (
@@ -42,6 +47,92 @@ EXPECTED_SKILLS = {
 
 
 class WorkflowContractTests(unittest.TestCase):
+    def test_worker_model_table_routes_roles_and_repair_escalation(self) -> None:
+        skill = ROOT_SKILL.read_text(encoding="utf-8")
+        section = skill.split("## Codex worker model routing", 1)[1].split("\n## ", 1)[0]
+        rows = [
+            [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+            for line in section.splitlines()
+            if line.lstrip().startswith("|")
+        ]
+        routing = {scope: (model, effort) for scope, model, effort in rows[2:]}
+        self.assertEqual(
+            routing,
+            {
+                "Ordinary development, docs or synchronization": ("gpt-6-luna", "medium"),
+                "API/schema, security or complex logic": ("gpt-6-luna", "high"),
+                "Repair implementation after two consecutive failed repair rounds on the same problem": (
+                    "gpt-6.1-sol",
+                    "high",
+                ),
+                "Ticket acceptance verification or final Plan/branch/PR acceptance": (
+                    "gpt-6.1-sol",
+                    "high",
+                ),
+            },
+        )
+
+    def test_codex_defaults_and_named_roles_do_not_override_routing(self) -> None:
+        config = tomllib.loads(CODEX_CONFIG.read_text(encoding="utf-8"))
+        self.assertEqual(config["agents"]["default_subagent_model"], "gpt-6-luna")
+        self.assertEqual(config["agents"]["default_subagent_reasoning_effort"], "medium")
+        self.assertNotIn("max_concurrent_threads_per_session", config["agents"])
+
+        repair = tomllib.loads((CODEX_AGENTS / "sol-repair.toml").read_text(encoding="utf-8"))
+        self.assertEqual((repair["model"], repair["model_reasoning_effort"]), ("gpt-6.1-sol", "high"))
+        self.assertIn("two consecutive failed repair rounds", repair["description"])
+        verifier = tomllib.loads((CODEX_AGENTS / "sol-verifier.toml").read_text(encoding="utf-8"))
+        self.assertEqual((verifier["model"], verifier["model_reasoning_effort"]), ("gpt-6.1-sol", "high"))
+        self.assertEqual(repair["name"], "sol_repair")
+        self.assertFalse((CODEX_AGENTS / "luna-escalation.toml").exists())
+
+    def test_direct_dispatch_and_exact_single_ticket_verifier_coalescing(self) -> None:
+        root = ROOT_SKILL.read_text(encoding="utf-8").lower()
+        develop = (REPO_ROOT / "skills" / "develop-workflow" / "SKILL.md").read_text(encoding="utf-8").lower()
+        verify = VERIFY_SKILL.read_text(encoding="utf-8").lower()
+        for text in (root, develop, verify):
+            normalized = re.sub(r"\s+", " ", text)
+            self.assertIn("directly dispatch", normalized)
+            self.assertIn("two available slots", normalized)
+        self.assertIn("initial implementation failure does not count", root)
+        self.assertIn("one-ticket plan", verify)
+        for marker in ("full scope", "artifact/version", "configuration", "deployment surface"):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, verify)
+        self.assertIn("after two consecutive failed", root)
+        self.assertNotIn("three available slots", root + develop + verify)
+        self.assertNotIn("luna/xhigh", root + develop + verify)
+
+    def test_agents_role_hierarchy_points_to_canonical_routing_policy(self) -> None:
+        agents = AGENTS.read_text(encoding="utf-8")
+        self.assertIn("[`SKILL.md`](SKILL.md#codex-worker-model-routing)", agents)
+        self.assertNotIn("one fresh implementation agent, which executes **all**", agents)
+
+    def test_plan_to_ticket_slice_template_has_execution_contract(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        template = re.search(
+            r"Each Ticket uses these fields.*?```text\n(.*?)\n```",
+            skill,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(template, "Expected the canonical Ticket/Slice template.")
+        slice_fields = template.group(1).split("#### S0001.1", 1)[1]
+        required_fields = (
+            "Goal:",
+            "Scope:",
+            "Out of scope:",
+            "Dependencies:",
+            "Acceptance Criteria:",
+            "Test Cases:",
+            "Relevant Context / Files:",
+            "Test Strategy:",
+            "Test Level:",
+            "Validation Command:",
+        )
+        for field in required_fields:
+            with self.subTest(field=field):
+                self.assertIn(field, slice_fields)
+
     def test_installer_managed_skills_match_repository_sources(self) -> None:
         installer = INSTALLER.read_text(encoding="utf-8")
         managed: set[str] = set()
@@ -205,17 +296,11 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("Coverage is", root_skill)
 
     def test_final_acceptance_uses_one_fresh_verifier(self) -> None:
-        root_skill = ROOT_SKILL.read_text(encoding="utf-8").lower()
         verify_skill = VERIFY_SKILL.read_text(encoding="utf-8").lower()
-        for text in (root_skill, verify_skill):
-            normalized = re.sub(r"\s+", " ", text)
-            with self.subTest():
-                self.assertIn("ordinary per-ticket", normalized)
-                self.assertIn("one verifier", normalized)
-                self.assertIn("final plan/branch/pr acceptance", normalized)
-                self.assertIn("one fresh independent verifier", normalized)
-                self.assertIn("verifier", normalized)
-                self.assertIn("it must pass", normalized)
+        verify_normalized = re.sub(r"\s+", " ", verify_skill)
+        self.assertIn("final plan/branch/pr acceptance", verify_normalized)
+        self.assertIn("one fresh independent", verify_normalized)
+        self.assertIn("one new verifier may satisfy both ticket and final gates", verify_normalized)
 
     def test_final_acceptance_rejects_old_three_verifier_policy(self) -> None:
         scanned_suffixes = {".md", ".puml", ".py", ".svg", ".yaml", ".yml"}

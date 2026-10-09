@@ -72,31 +72,24 @@ explanatory documents link here rather than copying it.
 
 ### Roles and Ticket ownership
 
-The main agent is the coordinator. It directly owns requirements, architecture
-and design, planning and decomposition, dependency ordering, execution-wave
-scheduling, integration, stage gates and final judgment. It does not implement
-Tickets or substitute for their independent verification workers.
+The main agent owns requirements, architecture, planning and decomposition,
+cross-Ticket dependencies and scheduling, integration, stage gates and final
+judgment. It directly dispatches one fresh implementation owner per Ticket.
+Each owner retains context across that Ticket's dependency-ordered Slices and
+local repair work, and never spawns agents. The main agent may dispatch optional
+independent-module assistants only for fixed interfaces and non-overlapping
+ownership; parallel writers use isolated workspaces and return patches for main
+integration. It directly dispatches fresh independent verifiers and fresh
+repair replacements. Workers are never reused across Tickets or roles.
+Interrupted workers are replaced from verified checkpoints.
 
-For every Ticket (including docs/config/test and one-Slice inline Tickets), create:
-
-* one fresh implementation agent, which executes **all** of that Ticket's
-  Slices in dependency order and supplies local validation;
-* one separate fresh verification agent after Development Complete, which
-  checks **all** scenarios for that functionality. Ordinary per-Ticket
-  verification uses one verifier. It must not be the implementation agent or a
-  verifier used for another Ticket.
-
-Do not reuse either role across Tickets or split a Ticket's Slices/scenarios
-among agents. Same-Ticket follow-up is allowed. Interrupted or failed workers
-are replaced with a fresh agent and a handoff from verified checkpoints.
-Dispatched implementation/verification workers execute their assigned role and
-never create further agents; the main agent directly orchestrates them.
-
-Final Plan/branch/PR acceptance verification is separate. Before deciding
-publication, PR update or merge readiness, dispatch one fresh independent
-verifier agent for the whole current Plan branch/PR scope. It must PASS; any
-FAIL or BLOCKED blocks readiness and preserves evidence. Do not reuse Ticket
-implementers, Ticket verifiers or a prior final verifier for this gate.
+Ticket acceptance uses a fresh independent verifier. Final Plan/branch/PR
+acceptance uses a separate fresh verifier for the whole current Plan scope,
+except that one NEW verifier may satisfy both gates for a one-Ticket Plan only
+when Ticket and final scopes have exactly the same full scope, artifact/version,
+configuration and deployment surface. It must PASS; any FAIL or BLOCKED blocks
+readiness and preserves evidence. Never reuse a verifier after code, test,
+configuration or documentation changes.
 
 The verifier reads the repository without changing code, tests, configuration
 or documentation; caches and temporary evidence are allowed. Verification
@@ -110,12 +103,14 @@ Worker context, task contracts, handoffs and retirement follow
 
 ### Adaptive execution waves
 
-Schedule dependency-ready Tickets and bounded coordinator tasks at runtime;
-do not pre-assign the whole Plan. Choose the smallest useful wave under the
-host concurrency ceiling, then integrate and recompute readiness after each
-material result, failure, dependency change or integration step. Concurrency
-is a ceiling, never a target; Ticket delegation is mandatory,
-while safe concurrency and agent selection remain adaptive.
+Schedule dependency-ready Tickets and bounded owner/module/verifier tasks at
+runtime. Count all active main agents and workers against actual host capacity;
+the repository imposes no fixed concurrency cap or total/lifetime agent quota.
+A direct main-to-worker dispatch requires two available slots; queue when host
+capacity is exhausted. No additional leaf-slot reservation applies. Integrate
+completed waves and recompute readiness after material results, failures,
+dependency changes or integration steps. A dependent Ticket may prepare
+read-only, but delivery writes wait for its prerequisite's independent PASS.
 
 Before a wave, check dependencies, ownership, risk, host capacity and overlap
 in files, interfaces, schemas, migrations, configuration and shared test state.
@@ -124,35 +119,31 @@ isolate the filesystem. Parallel writers require separate safe ownership and
 isolated worktrees or returned patches for main-agent integration on the shared
 Plan branch. Never switch a directory used by active workers or create Ticket
 delivery branches. If safe isolation is unavailable, serialize work. The main
-agent must not duplicate active worker implementation or verification.
+agent must not duplicate worker implementation or verification.
 
 ### Who chooses the subagent
 
-The coordinator alone selects the model and reasoning effort for each Codex
-worker; workers execute their assignment without routing models. The host and
-coordinator dynamically select available built-in or project-defined agents by
-the task contract and description; do not hard-code task classes to named
-agents. Codex may read `.codex/agents/`; Claude Code may read `.claude/agents/`.
-A definition's `description` must state its exact trigger and operating
-boundary, including when it must not run on ordinary work.
+The main agent selects each Ticket owner, optional module assistant, verifier or
+repair implementer. It uses the canonical model table in
+[`SKILL.md`](SKILL.md#codex-worker-model-routing), including its active-copy
+resolution, explicit dispatch arguments and observed-versus-requested evidence
+rules. Codex may read `.codex/agents/`; Claude Code may read `.claude/agents/`.
+Named agent descriptions state their trigger and operating boundary.
 
-Before every Codex worker dispatch, the coordinator applies the [Codex worker
-model routing policy](SKILL.md#codex-worker-model-routing) from the root Skill
-associated with its active installed entrypoint. Follow its active-copy
-resolution rules and apply **user instructions > explicit project model-routing
-policy > Skill defaults**; generic scheduling defaults do not override this
-priority. Explicitly request the selected model, reasoning effort, and
-`fork_turns="none"`. Preserve one fresh implementer and a separate fresh
-verifier for each Ticket, plus a fresh independent verifier for final
-Plan/branch/PR acceptance. Preserve failure evidence across worker replacements
-and verification retries.
-
-If the required model or effort is unsupported, or an unavoidable role
-configuration conflicts with the requested settings, stop that dispatch as
-**BLOCKED**. Do not silently fall back, switch providers, or substitute the
-coordinator for an implementation or verification worker. For `skill-eval`,
-keep the candidate model fixed across baseline and treatment; the experiment
-chooses that model, so the worker-routing defaults do not mandate Sol/high.
+For every Codex dispatch explicitly request the policy-selected model and
+reasoning effort with `fork_turns="none"`. Ordinary development, docs and sync
+use Luna/medium; API/schema, security and complex logic use Luna/high. The
+initial implementation failure does not count as a repair round. After two
+consecutive failed repair rounds on the same problem, stop Luna writes to that
+problem and dispatch a fresh Sol/high repair implementer. Preserve failure
+evidence and the count across replacements; later unrelated work remains Luna.
+Ticket and final acceptance use Sol/high, with the exact one-Ticket coalescing
+exception above. If a required setting is actually unsupported or a selected
+role has an unavoidable conflicting override, stop
+that dispatch as **BLOCKED**. Do not silently fall back, switch providers or
+substitute a coordinator for implementation or verification. `skill-eval` keeps
+its candidate model fixed across baseline and treatment; it does not inherit
+the default routing table.
 
 The installer does not install this file. The root, develop, verify and test
 Skills therefore carry the minimum executable worker/context rules so this
@@ -180,8 +171,9 @@ there is no main-agent implementation/verification fallback.
 
 Manually provide only this minimum task contract:
 
-* role (implementation or verification), current Ticket goal, scope and non-goals;
-* all Slice dependencies and acceptance criteria for that Ticket;
+* role (Ticket owner, module assistant, repair implementation or verification), current
+  Ticket/Slice goal, scope and non-goals;
+* Slice dependencies and acceptance criteria for the assigned Ticket or Slice;
 * relevant files and read/write ownership;
 * Plan branch/base and verified prerequisite results/checkpoints;
 * validation commands and expected result summary.
@@ -214,10 +206,14 @@ not Ticket history. Do not create `handoff.md`, `memory.md` or `context.md`.
 
 Prefer fresh execution context at natural task, role, stage and Ticket
 boundaries; retire the finished worker context without deleting host logs.
-Keep one implementation worker's continuity across the same Ticket's dependent
-Slices and permitted follow-up. Never reuse workers across roles, stages or
-Tickets; independent verification remains mandatory. Worker task completion
-does not make the Ticket done or closed before verified merge.
+Keep the Ticket owner's continuity across that Ticket's dependent Slices and
+local repairs; do not require per-Slice main-agent acknowledgement. A same-
+problem repair uses a fresh implementation worker and preserves the failure
+count. After two failed repair rounds, use Sol/high for that problem. Ticket
+acceptance repairs use a fresh replacement, followed by a new independent
+verifier. Never reuse workers across roles, stages or Tickets; independent
+verification remains mandatory. Worker task completion does not
+make the Ticket done or closed before verified merge.
 
 A compacted or fresh main agent reconstructs from repository rules, the Plan,
 current Ticket and relevant predecessor summaries, checked against the actual

@@ -8,16 +8,18 @@ title Persisted Plan / Ticket Lifecycle — Fresh Workers, Shared Plan Branch
 
 state "Plan + child Ticket Issues persisted" as persisted
 state "Shared Plan branch active" as branch
-state "Coordinator selects dependency-ready Ticket\nCheck ownership + test-state conflicts" as select
-state "Fresh Ticket implementer\nAll Slices in dependency order + local checks" as implement
+state "Main selects dependency-ready Ticket\nCheck dependencies + isolated ownership" as select
+state "Fresh Ticket owner\nRetains context across dependency-ordered Slices" as ticket_owner
+state "Owner implements ready Slice\nLocal checks; integrate before dependents" as implement
+state "Optional independent-module helpers\nFixed interfaces + isolated workspaces" as module_helpers
 state "Development Complete" as developed
-state "Separate fresh Ticket verifier\nAll functionality scenarios; read-only" as verify
-state "Coordinator judges Ticket evidence" as accepted
+state "Separate fresh Sol/high Ticket verifier\nAll scenarios; read-only" as verify
+state "Main coordinator judges Ticket evidence" as accepted
 state "More Tickets?" as more
 state "Local verified checkpoint\nNormal stopping point; Issues stay open" as local
 state "Append user-requested Ticket before merge\nUpdate Plan scope/index/dependencies/validation" as expand
-state "Final Plan/branch/PR acceptance\n1 fresh independent verifier checks whole scope" as final_verify
-state "Plan integration + Test Quality Gate\nCoordinator decides" as gate
+state "Final Plan acceptance\nFresh whole-Plan verifier unless exact-scope coalescing applies" as final_verify
+state "Plan integration + Test Quality Gate\nMain coordinator decides" as gate
 state "Authorized commit / push / Plan PR actions\nStop at selected boundary" as publish
 state "Merge Plan PR once" as merge
 state "Delete branch + Update main" as cleanup
@@ -28,9 +30,12 @@ state "Verification BLOCKED\nRecord cause + resume point" as verify_blocked
 [*] --> persisted
 persisted -down-> branch
 branch -down-> select
-select -down-> implement : fresh agent + clean context available
+select -down-> ticket_owner : fresh independent context + capacity available
 select --> blocked : unavailable
 blocked -[norank]-> select : capability restored
+ticket_owner -down-> implement
+ticket_owner --> module_helpers : optional safe independent modules
+module_helpers --> implement : integrate isolated patches
 implement -down-> developed
 developed -down-> verify
 verify --> verify_blocked : checks cannot run
@@ -38,11 +43,11 @@ verify_blocked -[norank]-> verify : cause resolved
 verify -down-> accepted : evidence complete
 verify -[norank]-> implement : FAIL: implementation repairs\nthen new verifier; retain failed evidence
 accepted -down-> more : Ticket evidence accepted
-more -[norank]-> select : yes; new workers for next Ticket
+more -[norank]-> select : yes; fresh owner and verifier for next Ticket
 more -down-> local : no
 local --> [*] : stop locally; not BLOCKED
 local -[norank]-> expand : new user-requested functionality
-publish -[norank]-> expand : new functionality before merge
+publish -[norank]-> expand
 expand -[norank]-> select : same branch/PR; Plan in_progress\nretain evidence; invalidate impacted readiness
 local -down-> final_verify : publication authorized for current scope
 final_verify -down-> gate : PASS
@@ -55,16 +60,18 @@ cleanup -down-> done
 done --> [*] : later functionality uses a new Plan
 
 note right of verify
-Codex: fork_turns="none"; other hosts: equivalent independent context.
-Manually scoped Ticket contract; no parent conversation.
-No cross-Ticket worker reuse or recursive agent creation.
-Fresh replacement from verified checkpoint if interrupted/failed.
-Unexplained flaky failure cannot become PASS by changing agents.
+The main agent directly dispatches fresh owners and verifiers.
+Every worker is a leaf; no worker spawns another worker.
+Codex uses fork_turns="none"; other hosts need equivalent fresh context.
+All active roles count against actual host capacity; main + one worker needs two slots.
+Dependent Tickets may prepare read-only; writes wait for prerequisite independent PASS.
+Batch checkpoints preserve accepted state and all failure evidence.
 end note
 
 note right of final_verify
-Separate from ordinary per-Ticket verification.
-The final verifier checks the whole current Plan branch/PR scope.
-Do not split scenarios or reuse Ticket verifiers.
+Normally a separate fresh verifier checks the entire current Plan scope.
+One new Sol/high check may cover both gates only for one Ticket with identical
+scope, artifact/version, configuration, and deployment surface.
+Never reuse a verifier after scope or surface changes.
 end note
 @enduml

@@ -61,54 +61,44 @@ runtime instance or surface cannot be proven.
   target-project knowledge under `docs/verification/` when useful; it is not a
   workflow Skill.
 
-## Coordinator and verification worker
+## Verification workers
 
-These minimum rules apply without `AGENTS.md` (not installed); when present,
-it owns the full scheduling policy.
+These minimum rules apply without `AGENTS.md`; when present, it owns full
+scheduling policy.
 
-- Codex coordinator, before dispatch: identify **this active entrypoint's** path
-  from the explicit user-selected/dispatched path first, otherwise its loaded
-  catalog location (resolve aliases). Project `.agents/skills` copies are valid
-  installed Skills. Read only the catalog-discovered
-  `codex-development-workflow/SKILL.md` sibling under that same installation root
-  (the parent of this Skill directory); duplicate names do not authorize
-  switching this stage or its root to another, possibly stale, global copy.
-  Apply that root's **Codex worker model routing** policy. Ambiguous active-copy
-  association, missing/unreadable sibling root, absent routing section or
-  unsupported settings blocks dispatch: name the paths/condition; request an
-  explicit path for ambiguity or update that bundle and restart discovery for
-  missing policy. Never inherit settings or evade the block through another
-  installation/provider. Inspect effective named-role settings only if selecting
-  that role; do not explore generic/global defaults. This coordinator-only hook
-  applies to direct invocation; workers do not route models. Claude selection is unchanged.
-- Coordinator: dispatch one fresh independent verifier per Ticket after
-  Development Complete, including docs/config/test and inline one-Slice work.
-  This ordinary per-Ticket check uses one verifier. It verifies all that
-  Ticket's scenarios; never reuse its implementation agent or any other Ticket's
-  verifier, or split scenarios among workers.
-- Final Plan/branch/PR acceptance verification is separate. Before deciding
-  publication, PR update or merge readiness, dispatch one fresh independent
-  verifier agent for the whole current Plan branch/PR scope. It must PASS; any
-  FAIL or BLOCKED blocks readiness.
-- The final verifier must not be a Ticket implementer, per-Ticket verifier or
-  prior final verifier. Do not split final scenarios across agents.
-- Dispatched verifier: invoke `test-workflow`, gather evidence, return a result;
-  never spawn agents. Repository access is read-only except caches/temporary
-  evidence; do not fix code, tests, config or docs to pass checks.
-- Codex dispatch uses `spawn_agent` with `fork_turns="none"`; other hosts require
-  equivalent fresh agents and independent context. Otherwise report BLOCKED;
-  the main agent cannot substitute for the verifier.
-- Hand off only role, current Ticket goal/scope/non-goals, Slice dependencies/
-  acceptance, relevant files/ownership, Plan branch/base and verified prerequisite
-  results, validation commands and expected summary; no parent conversation or
-  unrelated history. Same-Ticket follow-up is allowed; interrupted/failed workers
-  require fresh replacements from verified checkpoints, never cross-Ticket reuse.
-- FAIL returns fixes to the implementation role. After fixes, dispatch a new
-  verifier for the affected function, preserving all prior failed evidence;
-  replacing agents cannot turn unexplained flakiness into PASS.
-- Context isolation does not isolate files or test state. Serialize interference
-  on the shared Plan branch; create no Ticket branch. The main agent synthesizes
-  evidence and owns the Test Quality Gate, stage transitions and final judgment.
+- The main agent directly dispatches one fresh independent Sol/high verifier
+  for all scenarios across each Ticket after Development Complete. Verifiers
+  are leaves, never spawn, and never implement fixes.
+- Before deciding publication, PR update or merge readiness, verify the whole
+  current Plan scope with a fresh independent Sol/high verifier. One NEW
+  verifier may satisfy both Ticket and final gates only for a one-Ticket Plan
+  whose full scope, artifact/version, configuration and deployment surface are
+  exactly the same. Otherwise use a separate fresh final verifier. Any change
+  after verification requires a new verifier for the affected scope.
+- Count active agents against actual host capacity. There is no project cap or
+  lifetime quota; each direct main-to-worker dispatch requires two available
+  slots, and work queues when capacity is exhausted.
+- The main agent identifies this active entrypoint and its same-installation
+  root Skill routing policy before dispatch, preserving the active-copy and
+  unsupported-setting BLOCKED rules. Request explicit model, effort and
+  `fork_turns="none"`; distinguish requested settings from observed identity.
+- Verifiers invoke `test-workflow`, gather evidence and return a result. They
+  are read-only except caches/temporary evidence. Other hosts need equivalent
+  fresh independent context. If that is unavailable, report BLOCKED.
+- Hand off only role, Ticket goal/scope, dependencies and acceptance, relevant
+  files/ownership, Plan branch/base, prerequisites and validation summary. Do
+  not include parent conversation or unrelated history. Replace interrupted
+  workers from verified checkpoints and preserve failures.
+- FAIL returns the affected functionality to a fresh implementation worker,
+  followed by a new independent verifier for all affected Ticket scenarios.
+  The initial implementation failure does not count as a repair round. After
+  two consecutive failed same-problem repair rounds, stop Luna writes to that
+  problem and dispatch a fresh Sol/high repair implementer. Preserve counts and
+  evidence across replacement; later unrelated work remains on Luna. If Sol
+  cannot fix the problem, the main agent diagnoses and replans.
+- The main agent retains the Test Quality Gate, stage transitions and final
+  judgment. Preserve unexplained flaky failures; a passing retry does not erase
+  them.
 
 Return exactly one conclusion with evidence, then stop:
 

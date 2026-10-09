@@ -8,8 +8,8 @@
 
 This repository packages the `plan-to-ticket` specialist inside a larger
 main-agent workflow. Its job is to convert an explicitly scoped delivery batch
-into one Plan, behavior Tickets, and small engineering Slices within each Ticket with
-boundaries for fresh Ticket workers, and to persist the Plan and its
+into one Plan, behavior Tickets, and small engineering Slices within each
+Ticket, then persist the Plan and its
 Tickets to GitHub Issues when the work is complex, must survive a session
 boundary, or the user asks for a persisted plan. There is no
 application runtime, custom API client, or local ticket database in this
@@ -51,11 +51,14 @@ application infrastructure topology.
 7. The successful output follows the contract in `SKILL.md`: a `Plan` section
    followed by Ticket sections containing nested Slices and canonical Issue
    links, with the Plan branch handoff fields on the Plan section.
-8. The coordinator dispatches each Ticket to a fresh implementer for all its
-   dependency-ordered Slices, then to one separate fresh verifier for all
-   scenarios under the [scheduling policy](../../../AGENTS.md#multi-agent-delegation).
-   Final Plan/branch/PR acceptance later uses one fresh independent verifier
-   for the whole current Plan scope.
+8. The main agent dispatches each Ticket to a fresh owner, who retains context
+   across dependency-ordered Slices and local repairs. After Development
+   Complete, a separate fresh verifier checks all Ticket scenarios under the
+   [scheduling policy](../../../AGENTS.md#multi-agent-delegation). A new
+   Sol/high verifier can also satisfy final Plan acceptance only when the Plan
+   has one Ticket and the full scope, artifact/version, configuration and
+   deployment surface match exactly; otherwise final acceptance is a separate
+   fresh whole-Plan check.
 
 ## Design boundaries
 
@@ -65,8 +68,9 @@ application infrastructure topology.
 - Slice verification describes observable checks. It does not claim that implementation has already been completed.
 - For a persisted plan, a required GitHub Issue failure blocks completion; chat
   output and local Markdown are not persistence fallbacks.
-- Planning defines worker-ready Ticket contracts; the coordinator dispatches
-  workers and chooses safe concurrency under the canonical scheduling policy.
+- Planning defines worker-ready Ticket and Slice contracts; the main agent
+  dispatches Ticket owners and chooses safe concurrency under the canonical
+  scheduling policy. Workers are leaves and never dispatch workers.
 - Each Plan Issue maps to one implementation branch and one PR; all child
   Tickets and internal Slices share that branch, and the PR head/base must match
   the Plan Issue metadata.
