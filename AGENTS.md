@@ -41,14 +41,15 @@ stage that owns it rather than running one fixed chain for every request.
 Feature, bug fix, refactor, and documentation work are profiles of these stages,
 not separate workflows.
 
-Persist a Plan Issue with one or more child Ticket Issues before branch work
-when the work is complex, must survive a session boundary, or the user asks for
-a persisted plan. A persisted Plan owns one branch and, when the user elects delivery, one PR and
-one merge for all of its Tickets; split each Ticket into independently
-verifiable Slices. New user-requested functionality joins the same unmerged
-Plan as a new Ticket after its goal, scope, index, dependencies and validation
-are updated. Preserve IDs, branch/base, existing PR and evidence; after merge,
-start a new Plan. `plan-to-ticket` owns the scope-update procedure.
+Persist every requirement as one Plan Issue before branch work, with one child
+Ticket Issue for an ordinary requirement. A complex requirement may have
+multiple Tickets only for distinct behavioral, dependency, or acceptance
+boundaries. A Plan owns one branch and, when delivery is elected, one PR and one
+merge for that requirement. Independent requirements always get separate Plans,
+even while another Plan is unmerged. Supplementary work for the same requirement
+updates its Ticket or adds a behavior Ticket when a distinct boundary justifies
+it. Preserve IDs, branch/base, existing PR and evidence; after merge, new
+requirements use new Plans. `plan-to-ticket` owns scope updates.
 
 Local verified functionality is a normal stopping point, not BLOCKED while
 publication awaits the user. The user controls commit, push, PR creation/update
@@ -66,7 +67,7 @@ several stages as one authorized delivery.
 ## Multi-Agent Delegation
 
 Use a **fixed workflow / adaptive execution** model. Stage ownership, Plan ->
-Ticket -> Slice dependencies, verification, publication, integration and
+Ticket dependencies, verification, publication, integration and
 completion gates remain fixed. This section owns the scheduling policy;
 explanatory documents link here rather than copying it.
 
@@ -75,8 +76,8 @@ explanatory documents link here rather than copying it.
 The main agent owns requirements, architecture, planning and decomposition,
 cross-Ticket dependencies and scheduling, integration, stage gates and final
 judgment. It directly dispatches one fresh implementation owner per Ticket.
-Each owner retains context across that Ticket's dependency-ordered Slices and
-local repair work, and never spawns agents. The main agent may dispatch optional
+Each owner retains context across that Ticket and local repair work, and never
+spawns agents. The main agent may dispatch optional
 independent-module assistants only for fixed interfaces and non-overlapping
 ownership; parallel writers use isolated workspaces and return patches for main
 integration. It directly dispatches fresh independent verifiers and fresh
@@ -172,8 +173,8 @@ there is no main-agent implementation/verification fallback.
 Manually provide only this minimum task contract:
 
 * role (Ticket owner, module assistant, repair implementation or verification), current
-  Ticket/Slice goal, scope and non-goals;
-* Slice dependencies and acceptance criteria for the assigned Ticket or Slice;
+  Ticket goal, scope and non-goals;
+* Ticket dependencies and acceptance criteria;
 * relevant files and read/write ownership;
 * Plan branch/base and verified prerequisite results/checkpoints;
 * validation commands and expected result summary.
@@ -190,11 +191,10 @@ search output and conversation history. The main agent checks that evidence
 before scheduling dependent work or crossing a stage gate.
 
 For persisted work, the main agent records the accepted summary, current status,
-acceptance and dependency changes in existing Ticket Issue bodies, with
-append-only evidence comments that preserve failures. The Plan remains the
-batch index and dependency order; do not copy Ticket evidence into it. Keep
-existing small inline-work persistence exceptions, but work that must survive
-a context or session boundary requires durable persistence.
+acceptance and dependency changes in the Ticket Issue body, with append-only
+evidence comments that preserve failures. The Plan indexes its requirement and
+Tickets; do not copy Ticket evidence into it. Every requirement is persisted
+before branch edits.
 
 Before retiring context for persisted or resumable work, persist its checkpoint.
 If an Issue write fails, report **BLOCKED** and preserve completed changes and
@@ -206,8 +206,8 @@ not Ticket history. Do not create `handoff.md`, `memory.md` or `context.md`.
 
 Prefer fresh execution context at natural task, role, stage and Ticket
 boundaries; retire the finished worker context without deleting host logs.
-Keep the Ticket owner's continuity across that Ticket's dependent Slices and
-local repairs; do not require per-Slice main-agent acknowledgement. A same-
+Keep the Ticket owner's continuity across implementation and local repairs;
+do not create per-step acknowledgements or acceptance gates. A same-
 problem repair uses a fresh implementation worker and preserves the failure
 count. After two failed repair rounds, use Sol/high for that problem. Ticket
 acceptance repairs use a fresh replacement, followed by a new independent
@@ -231,7 +231,7 @@ natural boundary.
 | Verifying acceptance, a regression, or a branch                        | `verify-workflow`            |
 | Committing, pushing, or preparing a pull request                       | `publish-workflow`           |
 | Merging, cleaning up, or reconciling after delivery                    | `integrate-workflow`         |
-| Complex, multi-step, dependent, or incremental work needs a Plan/Ticket/Slice breakdown | `plan-to-ticket` |
+| Requirement needs Plan/Ticket decomposition and persistence | `plan-to-ticket` |
 | Feature, bug fix, regression, integration, or browser validation       | `test-workflow`              |
 | Skill effectiveness evaluation by blind A/B real task outcomes         | `skill-eval`                 |
 | Architecture or flow visualization materially improves understanding   | `plantuml`                   |
@@ -252,9 +252,8 @@ natural boundary.
 ## Repository Rules
 
 * Keep architecture and dependencies as simple as practical.
-* One commit should represent a clear declared scope: one functionality or a
-  planned delivery batch. Follow `github-push-when-ready` for batch messages and
-  publication gates.
+* One commit should represent a clear declared scope: one requirement's Plan.
+  Follow `github-push-when-ready` for Plan messages and publication gates.
 * Never commit passwords, tokens, credentials, private keys, `.env`, or other secrets.
 * Do not commit local `AGENTS.md` or `CLAUDE.md` unless the repository intentionally versions them.
 

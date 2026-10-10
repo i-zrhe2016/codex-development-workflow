@@ -1,6 +1,6 @@
 ---
 name: develop-workflow
-description: "Implement, fix, refactor or modify repository content from an executable Slice to Development Complete with focused local validation. Stops before delivery verification, publication, Issue closure and state refresh."
+description: "Implement, fix, refactor or modify repository content for a persisted Ticket through Development Complete with focused local validation. Stops before delivery verification, publication, Issue closure and state refresh."
 ---
 
 # Develop Workflow
@@ -8,7 +8,7 @@ description: "Implement, fix, refactor or modify repository content from an exec
 Owns **context -> implementation -> Development Complete**.
 
 When the user controls the overall flow, development executes only the approved
-Slice/Ticket scope. It may surface the next workflow step, blockers, risks and
+Ticket scope. It may surface the next workflow step, blockers, risks and
 available choices, but must not choose new scope, re-planning, verification,
 publication or merge actions for the user.
 
@@ -20,8 +20,8 @@ publication or merge actions for the user.
 3. Where practical, use meaningful failing tests first for behavior changes,
    bugs/regressions, APIs, core logic, data processing or high risk. Validate
    docs/config/dependencies/styling/typos/simple refactors directly; no forced RED.
-4. Make the minimum change satisfying acceptance; run focused checks and fix
-   clear failures. Refactor only within the Slice after acceptance passes.
+4. Make the minimum change satisfying Ticket acceptance; run focused checks and
+   fix clear failures. Keep all work within the persisted Ticket.
 5. The worker reports checkpoints/results; the coordinator integrates each wave
    and recomputes readiness. Wrong design assumptions require re-planning,
    not patch expansion.
@@ -33,10 +33,10 @@ owns the full scheduling policy.
 
 - Main agent: own requirements, dependencies, scheduling, integration, stage
   gates and final judgment. Directly dispatch one fresh implementation owner
-  per Ticket, including docs/config/test and one-Slice Tickets; also dispatch
+  per Ticket, including docs/config/test; also dispatch
   independent verifiers and fresh repair implementers.
-- Ticket owner: retain context across dependency-ordered Slices and local
-  repairs. Validate changes and report at integrated-wave and Development
+- Ticket owner: retain context across the Ticket and local repairs. Validate
+  changes and report at integrated-wave and Development
   Complete checkpoints. Owners never spawn agents or perform independent
   acceptance verification.
 - Optional module assistants may work only to fixed interfaces with
@@ -66,7 +66,7 @@ owns the full scheduling policy.
   settings are dispatch metadata, not proof of runtime identity; report observed
   identity only when exposed.
 - Keep the main agent long-lived and thin. Hand off only role, current
-  Ticket/Slice goal, scope/non-goals, dependencies and acceptance, files and
+  Ticket goal, scope/non-goals, dependencies and acceptance, files and
   ownership, Plan branch/base, verified prerequisites and validation summary.
   Do not include parent conversation or unrelated history. Replace interrupted
   workers from verified checkpoints and preserve failure evidence/counts.
@@ -82,9 +82,9 @@ owns the full scheduling policy.
   one NEW verifier may satisfy Ticket and final gates for a one-Ticket Plan only
   when full scope, artifact/version, configuration and deployment surface match
   exactly. The main agent owns the Test Quality Gate and stage decision.
-- Record durable Issue checkpoints at integrated waves, Development Complete,
-  acceptance failures, and pause/retirement. A required Issue write failure is
-  BLOCKED. Do not require per-Slice main-agent acknowledgement.
+- Record durable Ticket Issue checkpoints at integrated waves, Development
+  Complete, acceptance failures, and pause/retirement. A required Issue write
+  failure is BLOCKED. Do not create per-step acknowledgements or gates.
 
 **Development Complete:** acceptance is implemented and local validation passes.
 Report Ticket, changed files, commands/results, unresolved risks and follow-up work.
@@ -95,4 +95,4 @@ requires `plan-to-ticket`'s Plan/Ticket updates before implementation edits.
 
 `verify-workflow` owns delivery verification breadth; publish/integrate own
 commit/push/PR/merge, Issue closure and state refresh. No post-delivery evaluation,
-unrelated refactors, formatting sweeps, dependency upgrades or future-Slice work.
+unrelated requirements, refactors, formatting sweeps or dependency upgrades.

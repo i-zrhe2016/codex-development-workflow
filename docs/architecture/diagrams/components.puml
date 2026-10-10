@@ -14,7 +14,7 @@ component "develop-workflow\nImplement to Development Complete" as devw
 component "verify-workflow\nVerification scope and conclusion" as verifyw
 component "publish-workflow\nDocs, state, redaction, commit, push, PR ready" as pubw
 component "integrate-workflow\nMerge, cleanup, validate state/docs" as intw
-component "plan-to-ticket\nPlan / Ticket / Slice decomposition" as plan
+component "plan-to-ticket\nRequirement / Plan / Ticket decomposition" as plan
 component "test-workflow\nRisk-aware verification\nTest Quality Gate" as test
 component "repo-documentation\nDocumentation governance" as docs
 component "repo-current-state\nVerified recovery snapshot" as state
@@ -32,7 +32,7 @@ devw --> verifyw
 verifyw --> pubw
 pubw --> intw
 planw --> plan : decompose
-plan --> issues : persist when required
+plan --> issues : persist every requirement
 verifyw --> test : invoke
 pubw --> docs : impact / ownership
 docs --> docstore : update canonical docs

@@ -8,7 +8,7 @@ views retain their existing locations beside the documents they illustrate.
 |---|---|---|---|
 | [workflow-overview.svg](workflow-overview.svg) | [workflow-overview.puml](workflow-overview.puml) | Authorized full delivery and stage boundaries | [architecture.puml](../architecture/diagrams/architecture.puml) |
 | [components-overview.svg](components-overview.svg) | [components-overview.puml](components-overview.puml) | Stage workflows, capability skills, and boundaries | [components.puml](../architecture/diagrams/components.puml) |
-| [plan-ticket-slice.svg](plan-ticket-slice.svg) | [plan-ticket-slice.puml](plan-ticket-slice.puml) | Persisted Plan → Ticket → Slice hierarchy | [ticket-lifecycle.puml](../architecture/diagrams/ticket-lifecycle.puml) |
+| [plan-ticket.svg](plan-ticket.svg) | [plan-ticket.puml](plan-ticket.puml) | Requirement → Plan → Ticket ownership and sizing | [ticket-lifecycle.puml](../architecture/diagrams/ticket-lifecycle.puml) |
 | [test-quality-gate.svg](test-quality-gate.svg) | [test-quality-gate.puml](test-quality-gate.puml) | Risk-aware verification evidence | [test-workflow-flow.puml](../skills/test-workflow/diagrams/test-workflow-flow.puml) |
 | [docs-publication-flow.svg](docs-publication-flow.svg) | [docs-publication-flow.puml](docs-publication-flow.puml) | Documentation and authorized publication | [repo-documentation-flow.puml](../skills/repo-documentation/diagrams/repo-documentation-flow.puml) |
 | [installer-overview.svg](installer-overview.svg) | [installer-overview.puml](installer-overview.puml) | Installation ownership and retirement decisions | [installer-decision-flow.puml](../deployment/diagrams/installer-decision-flow.puml) |

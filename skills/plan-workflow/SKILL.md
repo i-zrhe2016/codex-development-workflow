@@ -1,6 +1,6 @@
 ---
 name: plan-workflow
-description: "Plan, design, investigate or decompose a requirement into executable Tickets/Slices before changes. Owns architecture, scope and persistence decisions; never edits repository files, verifies delivery or publishes."
+description: "Plan, design, investigate or decompose a requirement into one persisted Plan and its executable Tickets before changes. Owns architecture, scope and persistence decisions; never edits repository files, verifies delivery or publishes."
 ---
 
 # Plan Workflow
@@ -17,18 +17,21 @@ the user. Record explicit user decisions; otherwise return options and stop.
    verify relevant claims, boundaries, interfaces and existing constraints.
 2. Choose the simplest sufficient design; record rejected alternatives only
    when they explain a real decision.
-3. Invoke `plan-to-ticket` for behavior Tickets, dependency-ordered Slices,
-   acceptance criteria and planned verification breadth; do not execute checks.
-4. Persist Plan and child Issues when complex, cross-module, dependent,
-   multi-session/resumable by another agent, or explicitly requested. Keep small
-   single-session plans inline. Follow the capability's exact titles, markers,
-   ID allocation and branch contract. For newly requested functionality in an
-   unmerged Plan, use its scope-update contract before edits: append a Ticket,
-   update goal/scope/index/dependencies/validation, preserve branch/base/PR and
-   evidence, and invalidate impacted readiness. After merge, use a new Plan.
-   Planning new scope grants no publication authority.
+3. Invoke `plan-to-ticket` to define the requirement-level Plan, its Ticket
+   boundaries/dependencies, acceptance criteria and planned verification; do not
+   execute checks. One ordinary requirement has one Ticket. A complex
+   requirement may have multiple Tickets only for distinct behavioral,
+   dependency, or acceptance boundaries.
+4. Persist every requirement as a Plan Issue and all required child Ticket
+   Issues before branch edits, regardless of size or session length. Follow the
+   capability's titles, markers, ID allocation and branch contract. Supplementary
+   work for an unmerged requirement updates the existing Ticket, or adds a
+   behavior Ticket when a distinct boundary justifies it; update affected Plan
+   and Ticket contracts before edits. An independent new requirement always
+   starts a new Plan, even while another is unmerged. New scope grants no
+   publication authority.
 
-Complete only when the persistence decision is recorded and every Slice has
+Complete only when the Plan and Tickets are persisted, and every Ticket has
 scope/exclusions, dependencies, acceptance, test strategy/level and validation
 command. Return the plan and stop; later implementation uses `develop-workflow`.
 

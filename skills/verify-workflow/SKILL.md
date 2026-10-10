@@ -18,7 +18,7 @@ acceptance, or PR readiness. Exploratory implementation feedback belongs to
 `develop-workflow`.
 
 1. Establish whether verification is warranted (record any skip reason), and
-   scope: Slice, Ticket, branch, Plan or single criterion.
+   scope: Ticket, branch, Plan or single criterion.
 2. Choose `minimal`, `focused`, `regression` or `full` from behavior/risk.
 3. Prove Same-Surface Verification before judging behavior: verify the intended
    artifact, instance and user-facing surface match the requested scope.

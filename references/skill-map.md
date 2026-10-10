@@ -44,9 +44,9 @@ decision, Development Complete, verification scope/conclusion, docs/redaction/
 commit/push/PR ready (never merge), and merge/cleanup/Issue closure/state/docs reconciliation.
 Read their `SKILL.md` for contracts. Capability skills own **how**:
 
-- `plan-to-ticket`: Plan-first decomposition, Issue persistence and Slice
-  contracts (boundaries, acceptance, context, strategy, level, cases and validation
-  command); one branch/PR/merge per persisted Plan.
+- `plan-to-ticket`: one-requirement Plan decomposition, Issue persistence and
+  Ticket execution contracts (boundaries, acceptance, context, strategy, level,
+  cases and validation command); one branch/PR/merge per Plan.
 - `test-workflow`: minimal/focused/regression/full validation and evidence;
   browser/E2E when browser-visible interaction changes.
 - `skill-eval`: blind A/B skill-effectiveness evaluation with Static, Trigger,

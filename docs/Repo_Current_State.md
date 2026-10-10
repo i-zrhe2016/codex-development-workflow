@@ -1,20 +1,30 @@
 # Repository Current State
 
-Last verified: 2026-10-08 @ working tree
+Last verified: 2026-10-10 @ working tree
 
 ## Current Focus
 
-- [Plan #226](https://github.com/i-zrhe2016/codex-development-workflow/issues/226):
-  portable two-level owner implementation with independent Sol acceptance;
-  [Ticket #230](https://github.com/i-zrhe2016/codex-development-workflow/issues/230)
-  covers global instruction and managed-Skill synchronization.
+- [Plan #233](https://github.com/i-zrhe2016/codex-development-workflow/issues/233):
+  current requirement-workflow change;
+  [Ticket #234](https://github.com/i-zrhe2016/codex-development-workflow/issues/234)
+  covers core workflow rules and acceptance passed; current
+  [Ticket #235](https://github.com/i-zrhe2016/codex-development-workflow/issues/235)
+  covers documentation and contract checks, and
+  [Ticket #236](https://github.com/i-zrhe2016/codex-development-workflow/issues/236)
+  covers global instruction and managed-Skill synchronization; its local
+  synchronization checks now pass for all 14 installer-managed Codex bundles
+  and the relevant global instruction rules. Ticket acceptance and merge remain
+  pending.
 
 ## Implemented
 
 - Five stage workflows route planning, development, verification, publication
   and integration; full orchestration requires explicit end-to-end scope.
-- The main agent directly dispatches a fresh owner per Ticket, who retains
-  context across dependent Slices and local repairs without dispatching workers.
+- Every independent requirement has a Plan Issue before branch work; ordinary
+  requirements use one Ticket, while additional Tickets require distinct
+  behavioral, dependency, or acceptance boundaries. The main agent directly
+  dispatches a fresh owner per Ticket, who retains context across that Ticket
+  and local repairs without dispatching workers.
   Optional module assistants require fixed interfaces and isolated ownership;
   fresh independent verifiers and repair replacements remain main-dispatched.
   Final Plan acceptance uses a separate fresh verifier, with a one-Ticket
@@ -22,12 +32,11 @@ Last verified: 2026-10-08 @ working tree
   [worker policy](../AGENTS.md#multi-agent-delegation) and
   [Context Management](../AGENTS.md#context-management).
 - Root and direct develop/verify/test entrypoints use the portable worker model
-  policy from the root Skill associated with the active installation. Global
-  instructions now carry the same two-level execution contract, and all 14
-  managed Codex bundles match installer-selected source files and ownership
-  markers. See
+  policy from the root Skill associated with the active installation. See
   [installation boundaries](deployment/installation.md#codex-model-routing).
-  Project-local configuration remains separate.
+  Project-local configuration remains separate. The global instruction and
+  managed-bundle sync check is tracked by [Ticket #236](https://github.com/i-zrhe2016/codex-development-workflow/issues/236);
+  its selected installed bundles match the installer-managed source files.
 - Verification now requires Same-Surface proof: runtime identity/doctor,
   Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and
   fresh verification-profile knowledge. If the intended artifact, instance or
@@ -36,10 +45,11 @@ Last verified: 2026-10-08 @ working tree
   dimensions. Authentication and authorization are proven separately when
   relevant, denied operations require protected side-effect absence, and tests
   must fail for the defect they claim to protect.
-- Plans may batch functionalities under one branch, commit and PR with
-  per-Ticket evidence. New functionality extends the same unmerged Plan with
-  a new Ticket; after merge it starts a new Plan. See the
-  [Plan scope contract](../skills/plan-to-ticket/SKILL.md#updating-an-unmerged-plan).
+- Every independent requirement has its own Plan and child Ticket Issues before
+  branch work. Ordinary work uses one Ticket; supplementary same-requirement
+  work updates its Ticket or adds one for a distinct boundary. Independent
+  requirements use separate Plans even while an earlier Plan remains unmerged.
+  See the [Plan scope contract](../skills/plan-to-ticket/SKILL.md#updating-scope).
 - Local verification is a normal stopping point. The user controls publication
   and merge timing and scope; added scope requires impacted readiness checks
   and grants no new publication authority. See
@@ -60,10 +70,11 @@ Last verified: 2026-10-08 @ working tree
 - Inherited publication guidance has unresolved non-default-base and
   changed-content revalidation ambiguity; evidence remains in closed
   [Plan #196](https://github.com/i-zrhe2016/codex-development-workflow/issues/196).
-- Global diagram `--check` remains failing for 13 unchanged source/render pairs
-  with known renderer drift; all 13 remain HEAD-identical. The two changed
-  pairs passed source/render review and tracked-SVG visual review. No global
-  diagram check PASS is claimed.
+- The last full global diagram check reported 13 renderer-drift pairs. Eight
+  source/render pairs have changed since that baseline, so the current global
+  drift count has not been remeasured. The eight changed pairs pass the
+  isolated source/render check and visual review; no global diagram-check PASS
+  is claimed.
 
 ## Constraints
 

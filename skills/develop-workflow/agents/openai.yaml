@@ -1,4 +1,4 @@
 interface:
   display_name: "Develop Workflow"
   short_description: "Decide when to implement: minimal change, local validation"
-  default_prompt: "Use $develop-workflow: the main agent dispatches a fresh Ticket owner who retains context across dependency-ordered Slices and local repairs. Implementers run focused local validation and report integrated-wave and Development Complete checkpoints without spawning agents, performing independent acceptance verification, or publishing."
+  default_prompt: "Use $develop-workflow: the main agent dispatches a fresh owner for the persisted Ticket, who implements its full scope and retains context through local repairs. Run focused local validation and report integrated-wave and Development Complete checkpoints without spawning agents, performing independent acceptance verification, or publishing."

@@ -5,14 +5,13 @@ skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam componentStyle rectangle
 
-title plan-to-ticket — Plan / Ticket / Slice Persistence
+title plan-to-ticket — Requirement / Plan / Ticket Persistence
 
 actor "Requestor" as requestor
 component "Skill trigger" as trigger
 component "Plan boundary" as plan
-component "Ticket decomposition" as tickets
-component "Slice decomposition" as slices
-component "Issue persistence\nwhen triggered" as persistence
+component "Ticket decomposition\none Ticket or behavior Tickets" as tickets
+component "Issue persistence\nfor every requirement" as persistence
 database "GitHub Issues\nauthoritative Plan / Ticket records" as issues
 component "Result summary\nlinks + execution metadata" as output
 
@@ -24,9 +23,8 @@ folder "Documentation" as docs
 
 requestor --> trigger : requirement
 trigger --> plan
-plan --> tickets : behavior boundaries
-tickets --> slices : dependency-ordered work
-slices --> persistence : complete execution contract
+plan --> tickets : ordinary or complex scope
+tickets --> persistence : complete Plan + Ticket records
 persistence --> issues : create / update Plan + Tickets
 issues --> persistence : IDs / URLs
 persistence --> output : canonical links

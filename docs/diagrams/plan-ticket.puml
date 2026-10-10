@@ -1,0 +1,27 @@
+@startuml
+!theme plain
+top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Requirement → Plan → Behavior Tickets
+
+rectangle "Requirement\nPersist every requirement" as requirement
+rectangle "One Plan Issue\nOwns branch + PR + merge" as plan
+rectangle "Ordinary requirement\nOne Ticket" as ordinary
+rectangle "Complex requirement\nMultiple behavior Tickets" as complex
+rectangle "Original Ticket\nSupplement same requirement" as original_ticket
+rectangle "New Plan\nIndependent requirement" as new_plan
+
+requirement --> plan : persists as
+plan --> ordinary : ordinary scope
+plan --> complex : distinct behavior boundaries
+plan --> original_ticket : same-requirement follow-up
+requirement --> new_plan : independent scope, even if prior Plan is unmerged
+
+note bottom of plan
+  Add a Ticket only for a genuine behavior boundary.
+  Internal implementation steps need no separate IDs, status, or gates.
+  Publication and merge occur only when authorized.
+end note
+@enduml

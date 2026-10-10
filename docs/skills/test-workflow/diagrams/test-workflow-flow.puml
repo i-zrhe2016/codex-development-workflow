@@ -6,7 +6,7 @@ skinparam defaultFontName Arial
 title test-workflow — Risk-Aware Verification and Test Quality Gate
 
 start
-:Read requirement / Slice acceptance criteria / changed behavior;
+:Read requirement / Ticket acceptance criteria / changed behavior;
 :Build Acceptance-to-Test Matrix;
 :Select mandatory risk dimensions;
 

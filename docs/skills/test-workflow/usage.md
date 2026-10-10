@@ -7,7 +7,7 @@
 ## 适用范围
 
 适用于后端、前端、API、库、CLI 以及其他仓库级功能变更、缺陷修复、重构和
-Slice 验收。目标是用最低成本的可靠检查证明验收标准，而不是追求无差别的
+Ticket 验收。目标是用最低成本的可靠检查证明验收标准，而不是追求无差别的
 全量测试。
 公共边界上的成功、失败和异常路径按同一 caller-consumable contract 验证；
 失败路径必须断言调用方实际收到的格式、结构、语义和可操作性，不能只检查
@@ -23,7 +23,7 @@ status-only assertion 只有在本身就是契约时才足够。
 CORS 和浏览器安全规则都可能决定用户路径是否可用。
 
 实现 worker 可直接运行本流程获得本地反馈；每个 Ticket（含文档、配置、测试）
-的正式验收使用独立全新 verifier，涵盖该 Ticket 全部 scenario，不逐个 Slice 创建 verifier。已派发 worker
+的正式验收使用独立全新 verifier，涵盖该 Ticket 全部 scenario。已派发 worker
 直接执行，不递归派发。verifier 只读仓库（允许缓存与临时证据）；修复交还
 实现职责，再由新 verifier 重验受影响功能并保留失败证据。调度、干净上下文
 和主代理门禁遵循 [AGENTS.md](../../../AGENTS.md#multi-agent-delegation)。
@@ -57,7 +57,7 @@ case 数当成 completeness；优先覆盖契约、边界、状态转换、失�
 | Level | 执行边界 |
 |---|---|
 | `minimal` | 微小、文档、配置、样式、依赖、typo 或简单重构。 |
-| `focused` | 默认；覆盖当前 Slice 验收标准的最小检查。 |
+| `focused` | 默认；覆盖当前 Ticket 验收标准的最小检查。 |
 | `regression` | 缺陷修复、跨模块变更或已有回归风险。 |
 | `full` | 高风险、发布门禁或明确要求完整套件。 |
 
@@ -126,7 +126,7 @@ dimensions 都满足（或有具体 N/A 理由）后才停止。
 ```markdown
 ## Test Report
 
-- Scope: <Slice/feature>
+- Scope: <Ticket/feature>
 - Mode: tiny / normal / RED-GREEN / browser
 - Level: minimal / focused / regression / full
 - Result: pass / partial / fail / blocked
