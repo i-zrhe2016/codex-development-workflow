@@ -17,11 +17,10 @@ Core invariants:
 - work is routed to the stage workflow that owns it — `plan-workflow`,
   `develop-workflow`, `verify-workflow`, `publish-workflow`, or
   `integrate-workflow` — instead of one fixed chain for every request;
-- a **Plan** is an explicitly scoped delivery batch, which may include multiple
-  independent functionalities; a persisted **Plan Issue** owns one implementation
-  branch, one PR, and one merge for all of its child **Ticket Issues**;
-- Tickets decompose into dependency-ordered Slices that carry acceptance and
-  validation contracts;
+- a **Plan** records one independent requirement; its **Plan Issue** owns one
+  implementation branch, one PR, and one merge for its child **Ticket Issues**;
+- each **Ticket** is a complete execution and acceptance unit with its own scope,
+  acceptance, and validation contract;
 - PASS requires the risk-aware **Test Quality Gate**, not merely a green focused
   test run;
 - documentation impact, applicable state refresh, redaction, publication, and
@@ -37,19 +36,19 @@ deployment, health-check, and rollback instructions. The external release
 owner performs and verifies the rollout or rollback. Completion evidence is
 the external release result or incident link recorded with the delivery.
 
-The macro workflow controls architecture and scope. A delivery batch that is
-complex, must survive a session boundary, or is explicitly requested as a
-persisted plan is recorded as one GitHub Issue Plan with one or more child
-Ticket Issues before branch work starts. A single behavior uses one Ticket and
-one implicit Slice; multiple planned functionalities retain their behavior
-Tickets under one Plan. See the [Plan scope contract](skills/plan-to-ticket/SKILL.md#scope-and-sizing)
+The macro workflow controls architecture and scope. Every independent
+requirement is recorded as one GitHub Plan Issue with one or more child Ticket Issues
+before branch work starts. An ordinary requirement uses one Ticket; a complex
+requirement may use multiple behavior Tickets only when distinct behavioral,
+dependency, or acceptance boundaries justify them. Every Plan owns one branch,
+one PR, and one merge when delivery is elected. All Tickets share that branch,
+and Ticket dependencies define their execution order. Supplementary work for
+the same requirement updates its Ticket, adding another Ticket only for a
+distinct boundary. An independent requirement gets a new Plan even while another
+Plan remains unmerged. See the [Plan scope contract](skills/plan-to-ticket/SKILL.md#scope-and-sizing)
 and [batch publication rules](skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
-for shared commit/PR scope and verification. A persisted Plan owns the one branch, PR,
-and merge. All Tickets and Slices share that branch; Ticket dependencies remain
-separate from Slice dependencies, and the PR head and base must match the Plan
-metadata. New user-requested functionality joins the same unmerged Plan as a
-new Ticket after its scope, index, dependencies and validation are updated;
-after merge it uses a new Plan. Local verified functionality is a normal
+for branch, PR scope and verification. The PR head and base must match the Plan
+metadata. Local verified functionality is a normal
 stopping point. The user decides commit, push, PR creation/update and merge
 timing and scope; see [workflow usage](docs/workflow/usage.md#publication-decisions)
 for action boundaries and open-PR expansion.
@@ -88,8 +87,8 @@ as `BLOCKED`. Target projects may keep verification profiles or feature maps in
 Skill.
 The main agent owns requirements, architecture, decomposition, scheduling,
 integration, evaluation, and final judgment. It directly dispatches a fresh
-owner for each Ticket; that owner retains context across dependency-ordered
-Slices, then a fresh verifier checks all Ticket scenarios. Final Plan
+owner for each Ticket; that owner retains context across the Ticket, then a
+fresh verifier checks all Ticket scenarios. Final Plan
 acceptance normally uses a separate fresh verifier. One new Sol/high verifier
 may cover both gates only for a one-Ticket Plan with identical full scope,
 artifact/version, configuration, and deployment surface. Optional
@@ -103,7 +102,7 @@ execution contract, capacity, and scheduling.
 
 The main agent dispatches fresh Ticket owners and independent verifiers directly;
 all workers are leaves and never spawn agents. Owners retain context across
-Slices and local repairs. Dependent Tickets may be prepared read-only, while
+the Ticket and local repairs. Dependent Tickets may be prepared read-only, while
 writes wait for prerequisite acceptance. Optional module helpers require
 independent modules, fixed interfaces, non-overlapping ownership, and isolated
 workspaces or returned patches. Admission uses actual host capacity: main plus
@@ -129,7 +128,7 @@ but no repository change is requested yet.
 ```text
 Requirement
   -> plan-workflow
-  -> Plan / Tickets / Slices
+  -> Plan / Tickets
   -> stop
 ```
 
@@ -141,13 +140,13 @@ Plan how to add multi-tenant routing. Do not modify code yet.
 
 ### 2. Implement only from an existing plan
 
-Use when executable Tickets or Slices already exist and the request is only to
+Use when executable Tickets already exist and the request is only to
 make the repository changes.
 
 ```text
-Existing Ticket / Slices
+Existing Ticket
   -> develop-workflow: main dispatches fresh Ticket owner
-  -> same owner implements dependency-ready Slices + local validation
+  -> same owner implements the Ticket + local validation
   -> Development Complete
   -> stop
 ```
@@ -161,7 +160,7 @@ Use for a local feature or bug-fix cycle where implementation and evidence are
 needed, but no commit or PR is requested.
 
 ```text
-main -> fresh Ticket owner across Slices
+main -> fresh Ticket owner across the Ticket
   -> verify-workflow: separate fresh verifier for all Ticket scenarios
   -> PASS | FAIL | BLOCKED
   -> stop
@@ -260,7 +259,7 @@ adaptive:
 ```text
 ready Tickets
   -> main dispatches fresh Ticket owners within actual host capacity
-  -> each owner implements its Slices and reports Development Complete
+  -> each owner implements its Ticket and reports Development Complete
   -> integrate results
   -> recompute ready set
   -> continue current stage
@@ -272,8 +271,8 @@ For a Plan with independent Tickets and disjoint write/test-state ownership:
 
 ```text
 Main agent
-  +-- fresh Ticket owner A -> dependency-ordered Slices -> fresh verifier A
-  +-- fresh Ticket owner B -> dependency-ordered Slices -> fresh verifier B
+  +-- fresh Ticket owner A -> Ticket implementation -> fresh verifier A
+  +-- fresh Ticket owner B -> Ticket implementation -> fresh verifier B
   -> integrate evidence and decide gates
   -> final Plan acceptance: separate fresh verifier unless exact-scope coalescing applies
 ```
@@ -315,9 +314,9 @@ Detailed source: [`components.puml`](docs/architecture/diagrams/components.puml)
 
 ### Work decomposition
 
-![Plan Ticket Slice decomposition model](docs/diagrams/plan-ticket-slice.svg)
+![Requirement Plan Ticket model](docs/diagrams/plan-ticket.svg)
 
-Source: [`plan-ticket-slice.puml`](docs/diagrams/plan-ticket-slice.puml)
+Source: [`plan-ticket.puml`](docs/diagrams/plan-ticket.puml)
 
 ### Verification
 
@@ -327,7 +326,7 @@ Source: [`test-quality-gate.puml`](docs/diagrams/test-quality-gate.puml) ·
 Detailed test flow: [`test-workflow-flow.puml`](docs/skills/test-workflow/diagrams/test-workflow-flow.puml)
 
 See the [architecture overview](docs/architecture/overview.md) for the detailed
-lifecycle, Ticket/Slice loops, documentation governance, publication boundaries,
+lifecycle, Ticket execution, documentation governance, publication boundaries,
 state recovery, and installation flow.
 
 ## Install from this repository
@@ -370,11 +369,10 @@ Restart the host after installation so it discovers the new skill directories.
 - `data-document-redaction`
 - `github-push-when-ready`
 
-`plan-to-ticket` persists one Plan and its child Tickets to GitHub Issues when
-the work is complex, must survive a session boundary, or the user asks for a
-persisted plan. For a persisted plan, GitHub Issues are the sole durable
+`plan-to-ticket` persists one Plan and its child Tickets to GitHub Issues for
+every requirement before branch work. GitHub Issues are the sole durable
 Plan/Ticket authority; chat output and `Repo_Current_State.md` provide links and
-recovery context, not a parallel backlog. A Plan may contain one or more
+recovery context, not a parallel backlog. A Plan has one or more behavior
 Tickets, and its branch/PR/merge gate applies once per Plan, never once per
 Ticket.
 

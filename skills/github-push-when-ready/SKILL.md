@@ -71,26 +71,27 @@ and `push.default`; block if the target is default or indeterminate. A
 pull-tracking upstream may intentionally belong to another repository. Unknown
 default requires manual review. Never force-push without an explicit user request.
 
-Use one PR per declared delivery batch. A Plan may explicitly include multiple
-independent functionalities, and they may share one commit and PR; a single
-functionality commit remains valid. Keep implementation, tests and documentation
-within that scope together. Do not require separate commits merely because
-functionalities are independent, or classify planned batch members as unrelated.
-Do not combine different existing Plans or out-of-Plan user edits merely because
-they share a session. Plan metadata, when present, must validate; its absence
-permits normal publication—a persisted Plan is a planning decision, not a
-publication prerequisite.
+Use one PR per Plan, and one Plan per user requirement. A complex requirement may
+include multiple Tickets for distinct behavioral, dependency, or acceptance
+boundaries; they share that Plan's commit/PR delivery scope. Never combine
+independent requirements into one Plan or combine different Plans merely because
+they share a session. Keep implementation, tests and documentation within the
+Plan scope together. Before any commit, push, or PR creation/update, require the
+persisted Plan and its required Ticket Issue metadata and validate that they
+match the publication scope. Missing or invalid Plan/Ticket metadata blocks
+publication.
 
-Publish only after every Ticket's acceptance, relevant batch checks, and the
+Publish only after every Ticket's acceptance, relevant Plan checks, and the
 single-verifier final Plan/branch/PR acceptance gate pass. Any failure blocks the
-whole batch. Review each diff and stage only the batch's verified functionality,
+Plan. Review each diff and stage only the Plan's verified requirement scope,
 tests and documentation paths/hunks. Prefer explicit `--pathspec`; never use
-`--allow-stage-all` when it would include out-of-batch or unverified work.
+`--allow-stage-all` when it would include out-of-Plan or unverified work.
 Preserve user changes outside the Plan; mixed files require selective hunk
-staging. For new user-requested functionality before merge, follow `plan-to-ticket`'s
-scope-update contract before edits; retain IDs, branch/base, existing PR and
-evidence. An open PR remains the same PR, but the expanded Plan returns to
-`in_progress`; invalidate impacted acceptance/batch readiness and revalidate
+staging. For supplementary work to the same requirement before merge, follow
+`plan-to-ticket`'s scope-update contract before edits; retain IDs, branch/base,
+existing PR and evidence. An independent requirement gets a new Plan. An open PR
+for same-requirement expanded scope remains the same PR, but the Plan returns to
+`in_progress`; invalidate impacted acceptance/readiness and revalidate
 before authorized publication/update. Do not report that PR ready for expanded
 scope until the final single-verifier gate passes for the expanded scope. After
 merge, functionality starts a new Plan.
@@ -98,12 +99,12 @@ merge, functionality starts a new Plan.
 Use clear messages tied to the completed task boundary. Every new/unpublished
 commit subject must follow Conventional Commits 1.0.0:
 `<type>[optional scope][!]: <description>`; lowercase type, non-empty description
-and non-empty scope when present. For a multi-function commit, the subject
-summarizes the batch and the body lists each functionality, its Ticket ID, the
-behavior changes and validation results. Single-function commits remain valid;
+and non-empty scope when present. For a multi-Ticket requirement commit, the
+subject summarizes the requirement and the body lists each Ticket ID, behavior
+changes and validation results. Single-Ticket commits remain valid;
 specification-compliant bodies/footers are allowed. The PR description covers
-all included functionalities/Tickets, behavior changes, per-Ticket evidence and
-batch integration/regression results.
+the requirement, included Tickets, behavior changes, per-Ticket evidence and
+Plan integration/regression results.
 Before each push, verify all unpublished commit subjects comply; guarded
 scripts do this automatically.
 

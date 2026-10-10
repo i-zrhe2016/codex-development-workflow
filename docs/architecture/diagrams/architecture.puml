@@ -9,11 +9,11 @@ title Codex Development Workflow — Explicitly Authorized Full Delivery
 state "Requirement" as Requirement
 state "plan-workflow\nUnderstand · Design · Decompose" as Understand
 state "Plan" as Plan
-state "Persist Plan + Tickets + Slices\nGitHub Issues (when required)" as Issues
+state "Persist Plan + Ticket(s)\nGitHub Issues for every requirement" as Issues
 state "Create Plan branch" as Branch
 state "develop-workflow\nImplement all Plan Tickets" as Implement
 state "verify-workflow\nPer-Ticket Test Quality Gate" as Test
-state "Final Plan/branch/PR acceptance\n1 fresh independent verifier" as FinalVerify
+state "Final Plan/branch/PR acceptance\nExact-scope one-Ticket coalescing; separate verifier for multi-Ticket Plans" as FinalVerify
 state "Documentation impact check" as Docs
 state "Update State / Docs\nif represented state changed" as State
 state "Redaction scan\nwhen applicable" as Redact
@@ -28,7 +28,7 @@ state "Report improvement for user decision" as Improve
 [*] --> Requirement
 Requirement --> Understand
 Understand --> Plan
-Plan --> Issues : persist when required
+Plan --> Issues : persist requirement
 Issues --> Branch
 Branch --> Implement
 Implement --> Test

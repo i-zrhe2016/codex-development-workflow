@@ -9,16 +9,16 @@ title Persisted Plan / Ticket Lifecycle — Fresh Workers, Shared Plan Branch
 state "Plan + child Ticket Issues persisted" as persisted
 state "Shared Plan branch active" as branch
 state "Main selects dependency-ready Ticket\nCheck dependencies + isolated ownership" as select
-state "Fresh Ticket owner\nRetains context across dependency-ordered Slices" as ticket_owner
-state "Owner implements ready Slice\nLocal checks; integrate before dependents" as implement
+state "Fresh Ticket owner\nRetains context across the Ticket" as ticket_owner
+state "Owner implements ready Ticket\nLocal checks; integrate before dependents" as implement
 state "Optional independent-module helpers\nFixed interfaces + isolated workspaces" as module_helpers
 state "Development Complete" as developed
 state "Separate fresh Sol/high Ticket verifier\nAll scenarios; read-only" as verify
 state "Main coordinator judges Ticket evidence" as accepted
 state "More Tickets?" as more
 state "Local verified checkpoint\nNormal stopping point; Issues stay open" as local
-state "Append user-requested Ticket before merge\nUpdate Plan scope/index/dependencies/validation" as expand
-state "Final Plan acceptance\nFresh whole-Plan verifier unless exact-scope coalescing applies" as final_verify
+state "Add same-requirement scope before merge\nUpdate Plan scope/index/dependencies/validation" as expand
+state "Final Plan acceptance\nSeparate fresh verifier unless one-Ticket exact-scope coalescing applies" as final_verify
 state "Plan integration + Test Quality Gate\nMain coordinator decides" as gate
 state "Authorized commit / push / Plan PR actions\nStop at selected boundary" as publish
 state "Merge Plan PR once" as merge
@@ -46,7 +46,7 @@ accepted -down-> more : Ticket evidence accepted
 more -[norank]-> select : yes; fresh owner and verifier for next Ticket
 more -down-> local : no
 local --> [*] : stop locally; not BLOCKED
-local -[norank]-> expand : new user-requested functionality
+local -[norank]-> expand : same-requirement supplement
 publish -[norank]-> expand
 expand -[norank]-> select : same branch/PR; Plan in_progress\nretain evidence; invalidate impacted readiness
 local -down-> final_verify : publication authorized for current scope
@@ -58,6 +58,13 @@ publish -down-> merge : current PR ready + merge authorized
 merge -down-> cleanup
 cleanup -down-> done
 done --> [*] : later functionality uses a new Plan
+
+note right of expand
+Same-requirement supplements update the original Ticket;
+add a Ticket only for a distinct behavior boundary.
+Independent requirements always start a new Plan,
+even while another Plan is unmerged.
+end note
 
 note right of verify
 The main agent directly dispatches fresh owners and verifiers.

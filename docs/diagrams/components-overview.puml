@@ -18,7 +18,7 @@ package "Stage workflows" {
 }
 
 package "Capability skills" {
-  component "plan-to-ticket\nPlan / Ticket / Slice" as planning
+  component "plan-to-ticket\nRequirement / Plan / Ticket" as planning
   component "test-workflow\nTest Quality Gate" as testing
   component "repo-documentation\nCanonical docs" as documentation
   component "github-push-when-ready\nPublication readiness" as publication

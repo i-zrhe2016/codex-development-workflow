@@ -1,160 +1,137 @@
 ---
 name: plan-to-ticket
-description: "Decompose feature, bug-fix, refactor, docs/config, dependency, test, CI/CD or other requirements into one Plan, behavior Tickets and dependency-ordered Slices. Persist GitHub Plan/Ticket Issues for complex, resumable, or explicitly persisted work; include boundaries, acceptance, context, test strategy/level/cases, and validation."
+description: "Define one requirement-level Plan and its Ticket execution contracts, then persist GitHub Issues before branch edits. Use multiple Tickets only for genuine behavior, dependency, or acceptance boundaries."
 ---
 
 # Plan to Ticket
 
-Own decomposition and Issue persistence, not product/repository implementation.
-A **Plan** is a delivery batch with explicitly listed scope, which may include
-one or multiple independent functionalities; a **Ticket** is a reviewable
-behavior/capability within it; a **Slice** is an independently deliverable,
-verifiable execution unit inside a Ticket. Every Plan has at least one Ticket
-and every Ticket at least one Slice. These terms are not interchangeable.
+Own requirement decomposition and Issue persistence, not product/repository
+implementation. Every independent user requirement receives one Plan Issue before
+branch edits. An ordinary requirement has one Ticket; a complex requirement may
+have multiple Tickets only when distinct behavioral, dependency, or acceptance
+boundaries make the work independently understandable and verifiable. A Ticket
+is the execution and acceptance unit. Do not create per-step IDs, statuses,
+Issues, or acceptance gates.
 
-When the user controls the overall flow, present decomposition choices,
-dependency order, risks and validation options, but do not select scope,
-persistence, branch strategy, publication boundaries or delivery timing for the
-user. Persist only explicit user decisions or the minimum mechanics required by
-an already approved workflow.
+When the user controls the overall flow, present scope, dependency order, risks
+and validation options, but do not choose unapproved scope or delivery actions.
+Persist the user's stated requirement and the minimum contracts needed to execute
+it; every requirement is persisted regardless of size or expected session length.
 
 ## Scope and sizing
 
-Internally determine the desired outcome, necessary foundations, behavior
-boundaries, Ticket dependencies, then Slice dependencies/ownership, scope
-exclusions, observable acceptance, concrete cases, and Slice/final validation.
-Do not expose internal reasoning.
+Determine the requirement's desired outcome, necessary foundations, behavior
+boundaries, Ticket dependencies, scope exclusions, observable acceptance,
+concrete cases, and Ticket/final validation.
 
-- Use the smallest useful decomposition. One behavior may be one Ticket/one
-  Slice; add Tickets only when reduced implementation complexity outweighs
-  planning overhead. Multiple planned functionalities may share one Plan while
-  retaining separate behavior Tickets and acceptance boundaries. Do not merge
-  different existing Plans merely because they share a session.
-- Split Tickets for independent behaviors, unrelated subsystems/architecture
-  decisions or verification targets, independently completable parts, or parts
-  whose failure makes the rest ambiguous. Each must be understandable,
-  implementable and verifiable without mid-feature re-planning. Merge mechanical
-  file/class/method/import steps back into behavior Tickets.
+- Use one Ticket for an ordinary requirement. Use multiple Tickets for a complex
+  requirement only when they represent distinct behaviors, real dependencies,
+  or acceptance boundaries. Do not create Tickets for file/class/method/import
+  steps, implementation phases, or test activities that belong with behavior.
 - Keep tests with their behavior; a separate test Ticket is justified only when
-  test infrastructure is the deliverable. Avoid unrelated refactors, upgrades,
-  formatting, speculative abstractions and future features/edge-case Tickets.
-- Give each Slice one independently deliverable outcome. Keep its related
-  implementation and behavior tests together; split work only when a later
-  outcome has a real dependency on an earlier Slice, not merely by file or
-  implementation phase.
-- Establish Ticket boundaries/dependencies before Slices. Slices stay nested in
-  their Ticket: no separate Issue, branch, PR, merge or delivery metadata.
-- Use explicit Ticket/Slice dependency IDs and real dependencies only. Validate
-  prerequisites on the shared Plan branch before dependents; no Ticket-level
-  merge is required. Do not start blocked Tickets just to fill metadata.
-- The main agent directly dispatches one fresh implementation owner per Ticket,
-  including docs/config/test and one-Slice Tickets. The owner retains context
-  across dependency-ordered Slices and local repairs and never spawns agents.
-  The main agent separately dispatches fresh independent verifiers and repair
-  replacements. Verifiers are leaves. Optional module assistants require fixed
-  interfaces, non-overlapping ownership, isolated workspaces and returned
-  patches. Do not split a Slice or verification scope across workers, or reuse
-  agents across Tickets or roles. Final Plan acceptance uses a separate fresh
-  verifier except one NEW verifier may cover both gates for a one-Ticket Plan
-  with exactly matching full scope, artifact/version, configuration and
-  deployment surface. Main-agent capacity, read-only dependency prefetch and
-  direct-dispatch queuing follow `AGENTS.md` and workflow entrypoints. Planning
-  does not dispatch workers. Sequence
-  dependent/overlapping files, interfaces, schemas, migrations, configuration
-  and shared test state.
-- If implementation reveals a materially different design, new subsystem or
-  unrelated behavior, stop expanding the Ticket, preserve valid work and
-  re-plan/update dependencies. Add a Ticket only after explicitly updating the
-  batch's planned scope. New user-requested functionality follows the scope-update
-  contract below; after merge it belongs to a new Plan. Do not silently widen scope.
+  test infrastructure is itself the requirement. Avoid unrelated refactors,
+  upgrades, formatting, speculative abstractions and future work.
+- Record dependencies between Tickets only when real. A dependent Ticket may
+  prepare read-only, but delivery edits wait for its prerequisite's independent
+  PASS. All Tickets share the Plan branch; no Ticket branches or merges.
+- New independent requirements always start new Plans, even if another Plan is
+  unmerged or shares a branch, files, or session. Supplementary work for the
+  same requirement updates its existing Ticket. Add a Ticket only if the new
+  work creates a distinct behavioral, dependency, or acceptance boundary.
+- If implementation reveals a materially different design or an independent
+  requirement, stop expansion and persist the necessary scope/Plan changes before
+  further edits. Preserve valid work and prior evidence.
 
-## Updating an unmerged Plan
+The main agent directly dispatches one fresh implementation owner per Ticket,
+including docs/config/test work. The owner retains context across the Ticket and
+local repairs and never spawns agents. The main agent separately dispatches
+fresh independent verifiers and repair replacements. Verifiers are read-only
+except caches and temporary evidence. Optional module assistants require fixed
+interfaces, non-overlapping ownership, isolated workspaces and returned patches.
+Do not split Ticket implementation or acceptance verification across workers.
+A separate final Plan verifier is required except one NEW verifier may satisfy
+both Ticket and final gates for a one-Ticket Plan when full scope,
+artifact/version, configuration and deployment surface match exactly. Main-agent
+capacity and dispatch routing follow `AGENTS.md` and the root workflow skill.
+Planning does not dispatch workers. Serialize dependent or overlapping files,
+interfaces, schemas, migrations, configuration and shared test state.
 
-New user-requested functionality joins the same unmerged Plan as a new behavior
-Ticket, whether or not its PR already exists. Before implementation edits:
+## Updating scope
 
-1. Resolve the current Plan and confirm it has not merged; reuse its stable ID,
-   Issue, branch/base and existing PR. After verified merge, create a new Plan
-   with a new branch and eventual PR; never reopen the delivered Plan.
-2. Search exact markers and allocate new Ticket/Slice IDs under the naming rules.
-   Preserve existing Tickets and evidence; never duplicate a Plan or Ticket.
-3. Update the Plan goal, explicit functionality scope, linked Ticket index,
-   dependency order and batch validation; create the new Ticket Issue with its
-   scope/dependencies/acceptance/Slices/validation and update impacted contracts.
-   Verify every required write and index link before any new edits.
-4. Set the expanded Plan to `in_progress`. If a PR exists, retain its URL and
-   record that it is not ready for expanded scope. Preserve prior accepted and
-   failed evidence, identify impacted acceptance and invalidate affected
-   readiness; revalidate impacted Tickets and batch integration/regression before
-   user-authorized publication or PR update. No per-feature PR or automatic merge.
-5. Keep publication authority separate: prior authorization persists only for
-   its stated batch/actions. Adding feature scope authorizes its requested work,
-   not commit, push, PR update or merge of that scope. The user elects those
-   actions and timing; preserve the same one-Plan branch/PR/merge if delivered.
+For supplementary work within an unmerged requirement:
+
+1. Confirm the Plan remains unmerged; preserve its stable ID, Issue, branch/base,
+   existing PR and accepted evidence.
+2. Update the existing Ticket scope. Add a behavior Ticket only if the new work
+   has a distinct behavioral, dependency, or acceptance boundary.
+3. Update the Plan goal/scope, Ticket index, dependencies and validation; update
+   every affected Ticket Issue and preserve prior passing and failing evidence.
+4. Verify all Issue changes before editing. Set the Plan `in_progress`; if a PR
+   exists, retain its URL and require impacted acceptance and final Plan
+   verification before an authorized update.
+5. Keep publication authority separate. Scope authorization permits the
+   requested implementation, not commit, push, PR update or merge.
+
+An independent requirement always receives a new Plan, including before the
+previous Plan merges. After merge, the next requirement also starts a new Plan.
 
 Local verified functionality may stop with Plan/Tickets open and checkpointed.
-Keep `in_progress` before review, or existing `in_review` for unchanged review
-scope; awaiting a human publication decision is not `blocked`. Mark final
-`done` and close only after verified merge.
+Keep `in_progress` before review or `in_review` for unchanged review scope.
+Awaiting a publication decision is not `blocked`. Mark `done` and close only
+after verified merge.
 
 ## Repository context and validation
 
-Call tools only when repository context is explicitly available and needed.
-When available, respect `AGENTS.md`, `docs/Repo_Current_State.md`, directly
-relevant architecture/design documents, conventions and constraints; none of
-these files is required. Verify important documentation claims against code.
-Reuse existing patterns, abstractions, frameworks, tests, fixtures and commands.
-Find commands in package scripts, task runners, CI or test docs; never invent
-commands, framework/fixture details or implementation assumptions. Without
-context, remain implementation-neutral and describe expected validation layers.
+Use `AGENTS.md`, `docs/Repo_Current_State.md`, affected code and directly
+relevant architecture/design documents when available. Verify important claims
+against code. Reuse project patterns, tests, fixtures and commands. Find
+commands in package scripts, task runners, CI or test docs; do not invent them.
+Without repository context, remain implementation-neutral and state expected
+validation layers.
 
-For each Ticket, supply a behavioral, preferably implementation-neutral
-Function Checklist mapping important capabilities to acceptance/test evidence.
-Acceptance states **what must be true**, using observable outcomes rather than
-vague quality claims; cases state **how to exercise it**. Prefer 3–7 high-value
-cases, covering applicable success, boundary/failure, state transition, bug
-regression, integration boundary and browser-visible interaction.
-
-Specify the smallest reliable Slice/Ticket/final-Plan validation. Use known
-commands, otherwise expected evidence/layer; do not default to full suites or
-browser E2E. Let downstream testing choose its mode; do not force RED/GREEN for
-trivial or mechanically verifiable changes.
+Each Ticket includes a behavioral Function Checklist mapping required
+capabilities to acceptance and test evidence. Acceptance states observable
+outcomes; cases state how to exercise them. Prefer a concise set of high-value
+success, boundary/failure, state-transition, regression, integration, and
+browser-visible cases when applicable. Specify the smallest reliable
+Ticket/final-Plan validation. Downstream testing chooses level and breadth;
+planning does not force RED/GREEN for trivial or mechanically verifiable work.
 
 ## Persistence and delivery contract
 
-Persist when work is complex, crosses modules, has internal dependencies, must
-survive a session/resume by another agent, or the user requests persistence.
-Small single-session work stays inline without Issues.
+Persist one Plan Issue and its child Ticket Issue or Issues for every user
+requirement before creating a branch or editing repository files. GitHub Issues
+are authoritative. Chat may link to them but is not a substitute. Do not create
+local Markdown or `docs/plans/` / `docs/tickets/` mirrors.
 
-A persisted Plan owns **one Plan Issue, one child Issue per Ticket, one
-branch, tests and, when delivery is elected, applicable redaction, commits/push,
-one PR and one merge** for
-all Tickets/Slices/documents. GitHub Issues are authoritative; chat is only a
-linked convenience copy. No chat-only completion or local Markdown,
-`docs/plans/`, `docs/tickets/` mirror/fallback is allowed.
+A Plan owns one requirement, one Issue, one branch, and when delivery is
+authorized, one PR and one merge. Each Ticket owns one child Issue and its
+complete execution/acceptance contract, tests and docs. Every Ticket shares the
+Plan branch/base; Plan and branch are one-to-one. Plan Issue records the overall
+goal, scope, Ticket index, Ticket dependency order, relevant integration /
+regression validation, and one-merge completion rule. Do not copy mutable Ticket
+acceptance or execution evidence into the Plan. Ticket Issue owns its goal,
+scope, exclusions, dependencies, current status, acceptance, relevant context,
+Function Checklist, test strategy/level/cases and validation command.
 
 Use the available GitHub Issues connector and current repository remote's
 `owner/name`. Missing target, connector, authentication or write permission
 blocks persistence; do not use an unapproved ad-hoc API client. All required
-initial Issues must exist before creating the Plan branch; appended Tickets
-and Plan updates must persist before their implementation edits.
+Issues must exist before branch creation. Any same-requirement scope update and
+required Issue edits must persist before further implementation edits.
 
 ### Naming and idempotency
 
-- Plan ID: repository-unique stable lowercase kebab-case slug, recorded only in
-  its `codex-plan-id` marker. Title: exactly `[PLAN] <short plan title>`.
-- Ticket ID: `T` plus exactly four zero-padded decimal digits. Allocate in
-  repository scope by scanning **open and closed Issue bodies** for exact
-  `codex-ticket-id` markers; choose above every valid existing ID, never reuse.
-  Historical duplicate IDs remain legacy records; do not renumber them.
-  Title: exactly `[T0016] <short behavior/capability title>` using the real ID.
-- Slice ID: `S` plus parent Ticket's four digits and one-based ordinal,
-  e.g. `S0016.1`. GitHub Issue numbers are link targets, not Plan/Ticket IDs.
-- Before any creation, search the exact Plan marker and each exact Ticket
-  marker. Reuse/update the one match and normalize its title while retaining
-  its stable marker/ID. Resolve legacy duplicates by exact marker and Plan
-  association; multiple remaining candidates require resolution, never guessing
-  or duplicate creation.
+- Plan ID: repository-unique stable lowercase kebab-case slug in its
+  `codex-plan-id` marker. Title: `[PLAN] <short plan title>`.
+- Ticket ID: `T` plus exactly four zero-padded decimal digits. Scan open and
+  closed Issue bodies for exact `codex-ticket-id` markers and allocate above
+  every valid ID; never reuse IDs. Historical duplicates remain legacy records
+  and are resolved by exact marker and Plan association. Title:
+  `[T0016] <short behavior/capability title>`.
+- Before creation, search exact Plan and Ticket markers. Reuse/update the unique
+  matching Issues and normalize titles while retaining stable IDs. Resolve
+  duplicate matches; never guess or create a duplicate.
 
 ```text
 <!-- codex-plan-id: <stable-plan-slug> -->
@@ -173,12 +150,7 @@ PR: null
 Tickets: [T0001]
 ```
 
-It also contains its marker, overall goal/milestones, explicit functionality
-scope, linked Ticket index, Ticket dependency order, batch integration/regression
-validation and one-merge completion rule. Do not duplicate mutable Ticket
-acceptance or Slice progress there.
-
-Every Ticket contains its stable marker and begins with actual execution metadata:
+Each Ticket begins with:
 
 ```yaml
 Plan: <canonical Plan Issue URL>
@@ -186,99 +158,82 @@ Status: planned
 Dependencies: []
 ```
 
-Its body owns its goal, boundaries, dependencies, current status/acceptance and
-nested Slice plan, using the structure below. Comments may hold append-only
-progress evidence; they never replace structured body fields. Keep Plan
-branch/base/index/PR and Ticket dependency/acceptance/Slice bodies current.
-Child Tickets hold Plan link, status, dependencies, acceptance and Slice
-metadata, never independent branch/base/PR metadata.
+Allowed statuses are `planned`, `in_progress`, `blocked`, `in_review`, and
+`done`. Keep Plan and Tickets open until verified merge. Issue comments may hold
+append-only progress evidence but do not replace structured body fields. Child
+Tickets do not carry independent branch/base/PR metadata.
 
 ### Persistence sequence and failures
 
-1. Resolve target repository and base (default branch unless explicitly
-   established otherwise); generate the Plan and dependency-ordered Tickets in
-   memory.
-2. Search exact markers, check ID collisions and resolve/reuse existing Issues.
-3. Create/update the Plan with delivery metadata and Ticket index.
-4. Create/update every initial Ticket **sequentially**, preserving metadata and
-   linking Plan/dependencies to canonical Issue URLs.
-5. Verify the Plan index links every child. Return Plan/Ticket links and allow
-   the single branch to start only after **all required writes succeed**.
+1. Resolve repository, default base, requirement scope and Ticket boundaries.
+2. Search exact markers, check IDs, and resolve existing matching Issues.
+3. Create/update the Plan with metadata, requirement scope, and Ticket index.
+4. Create/update each Ticket Issue with complete execution and acceptance
+   contract, Plan URL, dependencies and validation.
+5. Verify the Plan index links every required child. Start the Plan branch only
+   after every required Issue write succeeds.
 
-If any required read/write fails, report the failed operation and created Issue
-URLs; mark affected Issues `blocked` if still possible. Do not claim persistence
-or implementation readiness, and never compensate with a local mirror.
+If a required read/write fails, report the failed operation and created Issue
+URLs; mark affected Issues `blocked` when possible. Do not claim persistence or
+implementation readiness and never compensate with a local mirror.
 
 ### Branch, status and handoff
 
-Assign the exact `Branch` and `Base` before branch work/first edit, using
-`<type>/<plan-id>-<short-description>`; verify them on resume. Plan Issue and
-branch are one-to-one: never share a branch across Plans or create Ticket/Slice
-branches. Keep every Ticket/Slice/test/document on that branch.
-
-Allowed statuses: `planned`, `in_progress`, `blocked`, `in_review`, `done`.
-All except `done` remain open. Update Plan and child Tickets as work progresses:
+Record exact `Branch` and `Base` before branch work, using
+`<type>/<plan-id>-<short-description>`, and verify them on resume. Do not share
+a branch across Plans or create Ticket branches. Keep every Ticket, test and
+document on the Plan branch. Prerequisites are validated on that branch; no
+Ticket-level merge is required.
 
 | Boundary | Update |
 |---|---|
-| Branch work starts | Plan `Status: in_progress`; exact Branch/Base recorded. |
-| Blocking dependency/environment | Affected Plan/Ticket `Status: blocked`. |
-| Local verification passes; publication awaits user | Valid stopping point; keep Issues open with accepted evidence, not `blocked`. |
-| New functionality appended before merge | Update goal/scope/index/dependencies/validation; Plan `in_progress`, retain existing `PR`; affected readiness requires revalidation. |
-| One Plan PR opens or expanded PR is updated with authorization | Head/base match Branch/Base and current batch checks pass; Plan `Status: in_review`, `PR` canonical URL or number; Tickets may enter `in_review`. |
-| PR verified merged | Plan and **all** children `done` and closed; retain merged PR on Plan. |
+| Branch work starts | Plan `in_progress`; exact Branch/Base recorded. |
+| Blocking dependency/environment | Affected Plan/Ticket `blocked`. |
+| Local verification passes; publication awaits user | Keep Issues open with accepted evidence, not `blocked`. |
+| Same-requirement scope added before merge | Update Plan/Ticket scope, index, dependencies and validation; Plan `in_progress`; retain PR; revalidate affected work. |
+| One Plan PR opens or is updated with authorization | Head/base match Branch/Base and current requirement checks pass; Plan `in_review`, record PR URL; Tickets may enter `in_review`. |
+| PR verified merged | Plan and all child Tickets `done` and closed; retain merged PR on Plan. |
 
-Keep `PR: null` until the PR exists and keep branch/base/PR references current.
-Branch/PR existence alone never means done. Only after every Ticket's acceptance
-and the batch's relevant integration/regression checks pass is the Plan ready
-for its one PR; any failure blocks batch publication. The batch may use one
-commit for multiple functionalities under `github-push-when-ready`'s staging and
-message rules. The parent workflow stops at the requested local or publication
-boundary; commit-only/push-only never forces a PR. Human-authorized delivery
-follows Test/Redaction/Commit/Push/PR and a separately authorized merge (or
-explicit full delivery scope). When repository
-state is updated, `docs/Repo_Current_State.md` holds a compact active-Issue
-pointer, never a copied Plan/backlog.
+Keep `PR: null` until a PR exists. Branch/PR existence alone never means done.
+The Plan is ready for its one PR only after every Ticket acceptance and relevant
+Plan-level integration/regression checks pass. Any failure blocks publication.
+Commit-only and push-only stop at their authorized boundaries. Human-authorized
+delivery follows verification, redaction, commit/push/PR, then separately
+authorized merge unless full delivery explicitly includes merge. When repository
+state changes, `docs/Repo_Current_State.md` holds a compact active-Issue pointer,
+not a copied Plan/backlog.
 
 ## Output structure
 
-Use `# Plan` and `# Tickets`; nest Slices under their parent Ticket. For
-persisted work include canonical Plan and every child Issue URL, current
-metadata above, actual branch/base, milestones and linked Ticket index. Slices
-inherit the Ticket Issue and Plan branch/base. For inline work omit nonexistent
-Issue links/delivery metadata; keep the execution contracts.
+Use `# Plan` and `# Tickets`. For persisted work, include canonical Plan and
+Ticket Issue URLs, metadata, actual branch/base, milestones and Ticket index.
+Before persistence, return only scope/options discussion, not an
+implementation-ready contract; persistence remains required before branch edits.
 
-Each Ticket uses these fields (repeat for every Ticket):
+Each Ticket uses these fields:
 
 ```text
 ### T0001 - <behavior/capability title>
 Issue title: [T0001] <behavior/capability title>
-Issue: <canonical child Issue URL, when persisted>
-<execution metadata above, when persisted>
+Issue: <canonical child Issue URL>
+Plan: <canonical Plan Issue URL>
+Status: planned
+Dependencies: <explicit Ticket IDs or None>
 Ticket Goal: <one concrete outcome>
-Ticket Dependencies: <explicit IDs or None>
 Ticket Scope: <allowed components/behavior>
 Ticket Out of scope: <unrelated/future work>
 Function Checklist: <required behaviors as checkboxes>
 Requirements: <concrete requirements and important edge cases>
 Non-goals: <explicit exclusions>
-Ticket Acceptance Criteria: <observable Ticket results>
-Slices:
-#### S0001.1 - <execution-ready title>
-Goal: <one outcome inside T0001>
-Scope: <owned files/interfaces/behavior>
-Out of scope: <future/unrelated behavior>
-Dependencies: <earlier Slice IDs in T0001 or None>
-Acceptance Criteria: <observable Slice results>
-Test Cases: <concrete success/failure/boundary cases>
+Ticket Acceptance Criteria: <observable results>
 Relevant Context / Files: <needed files/interfaces/state>
-Test Strategy: <justified test-first/focused-after/static/browser/etc.>
+Test Strategy: <justified focused-after, RED/GREEN, static, integration, browser>
 Test Level: <minimal / focused / regression / full>
+Test Cases: <concrete success/failure/boundary cases>
 Validation Command: <smallest known commands, otherwise expected evidence>
 ```
 
-On successful persistence, return **only** Plan and Tickets sections with URLs
-and current metadata: no commentary, explanations, code or implementation
-after Tickets. On required Issue read/write failure return **only** a concise
-blocked report naming the operation and any created URLs, never a chat-only
-plan or readiness claim.
+On successful persistence, return `# Plan` and `# Tickets` with URLs and current
+metadata. On required Issue read/write failure, return a concise blocked report
+naming the operation and any created URLs; do not return a chat-only plan or
+readiness claim.

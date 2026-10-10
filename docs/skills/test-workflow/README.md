@@ -51,7 +51,7 @@ Overview source: [`test-quality-gate.puml`](../../diagrams/test-quality-gate.pum
 | Level | 用途 |
 |---|---|
 | `minimal` | 微小、文档、配置、样式、依赖、typo 或简单重构。 |
-| `focused` | 默认；直接覆盖当前 Slice 验收标准的最小检查。 |
+| `focused` | 默认；直接覆盖当前 Ticket 验收标准的最小检查。 |
 | `regression` | 缺陷修复、跨模块变更或已有回归风险。 |
 | `full` | 高风险、发布门禁或明确要求完整套件。 |
 
@@ -62,7 +62,7 @@ Level 只控制验证广度，不直接决定 PASS。只有所有 mandatory risk
 ## 推荐执行顺序
 
 ```text
-Requirement / Slice
+Requirement / Ticket
         |
         v
 Acceptance + Test Cases
@@ -112,7 +112,7 @@ Test Quality Gate
 ## 维护约定
 
 - 优先复用项目已有测试框架、fixture、helper 和命令。
-- 每个 Slice 的内循环保持 focused；多个 Slice 完成后再运行必要的集成/回归测试。
+- 每个 Ticket 的本地反馈保持 focused；完成后再运行必要的集成/回归测试。
 - Coverage 只作为诊断信号，不能替代 assertion quality 或 acceptance evidence。
 - Failure/error paths 必须验证调用方看到的格式、结构、语义和可操作性；状态或异常发生本身不够。
 - AuthN/AuthZ 必须在相关时作为 mandatory dimension：分开验证身份/session/cookie-token 和权限/ownership/fail-closed，并确认拒绝操作没有受保护副作用。

@@ -6,7 +6,7 @@
 
 ## 目标
 
-`test-workflow` 面向后端、前端、API、库和 CLI 等仓库变更，从需求、Slice 功能
+`test-workflow` 面向后端、前端、API、库和 CLI 等仓库变更，从需求、Ticket 功能
 清单、验收标准和现有契约中提炼最小高价值测试集，并按成本从低到高逐层
 验证。浏览器验证只在行为对用户可见或验收明确要求端到端流程时启用。
 公共边界（API、CLI、UI、文件/Schema、进程、服务或公开库接口）上的成功、
@@ -34,7 +34,7 @@ scenario；实现阶段的 RED/GREEN 与本地反馈仍由该 Ticket 的实现 w
 
 ## 核心数据流
 
-1. 从需求、Slice 验收标准和本次实际改动中确定行为契约，包含成功、失败和异常路径。
+1. 从需求、Ticket 验收标准和本次实际改动中确定行为契约，包含成功、失败和异常路径。
 2. 建立 Acceptance-to-Test Matrix，把每条验收标准映射到实际执行证据。
 3. 根据风险选择 mandatory dimensions：happy path、boundary、negative、AuthN/AuthZ、state/invariant、integration/contract、real entrypoint/config、regression，以及按需的 property/fuzz、mutation、browser/E2E、isolation/flaky。
 4. 从静态检查和 focused tests 开始，按成本逐级执行适用维度。
@@ -46,7 +46,7 @@ scenario；实现阶段的 RED/GREEN 与本地反馈仍由该 Ticket 的实现 w
 | Level | 主要用途 |
 |---|---|
 | `minimal` | 微小或非行为变更。 |
-| `focused` | 默认；覆盖当前 Slice 验收标准的最小检查。 |
+| `focused` | 默认；覆盖当前 Ticket 验收标准的最小检查。 |
 | `regression` | 缺陷修复、跨模块变更或已有回归风险。 |
 | `full` | 高风险、发布门禁或明确要求完整套件。 |
 

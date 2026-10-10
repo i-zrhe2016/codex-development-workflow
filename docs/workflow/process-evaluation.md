@@ -44,10 +44,10 @@ smaller change solves the same problem.
 
 | Area | Question | Typical redundancy signal |
 |---|---|---|
-| Planning | Was Plan/Ticket/Slice planning proportional to the requirement? | A tiny Plan required extra Tickets, repeated planning, or unnecessary re-decomposition |
+| Planning | Was Plan/Ticket planning proportional to the requirement? | A routine requirement needed extra Tickets or unnecessary re-decomposition |
 | Context | Was the same repository context loaded repeatedly? | Re-reading large files because no compact recovery state existed |
 | Delegation | Did another agent reduce work or add coordination? | Main agent repeated delegated exploration or integration cost exceeded benefit |
-| Implementation | Was work expanded beyond acceptance criteria? | Unrelated refactor or future-slice work appeared |
+| Implementation | Was work expanded beyond acceptance criteria? | Unrelated refactor or future work appeared |
 | Testing | Was verification proportional to risk? | Full/regression suites ran without evidence requiring escalation |
 | Redaction | Was scanning repeated without a changed sensitive surface? | Identical safe scope was reclassified unnecessarily |
 | Git / PR | Did branch and PR handling create avoidable cycles? | Multiple publication cycles for changes that could have been batched |
@@ -123,13 +123,13 @@ Use future real runs to confirm or reject them.
 | Branch/PR rules appear in the router, the usage guide, and the architecture overview | Some repetition is useful for local context, but the same rule is stated many times | Keep one authoritative rule and shorten repeated sections to references |
 | Post-delivery evaluation can itself create a documentation-only change every run | High risk of process noise and recursive self-improvement | Evaluate every run in memory; persist only reusable findings or an approved follow-up improvement |
 | State / Docs updates plus separate evaluation records | Potential duplicate persistence | Keep `Repo_Current_State.md` for recovery state and this file for process quality; do not duplicate ticket/backlog/status history |
-| Plan/Ticket/Slice/worker machinery | Persistence remains conditional; the main agent directly dispatches fresh Ticket owners and independent verification | Keep the smallest useful decomposition and scoped handoff under the [canonical scheduling policy](../../AGENTS.md#multi-agent-delegation) |
+| Requirement/Plan/Ticket/worker machinery | Every requirement is persisted before branch work; ordinary work uses one Ticket, with more Tickets only for distinct behavior, dependency, or acceptance boundaries | Keep the smallest useful decomposition and scoped handoff under the [canonical scheduling policy](../../AGENTS.md#multi-agent-delegation) |
 | Stage routing versus one fixed chain | The five stage workflows are independently invocable; only an explicitly authorized delivery runs them all | Keep the router as the entry point and confirm each stage's non-responsibility still holds after every change |
 
 ## Improvement backlog discipline
 
 Do not turn this document into a backlog. When an improvement is actionable,
 record it as a normal plan before implementation; a small improvement is one
-Ticket with a single Slice, routed through the requested stages and authorized
-actions. Remove or rewrite resolved baseline findings so this file stays a compact
+Ticket, routed through the requested stages and authorized actions. Remove or
+rewrite resolved baseline findings so this file stays a compact
 description of current process quality rather than a historical archive.

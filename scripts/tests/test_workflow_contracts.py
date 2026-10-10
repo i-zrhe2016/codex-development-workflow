@@ -108,21 +108,21 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("[`SKILL.md`](SKILL.md#codex-worker-model-routing)", agents)
         self.assertNotIn("one fresh implementation agent, which executes **all**", agents)
 
-    def test_plan_to_ticket_slice_template_has_execution_contract(self) -> None:
+    def test_plan_to_ticket_ticket_contract_has_behavioral_acceptance(self) -> None:
         skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
         template = re.search(
             r"Each Ticket uses these fields.*?```text\n(.*?)\n```",
             skill,
             flags=re.DOTALL,
         )
-        self.assertIsNotNone(template, "Expected the canonical Ticket/Slice template.")
-        slice_fields = template.group(1).split("#### S0001.1", 1)[1]
+        self.assertIsNotNone(template, "Expected the canonical Ticket contract.")
         required_fields = (
-            "Goal:",
-            "Scope:",
-            "Out of scope:",
+            "Ticket Goal:",
+            "Ticket Scope:",
+            "Ticket Out of scope:",
             "Dependencies:",
-            "Acceptance Criteria:",
+            "Function Checklist:",
+            "Ticket Acceptance Criteria:",
             "Test Cases:",
             "Relevant Context / Files:",
             "Test Strategy:",
@@ -131,7 +131,89 @@ class WorkflowContractTests(unittest.TestCase):
         )
         for field in required_fields:
             with self.subTest(field=field):
-                self.assertIn(field, slice_fields)
+                self.assertIn(field, template.group(1))
+
+    def test_requirement_sizing_and_supplement_scenarios(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        sizing = skill.split("## Scope and sizing", 1)[1].split("## Updating scope", 1)[0]
+        updates = skill.split("## Updating scope", 1)[1].split("## Persistence and delivery contract", 1)[0]
+        sizing = re.sub(r"\s+", " ", sizing).lower()
+        updates = re.sub(r"\s+", " ", updates).lower()
+
+        scenarios = {
+            "ordinary requirement has one Ticket": (
+                sizing,
+                r"one ticket for an ordinary requirement",
+            ),
+            "additional Tickets require distinct behavior boundaries": (
+                sizing,
+                r"multiple tickets.*?only when they represent distinct behaviors, real dependencies, or acceptance boundaries",
+            ),
+            "same-requirement supplement updates the existing Ticket": (
+                sizing + " " + updates,
+                r"supplementary work for the same requirement updates its existing ticket",
+            ),
+            "new Ticket is conditional on a distinct boundary": (
+                sizing + " " + updates,
+                r"add a ticket only if the new work creates a distinct behavioral, dependency, or acceptance boundary",
+            ),
+        }
+        for label, (contract, pattern) in scenarios.items():
+            with self.subTest(scenario=label):
+                self.assertRegex(contract, pattern)
+
+    def test_every_requirement_is_persisted_before_branch_work(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        persistence = skill.split("## Persistence and delivery contract", 1)[1].split("### Naming and idempotency", 1)[0]
+        persistence = re.sub(r"\s+", " ", persistence).lower()
+
+        self.assertRegex(
+            persistence,
+            r"persist one plan issue and its child ticket issue or issues for every user requirement before creating a branch or editing repository files",
+        )
+        self.assertIn("github issues are authoritative", persistence)
+        self.assertIn("do not create local markdown", persistence)
+
+    def test_independent_requirement_uses_new_plan_before_prior_merge(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        sizing = skill.split("## Scope and sizing", 1)[1].split("## Updating scope", 1)[0]
+        updates = skill.split("## Updating scope", 1)[1].split("## Persistence and delivery contract", 1)[0]
+        contract = re.sub(r"\s+", " ", sizing + " " + updates).lower()
+
+        self.assertRegex(
+            contract,
+            r"new independent requirements always start new plans, even if another plan is unmerged",
+        )
+        self.assertRegex(
+            contract,
+            r"an independent requirement always receives a new plan, including before the previous plan merges",
+        )
+
+    def test_publication_requires_valid_plan_and_ticket_metadata(self) -> None:
+        publish = (REPO_ROOT / "skills" / "publish-workflow" / "SKILL.md").read_text(encoding="utf-8")
+        push = (REPO_ROOT / "skills" / "github-push-when-ready" / "SKILL.md").read_text(encoding="utf-8")
+        guide = (REPO_ROOT / "docs" / "skills" / "github-push-when-ready" / "README.md").read_text(encoding="utf-8")
+        publish = re.sub(r"\s+", " ", publish).lower()
+        push = re.sub(r"\s+", " ", push).lower()
+        guide = re.sub(r"\s+", " ", guide).lower()
+
+        self.assertRegex(
+            publish,
+            r"require the persisted plan and its required ticket issue metadata, and validate that they match the publication scope; missing or invalid metadata blocks commit, push, and pr creation/update",
+        )
+        self.assertRegex(
+            push,
+            r"before any commit, push, or pr creation/update, require the persisted plan and its required ticket issue metadata and validate that they match the publication scope\. missing or invalid plan/ticket metadata blocks publication",
+        )
+        self.assertRegex(
+            guide,
+            r"require valid plan and ticket issue metadata that matches the publication scope; missing or invalid metadata blocks publication",
+        )
+        self.assertNotRegex(
+            publish + " " + push,
+            r"(?:commit|push|pr creation/update) (?:may|can) proceed without (?:the )?plan",
+        )
+        self.assertNotIn("when it does not, publication proceeds normally", guide)
 
     def test_installer_managed_skills_match_repository_sources(self) -> None:
         installer = INSTALLER.read_text(encoding="utf-8")
@@ -387,7 +469,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_all_shared_overviews_are_present(self) -> None:
         expected = {
-            "workflow-overview", "components-overview", "plan-ticket-slice",
+            "workflow-overview", "components-overview", "plan-ticket",
             "test-quality-gate", "docs-publication-flow", "installer-overview",
         }
         sources = (REPO_ROOT / "docs" / "diagrams").glob("*.puml")

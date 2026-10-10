@@ -16,11 +16,11 @@ procedures remain inside their own `SKILL.md` files.
 | Component | Responsibility |
 |---|---|
 | `codex-development-workflow` | Routes each request to the stage workflow that owns it — `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, or `integrate-workflow` — carries the invariants shared by all stages, and provides the optional full orchestration for an explicitly authorized end-to-end delivery. |
-| Adaptive execution waves | The main agent directly dispatches fresh Ticket owners and independent verifiers; an owner retains context across that Ticket's dependency-ordered Slices and local repairs. |
+| Adaptive execution waves | The main agent directly dispatches fresh Ticket owners and independent verifiers; an owner retains context across the Ticket and local repairs. |
 | Subagent selection | The main agent and host choose the best available built-in or project-defined subagent from the task contract and agent description; no task class is hard-coded to a named agent. |
 | Codex worker model routing | Root [`SKILL.md`](../../SKILL.md#codex-worker-model-routing) owns portable worker defaults, precedence and escalation; direct develop/verify/test coordinators read the corresponding root from their active installation through the discovered Skill catalog. |
 | `.codex/config.toml` and `.codex/agents/` | Separate project-local coordinator/worker configuration and optional scoped agent definitions; [installation.md](../deployment/installation.md#codex-model-routing) owns configuration and installation boundaries. |
-| `plan-to-ticket` | Defines an explicitly scoped delivery batch as one Plan, splits its functionalities into behavior Tickets, and decomposes each Ticket into dependency-ordered Slices with explicit scope and acceptance criteria. It persists the Plan and child Ticket Issues before branch work when the work is complex, must survive a session boundary, or the user asks for a persisted plan. |
+| `plan-to-ticket` | Defines one Plan per independent requirement, ordinarily with one complete execution/acceptance Ticket; multiple Tickets require distinct behavioral, dependency, or acceptance boundaries. It persists Plan/Ticket Issues before branch work. |
 | GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
 | `repo-current-state` | Maintains the compact, verified recovery point on the same Plan branch and PR as the work it describes. |
@@ -35,7 +35,7 @@ The main agent centrally owns requirements, architecture, planning, cross-
 Ticket dependency ordering, execution-wave scheduling, integration, stage-gate
 decisions, and final judgment. It directly dispatches fresh Ticket owners,
 independent-module helpers when safe, and independent verifiers. Ticket owners
-retain context across dependency-ordered Slices and local repairs; all workers
+retain context across their Ticket and local repairs; all workers
 are leaves and never dispatch workers. This delegation preserves the workflow topology.
 [`AGENTS.md`](../../AGENTS.md#multi-agent-delegation) owns the
 scheduling policy. Dependent or overlapping work remains sequential, and the
@@ -49,9 +49,9 @@ main agent must not duplicate active delegated work.
 
 Source: [`components-overview.puml`](../diagrams/components-overview.puml)
 
-![Plan Ticket Slice work decomposition](../diagrams/plan-ticket-slice.svg)
+![Requirement Plan Ticket model](../diagrams/plan-ticket.svg)
 
-Source: [`plan-ticket-slice.puml`](../diagrams/plan-ticket-slice.puml)
+Source: [`plan-ticket.puml`](../diagrams/plan-ticket.puml)
 
 ![Risk-aware Test Quality Gate](../diagrams/test-quality-gate.svg)
 
@@ -120,26 +120,25 @@ Create Plan branch
 ```
 
 Feature, Bug, Refactor, and Docs are profiles of these stages, not separate
-workflows: they change verification breadth and whether a plan is persisted.
+workflows: they change verification breadth, while every requirement is
+persisted before branch work.
 Planning depth and verification level may vary. Authorized commits and pushes
 on a non-default branch may stop at their requested boundary; integration into
-the default branch still requires the guarded PR and merge path. A requirement
-that is complex, must survive a session boundary, or is explicitly requested as
-a persisted plan is recorded as one Plan Issue with one or more child Ticket
-Issues before branch work; split Ticket Slices only after each boundary is clear,
-and treat a single-behavior requirement as one Plan with one Ticket and one
-implicit Slice.
+the default branch still requires the guarded PR and merge path. Every
+independent requirement is recorded as one Plan Issue and one or more child
+Ticket Issues before branch work. Ordinary work uses one Ticket; multiple
+Tickets need distinct behavioral, dependency, or acceptance boundaries.
 
-When `plan-to-ticket` persists a plan, it creates the Plan Issue and all child
-Ticket Issues before the Plan branch is created. Each Slice loads only the
-context needed for its acceptance criteria. A wrong design assumption returns to
-Plan or causes a Slice split.
+`plan-to-ticket` creates the Plan Issue and all child Ticket Issues before the
+Plan branch is created. Each Ticket loads only the context needed for its
+acceptance criteria. A wrong design assumption returns to planning before scope
+expands.
 
 ### Fixed topology and adaptive execution waves
 
 ```text
 Fixed stages: plan -> develop -> verify -> publish -> integrate
-Ticket execution: main -> fresh Ticket owner across Slices -> fresh whole-Ticket verifier
+Ticket execution: main -> fresh Ticket owner -> fresh whole-Ticket verifier
 Final delivery verification: fresh whole-Plan verifier; exact one-Ticket scope may coalesce
 Main: readiness -> capacity-bounded Ticket wave -> integrate evidence -> gates
 ```
@@ -155,20 +154,20 @@ prerequisite independent PASS. See the canonical
 [AGENTS.md policy](../../AGENTS.md#multi-agent-delegation); local development
 checks do not replace independent verification.
 
-### Ticket-to-Slice hierarchy
+### Requirement-to-Ticket lifecycle
 
-The detailed Plan/Ticket lifecycle is split into three linked views so each
-return edge has a clear scope and exit condition:
+The detailed Plan/Ticket lifecycle uses two linked views so each return edge has
+a clear scope and exit condition:
 
 ![Plan / Ticket lifecycle](diagrams/ticket-lifecycle.svg)
 
 Source: [`diagrams/ticket-lifecycle.puml`](diagrams/ticket-lifecycle.puml)
 
-![Slice implementation and validation loop](diagrams/ticket-slice-loop.svg)
+![Ticket implementation and validation loop](diagrams/ticket-loop.svg)
 
-Source: [`diagrams/ticket-slice-loop.puml`](diagrams/ticket-slice-loop.puml)
+Source: [`diagrams/ticket-loop.puml`](diagrams/ticket-loop.puml)
 
-Dependency waits resume only after fresh evidence; a failed Slice returns to
+Dependency waits resume only after fresh evidence; a failed Ticket returns to
 diagnosis and affected validation, while a design conflict returns to planning.
 A failed validation or publication step returns to the recorded failed stage, never a later gate.
 Only the single verified Plan merge permits `done` and Plan/Ticket Issue closure.
@@ -176,31 +175,29 @@ There is no outer per-Ticket merge loop. `planned`, `in_progress`, `blocked`,
 and `in_review` remain open states; `Status` is workflow metadata, not a claim
 that GitHub provides these workflow states automatically.
 
-A Plan is an explicitly scoped delivery batch that may include multiple
-independent functionalities and owns one branch and, if delivered, one PR and
-merge. Before merge, new user-requested functionality appends as a Ticket;
-after merge it starts a new Plan. An expanded Plan with an open PR retains
+Each Plan records one independent requirement and owns one branch and, when
+delivery is authorized, one PR and merge. An ordinary requirement uses one
+Ticket; a complex requirement may use multiple behavior Tickets only for
+distinct behavioral, dependency, or acceptance boundaries. Supplementary work
+for the same requirement updates its Ticket, adding another only for a distinct
+boundary. An independent requirement always starts a new Plan, even before
+another Plan merges. An expanded same-requirement Plan with an open PR retains
 its URL but returns to `in_progress`, invalidating impacted readiness until
 revalidation and an authorized PR update. See the
 [Plan scope contract](../../skills/plan-to-ticket/SKILL.md#scope-and-sizing) and
-[batch publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries).
-A Ticket is an independently reviewable behavior or capability boundary inside
-that Plan. A Slice is an execution-ready unit within a Ticket, with its own
-scope, dependencies, acceptance criteria, test strategy, test level, test
-cases, and validation command. Establish the Plan boundary, then Ticket
-boundaries, then dependency-ordered Slices. All Tickets and Slices for one Plan
-share its implementation branch; Ticket dependencies control work order within
-the Plan, while Slice dependencies control order within a Ticket. Tiny work is
-one Plan with one Ticket and one implicit Slice.
+[publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries).
+Each Ticket is a complete execution and acceptance unit with scope, exclusions,
+dependencies, Function Checklist, observable criteria, test strategy, cases,
+and validation. Real Ticket dependencies control work order within the Plan.
 
 ### Persistent ticket authority
 
-GitHub Issues are the sole durable authority for persisted Plans and Tickets
-created by `plan-to-ticket`. A persisted plan has one Plan Issue holding the
-overall plan and linking to one or more child Ticket Issues. The Plan retains `Status`, `Branch`,
-`Base`, `PR`, and completion metadata; each child Ticket retains its Plan link,
-goal, scope, dependencies, acceptance criteria, validation, and Slice plan but
-does not own a branch or PR. The workflow blocks when required Issue reads or
+GitHub Issues are the sole durable authority for Plans and Tickets created by
+`plan-to-ticket`. Every requirement has one Plan Issue linking to one or more
+child Ticket Issues. The Plan retains `Status`, `Branch`, `Base`, `PR`, and
+completion metadata; each child Ticket retains its Plan link, goal, scope,
+dependencies, Function Checklist, acceptance criteria, and validation but does
+not own a branch or PR. The workflow blocks when required Issue reads or
 writes fail; it does not create a local Markdown mirror or treat chat output as
 completion.
 
@@ -237,12 +234,12 @@ context, concise handoffs and durable Issue checkpoints at integrated waves,
 Development Complete, acceptance failures, and pause or retirement. The state snapshot remains repository recovery truth; it does not
 replace those checkpoints.
 
-### Slice execution
+### Ticket execution
 
 ```text
 Acceptance criteria -> Test strategy -> Minimal change
                     -> Focused validation -> Fix / Refactor
-                    -> Slice complete
+                    -> Ticket complete
 ```
 
 Test-first is preferred for meaningful behavioral changes, bug fixes,
@@ -255,7 +252,7 @@ styling, typo fixes, simple refactors, or exploratory work.
 | Level | Purpose |
 |---|---|
 | `minimal` | Tiny and non-behavioral changes. |
-| `focused` | Default evidence for one Slice. |
+| `focused` | Default evidence for one Ticket. |
 | `regression` | Bug fixes and cross-module risk. |
 | `full` | High-risk or release verification. |
 
@@ -318,8 +315,8 @@ procedure.
 ## Boundaries
 
 - The orchestrator defines stages and gates; specialist skills define detailed procedures.
-- A persisted plan has one Plan Issue with at least one Ticket; a single-behavior requirement is one Ticket with one implicit Slice, and a persisted Plan uses one branch and PR.
-- Tests provide evidence inside a Slice; local verification is a valid stop.
+- Every requirement has one Plan Issue with at least one Ticket; ordinary work uses one Ticket and a persisted Plan uses one branch and PR.
+- Tests provide evidence against Ticket acceptance criteria; local verification is a valid stop.
   If delivery is elected, single-verifier Plan/branch/PR acceptance precedes the
   final publication/merge boundary.
 - `Repo_Current_State.md` is the recovery point, not a session transcript or full backlog.

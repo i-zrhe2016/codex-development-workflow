@@ -53,7 +53,8 @@ Create Plan branch
 ```
 
 Feature, Bug, Refactor, and Docs are profiles of these stages, not additional
-workflows. They change verification breadth and whether a plan is persisted.
+workflows. They vary verification breadth. Every independent requirement has
+Plan/Ticket Issues before branch work.
 Planning depth and verification level may vary. Commits/pushes use non-default
 branches; user-elected final delivery uses a PR merge. Docs, Code, Tests, Config,
 Refactor, Bugfix, Feature, Dependency and CI/CD changes never commit/push
@@ -69,73 +70,69 @@ rollback instructions. The external release owner performs and verifies the
 rollout or rollback; record the external release result or incident link as
 completion evidence with the delivery.
 
-## Ticket-to-Slice hierarchy
+## Requirement-to-Ticket hierarchy
 
-A delivery batch that is complex, must survive a session boundary, or is
-explicitly requested as a persisted plan gets one Plan Issue and at least one
-Ticket Issue. When the batch includes multiple functionalities or has
-dependencies, use this order:
+Every independent requirement gets one Plan Issue and one or more child Ticket
+Issues before branch work. Ordinary requirements use one Ticket; complex
+requirements may use multiple behavior Tickets only for distinct behavioral,
+dependency, or acceptance boundaries. Use this order:
 
-1. Explicitly list the batch's planned functionalities and create its Plan Issue.
-2. Split its functionalities into independently reviewable behavior Tickets.
-3. Define each Ticket's scope, dependencies, acceptance boundary, and Issue.
-4. Split each Ticket into dependency-ordered, independently verifiable
-   Slices.
+1. Define the independent requirement and create its Plan Issue.
+2. Use one Ticket for ordinary work; divide complex work only at independently
+   understandable behavior, dependency, or acceptance boundaries.
+3. Define each Ticket's complete scope, dependencies, Function Checklist,
+   acceptance, cases, validation, and Issue.
 
-All Tickets and Slices for one Plan share the Plan's implementation branch.
-Ticket dependencies determine execution order within the Plan; Slice
-dependencies determine the execution order within a Ticket. A single-behavior
-requirement is one Ticket containing one Slice, and a persisted plan still uses
-one branch and one PR. The [Plan scope contract](../../skills/plan-to-ticket/SKILL.md#scope-and-sizing)
-owns batch boundaries and the procedure for appending functionality to an
-unmerged Plan. Update goal/scope/index/dependencies/validation and persist the
-new Ticket before edits; preserve IDs, branch/base, PR and evidence. With an
-open PR, expanded scope returns the Plan to `in_progress`, retains the PR URL
-and invalidates impacted acceptance/batch readiness. Revalidate before an
-authorized update; the PR is not ready for expanded scope until the fresh
-whole-Plan acceptance gate passes. After verified
-merge, subsequent functionality requires a new Plan.
+All Tickets for one Plan share its implementation branch, and real Ticket
+dependencies determine execution order. Supplementary work for the same
+requirement updates its Ticket, adding a Ticket only for a distinct boundary.
+An independent requirement always gets a new Plan, including while another
+Plan is unmerged. The [Plan scope contract](../../skills/plan-to-ticket/SKILL.md#scope-and-sizing)
+owns scope updates. Persist required Plan/Ticket updates before edits; preserve
+IDs, branch/base, PR and evidence. With an open PR, expanded same-requirement
+scope returns the Plan to `in_progress`, retains the PR URL and invalidates
+impacted acceptance/batch readiness. Revalidate before an authorized update;
+the PR is not ready for expanded scope until fresh whole-Plan acceptance passes.
 
-For every Slice, define:
+For every Ticket, define:
 
 ```text
-Goal, Scope, Out of scope, Dependencies, Acceptance criteria,
-Relevant context/files, Test strategy, Test level, Test cases,
-Validation command
+Ticket goal and scope, exclusions, dependencies, Function Checklist,
+observable acceptance, relevant context/files, test strategy and level,
+concrete cases, validation command
 ```
 
-The main agent dispatches a fresh Ticket owner, who retains context across
-dependency-ordered Slices and local repairs. Workers never dispatch workers.
+The main agent dispatches a fresh Ticket owner, who retains context across the
+Ticket and local repairs. Workers never dispatch workers.
 Independent module helpers are optional and require isolated ownership, fixed
 interfaces, and independent verification. If an assumption is wrong, return to
 planning rather than expanding the patch; the main agent owns that decision.
 
 ## Persistent plan and ticket handoff
 
-Persist a plan when the work is complex, must survive a session boundary, or
-the user explicitly asks for a persisted plan. Small, single-session work keeps
-its plan inline.
+Persist every requirement as a Plan and Ticket Issue before branch work,
+including small, single-session work.
 
-For a persisted plan, GitHub Issues are the durable source of truth. Create or
+For every requirement, GitHub Issues are the durable source of truth. Create or
 update one Plan Issue and every required child Ticket Issue before the Plan
 branch starts. The Plan Issue retains:
 
 - `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
 - `Branch`, `Base`, `PR`, and child Ticket index metadata;
-- the batch goal, explicit functionality scope, milestones, completion rule,
+- the requirement goal, explicit scope, milestones, completion rule,
   and delivery contract.
 
 Each child Ticket Issue retains its Plan link, `Status`, `Dependencies`, goal,
-scope, acceptance criteria, Slice plan, and validation contract. It does not
-own `Branch`, `Base`, `PR`, or a separate merge.
+scope, Function Checklist, acceptance criteria, and validation contract. It does
+not own `Branch`, `Base`, `PR`, or a separate merge.
 
-The Plan Issue contains the overall batch plan and links to every Ticket
+The Plan Issue contains the overall requirement plan and links to every Ticket
 Issue. Chat output contains convenience links only.
 `docs/Repo_Current_State.md` may link to the active Issue but must not become a
 duplicate plan or backlog.
 
 Search for stable plan/ticket markers before creating Issues so retries reuse
-existing records. For a persisted plan, if the GitHub connector, repository
+existing records. If the GitHub connector, repository
 target, authentication, or required write fails, mark the operation blocked and
 stop; do not fall back to local Markdown or an unpersisted chat response.
 
@@ -157,15 +154,15 @@ Use `<type>/<plan-id>-<short-description>` and create the branch from the
 updated default branch. Ticket dependencies are completed and validated on this
 branch; they do not require prerequisite Ticket merges. Keep the Plan's
 implementation, tests, and related documentation on this branch; all Tickets
-and internal Slices share it.
+share it.
 
 Verify the current branch and working tree before editing and preserve
 unrelated or uncommitted work. Parallel workers use isolated worktrees or
 return patches/findings for integration on the branch; never create a second
 delivery branch for a Ticket. Before publishing, complete the Plan's acceptance
-and relevant integration/regression checks for every Ticket and the batch, then
-pass the fresh whole-Plan acceptance gate. A planned batch may share one commit
-and PR; follow the
+and relevant integration/regression checks for every Ticket and the Plan, then
+pass the fresh whole-Plan acceptance gate. All Tickets for one requirement may
+share one commit and PR; follow the
 [publication rules](../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
 for staging, batch commit bodies and complete PR evidence. Create/update the
 same Plan PR only when authorized and current-scope checks pass; merge once
@@ -176,7 +173,7 @@ Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 ## Adaptive agent orchestration
 
 ```text
-main -> fresh Ticket owner across dependency-ordered Slices + local checks
+main -> fresh Ticket owner across the Ticket + local checks
      -> separate fresh verifier for all Ticket scenarios
      -> main integrates evidence and decides gates
 ```
@@ -202,7 +199,7 @@ repositories without AGENTS.md.
 
 Local verification may end requested functionality work with a checkpoint and
 open Plan/Tickets. The user chooses when and what to commit, push, create/update
-as a PR or merge. Prior authorization persists for its stated batch/actions;
+as a PR or merge. Prior authorization persists for its stated requirement/actions;
 new feature scope alone does not extend it. Readiness recommends actions and
 does not authorize them. Waiting for the user is a normal stop, not BLOCKED.
 
@@ -213,7 +210,7 @@ does not authorize them. Waiting for the user is a normal stop, not BLOCKED.
 | Push only | Guarded push of verified existing commits; no commit or PR. |
 | Create/update PR | Authorized same-Plan PR action after current-scope checks and single-verifier final acceptance; stop at PR ready. |
 | Merge ready PR | Authorized merge and reconciliation; readiness alone grants no merge authority. |
-| Full end-to-end delivery | All gates/actions within the explicitly authorized batch. |
+| Full end-to-end delivery | All gates/actions within the explicitly authorized requirement. |
 
 When verified repository state materially changes, update
 `docs/Repo_Current_State.md` before commit/PR creation and include it in the
@@ -225,14 +222,15 @@ Before final publication, PR update or merge readiness passes for a Plan,
 `verify-workflow` dispatches one fresh independent verifier for the whole
 current Plan branch/PR scope. It must PASS.
 
-For example, after verifying search locally, a user can request export as a
-new Ticket in the same unmerged Plan. Update its goal/scope/index/dependencies/
-validation before edits and keep the existing branch. If a PR already exists,
-retain its URL, return Plan to `in_progress` and revalidate impacted acceptance
-and batch readiness, including the fresh whole-Plan acceptance gate.
-Neither adding export nor finishing its checks triggers a PR update;
-publication awaits the user's chosen action. Once that Plan has merged, a later
-requested functionality starts a new Plan.
+For example, if export is supplementary work for the same requirement and adds
+a distinct behavior boundary, record it as a Ticket in that requirement's
+unmerged Plan. Update its goal/scope/index/dependencies/validation before edits
+and keep the existing branch. If a PR already exists, retain its URL, return
+Plan to `in_progress` and revalidate impacted acceptance and Plan readiness,
+including the fresh whole-Plan acceptance gate. An independent export request
+gets a new Plan even while the search Plan remains unmerged. Neither a scope
+update nor finishing its checks triggers a PR update; publication awaits the
+user's chosen action.
 
 ## Verification
 
@@ -247,7 +245,7 @@ forcing RED/GREEN.
 | Level | Use |
 |---|---|
 | `minimal` | Tiny changes, docs, configuration, styling, simple scripts. |
-| `focused` | Default; checks directly tied to Slice acceptance criteria. |
+| `focused` | Default; checks directly tied to Ticket acceptance criteria. |
 | `regression` | Bug fixes, cross-module changes, demonstrated regression risk. |
 | `full` | High-risk, release gates, or explicit requirements. |
 

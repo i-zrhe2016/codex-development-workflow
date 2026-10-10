@@ -12,7 +12,7 @@ When the user controls the overall flow, integration may state readiness,
 remaining gates, risks and merge/cleanup consequences, but must not choose merge
 timing, cleanup timing, follow-up scope or post-merge work for the user.
 
-1. Confirm merge authorization covers the current batch (an explicit full
+1. Confirm merge authorization covers the current Plan requirement (an explicit full
    delivery may already include it); PR readiness alone grants no merge authority.
    Confirm required verification passed for the current scope, including the
    final Plan/branch/PR acceptance gate. It may coalesce with Ticket

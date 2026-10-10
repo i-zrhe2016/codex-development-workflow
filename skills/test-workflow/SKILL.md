@@ -14,7 +14,7 @@ lightest reliable, deterministic automated evidence over repeated inspection.
 These minimum rules work without `AGENTS.md`; when present, it owns the full
 policy. Implementers may use this procedure for local feedback. The main agent
 dispatches one fresh independent Sol/high verifier per Ticket, including
-docs/config/test and inline work. Verifiers cover every Ticket scenario, are
+docs/config/test work. Verifiers cover every Ticket scenario, are
 read-only except caches/temporary evidence, and never spawn or implement fixes.
 Final Plan acceptance uses a separate fresh Sol/high verifier unless one NEW
 verifier can cover both gates for a one-Ticket Plan with exactly matching full
@@ -47,7 +47,7 @@ dispatched workers do not route models. Claude selection is unchanged.
 The main agent explicitly requests the policy-selected model and effort with
 `fork_turns="none"`; other hosts require equivalent fresh agents and independent
 context, or report BLOCKED without main-agent fallback. A coordinator's handoff
-contains only role, current Ticket/Slice goal/scope/non-goals, dependencies and
+contains only role, current Ticket goal/scope/non-goals, dependencies and
 acceptance, relevant files/ownership, Plan branch/base and verified
 prerequisites, validation commands and expected summary; never the parent
 conversation or unrelated history. Same-Ticket follow-up is allowed;
@@ -91,12 +91,12 @@ headers, cookies, tokens, CORS and equivalent client-enforced rules are part of
 the contract when callers rely on them. Use production-like configuration
 combinations for the affected risk, not only framework defaults.
 
-Choose a Slice level **before checks**:
+Choose a test level for the Ticket **before checks**:
 
 | Level | Use |
 |---|---|
 | `minimal` | Tiny/docs/config/styling/dependency/typo/simple-refactor work. |
-| `focused` | Default: smallest checks proving Slice acceptance. |
+| `focused` | Default: smallest checks proving Ticket acceptance. |
 | `regression` | Bug fix, cross-module change or demonstrated regression risk. |
 | `full` | High risk, release gate or explicit full-suite requirement. |
 
@@ -123,7 +123,7 @@ high-signal cases, not fixed counts or exhaustive low-signal matrices.
 
 ## Acceptance-to-test matrix
 
-Before Slice test-completion map **every** acceptance criterion to executed
+Before Ticket test-completion map **every** acceptance criterion to executed
 evidence. Untested requirements keep the gate open; unmapped passing tests
 prove no requirement.
 
@@ -197,7 +197,7 @@ policy; use cheaper deterministic unit/API tests when sufficient.
 
 ## RED -> GREEN
 
-For complex/risky Tickets/Slices:
+For complex/risky Tickets:
 
 1. Translate acceptance into focused cases and identify/write the smallest
    meaningful test for missing behavior.
@@ -207,7 +207,7 @@ For complex/risky Tickets/Slices:
    checks until GREEN.
 4. Run affected integration/regression; refactor only with relevant tests GREEN.
 
-Keep the current behavior Slice explicit, never batch unrelated cycles into an
+Keep the current Ticket behavior explicit, never batch unrelated cycles into an
 opaque loop.
 
 ## Property, fuzz, and mutation rules
@@ -295,7 +295,7 @@ playwright-cli close
 
 ## Test Quality Gate and report
 
-Ticket Slices are test-complete only when:
+Tickets are test-complete only when:
 
 - every acceptance criterion has concrete executed evidence;
 - every mandatory dimension is satisfied or explicitly N/A with reason;

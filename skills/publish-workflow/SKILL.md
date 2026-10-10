@@ -18,16 +18,17 @@ publication sequence and consequences of each boundary, but must not pick
 commit/push/PR actions, message scope, review timing or merge readiness for the
 user without explicit authorization.
 
-A change may be one functionality or an explicitly planned multi-function batch.
-Before publication, every Ticket's acceptance and the batch's relevant
-integration/regression checks must pass; any failure blocks the batch. Final
+A Plan represents one requirement, with one Ticket for ordinary work and
+multiple Tickets only for distinct behavioral, dependency, or acceptance
+boundaries. Before publication, every Ticket's acceptance and the Plan's relevant
+integration/regression checks must pass; any failure blocks the Plan. Final
 Plan/branch/PR acceptance uses a fresh independent verifier for the whole
-current scope before publication or PR readiness can pass. That verifier may
+current requirement scope before publication or PR readiness can pass. That verifier may
 also satisfy Ticket acceptance only for a one-Ticket Plan with exactly matching
 full scope, artifact/version, configuration and deployment surface; otherwise
 the gates require separate fresh verifiers. Expanded
 unmerged Plan scope follows `plan-to-ticket`: retain branch/base/PR and evidence,
-set Plan `in_progress` and revalidate impacted acceptance plus batch readiness.
+set Plan `in_progress` and revalidate impacted acceptance and Plan readiness.
 The existing PR is not ready for expanded scope until revalidated, the final
 final-verifier gate passes and an authorized update succeeds; never create a
 per-feature PR.
@@ -41,21 +42,22 @@ Invoke applicable capabilities in order for the requested actions:
    Plan branch and include it in the PR-bound commit. If no represented state
    changed, record that no state update is needed. Do not defer required state
    updates to a separate post-merge PR.
-3. Before a commit, `data-document-redaction`: stage only the batch's verified
-   functionality, tests and documentation, preserving out-of-Plan user changes;
+3. Before a commit, `data-document-redaction`: stage only the Plan's verified
+   requirement, tests and documentation, preserving out-of-Plan user changes;
    prefer explicit pathspecs/hunks under `github-push-when-ready`. Scan staged
    files. Proceed only on `pass`, `noop` or recorded no-sensitive-surface skip.
    `findings`/`needs_review` block: sanitize reported files, re-stage/re-scan; fix
    scanner `error` first. Push-only checks the prior staged gate evidence for
    commits being published; do not invent an empty commit or bypass the gate.
 4. `github-push-when-ready`: perform only authorized actions, using Conventional
-   Commits and its batch commit/PR description rules. For commit-only, suppress
+   Commits and its Plan commit/PR description rules. For commit-only, suppress
    optional auto-push hooks and use equivalent guarded commit commands; do not
    use a combined commit/push script. Push-only must not create a commit or PR.
-   Validate any Plan metadata; persistence is a planning decision, not a
-   publication precondition. Return `PR ready` only after an authorized PR
-   creation/update succeeds and current-scope checks, including the final
-   single-verifier gate, pass.
+   Require the persisted Plan and its required Ticket Issue metadata, and
+   validate that they match the publication scope; missing or invalid metadata
+   blocks commit, push, and PR creation/update. Return `PR ready` only after an
+   authorized PR creation/update succeeds and current-scope checks, including
+   the final single-verifier gate, pass.
 
 Report branch, action results and any existing PR URL, then stop at the requested
 boundary. No merge, branch deletion or Issue closure (`integrate-workflow`);
