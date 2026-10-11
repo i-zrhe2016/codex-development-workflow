@@ -12,8 +12,8 @@ MANAGED_MARKER=".codex-development-workflow-managed"
 
 usage() {
   cat <<'USAGE'
-Install the complete development workflow skill set bundled in this repository
-into a Codex or Claude Code skills directory.
+Install the documentation skill set bundled in this repository into a Codex
+or Claude Code skills directory.
 
 Usage:
   install-all.sh [--target codex|claude] [--update] [--adopt-legacy] [--dest PATH]
@@ -22,7 +22,7 @@ Options:
   --target NAME  Host to install for: codex (default) or claude.
                  codex  -> ${CODEX_HOME:-$HOME/.codex}/skills
                  claude -> $HOME/.claude/skills
-  --update       Replace already-installed workflow skills.
+  --update       Replace managed skills and remove owned retired bundles.
   --adopt-legacy Adopt pre-marker destinations during --update, moving them
                  to a recoverable backup first.
   --dest PATH    Install into PATH instead of the --target destination.
@@ -67,7 +67,7 @@ fi
 
 command -v tar >/dev/null 2>&1 || { echo "error: tar is required" >&2; exit 1; }
 
-[ -f "$REPO_ROOT/SKILL.md" ] || {
+[ -f "$REPO_ROOT/skills/repo-documentation/SKILL.md" ] || {
   echo "error: repository root not found; run this script from a complete checkout" >&2
   exit 1
 }
@@ -82,26 +82,15 @@ case "$DEST_ROOT" in
 esac
 
 # source path relative to the repository root|destination-name
-# The root package is kept at the repository root for backward compatibility.
 SKILLS=(
-  ".|codex-development-workflow"
-  "skills/plan-workflow|plan-workflow"
-  "skills/develop-workflow|develop-workflow"
-  "skills/verify-workflow|verify-workflow"
-  "skills/publish-workflow|publish-workflow"
-  "skills/integrate-workflow|integrate-workflow"
-  "skills/plan-to-ticket|plan-to-ticket"
-  "skills/test-workflow|test-workflow"
-  "skills/skill-eval|skill-eval"
   "skills/plantuml|plantuml"
   "skills/repo-current-state|repo-current-state"
   "skills/repo-documentation|repo-documentation"
   "skills/data-document-redaction|data-document-redaction"
-  "skills/github-push-when-ready|github-push-when-ready"
 )
 
-# Destinations from bundles retired by the workflow. These are removed only
-# during an explicit update so old installations do not keep discovering them.
+# Previously shipped workflow bundles. Remove only on explicit update and
+# only when the ownership marker matches the former installer identity.
 OBSOLETE_SKILLS=(
   "context-efficiency"
   "pr-review"
@@ -112,6 +101,16 @@ OBSOLETE_SKILLS=(
   "ponytail-gain"
   "ponytail-help"
   "auto-deploy"
+  "codex-development-workflow"
+  "plan-workflow"
+  "develop-workflow"
+  "verify-workflow"
+  "publish-workflow"
+  "integrate-workflow"
+  "plan-to-ticket"
+  "test-workflow"
+  "skill-eval"
+  "github-push-when-ready"
 )
 
 destination_is_managed() {
@@ -175,11 +174,7 @@ for spec in "${SKILLS[@]}"; do
   IFS='|' read -r subpath name <<< "$spec"
   dest="$DEST_ROOT/$name"
 
-  if [ "$subpath" = "." ]; then
-    src="$REPO_ROOT"
-  else
-    src="$REPO_ROOT/$subpath"
-  fi
+  src="$REPO_ROOT/$subpath"
 
   if [ ! -f "$src/SKILL.md" ]; then
     echo "error: bundled source $subpath does not contain SKILL.md" >&2
@@ -213,27 +208,15 @@ for spec in "${SKILLS[@]}"; do
 
   echo "install: $name <- $subpath"
   mkdir -p "$dest"
-  if [ "$subpath" = "." ]; then
-    (
-      cd "$REPO_ROOT"
-      if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
-        tar "${TAR_EXCLUDES[@]}" -cf - \
-          SKILL.md agents docs/workflow/redaction.md references/skill-map.md
-      else
-        tar -cf - SKILL.md agents docs/workflow/redaction.md references/skill-map.md
-      fi
-    ) | (cd "$dest" && tar -xf -)
-  else
-    (
-      cd "$src"
-      if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
-        tar "${TAR_EXCLUDES[@]}" --exclude='.git' --exclude='__pycache__' \
-          --exclude='*.pyc' -cf - .
-      else
-        tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
-      fi
-    ) | (cd "$dest" && tar -xf -)
-  fi
+  (
+    cd "$src"
+    if [ "${#TAR_EXCLUDES[@]}" -gt 0 ]; then
+      tar "${TAR_EXCLUDES[@]}" --exclude='.git' --exclude='__pycache__' \
+        --exclude='*.pyc' -cf - .
+    else
+      tar --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' -cf - .
+    fi
+  ) | (cd "$dest" && tar -xf -)
   printf '%s\n' "codex-development-workflow:$name" > "$dest/$MANAGED_MARKER"
   installed=$((installed + 1))
 done

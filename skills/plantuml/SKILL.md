@@ -50,14 +50,42 @@ source quality, rendering, and semantic/readability validation. Architecture
 code and affected source/render share a PR. Never hand-edit rendered SVG to hide
 source problems.
 
-For codex-development-workflow, preserve locations unless migrating the owner;
+Preserve repository locations unless migrating the canonical document owner;
 keep `.puml`/same-basename `.svg` synchronized where the documentation standard
 requires it:
 
 ```bash
-bash scripts/render-diagrams.sh render
-bash scripts/render-diagrams.sh --check
+if [[ -x scripts/render-diagrams.sh ]]; then
+  bash scripts/render-diagrams.sh render
+  bash scripts/render-diagrams.sh --check
+else
+  # Run once per diagram, from the repository root. Public Kroki is for
+  # non-sensitive source; set KROKI_URL to an approved local/private endpoint
+  # for private or unreleased architecture.
+  set -euo pipefail
+  src=docs/architecture.puml
+  out="${src%.puml}.svg"
+  renderer="${KROKI_URL:-https://kroki.io}"
+  tmp="$(mktemp "${out}.tmp.XXXXXX")"
+  trap 'rm -f "$tmp"' EXIT
+  curl --fail --silent --show-error \
+    -X POST "${renderer%/}/plantuml/svg" \
+    -H 'Content-Type: text/plain' \
+    --data-binary "@$src" \
+    --output "$tmp"
+  if ! grep -Eq '<svg([[:space:]>])' "$tmp"; then
+    echo "renderer returned no SVG: $src" >&2
+    exit 1
+  fi
+  mv "$tmp" "$out"
+  trap - EXIT
+fi
 ```
+
+When the repository script is unavailable, use this direct Kroki request for
+each `.puml` file and compare the resulting SVG in review. The request must
+succeed and the response must contain an SVG root before the output is replaced;
+keep the source if rendering fails and report it as unrendered.
 
 The first regenerates renders; the second detects drift. Public Kroki accepts
 only non-sensitive source; sensitive/unreleased architecture needs an approved

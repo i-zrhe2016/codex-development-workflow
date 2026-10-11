@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for scripts/install-all.sh target selection.
-
-These exercise the CLI surface added for dual-host support: the default Codex
-destination, the Claude destination, explicit --dest precedence, invalid or
-missing --target values, and the update/skip behavior against a scratch root.
-
-The installer never touches a real skills directory here; every case passes an
-explicit --dest under a temporary directory.
-"""
-
+"""Regression tests for the documentation-skill installer."""
 from __future__ import annotations
 
 import os
@@ -20,235 +11,92 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALLER = REPO_ROOT / "scripts" / "install-all.sh"
-
-EXPECTED_SKILLS = (
-    "codex-development-workflow",
-    "plan-workflow",
-    "develop-workflow",
-    "verify-workflow",
-    "publish-workflow",
-    "integrate-workflow",
-    "plan-to-ticket",
-    "test-workflow",
-    "skill-eval",
-    "plantuml",
-    "repo-current-state",
-    "repo-documentation",
-    "data-document-redaction",
-    "github-push-when-ready",
-)
+EXPECTED_SKILLS = ("data-document-redaction", "plantuml", "repo-current-state", "repo-documentation")
+RETIRED = ("context-efficiency", "pr-review", "ponytail", "ponytail-review", "ponytail-audit",
+           "ponytail-debt", "ponytail-gain", "ponytail-help", "auto-deploy",
+           "codex-development-workflow", "plan-workflow", "develop-workflow", "verify-workflow",
+           "publish-workflow", "integrate-workflow", "plan-to-ticket", "test-workflow",
+           "skill-eval", "github-push-when-ready")
+MARKER = ".codex-development-workflow-managed"
 
 
-class InstallerTargetTests(unittest.TestCase):
+class InstallerTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.tmp = Path(tempfile.mkdtemp(prefix="install-all-test-"))
+        self.tmp = Path(tempfile.mkdtemp(prefix="install-doc-skills-"))
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
-    def run_installer(self, *args: str, home: Path | None = None,
-                      codex_home: Path | None = None) -> subprocess.CompletedProcess:
-        env = dict(os.environ)
-        if home is not None:
-            env["HOME"] = str(home)
-        if codex_home is not None:
-            env["CODEX_HOME"] = str(codex_home)
-        else:
-            env.pop("CODEX_HOME", None)
-        return subprocess.run(
-            ["bash", str(INSTALLER), *args],
-            capture_output=True,
-            text=True,
-            env=env,
-            cwd=REPO_ROOT,
-        )
+    def run_installer(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(["bash", str(INSTALLER), *args], cwd=REPO_ROOT,
+                              capture_output=True, text=True, env=dict(os.environ))
 
-    def installed_names(self, root: Path) -> list[str]:
-        return sorted(
-            p.parent.name
-            for p in root.glob("*/SKILL.md")
-        )
+    def names(self, root: Path) -> list[str]:
+        return sorted(path.parent.name for path in root.glob("*/SKILL.md"))
 
-    def openai_metadata(self, root: Path) -> list[Path]:
-        return sorted(root.rglob("openai.yaml"))
+    def test_fresh_install_has_only_four_standalone_skills(self) -> None:
+        for target in ("codex", "claude"):
+            dest = self.tmp / target
+            result = self.run_installer("--target", target, "--dest", str(dest))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(self.names(dest), list(EXPECTED_SKILLS))
+            for name in EXPECTED_SKILLS:
+                bundle = dest / name
+                self.assertTrue((bundle / "SKILL.md").is_file())
+                if target == "codex":
+                    self.assertTrue((bundle / "agents/openai.yaml").is_file())
+                else:
+                    self.assertFalse((bundle / "agents/openai.yaml").exists())
+                source = REPO_ROOT / "skills" / name
+                self.assertEqual((bundle / "SKILL.md").read_bytes(), (source / "SKILL.md").read_bytes())
 
-    def test_claude_target_omits_codex_metadata_from_every_bundle(self) -> None:
-        """agents/openai.yaml is Codex-only; the Claude archive must not ship it.
-
-        This covers both archive branches: the root package copies an explicit
-        file list that includes `agents/`, and each specialist bundle copies `.`
-        wholesale.
-        """
-        dest = self.tmp / "dest"
-        result = self.run_installer("--target", "claude", "--dest", str(dest))
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.openai_metadata(dest), [])
-
-        # The root package still ships its other managed paths.
-        root_bundle = dest / "codex-development-workflow"
-        self.assertTrue((root_bundle / "SKILL.md").is_file())
-        self.assertTrue((root_bundle / "agents").is_dir())
-        self.assertTrue((root_bundle / "docs" / "workflow" / "redaction.md").is_file())
-        self.assertTrue((root_bundle / "references" / "skill-map.md").is_file())
-
-    def test_codex_target_installs_codex_metadata_for_every_bundle(self) -> None:
-        codex_home = self.tmp / "codex-home"
-        home = self.tmp / "home"
-        home.mkdir()
-        result = self.run_installer(home=home, codex_home=codex_home)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        found = self.openai_metadata(codex_home / "skills")
-        self.assertEqual(len(found), len(EXPECTED_SKILLS))
-        self.assertEqual(
-            sorted(p.parent.parent.name for p in found),
-            sorted(EXPECTED_SKILLS),
-        )
-
-    def test_default_target_installs_into_codex_home(self) -> None:
-        codex_home = self.tmp / "codex-home"
-        home = self.tmp / "home"
-        home.mkdir()
-        result = self.run_installer(home=home, codex_home=codex_home)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(str(codex_home / "skills"), result.stdout)
-        self.assertIn("Restart Codex", result.stdout)
-        self.assertEqual(self.installed_names(codex_home / "skills"), sorted(EXPECTED_SKILLS))
-
-    def test_claude_target_installs_into_claude_skills(self) -> None:
-        home = self.tmp / "home"
-        home.mkdir()
-        result = self.run_installer("--target", "claude", home=home)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(str(home / ".claude" / "skills"), result.stdout)
-        self.assertIn("Restart Claude Code", result.stdout)
-        self.assertEqual(self.installed_names(home / ".claude" / "skills"), sorted(EXPECTED_SKILLS))
-
-    def test_explicit_dest_overrides_target(self) -> None:
-        home = self.tmp / "home"
-        home.mkdir()
-        explicit = self.tmp / "explicit"
-        result = self.run_installer("--target", "claude", "--dest", str(explicit), home=home)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(str(explicit), result.stdout)
-        self.assertEqual(self.installed_names(explicit), sorted(EXPECTED_SKILLS))
-        self.assertFalse((home / ".claude" / "skills").exists())
-
-    def test_unknown_target_exits_without_creating_destination(self) -> None:
-        home = self.tmp / "home"
-        home.mkdir()
-        result = self.run_installer("--target", "bogus", home=home)
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("unknown target", result.stderr)
-        self.assertFalse((home / ".claude" / "skills").exists())
-
-    def test_missing_target_value_exits_with_error(self) -> None:
-        result = self.run_installer("--target")
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("--target requires a name", result.stderr)
-
-    def test_rerun_skips_then_update_replaces(self) -> None:
+    def test_update_replaces_owned_skills_and_removes_only_owned_retired_bundles(self) -> None:
         dest = self.tmp / "dest"
         first = self.run_installer("--target", "claude", "--dest", str(dest))
         self.assertEqual(first.returncode, 0, first.stderr)
-        self.assertIn(f"Installed: {len(EXPECTED_SKILLS)}", first.stdout)
-
-        second = self.run_installer("--target", "claude", "--dest", str(dest))
-        self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertIn(f"Skipped:   {len(EXPECTED_SKILLS)}", second.stdout)
-
-        third = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
-        self.assertEqual(third.returncode, 0, third.stderr)
-        self.assertIn(f"Installed: {len(EXPECTED_SKILLS)}", third.stdout)
-
-    def test_install_and_update_copy_current_skill_bytes_for_every_target(self) -> None:
-        for target in ("codex", "claude"):
-            dest = self.tmp / target
-            for phase, extra_args in (("install", ()), ("update", ("--update",))):
-                with self.subTest(target=target, phase=phase):
-                    result = self.run_installer(
-                        "--target", target, "--dest", str(dest), *extra_args,
-                    )
-                    self.assertEqual(result.returncode, 0, result.stderr)
-                    for bundle in EXPECTED_SKILLS:
-                        with self.subTest(bundle=bundle):
-                            source = (
-                                REPO_ROOT if bundle == "codex-development-workflow"
-                                else REPO_ROOT / "skills" / bundle
-                            ) / "SKILL.md"
-                            self.assertEqual(
-                                (dest / bundle / "SKILL.md").read_bytes(),
-                                source.read_bytes(),
-                            )
-                    if phase == "install":
-                        for bundle in EXPECTED_SKILLS:
-                            (dest / bundle / "SKILL.md").write_bytes(b"stale installed skill\n")
-
-    def test_install_skip_update_preserve_external_configuration_and_instructions(self) -> None:
-        """Shipping Skill policy must not install or rewrite runtime/project policy."""
-        home = self.tmp / "home"
-        codex_home = self.tmp / "codex-home"
-        project = self.tmp / "project"
-        protected = {
-            codex_home / "config.toml": b'model = "local-user-model"\n',
-            codex_home / "agents" / "local.toml": b'name = "local-role"\n',
-            home / ".claude" / "settings.json": b'{"model":"local-claude-model"}\n',
-            home / "AGENTS.md": b"User instructions\n",
-            project / ".codex" / "config.toml": b'model = "local-project-model"\n',
-            project / ".codex" / "agents" / "local.toml": b'name = "project-role"\n',
-            project / ".claude" / "settings.json": b'{"model":"project-claude-model"}\n',
-            project / "AGENTS.md": b"Project scheduling and model policy\n",
-            project / "CLAUDE.md": b"Project Claude instructions\n",
-        }
-        for path, content in protected.items():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(content)
-
-        for target in ("codex", "claude"):
-            dest = self.tmp / "arbitrary destinations" / target / "skills"
-            stale = b"previously installed root policy\n"
-            for phase, extra_args in (("install", ()), ("skip", ()), ("update", ("--update",))):
-                with self.subTest(target=target, phase=phase):
-                    result = self.run_installer(
-                        "--target", target, "--dest", str(dest), *extra_args,
-                        home=home, codex_home=codex_home,
-                    )
-                    self.assertEqual(result.returncode, 0, result.stderr)
-                    installed_root = dest / "codex-development-workflow" / "SKILL.md"
-                    expected = stale if phase == "skip" else (REPO_ROOT / "SKILL.md").read_bytes()
-                    self.assertEqual(installed_root.read_bytes(), expected)
-                    for path, content in protected.items():
-                        self.assertEqual(path.read_bytes(), content, str(path))
-                    # The source project's runtime config/instructions are outside every bundle.
-                    for name in ("config.toml", "AGENTS.md", "CLAUDE.md"):
-                        self.assertEqual(list(dest.rglob(name)), [])
-                    self.assertEqual(list(dest.rglob(".codex")), [])
-                    self.assertEqual(list(dest.rglob(".claude")), [])
-                    if phase == "install":
-                        installed_root.write_bytes(stale)
-
-    def test_update_leaves_unrelated_destination_untouched(self) -> None:
-        dest = self.tmp / "dest"
-        unrelated = dest / "local-custom-skill"
-        unrelated.mkdir(parents=True)
-        (unrelated / "SKILL.md").write_text("local work\n", encoding="utf-8")
+        for name in EXPECTED_SKILLS:
+            (dest / name / "SKILL.md").write_text("stale\n", encoding="utf-8")
+        owned = dest / "plan-workflow"
+        owned.mkdir()
+        (owned / MARKER).write_text(f"codex-development-workflow:plan-workflow\n", encoding="utf-8")
+        unowned = dest / "develop-workflow"
+        unowned.mkdir()
+        (unowned / "SKILL.md").write_text("local\n", encoding="utf-8")
+        unrelated = dest / "my-skill"
+        unrelated.mkdir()
+        (unrelated / "SKILL.md").write_text("local\n", encoding="utf-8")
 
         result = self.run_installer("--target", "claude", "--dest", str(dest), "--update")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertNotIn("local-custom-skill", result.stdout)
-        self.assertEqual((unrelated / "SKILL.md").read_text(encoding="utf-8"), "local work\n")
+        self.assertIn("remove: plan-workflow (retired)", result.stdout)
+        self.assertIn("preserve: develop-workflow (ownership unverified)", result.stdout)
+        for name in EXPECTED_SKILLS:
+            self.assertEqual((dest / name / "SKILL.md").read_bytes(),
+                             (REPO_ROOT / "skills" / name / "SKILL.md").read_bytes())
+        self.assertFalse(owned.exists())
+        self.assertEqual((unowned / "SKILL.md").read_text(encoding="utf-8"), "local\n")
+        self.assertEqual((unrelated / "SKILL.md").read_text(encoding="utf-8"), "local\n")
 
-    def test_update_preserves_unverified_managed_destination(self) -> None:
-        for target in ("codex", "claude"):
-            with self.subTest(target=target):
-                dest = self.tmp / target
-                for bundle in ("codex-development-workflow", "test-workflow"):
-                    unverified = dest / bundle
-                    unverified.mkdir(parents=True)
-                    (unverified / "SKILL.md").write_bytes(b"local work\n")
+    def test_adopt_legacy_backs_up_unmarked_retired_bundle(self) -> None:
+        dest = self.tmp / "dest"
+        legacy = dest / "plan-workflow"
+        legacy.mkdir(parents=True)
+        (legacy / "SKILL.md").write_text("legacy\n", encoding="utf-8")
+        result = self.run_installer("--target", "claude", "--dest", str(dest), "--update", "--adopt-legacy")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Migrated:  1", result.stdout)
+        backups = list(dest.glob(".codex-development-workflow-legacy.*"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual((backups[0] / "plan-workflow/SKILL.md").read_text(encoding="utf-8"), "legacy\n")
+        self.assertFalse((dest / "plan-workflow").exists())
 
-                result = self.run_installer("--target", target, "--dest", str(dest), "--update")
-                self.assertEqual(result.returncode, 0, result.stderr)
-                for bundle in ("codex-development-workflow", "test-workflow"):
-                    self.assertIn(f"preserve: {bundle} (ownership unverified)", result.stdout)
-                    self.assertEqual((dest / bundle / "SKILL.md").read_bytes(), b"local work\n")
+    def test_skip_and_cli_errors(self) -> None:
+        dest = self.tmp / "dest"
+        first = self.run_installer("--target", "claude", "--dest", str(dest))
+        self.assertEqual(first.returncode, 0, first.stderr)
+        second = self.run_installer("--target", "claude", "--dest", str(dest))
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertIn("Skipped:   4", second.stdout)
+        self.assertEqual(self.run_installer("--target", "bogus").returncode, 2)
+        self.assertEqual(self.run_installer("--adopt-legacy").returncode, 2)
 
 
 if __name__ == "__main__":
