@@ -5,7 +5,7 @@ description: "Before commit, push, or PR publication, scan/sanitize staged files
 
 # Git Commit Redaction
 
-Protect the next Git commit, not prove repository/history secret-free. Scan the
+Protect the next Git commit; this scan does not prove the repository or its history is secret-free. Scan the
 **exact staged files**, never the whole repository/history unless explicitly
 requested; no PDF, Office, OCR, image metadata or general anonymization.
 Never print matched secrets/personal values in logs, reports or chat.

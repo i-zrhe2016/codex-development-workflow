@@ -1,4 +1,0 @@
-interface:
-  display_name: "Publish Workflow"
-  short_description: "Decide when to publish: docs, redaction, commit, push, PR"
-  default_prompt: "Use $publish-workflow for only the user-authorized commit, push or PR update of verified work. Preserve documentation, staged redaction, identity and batch readiness; require final Plan verification, coalescing with Ticket acceptance only for an exactly matching one-Ticket scope and surface. Suppress auto-push hooks for commit-only and stop at the selected boundary."

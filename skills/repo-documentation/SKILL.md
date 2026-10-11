@@ -28,8 +28,8 @@ check whether it:
 7. Affects a diagram's components, order, decisions, or boundaries so its claimed
    flow no longer matches.
 
-Unclear means yes: inspect. Report in the existing PR description or Plan Issue
-delivery evidence, with no separate artifact. A yes names the changed canonical
+Unclear means yes: inspect. Report the result in the change description or the
+repository issue record when available. A yes names the changed canonical
 document and its fact; a no is one line that nothing documented changed. Do not
 create documents merely to appear thorough.
 
@@ -38,9 +38,9 @@ create documents merely to appear thorough.
 Resolve ownership before writing via
 [`references/document-types.md`](references/document-types.md); choose the more
 specific type when two could own a fact and link from the other. Current truth
-belongs in `docs/Repo_Current_State.md` (`repo-current-state`), planned/in-progress
-work in GitHub Issues (`plan-to-ticket`), and history in Git. Never copy those
-snapshots/backlogs/history into content documents.
+may belong in `docs/Repo_Current_State.md` (`repo-current-state`); work tracking
+belongs in the repository issue tracker when one exists, and history belongs in
+Git. Do not copy state snapshots, backlogs, or history into content documents.
 
 Apply [`references/doc-file-standard.md`](references/doc-file-standard.md) to
 content under `docs/`: `kebab-case` filename, one `#` title, header fields `Type`,
@@ -72,10 +72,10 @@ ownership and update obligations; do not restate facts elsewhere. Draw only when
 a picture materially clarifies decisions, request/data flow, states, or component
 boundaries, not for value lists, single steps, or symmetry.
 
-Placement/naming and unrendered markup are in the file standard; embedding,
-including unrendered cases, is in templates. Invoke the `plantuml` capability
-skill routed by `AGENTS.md` **before drawing**; it owns rendering procedures. If
-unavailable, preserve `.puml` source and report unrendered using required markup.
+Placement, naming, and embedding rules are in the file standard and templates.
+Use the companion `plantuml` skill for diagram type, source quality, rendering,
+and readability review. If it is unavailable, preserve `.puml` source and report
+that it is unrendered.
 
 For changed components/order/decisions/boundaries, update `.puml`, re-render
 through that skill, and commit source/render with the behavior change. Never
