@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Workflow"
+  short_description: "Decide when to plan: understand, design, and decompose"
+  default_prompt: "Use $plan-workflow to define and persist one Plan for this requirement before branch edits. Use one Ticket for ordinary work and multiple Tickets only for distinct behavior, dependency, or acceptance boundaries; supplementary work updates that requirement's Plan, while an independent requirement starts a new Plan. Planning grants no publication authority."

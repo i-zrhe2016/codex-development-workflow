@@ -4,10 +4,17 @@
 > Status: Active
 > Scope: PlantUML diagram generation, rendering, review, and repository integration
 
-Use PlantUML when an engineering concern is clearer as a diagram. Choose a view that answers one question: context for boundaries, component for decomposition, sequence for interactions, state for lifecycle, activity for decisions, deployment for runtime placement, or ERD/class for data structure.
+PlantUML is a capability skill for diagrams-as-code. It is invoked when architecture, runtime flow, lifecycle, deployment, or another engineering concern is materially clearer as a diagram.
 
-Keep sources deterministic and reviewable, use meaningful node names and labeled edges, and preserve local style conventions. Avoid remote includes. Check rendered output for readability and keep the `.puml` source and same-basename `.svg` together.
+It is not a workflow stage. repo-documentation decides whether documentation needs a diagram and where the canonical source/render belong; plantuml owns diagram selection, PlantUML source quality, rendering, and readability validation.
 
-The `repo-documentation` skill owns whether a diagram is needed and where it belongs. This skill owns diagram type, source quality, rendering, and visual review. The repository renderer is `scripts/render-diagrams.sh`; it uses public Kroki, so send only non-sensitive source.
+Repository conventions:
 
-Runtime guidance: [`skills/plantuml/SKILL.md`](../../../skills/plantuml/SKILL.md).
+- one diagram answers one question;
+- static structure uses focused architecture views, while runtime behavior uses sequence/state/activity views;
+- important relationships carry semantic labels;
+- .puml source and same-basename SVG stay synchronized when required by the documentation standard;
+- public Kroki is used only for non-sensitive diagrams;
+- architecture-changing code and affected diagrams change in the same PR.
+
+Runtime instructions: [`SKILL.md`](../../../skills/plantuml/SKILL.md).

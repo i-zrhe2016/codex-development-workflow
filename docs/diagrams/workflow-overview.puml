@@ -1,0 +1,31 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Codex Development Workflow — Authorized Full Delivery Overview
+
+start
+:Requirement;
+note right
+  Ordinary requests route directly to the owning stage.
+  This complete path requires explicit end-to-end authorization.
+end note
+:plan-workflow;
+:develop-workflow;
+:verify-workflow;
+:State / Docs if changed;
+:publish-workflow;
+note right
+  Publish only the authorized batch;
+  stop at the selected commit / push / PR boundary.
+end note
+:integrate-workflow;
+:Validate merged State / Docs;
+:Evaluate / follow-up;
+note right
+  Report evidence-backed improvement for user decision.
+  Follow-up work requires a new request.
+end note
+stop
+@enduml
