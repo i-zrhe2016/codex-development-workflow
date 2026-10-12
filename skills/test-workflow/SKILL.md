@@ -23,9 +23,10 @@ surface or multi-Ticket Plan requires a separate final verifier.
 
 The main agent applies the associated root routing policy, requests model,
 effort and `fork_turns="none"` explicitly, and distinguishes requested settings
-from observed identity. Count all active agents against actual host capacity;
-there is no project concurrency cap or lifetime quota, and direct main-to-worker
-dispatch requires two available slots. Queue when capacity is exhausted.
+from observed identity. Count the active main agent and all workers against
+actual host capacity; there is no project cap or lifetime quota. A direct
+main-to-worker dispatch needs one free slot for that worker. Queue when no slot
+is free.
 
 Main agent, before dispatch: identify **this active entrypoint's** path
 from the explicit user-selected/dispatched path first, otherwise its loaded

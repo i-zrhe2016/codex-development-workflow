@@ -93,7 +93,8 @@ class WorkflowContractTests(unittest.TestCase):
         for text in (root, develop, verify):
             normalized = re.sub(r"\s+", " ", text)
             self.assertIn("directly dispatch", normalized)
-            self.assertIn("two available slots", normalized)
+            self.assertIn("one free slot", normalized)
+            self.assertIn("active main agent", normalized)
         self.assertIn("initial implementation failure does not count", root)
         self.assertIn("one-ticket plan", verify)
         for marker in ("full scope", "artifact/version", "configuration", "deployment surface"):
@@ -121,6 +122,9 @@ class WorkflowContractTests(unittest.TestCase):
             "Ticket Scope:",
             "Ticket Out of scope:",
             "Dependencies:",
+            "Write Ownership:",
+            "Shared Resources / Conflicts:",
+            "Relative Effort:",
             "Function Checklist:",
             "Ticket Acceptance Criteria:",
             "Test Cases:",

@@ -63,6 +63,29 @@ runtime instance or surface cannot be proven.
 
 ## Verification workers
 
+### Scheduling policy scenario checks
+
+When verifying a scheduling-policy change, exercise the real coordinator/worker
+workflow:
+
+- Confirm an independent Ticket can start while another dependency chain is
+  blocked, and that an individual completion immediately requeues a newly ready
+  Ticket.
+- Confirm a dependent Ticket stays write-locked until prerequisite work is
+  integrated, the fixed snapshot independently passes, and PASS evidence is
+  saved to its Issue. Force an Issue-write failure and confirm it stays locked.
+- Confirm overlapping paths, interfaces, schemas, fixtures and runtime
+  resources serialize. Use a no-commit Git fixture with staged and unstaged
+  edits plus binary, added, deleted and renamed files; confirm the patch captures
+  every change while preserving the primary index and dirty baseline.
+- Confirm concurrent checks use isolated databases, ports, caches and service
+  instances. Change an integrated prerequisite and confirm its dependent
+  closure is invalidated, active descendants stop or remain isolated, and their
+  outputs are reconciled against the new base before integration.
+
+These checks exercise the actual workflow; a toy scheduler tested only against
+its own selection logic is not sufficient evidence.
+
 These minimum rules apply without `AGENTS.md`; when present, it owns full
 scheduling policy.
 
@@ -75,9 +98,15 @@ scheduling policy.
   whose full scope, artifact/version, configuration and deployment surface are
   exactly the same. Otherwise use a separate fresh final verifier. Any change
   after verification requires a new verifier for the affected scope.
-- Count active agents against actual host capacity. There is no project cap or
-  lifetime quota; each direct main-to-worker dispatch requires two available
-  slots, and work queues when capacity is exhausted.
+- Count the active main agent and workers against actual host capacity. There
+  is no project cap or lifetime quota; each direct dispatch needs one free slot
+  for its worker. Queue when no slot is free.
+- Verify one fixed, integrated Plan-branch snapshot. Independently identify its
+  content and runtime/environment against acceptance before exercising it; hold
+  that identity fixed for the run. Integration must precede this verification,
+  and durable PASS evidence must precede dependent delivery. A failed Issue
+  write blocks the unlock. Follow `develop-workflow` for snapshot capture,
+  runtime isolation, event requeue, and stale-descendant reconciliation.
 - The main agent identifies this active entrypoint and its same-installation
   root Skill routing policy before dispatch, preserving the active-copy and
   unsupported-setting BLOCKED rules. Request explicit model, effort and

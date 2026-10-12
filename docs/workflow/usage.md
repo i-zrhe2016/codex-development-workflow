@@ -184,14 +184,17 @@ new Sol/high verifier may satisfy both gates only when the Plan has one Ticket
 and the full scope, artifact/version, configuration, and deployment surface
 match exactly. Otherwise dispatch a separate fresh final verifier.
 
-The canonical [scheduling and context policy](../../AGENTS.md#multi-agent-delegation)
+The canonical [role and context policy](../../AGENTS.md#multi-agent-delegation)
 defines direct main-agent dispatch, fresh worker contracts, repair replacement,
-capacity, exact-scope verifier reuse, and durable checkpoints. Codex dispatch
-uses `fork_turns="none"`; another host must provide equivalent independent
-context or report BLOCKED. All workers are leaves. Admission uses actual host
-capacity: main plus one worker requires two slots, with work queued when full;
-there is no project concurrency or lifetime quota. Dependent Tickets may be
-prepared read-only, but delivery writes wait for prerequisite independent PASS.
+exact-scope verifier reuse, and durable checkpoints. The portable
+[develop-workflow procedure](../../skills/develop-workflow/SKILL.md#ticket-owners-and-workers)
+defines the event-driven Ready Queue, host capacity and integration. Codex
+dispatch uses `fork_turns="none"`; another host must provide equivalent
+independent context or report BLOCKED. All workers are leaves. Count the active
+main agent and workers against host capacity; each dispatch needs one free slot.
+There is no project concurrency or lifetime quota. Dependent Tickets may be
+prepared read-only, but delivery writes wait until prerequisite work is
+integrated, independently verified on the fixed snapshot, and durably recorded.
 The installable root/develop/verify/test Skills carry minimum runtime rules in
 repositories without AGENTS.md.
 
