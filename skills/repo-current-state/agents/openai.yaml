@@ -1,3 +1,5 @@
 interface:
   display_name: "Repo Current State"
   short_description: "Keep repository state concise, verified, and current"
+policy:
+  allow_implicit_invocation: false

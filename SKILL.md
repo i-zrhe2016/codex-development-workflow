@@ -5,6 +5,10 @@ description: "Route repository work to plan, develop, verify, publish or integra
 
 # Development Workflow
 
+This Skill and every bundled workflow Skill are explicit-only. Invoke them only
+when the user explicitly writes the corresponding `$skill-name`; do not invoke
+them automatically from a task description or generic trigger.
+
 Stage skills own **when** work runs; capability skills own **how**. Read and
 follow each invoked skill's `SKILL.md`; report a required skill's absence rather
 than inventing a replacement. Feature, Bug, Refactor and Docs are profiles,

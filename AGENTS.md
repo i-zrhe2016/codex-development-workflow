@@ -233,11 +233,13 @@ natural boundary.
 
 ## Skill Rules
 
-* Invoke Skills only when their trigger applies.
-* Prefer the most specific applicable Skill.
+* Workflow Skills are explicit-only: invoke one only when the user writes its
+  `$skill-name` form.
+* Prefer the most specific explicitly requested Skill.
 * Follow the invoked Skill's `SKILL.md`.
-* Do not duplicate Skill procedures here.
-* Multiple Skills may be invoked when independent triggers apply.
+* Do not duplicate Skill procedures here or infer invocation from a generic
+  task trigger.
+* Multiple Skills may be invoked only when the user explicitly names each one.
 * If a required Skill is unavailable, report it instead of inventing a replacement.
 
 ## Repository Rules

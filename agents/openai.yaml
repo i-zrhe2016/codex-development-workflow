@@ -1,3 +1,5 @@
 interface:
   display_name: "Codex Development Workflow"
   short_description: "Route scoped work; publish and merge when authorized"
+policy:
+  allow_implicit_invocation: false
