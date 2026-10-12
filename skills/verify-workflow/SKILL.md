@@ -121,10 +121,9 @@ scheduling policy.
 - FAIL returns the affected functionality to a fresh implementation worker,
   followed by a new independent verifier for all affected Ticket scenarios.
   The initial implementation failure does not count as a repair round. After
-  two consecutive failed same-problem repair rounds, stop Luna writes to that
-  problem and dispatch a fresh Sol/high repair implementer. Preserve counts and
-  evidence across replacement; later unrelated work remains on Luna. If Sol
-  cannot fix the problem, the main agent diagnoses and replans.
+  two consecutive failed same-problem repair rounds, the main agent diagnoses
+  and replans. Repair implementation uses Sol/low from the first round.
+  Preserve counts and evidence across replacement; verification uses Sol/high.
 - The main agent retains the Test Quality Gate, stage transitions and final
   judgment. Preserve unexplained flaky failures; a passing retry does not erase
   them.

@@ -114,20 +114,21 @@ agent must not duplicate worker implementation or verification.
 ### Who chooses the subagent
 
 The main agent selects each Ticket owner, optional module assistant, verifier or
-repair implementer. It uses the canonical model table in
+repair implementer. This project's explicit model-routing policy overrides the
+bundle defaults: every Codex worker uses `gpt-6.1-sol`; development workers use
+`low` reasoning effort and verification workers use `high`. It uses the canonical model-routing procedure in
 [`SKILL.md`](SKILL.md#codex-worker-model-routing), including its active-copy
 resolution, explicit dispatch arguments and observed-versus-requested evidence
 rules. Codex may read `.codex/agents/`; Claude Code may read `.claude/agents/`.
 Named agent descriptions state their trigger and operating boundary.
 
-For every Codex dispatch explicitly request the policy-selected model and
-reasoning effort with `fork_turns="none"`. Ordinary development, docs and sync
-use Luna/medium; API/schema, security and complex logic use Luna/high. The
-initial implementation failure does not count as a repair round. After two
-consecutive failed repair rounds on the same problem, stop Luna writes to that
-problem and dispatch a fresh Sol/high repair implementer. Preserve failure
-evidence and the count across replacements; later unrelated work remains Luna.
-Ticket and final acceptance use Sol/high, with the exact one-Ticket coalescing
+For every Codex dispatch explicitly request `gpt-6.1-sol` and the role's reasoning
+effort with `fork_turns="none"`. Development, docs, synchronization, API/schema,
+security, complex logic and repair implementation all use Sol/low. The initial implementation
+failure does not count as a repair round. Preserve failure evidence and the
+count across replacements. After two consecutive failed repair rounds on the
+same problem, the main agent diagnoses and replans using the preserved evidence.
+Ticket and final acceptance also use Sol/high, with the exact one-Ticket coalescing
 exception above. If a required setting is actually unsupported or a selected
 role has an unavoidable conflicting override, stop
 that dispatch as **BLOCKED**. Do not silently fall back, switch providers or
@@ -198,7 +199,8 @@ boundaries; retire the finished worker context without deleting host logs.
 Keep the Ticket owner's continuity across implementation and local repairs;
 do not create per-step acknowledgements or acceptance gates. A same-
 problem repair uses a fresh implementation worker and preserves the failure
-count. After two failed repair rounds, use Sol/high for that problem. Ticket
+count. All repair implementation workers use Sol/low from the first round; after two failed
+repair rounds, the main agent diagnoses and replans. Ticket
 acceptance repairs use a fresh replacement, followed by a new independent
 verifier. Never reuse workers across roles, stages or Tickets; independent
 verification remains mandatory. Worker task completion does not

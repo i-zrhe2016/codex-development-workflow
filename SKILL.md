@@ -189,18 +189,17 @@ across fresh workers:
 
 | Dispatch scope | Model | Reasoning effort |
 |---|---|---|
-| Ordinary development, docs or synchronization | `gpt-6-luna` | `medium` |
-| API/schema, security or complex logic | `gpt-6-luna` | `high` |
-| Repair implementation after two consecutive failed repair rounds on the same problem | `gpt-6.1-sol` | `high` |
+| Ordinary development, docs or synchronization | `gpt-6.1-sol` | `low` |
+| API/schema, security or complex logic | `gpt-6.1-sol` | `low` |
+| Repair implementation from the first repair round | `gpt-6.1-sol` | `low` |
 | Ticket acceptance verification or final Plan/branch/PR acceptance | `gpt-6.1-sol` | `high` |
 
 The initial implementation failure does not count as a repair round. A failed
 repair round is a fresh repair implementation followed by a same-problem check
-that still fails. After two consecutive failed repair rounds, stop Luna writes
-to that problem and dispatch a fresh Sol/high repair implementer. Preserve the
+that still fails. All repair implementation uses Sol/low. Preserve the
 failure evidence and count across replacement or context reset. If Sol cannot
-fix the problem, the main agent diagnoses and replans; do not silently fall back.
-Later unrelated development continues on Luna. Ticket and final acceptance use
+fix the problem after two consecutive failed repair rounds, the main agent
+diagnoses and replans; do not silently fall back. Ticket and final acceptance use
 Sol/high. One new verifier can cover both gates only for a one-Ticket Plan with
 exactly matching full scope, artifact/version, configuration and deployment
 surface; all other final Plan checks use a separate fresh verifier.
