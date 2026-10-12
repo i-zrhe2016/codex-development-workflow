@@ -3,4 +3,4 @@ interface:
   short_description: "Run risk-aware verification with explicit test quality gates"
   default_prompt: "Use $test-workflow for implementation feedback or read-only Sol/high Ticket and final Plan verification. Coalesce gates only for a one-Ticket Plan with exactly matching scope, artifact/version, configuration, and deployment surface; map acceptance to risk-based evidence and require the Test Quality Gate before PASS."
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false
