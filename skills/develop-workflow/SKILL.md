@@ -177,9 +177,9 @@ owns the full scheduling policy.
   followed by a new verifier for affected functionality. Preserve flaky-test
   evidence and the Test Quality Gate.
 - The initial implementation failure does not count as a repair round. After
-  two consecutive failed same-problem repair rounds, stop Luna writes to that
-  problem and dispatch a fresh Sol/high repair implementer. Later unrelated work
-  remains on Luna. Final Plan acceptance is a separate fresh verifier, except
+  two consecutive failed same-problem repair rounds, the main agent diagnoses
+  and replans. Development and repair implementation use Sol/low from the start.
+  Final Plan acceptance is a separate fresh verifier, except
   one NEW verifier may satisfy Ticket and final gates for a one-Ticket Plan only
   when full scope, artifact/version, configuration and deployment surface match
   exactly. The main agent owns the Test Quality Gate and stage decision.

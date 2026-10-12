@@ -61,9 +61,9 @@ test, config and docs fixes belong to implementation. A failed Ticket check
 returns affected functionality to a fresh implementation worker, followed by a
 new verifier for all affected Ticket scenarios. The initial implementation
 failure is not a repair round. After two consecutive failed same-problem repair
-rounds, stop Luna writes to that problem and dispatch a fresh Sol/high repair
-implementer. Preserve counts and every failure; later unrelated work remains
-Luna. If Sol cannot fix the problem, the main agent diagnoses and replans.
+rounds, the main agent diagnoses and replans. Repair implementation uses
+Sol/low from the first round; verification uses Sol/high. Preserve counts and
+every failure across worker replacements.
 Unavailable independent verifiers block acceptance; retries cannot erase
 unexplained flakiness.
 

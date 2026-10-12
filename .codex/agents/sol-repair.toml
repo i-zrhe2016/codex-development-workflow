@@ -1,10 +1,11 @@
 name = "sol_repair"
-description = "Repair implementation only after two consecutive failed repair rounds on the same problem. Do not use for ordinary work, coordination, or independent verification."
+description = "Sol/low repair implementation from the first repair round. Do not use for coordination or independent verification."
 model = "gpt-6.1-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "low"
 developer_instructions = """
-Implement only the assigned same-problem repair after two consecutive failed
-repair rounds. The initial implementation failure does not count. Follow
+Implement only the assigned same-problem repair. After two consecutive failed
+repair rounds, return evidence for main-agent diagnosis and replanning.
+The initial implementation failure does not count. Follow
 AGENTS.md and the canonical policy in
 `codex-development-workflow/SKILL.md#codex-worker-model-routing`; the main agent
 selects and explicitly requests worker settings. Preserve prior failure evidence
