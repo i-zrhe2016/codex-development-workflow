@@ -116,12 +116,41 @@ boundaries; the root skill defines model routing and repair escalation, and
 root/develop/verify/test Skills retain minimum runtime rules because AGENTS.md
 is not installed.
 
+## Workflows
+
+A workflow is implemented as an installable Skill: it controls stage ownership,
+action gates, and where work stops. Specialist Skills provide the capabilities
+used within that contract. In a prompt, `$skill-name` uses the exact `name` in
+the Skill's frontmatter, as shown below; section titles are not invocation names.
+
+Choose `$codex-development-workflow` to route the request or orchestrate an
+explicitly authorized complete delivery, **or** name the specific stage workflow
+needed. Do not redundantly invoke the root and every stage for the same request.
+Required specialist dependencies run under the selected workflow contract; you
+do not need to type every specialist name to activate those dependencies.
+Direct specialist invocation is useful when requesting that capability itself.
+
+| Workflow | Purpose | Invocation example | Stop boundary | Runtime source | Documentation |
+|---|---|---|---|---|---|
+| `codex-development-workflow` | Route requests; orchestrate explicitly authorized complete delivery | `$codex-development-workflow Implement this requirement and verify it locally.` | Requested stages/actions; full delivery only when explicitly authorized | [`SKILL.md`](SKILL.md) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `plan-workflow` | Define architecture, scope, and persisted Plan/Tickets | `$plan-workflow Plan multi-tenant routing without changing code.` | Executable Plan/Tickets; no repository edits, delivery verification, or publication | [`skills/plan-workflow/`](skills/plan-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `develop-workflow` | Implement an existing Ticket and validate locally | `$develop-workflow Implement the existing Ticket.` | Development Complete; before independent acceptance, publication, Issue closure, or state refresh | [`skills/develop-workflow/`](skills/develop-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `verify-workflow` | Prove acceptance, regressions, or branch/PR readiness | `$verify-workflow Verify this change against its acceptance criteria.` | PASS / FAIL / BLOCKED evidence; no code changes or publication | [`skills/verify-workflow/`](skills/verify-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `publish-workflow` | Publish a verified change within authorized scope | `$publish-workflow Commit this verified change only.` | Requested commit, push, or PR creation/update boundary; never merge | [`skills/publish-workflow/`](skills/publish-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `integrate-workflow` | Merge a ready PR and reconcile delivery state | `$integrate-workflow Merge this ready PR and complete cleanup.` | Authorized merge, cleanup, synchronization, and Plan/Ticket closure; no product code changes | [`skills/integrate-workflow/`](skills/integrate-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+
 ## Workflow composition examples
 
 Stage workflows are composable. Use only the stages needed for the current
 request, while preserving stage ownership and the existing gates. A partial
 workflow stops when its requested stage is complete; it does not implicitly
 continue into publication or merge.
+
+The bare skill names in the flow sketches below label stages; they are not
+prompt invocations. Use the explicit `$name` forms in the workflow table. For a
+composition of specific stages, name each requested workflow explicitly (for
+example, `$develop-workflow $verify-workflow Implement and verify this Ticket
+locally`), or use the root workflow with that bounded scope.
 
 ### 1. Planning only
 
@@ -138,7 +167,7 @@ Requirement
 Example request:
 
 ```text
-Plan how to add multi-tenant routing. Do not modify code yet.
+$plan-workflow Plan how to add multi-tenant routing. Do not modify code yet.
 ```
 
 ### 2. Implement only from an existing plan
@@ -356,22 +385,11 @@ bash scripts/install-all.sh --update
 
 Restart the host after installation so it discovers the new skill directories.
 
-## Installed skills
+## Specialist Skills
 
-- `codex-development-workflow`
-- `plan-workflow`
-- `develop-workflow`
-- `verify-workflow`
-- `publish-workflow`
-- `integrate-workflow`
-- `plan-to-ticket`
-- `test-workflow`
-- `skill-eval`
-- `plantuml`
-- `repo-current-state`
-- `repo-documentation`
-- `data-document-redaction`
-- `github-push-when-ready`
+These eight capabilities support the workflows or can be requested directly
+with their actual `$name`. `test-workflow` is the testing capability used by
+`verify-workflow`; its name does not make it another lifecycle stage.
 
 `plan-to-ticket` persists one Plan and its child Tickets to GitHub Issues for
 every requirement before branch work. GitHub Issues are the sole durable
@@ -380,30 +398,22 @@ recovery context, not a parallel backlog. A Plan has one or more behavior
 Tickets, and its branch/PR/merge gate applies once per Plan, never once per
 Ticket.
 
-## Skill documentation
-
 Runtime skill sources live under `skills/` and are installed by
 [`scripts/install-all.sh`](scripts/install-all.sh). Specialist documentation
 is grouped under
 [`docs/skills/`](docs/skills/); operational references remain beside the
 relevant bundle.
 
-| Skill | Runtime source | Documentation |
-|---|---|---|
-| `codex-development-workflow` | [`SKILL.md`](SKILL.md) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `plan-workflow` | [`skills/plan-workflow/`](skills/plan-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `develop-workflow` | [`skills/develop-workflow/`](skills/develop-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `verify-workflow` | [`skills/verify-workflow/`](skills/verify-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `publish-workflow` | [`skills/publish-workflow/`](skills/publish-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `integrate-workflow` | [`skills/integrate-workflow/`](skills/integrate-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `plan-to-ticket` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
-| `test-workflow` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
-| `skill-eval` | [`skills/skill-eval/`](skills/skill-eval/) | — |
-| `plantuml` | [`skills/plantuml/`](skills/plantuml/) | [Skill documentation](docs/skills/plantuml/README.md) |
-| `repo-current-state` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |
-| `repo-documentation` | [`skills/repo-documentation/`](skills/repo-documentation/) | [Skill documentation](docs/skills/repo-documentation/README.md) |
-| `data-document-redaction` | [`skills/data-document-redaction/`](skills/data-document-redaction/) | [Skill documentation](docs/skills/data-document-redaction/README.md) |
-| `github-push-when-ready` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
+| Specialist Skill | Purpose | Invocation example | Runtime source | Documentation |
+|---|---|---|---|---|
+| `plan-to-ticket` | Decompose and persist a requirement as Plan/Ticket Issues | `$plan-to-ticket Persist this requirement as a Plan and Tickets.` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
+| `test-workflow` | Map acceptance to risk-based evidence and enforce the Test Quality Gate | `$test-workflow Validate this bug fix against its acceptance criteria.` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
+| `skill-eval` | Evaluate skill effectiveness with blind A/B real-task comparisons | `$skill-eval Evaluate whether this skill improves task outcomes.` | [`skills/skill-eval/`](skills/skill-eval/) | — |
+| `plantuml` | Create, render, and review architecture and workflow diagrams | `$plantuml Render and review this architecture diagram.` | [`skills/plantuml/`](skills/plantuml/) | [Skill documentation](docs/skills/plantuml/README.md) |
+| `repo-current-state` | Maintain concise, verified repository recovery state | `$repo-current-state Refresh the verified repository state.` | [`skills/repo-current-state/`](skills/repo-current-state/) | [Skill README](docs/skills/repo-current-state/README.md) · [Architecture](docs/skills/repo-current-state/architecture.md) |
+| `repo-documentation` | Govern canonical documentation and its navigation index | `$repo-documentation Check this change's documentation impact.` | [`skills/repo-documentation/`](skills/repo-documentation/) | [Skill documentation](docs/skills/repo-documentation/README.md) |
+| `data-document-redaction` | Scan and sanitize sensitive values in staged publication files | `$data-document-redaction Scan staged files before publication.` | [`skills/data-document-redaction/`](skills/data-document-redaction/) | [Skill documentation](docs/skills/data-document-redaction/README.md) |
+| `github-push-when-ready` | Assess readiness and guard authorized commit, push, and PR actions | `$github-push-when-ready Assess this batch's publication readiness.` | [`skills/github-push-when-ready/`](skills/github-push-when-ready/) | [Skill documentation](docs/skills/github-push-when-ready/README.md) |
 
 
 ## Documentation
