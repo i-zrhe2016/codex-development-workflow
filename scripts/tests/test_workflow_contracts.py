@@ -59,11 +59,11 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual(
             routing,
             {
-                "Ordinary development, docs or synchronization": ("gpt-6-luna", "medium"),
-                "API/schema, security or complex logic": ("gpt-6-luna", "high"),
-                "Repair implementation after two consecutive failed repair rounds on the same problem": (
+                "Ordinary development, docs or synchronization": ("gpt-6.1-sol", "low"),
+                "API/schema, security or complex logic": ("gpt-6.1-sol", "low"),
+                "Repair implementation from the first repair round": (
                     "gpt-6.1-sol",
-                    "high",
+                    "low",
                 ),
                 "Ticket acceptance verification or final Plan/branch/PR acceptance": (
                     "gpt-6.1-sol",
@@ -74,13 +74,14 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_codex_defaults_and_named_roles_do_not_override_routing(self) -> None:
         config = tomllib.loads(CODEX_CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(config["agents"]["default_subagent_model"], "gpt-6-luna")
-        self.assertEqual(config["agents"]["default_subagent_reasoning_effort"], "medium")
+        self.assertEqual(config["agents"]["default_subagent_model"], "gpt-6.1-sol")
+        self.assertEqual(config["agents"]["default_subagent_reasoning_effort"], "low")
         self.assertNotIn("max_concurrent_threads_per_session", config["agents"])
 
         repair = tomllib.loads((CODEX_AGENTS / "sol-repair.toml").read_text(encoding="utf-8"))
-        self.assertEqual((repair["model"], repair["model_reasoning_effort"]), ("gpt-6.1-sol", "high"))
-        self.assertIn("two consecutive failed repair rounds", repair["description"])
+        self.assertEqual((repair["model"], repair["model_reasoning_effort"]), ("gpt-6.1-sol", "low"))
+        self.assertIn("from the first repair round", repair["description"])
+        self.assertIn("After two consecutive failed\nrepair rounds", repair["developer_instructions"])
         verifier = tomllib.loads((CODEX_AGENTS / "sol-verifier.toml").read_text(encoding="utf-8"))
         self.assertEqual((verifier["model"], verifier["model_reasoning_effort"]), ("gpt-6.1-sol", "high"))
         self.assertEqual(repair["name"], "sol_repair")
@@ -254,15 +255,36 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertTrue((root / "SKILL.md").is_file())
                 self.assertTrue((root / "agents" / "openai.yaml").is_file())
 
-    def test_readme_installed_skill_list_matches_installer(self) -> None:
+    def test_readme_skill_tables_match_installer(self) -> None:
         readme = README.read_text(encoding="utf-8")
-        section = readme.split("## Installed skills", 1)[1].split("## Skill documentation", 1)[0]
-        listed = {
-            line.removeprefix("- `").removesuffix("`")
-            for line in section.splitlines()
-            if line.startswith("- `") and line.endswith("`")
+        expected_workflows = {
+            "codex-development-workflow", "plan-workflow", "develop-workflow",
+            "verify-workflow", "publish-workflow", "integrate-workflow",
         }
-        self.assertEqual(listed, EXPECTED_SKILLS)
+        listed = []
+        for heading, expected in (
+            ("Workflows", expected_workflows),
+            ("Specialist Skills", EXPECTED_SKILLS - expected_workflows),
+        ):
+            section = readme.split(f"## {heading}\n", 1)[1].split("\n## ", 1)[0]
+            rows = [line for line in section.splitlines() if line.startswith("| `")]
+            names = [re.match(r"\| `([^`]+)` \|", row).group(1) for row in rows]
+            self.assertEqual(set(names), expected)
+            self.assertEqual(len(names), len(expected))
+            listed.extend(names)
+            for name, row in zip(names, rows):
+                source = ROOT_SKILL if name == "codex-development-workflow" else (
+                    REPO_ROOT / "skills" / name / "SKILL.md"
+                )
+                frontmatter_name = re.search(
+                    r"^name: (.+)$", source.read_text(encoding="utf-8"), re.MULTILINE
+                ).group(1).strip()
+                self.assertEqual(name, frontmatter_name)
+                self.assertIn(f"`${frontmatter_name} ", row)
+        self.assertEqual(set(listed), EXPECTED_SKILLS)
+        self.assertEqual(len(listed), len(EXPECTED_SKILLS))
+        self.assertNotIn("## Installed skills", readme)
+        self.assertNotIn("## Skill documentation", readme)
 
     def test_test_workflow_contains_quality_gate_contract(self) -> None:
         runtime = TEST_SKILL.read_text(encoding="utf-8").lower()
