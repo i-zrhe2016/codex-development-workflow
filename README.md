@@ -57,8 +57,10 @@ Docs, Code, Tests, Config, Refactor, Bugfix, Feature, Dependency, and CI/CD
 changes all use the branch, commit, push, PR, and merge path. Selected local,
 commit-only and push-only requests stop at their authorized boundary. Feature, Bug, Refactor, and Docs are profiles of the stage workflows,
 not separate workflows. The macro stage order and gates stay fixed; inside the
-current stage, the main agent chooses the smallest useful execution wave and may
-run dependency-ready, non-overlapping work concurrently.
+development stage, the main agent schedules dependency-ready work from a live
+Ready Queue, re-evaluating after each completion or material checkpoint and
+prioritizing the remaining critical path. See the [develop-workflow scheduling
+rules](skills/develop-workflow/SKILL.md#ticket-owners-and-workers).
 
 After delivery, the main agent performs one lightweight workflow evaluation.
 It looks for reusable evidence such as avoidable rework, weak assumptions,
@@ -95,8 +97,8 @@ artifact/version, configuration, and deployment surface. Optional
 independent-module helpers may work in parallel only with fixed interfaces,
 isolated workspaces, and independent verification. Workers never dispatch
 workers. The root [`SKILL.md`](SKILL.md#codex-worker-model-routing) owns model
-and effort defaults; [`AGENTS.md`](AGENTS.md#multi-agent-delegation) owns the
-execution contract, capacity, and scheduling.
+and effort defaults; [`AGENTS.md`](AGENTS.md#multi-agent-delegation) owns role
+boundaries and links to the portable `develop-workflow` scheduling procedure.
 
 ## Adaptive multi-agent execution
 
@@ -105,13 +107,14 @@ all workers are leaves and never spawn agents. Owners retain context across
 the Ticket and local repairs. Dependent Tickets may be prepared read-only, while
 writes wait for prerequisite acceptance. Optional module helpers require
 independent modules, fixed interfaces, non-overlapping ownership, and isolated
-workspaces or returned patches. Admission uses actual host capacity: main plus
-one worker requires two slots, and work queues when capacity is exhausted; no
-project concurrency or lifetime quota applies. The canonical
-[`AGENTS.md` policy](AGENTS.md#multi-agent-delegation) defines model routing,
-repair escalation, exact-scope verification reuse, checkpoints, and recovery.
-Installed root/develop/verify/test Skills retain minimum runtime rules because
-AGENTS.md is not installed.
+workspaces or returned patches. Count the active main agent and workers against
+actual host capacity; each dispatch consumes one free worker slot, and work
+queues when none is free. No project concurrency or lifetime quota applies. The
+canonical [`AGENTS.md` policy](AGENTS.md#multi-agent-delegation) defines role
+boundaries; the root skill defines model routing and repair escalation, and
+`develop-workflow` defines queueing, integration and recovery. Installed
+root/develop/verify/test Skills retain minimum runtime rules because AGENTS.md
+is not installed.
 
 ## Workflow composition examples
 
@@ -281,8 +284,9 @@ Ticket concurrency is allowed only when scopes, interfaces, files, configuration
 and shared test state do not conflict; parallel writers need isolated workspaces
 or returned patches. Every active role counts against actual host capacity.
 Read-only preparation may proceed across dependencies, but dependent writes wait
-for prerequisite independent PASS. See the
-[scheduling policy](AGENTS.md#multi-agent-delegation).
+until prerequisite work is integrated on the Plan branch, independently passes
+on that fixed snapshot, and has durable Issue evidence. See the
+[develop-workflow scheduling procedure](skills/develop-workflow/SKILL.md#ticket-owners-and-workers).
 
 ### Composition rule
 

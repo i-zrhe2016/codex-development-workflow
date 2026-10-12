@@ -102,24 +102,13 @@ agent retains the Test Quality Gate and stage-transition decision.
 Worker context, task contracts, handoffs and retirement follow
 [Context Management](#context-management).
 
-### Adaptive execution waves
+### Adaptive execution
 
-Schedule dependency-ready Tickets and bounded owner/module/verifier tasks at
-runtime. Count all active main agents and workers against actual host capacity;
-the repository imposes no fixed concurrency cap or total/lifetime agent quota.
-A direct main-to-worker dispatch requires two available slots; queue when host
-capacity is exhausted. No additional leaf-slot reservation applies. Integrate
-completed waves and recompute readiness after material results, failures,
-dependency changes or integration steps. A dependent Ticket may prepare
-read-only, but delivery writes wait for its prerequisite's independent PASS.
-
-Before a wave, check dependencies, ownership, risk, host capacity and overlap
-in files, interfaces, schemas, migrations, configuration and shared test state.
-Keep dependent or conflicting work sequential. Context isolation does not
-isolate the filesystem. Parallel writers require separate safe ownership and
-isolated worktrees or returned patches for main-agent integration on the shared
-Plan branch. Never switch a directory used by active workers or create Ticket
-delivery branches. If safe isolation is unavailable, serialize work. The main
+The portable `develop-workflow` Skill owns the dynamic Ticket Ready Queue,
+critical-path priority, integration/unlock conditions, completion-triggered
+requeue, snapshot identity, conflict serialization, recovery and host-capacity
+accounting. Follow its [Ticket owner and Ready Queue rules](skills/develop-workflow/SKILL.md#ticket-owners-and-workers).
+The root workflow Skill preserves only cross-stage unlock invariants. The main
 agent must not duplicate worker implementation or verification.
 
 ### Who chooses the subagent

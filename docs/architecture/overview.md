@@ -16,7 +16,7 @@ procedures remain inside their own `SKILL.md` files.
 | Component | Responsibility |
 |---|---|
 | `codex-development-workflow` | Routes each request to the stage workflow that owns it — `plan-workflow`, `develop-workflow`, `verify-workflow`, `publish-workflow`, or `integrate-workflow` — carries the invariants shared by all stages, and provides the optional full orchestration for an explicitly authorized end-to-end delivery. |
-| Adaptive execution waves | The main agent directly dispatches fresh Ticket owners and independent verifiers; an owner retains context across the Ticket and local repairs. |
+| Dynamic Ready Queue | The main agent directly dispatches fresh Ticket owners and independent verifiers, requeueing work after each completion or material checkpoint. |
 | Subagent selection | The main agent and host choose the best available built-in or project-defined subagent from the task contract and agent description; no task class is hard-coded to a named agent. |
 | Codex worker model routing | Root [`SKILL.md`](../../SKILL.md#codex-worker-model-routing) owns portable worker defaults, precedence and escalation; direct develop/verify/test coordinators read the corresponding root from their active installation through the discovered Skill catalog. |
 | `.codex/config.toml` and `.codex/agents/` | Separate project-local coordinator/worker configuration and optional scoped agent definitions; [installation.md](../deployment/installation.md#codex-model-routing) owns configuration and installation boundaries. |
@@ -32,7 +32,7 @@ procedures remain inside their own `SKILL.md` files.
 | `github-push-when-ready` | Guards feature-branch publication through Commit, Push, and PR readiness. |
 
 The main agent centrally owns requirements, architecture, planning, cross-
-Ticket dependency ordering, execution-wave scheduling, integration, stage-gate
+Ticket dependency ordering, Ready Queue scheduling, integration, stage-gate
 decisions, and final judgment. It directly dispatches fresh Ticket owners,
 independent-module helpers when safe, and independent verifiers. Ticket owners
 retain context across their Ticket and local repairs; all workers
@@ -134,25 +134,25 @@ Plan branch is created. Each Ticket loads only the context needed for its
 acceptance criteria. A wrong design assumption returns to planning before scope
 expands.
 
-### Fixed topology and adaptive execution waves
+### Fixed topology and event-driven execution
 
 ```text
 Fixed stages: plan -> develop -> verify -> publish -> integrate
 Ticket execution: main -> fresh Ticket owner -> fresh whole-Ticket verifier
 Final delivery verification: fresh whole-Plan verifier; exact one-Ticket scope may coalesce
-Main: readiness -> capacity-bounded Ticket wave -> integrate evidence -> gates
+Main: live Ready Queue -> integrate -> verify fixed snapshot -> persist evidence -> unlock
 ```
 
 Worker selection and concurrency adapt to actual host capacity, dependencies
-and ownership. All active roles count toward capacity; no project-set cap or
-total/lifetime quota applies. Main plus one worker requires two slots, and work
-queues when capacity is exhausted. Parallel module work requires fixed
-interfaces, independent decisions and verification, isolated workspaces or
-returned patches, and non-overlapping files, interfaces, configuration, and
-test state. Dependent Tickets may be prepared read-only, but writes wait for
-prerequisite independent PASS. See the canonical
-[AGENTS.md policy](../../AGENTS.md#multi-agent-delegation); local development
-checks do not replace independent verification.
+and ownership; requeue after each completion or material checkpoint without
+waiting for a batch. Count the active main agent and workers against host
+capacity; a dispatch needs one free worker slot. There is no project cap or
+total/lifetime quota. Conflicting paths, interfaces, configuration and shared
+test state serialize. Dependent Tickets may be prepared read-only; delivery
+writes wait until prerequisite work is integrated, its fixed snapshot passes
+independent verification, and evidence is saved to its Issue. See the
+[AGENTS.md policy](../../AGENTS.md#multi-agent-delegation) and
+[develop-workflow procedure](../../skills/develop-workflow/SKILL.md#ticket-owners-and-workers).
 
 ### Requirement-to-Ticket lifecycle
 
@@ -218,8 +218,10 @@ match those fields.
 
 ### Ticket worker boundaries
 
-The [canonical policy](../../AGENTS.md#multi-agent-delegation) owns worker
-contracts, safe waves, model routing, repair escalation and failure recovery.
+The [canonical role policy](../../AGENTS.md#multi-agent-delegation) owns worker
+contracts, model routing, repair escalation and failure recovery. The portable
+[develop-workflow procedure](../../skills/develop-workflow/SKILL.md#ticket-owners-and-workers)
+owns Ready Queue scheduling, capacity, integration and recovery.
 Root, develop, verify and test Skills retain minimum executable rules for
 installed use without AGENTS.md. Verifiers read without repair edits; a failed
 acceptance returns to implementation, then a fresh verifier checks affected
@@ -230,7 +232,7 @@ Otherwise final Plan acceptance uses a separate fresh whole-Plan verifier.
 The main agent retains integration, the Test Quality Gate and final judgment.
 
 [Context Management](../../AGENTS.md#context-management) owns scoped worker
-context, concise handoffs and durable Issue checkpoints at integrated waves,
+context, concise handoffs and durable Issue checkpoints at each integration,
 Development Complete, acceptance failures, and pause or retirement. The state snapshot remains repository recovery truth; it does not
 replace those checkpoints.
 

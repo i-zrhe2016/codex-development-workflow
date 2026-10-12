@@ -148,21 +148,19 @@ preserving failed evidence and the flaky-test gate. Interrupted/failed workers
 are replaced by fresh agents from verified checkpoints. The main agent owns
 the final Test Quality Gate and stage decisions.
 
-Schedule dependency-ready Tickets and bounded owner/module/verifier work in
-adaptive waves within actual host capacity. Count all active main agents and
-workers together; the repository imposes no fixed concurrency cap or
-total/lifetime agent quota. A direct main-to-worker dispatch needs two available
-slots; queue work when capacity is exhausted. No additional leaf-slot
-reservation applies. A dependent Ticket may prepare read-only, but delivery
-writes wait until its prerequisite independently passes. Integrate completed
-waves and recompute readiness after material results, failures, dependency
-changes or integration steps.
-Keep dependent or overlapping writes/interfaces/schemas/migrations/config and
-shared test state sequential. Parallel writers require non-overlapping
-ownership and isolated worktrees or returned patches for integration on the
-shared Plan branch. Never create Ticket branches or switch a directory used by
-active workers. Integrate results and recompute readiness after each material
-change.
+## Cross-stage scheduling invariants
+
+The `develop-workflow` skill owns the dynamic dependency Ready Queue,
+critical-path priority, event-based requeue, conflict isolation and transactional
+integration/recovery procedure. Across stages, integrate prerequisite work onto
+the Plan's single branch first; then a fresh independent verifier checks the
+fixed integrated snapshot; then save PASS evidence to that Ticket Issue. A
+dependent Ticket's delivery becomes eligible only after all three steps succeed
+for every prerequisite. Failed Issue writes never unlock work. A later change to
+a verified surface invalidates affected evidence and blocks dependent work until
+revalidation. Count the active main agent in host capacity; each dispatch needs
+one free slot for its worker. See `develop-workflow` for the portable execution
+rules.
 
 ## Codex worker model routing
 

@@ -32,8 +32,18 @@ concrete cases, and Ticket/final validation.
   test infrastructure is itself the requirement. Avoid unrelated refactors,
   upgrades, formatting, speculative abstractions and future work.
 - Record dependencies between Tickets only when real. A dependent Ticket may
-  prepare read-only, but delivery edits wait for its prerequisite's independent
-  PASS. All Tickets share the Plan branch; no Ticket branches or merges.
+  prepare read-only; delivery edits become ready only after each prerequisite's
+  work is integrated on the shared Plan branch, a fresh independent verifier
+  passes that fixed integrated snapshot, and PASS evidence is saved to its
+  Issue. Failed Issue writes never unlock dependents. The coordinator requeues
+  eligible work on each completion or material progress event; there is no
+  batch barrier. All Tickets share the Plan branch; no Ticket branches or merges.
+- Before persisting a multi-Ticket Plan, validate that every dependency points
+  to an indexed Ticket in this Plan and that the graph is acyclic. Record each
+  Ticket's owned paths/modules, shared resources or conflicts, and a rough
+  relative effort estimate when useful for scheduling. Dependency edges express
+  acceptance prerequisites; overlapping ownership/resources are serialized
+  separately and do not by themselves justify an extra Ticket dependency.
 - New independent requirements always start new Plans, even if another Plan is
   unmerged or shares a branch, files, or session. Supplementary work for the
   same requirement updates its existing Ticket. Add a Ticket only if the new
@@ -53,8 +63,10 @@ A separate final Plan verifier is required except one NEW verifier may satisfy
 both Ticket and final gates for a one-Ticket Plan when full scope,
 artifact/version, configuration and deployment surface match exactly. Main-agent
 capacity and dispatch routing follow `AGENTS.md` and the root workflow skill.
-Planning does not dispatch workers. Serialize dependent or overlapping files,
-interfaces, schemas, migrations, configuration and shared test state.
+Planning does not dispatch workers. Declare actual file, interface, schema,
+migration, configuration, fixture and shared-runtime conflicts so the
+coordinator can serialize them. The `develop-workflow` skill owns Ready Queue
+priority, integration and recovery details.
 
 ## Updating scope
 
@@ -112,6 +124,7 @@ goal, scope, Ticket index, Ticket dependency order, relevant integration /
 regression validation, and one-merge completion rule. Do not copy mutable Ticket
 acceptance or execution evidence into the Plan. Ticket Issue owns its goal,
 scope, exclusions, dependencies, current status, acceptance, relevant context,
+write ownership, shared resources/conflicts, optional relative effort,
 Function Checklist, test strategy/level/cases and validation command.
 
 Use the available GitHub Issues connector and current repository remote's
@@ -219,6 +232,9 @@ Issue: <canonical child Issue URL>
 Plan: <canonical Plan Issue URL>
 Status: planned
 Dependencies: <explicit Ticket IDs or None>
+Write Ownership: <paths/modules the owner may change>
+Shared Resources / Conflicts: <interfaces, schemas, fixtures, databases, ports, services or None>
+Relative Effort: <rough estimate or Unknown>
 Ticket Goal: <one concrete outcome>
 Ticket Scope: <allowed components/behavior>
 Ticket Out of scope: <unrelated/future work>

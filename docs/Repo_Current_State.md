@@ -1,20 +1,13 @@
 # Repository Current State
 
-Last verified: 2026-10-10 @ working tree
+Last verified: 2026-10-12 @ working tree
 
 ## Current Focus
 
-- [Plan #233](https://github.com/i-zrhe2016/codex-development-workflow/issues/233):
-  current requirement-workflow change;
-  [Ticket #234](https://github.com/i-zrhe2016/codex-development-workflow/issues/234)
-  covers core workflow rules and acceptance passed; current
-  [Ticket #235](https://github.com/i-zrhe2016/codex-development-workflow/issues/235)
-  covers documentation and contract checks, and
-  [Ticket #236](https://github.com/i-zrhe2016/codex-development-workflow/issues/236)
-  covers global instruction and managed-Skill synchronization; its local
-  synchronization checks now pass for all 14 installer-managed Codex bundles
-  and the relevant global instruction rules. Ticket acceptance and merge remain
-  pending.
+- [Plan #241](https://github.com/i-zrhe2016/codex-development-workflow/issues/241)
+  and [Ticket #242](https://github.com/i-zrhe2016/codex-development-workflow/issues/242):
+  efficient Ticket parallelism; publication and acceptance status are tracked
+  in the linked Issues.
 
 ## Implemented
 
@@ -54,6 +47,11 @@ Last verified: 2026-10-10 @ working tree
   and merge timing and scope; added scope requires impacted readiness checks
   and grants no new publication authority. See
   [publication decisions](workflow/usage.md#publication-decisions).
+- Development uses a native dynamic Ready Queue: dispatch newly ready Tickets,
+  integrate accepted outputs, then verify dependent work on the integrated
+  snapshot. Accepted, uncommitted Plan contents are preserved as baseline `S`
+  for isolated dependent workers. See
+  [Ticket owner and Ready Queue rules](../skills/develop-workflow/SKILL.md#ticket-owners-and-workers).
 - Material `docs/Repo_Current_State.md` updates are included on the same Plan
   branch and PR as the work they describe, before commit/PR creation; integration
   validates merged state instead of creating a post-merge state-only PR. See
@@ -75,6 +73,10 @@ Last verified: 2026-10-10 @ working tree
   drift count has not been remeasured. The eight changed pairs pass the
   isolated source/render check and visual review; no global diagram-check PASS
   is claimed.
+- Comparative performance for native one-, two- and three-owner scheduling is
+  unmeasured. Live GitHub checkpoint-failure recovery has not been exercised; see
+  [Plan #241](https://github.com/i-zrhe2016/codex-development-workflow/issues/241)
+  for current evidence.
 
 ## Constraints
 
