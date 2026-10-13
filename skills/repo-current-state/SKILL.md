@@ -87,7 +87,7 @@ Omit empty bullets; use `None` only when absence is useful information.
   secrets, spending, etc.).
 - **Architecture Snapshot:** a few orientation facts; link architecture, ADR,
   or module docs for detail.
-- **Next:** immediate Plan/Ticket Issue link, not a backlog or full Plan.
+- **Next:** immediate Plan Issue/Ticket section link, not a backlog or full Plan.
 
 ## Freshness and reconciliation
 

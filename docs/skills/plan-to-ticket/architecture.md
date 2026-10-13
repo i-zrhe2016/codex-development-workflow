@@ -29,7 +29,7 @@ application infrastructure topology.
 | --- | --- | --- |
 | [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines requirement/Plan/Ticket planning rules, Issue persistence contract, Ticket structure, scope constraints, and verification expectations. | It plans and persists Issue records; it does not implement the planned change. |
 | [`skills/plan-to-ticket/agents/openai.yaml`](../../../skills/plan-to-ticket/agents/openai.yaml) | Supplies the display name and short interface description. | It describes the skill in the interface; it does not define planning behavior. |
-| GitHub Issues connector | Creates, finds, and updates one Plan Issue plus one child Issue per Ticket for every requirement. | It is the external durable authority; no local Markdown mirror is maintained. |
+| GitHub Issues connector | Creates, finds, and updates one Plan Issue containing every Ticket section for every requirement. | It is the external durable authority; no local Markdown mirror is maintained. |
 | This documentation package | Explains the bundle structure, behavior, output contract, and maintenance expectations. | Documentation does not add executable behavior. |
 
 ## Request flow
@@ -42,12 +42,12 @@ application infrastructure topology.
 4. The skill defines each Ticket's complete execution and acceptance contract.
 5. The skill resolves the repository's GitHub target, searches exact stable
    markers and Ticket ID collisions, normalizes matching Issue titles, and
-   creates or updates one Plan Issue and its Ticket Issues before branch work
+   creates or updates one Plan Issue and its Ticket sections before branch work
    for every requirement.
 6. The skill assigns or resumes one branch and base branch for the Plan, records
    those values on the Plan Issue, and keeps all Tickets on that branch.
 7. The successful output follows the contract in `SKILL.md`: a `Plan` section
-   followed by complete Ticket sections with canonical Issue links and Plan
+   followed by complete Ticket sections with canonical same-Issue anchor links and Plan
    branch handoff fields.
 8. The main agent dispatches each Ticket to a fresh owner, who retains context
    across the Ticket and local repairs. After Development
@@ -70,13 +70,13 @@ application infrastructure topology.
   dispatches Ticket owners and chooses safe concurrency under the canonical
   scheduling policy. Workers are leaves and never dispatch workers.
 - Each Plan Issue maps to one independent requirement and one implementation
-  branch and, when delivered, one PR; all child Tickets share that branch, and the PR head/base must match
+  branch and, when delivered, one PR; all Ticket sections share that branch, and the PR head/base must match
   the Plan Issue metadata.
-- Plan Issue titles use `[PLAN] <short plan title>`; Ticket Issue titles
-  use `[T####] <short behavior/capability title>`. New `T####` identifiers are
+- Plan Issue titles use `[PLAN] <short plan title>`; Ticket sections
+  use stable `### Tdddd` headings with behavior titles in their bodies. New `T####` identifiers are
   repository-scoped, four-digit, monotonically allocated, and never reused;
   historical duplicate IDs remain legacy records.
-- Every requirement has one Plan Issue and at least one Ticket Issue; an
+- Every requirement has one Plan Issue and at least one Ticket section; an
   ordinary requirement uses one Ticket, while complex work may use multiple
   Tickets only for distinct behavioral, dependency, or acceptance boundaries.
   If the user elects delivery, PR/merge/cleanup gates apply
@@ -84,8 +84,8 @@ application infrastructure topology.
 
 ## Requirement-to-Ticket hierarchy
 
-Each independent requirement has one Plan Issue. Ordinary work uses one child
-Ticket; complex work may use multiple behavior Tickets only where distinct
+Each independent requirement has one Plan Issue. Ordinary work uses one Ticket
+section; complex work may use multiple behavior Tickets only where distinct
 behavioral, dependency, or acceptance boundaries justify them. Supplementary
 work for the same requirement updates its Ticket, adding another only for a
 distinct boundary. An independent requirement always gets a new Plan, even
@@ -97,7 +97,7 @@ execution order on the Plan branch.
 
 ## Ticket output contract
 
-Each Ticket Issue holds its complete execution and acceptance contract:
+Each Ticket section holds its complete execution and acceptance contract:
 
 - requirement goal, scope, exclusions, dependencies, and status;
 - Function Checklist, concrete requirements, and observable acceptance;
@@ -113,3 +113,12 @@ When changing planning behavior:
 2. Check that the architecture boundaries and request flow in this document remain accurate.
 3. Update this documentation index or repository layout if files or responsibilities change.
 4. Verify the Markdown structure, frontmatter, and any rendered diagram before committing.
+
+## Historical format compatibility
+
+New Plans persist all Ticket sections in one Issue. Historical Plan/child
+records stay intact until extension; the original Plan then receives complete
+contracts and evidence summaries, with source links retained and read-back
+verified before child supersession or closure. Completed merged Plans are never
+reopened. Follow the canonical
+[migration and retry procedure](../../../skills/plan-to-ticket/SKILL.md#historical-child-issue-migration-on-extension).

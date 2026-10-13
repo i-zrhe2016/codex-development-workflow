@@ -20,8 +20,8 @@ procedures remain inside their own `SKILL.md` files.
 | Subagent selection | The main agent and host choose the best available built-in or project-defined subagent from the task contract and agent description; no task class is hard-coded to a named agent. |
 | Codex worker model routing | Root [`SKILL.md`](../../SKILL.md#codex-worker-model-routing) owns portable worker defaults, precedence and escalation; direct develop/verify/test coordinators read the corresponding root from their active installation through the discovered Skill catalog. |
 | `.codex/config.toml` and `.codex/agents/` | Separate project-local coordinator/worker configuration and optional scoped agent definitions; [installation.md](../deployment/installation.md#codex-model-routing) owns configuration and installation boundaries. |
-| `plan-to-ticket` | Defines one Plan per independent requirement, ordinarily with one complete execution/acceptance Ticket; multiple Tickets require distinct behavioral, dependency, or acceptance boundaries. It persists Plan/Ticket Issues before branch work. |
-| GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while child Tickets own behavior and acceptance metadata. |
+| `plan-to-ticket` | Defines one Plan per independent requirement, ordinarily with one complete execution/acceptance Ticket; multiple Tickets require distinct behavioral, dependency, or acceptance boundaries. It persists Plan/Ticket sections before branch work. |
+| GitHub Issues connector | Stores the durable Plan/Ticket records; the Plan owns status, dependency index, branch, base, and PR metadata while its Ticket sections own behavior and acceptance metadata. |
 | `test-workflow` | Maps acceptance criteria to evidence, selects mandatory risk dimensions, and closes the Test Quality Gate only when required verification is satisfied. |
 | `repo-current-state` | Maintains the compact, verified recovery point on the same Plan branch and PR as the work it describes. |
 | `repo-documentation` | Governs documentation as one canonical document per fact: the documentation impact check, canonical ownership, the documentation index, duplicate and orphan detection, document lifecycle, and the diagram policy. |
@@ -114,7 +114,7 @@ Create Plan branch
   -> Delete branch
   -> Update main
   -> Validate PR-included State / Docs
-  -> Close Plan + Tickets
+  -> Mark Ticket sections done + close Plan Issue
   -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
 ```
@@ -125,11 +125,10 @@ persisted before branch work.
 Planning depth and verification level may vary. Authorized commits and pushes
 on a non-default branch may stop at their requested boundary; integration into
 the default branch still requires the guarded PR and merge path. Every
-independent requirement is recorded as one Plan Issue and one or more child
-Ticket Issues before branch work. Ordinary work uses one Ticket; multiple
+independent requirement is recorded as one Plan Issue and one or more Ticket sections in that Issue before branch work. Ordinary work uses one Ticket; multiple
 Tickets need distinct behavioral, dependency, or acceptance boundaries.
 
-`plan-to-ticket` creates the Plan Issue and all child Ticket Issues before the
+`plan-to-ticket` creates the Plan Issue and all Ticket sections before the
 Plan branch is created. Each Ticket loads only the context needed for its
 acceptance criteria. A wrong design assumption returns to planning before scope
 expands.
@@ -150,7 +149,7 @@ capacity; a dispatch needs one free worker slot. There is no project cap or
 total/lifetime quota. Conflicting paths, interfaces, configuration and shared
 test state serialize. Dependent Tickets may be prepared read-only; delivery
 writes wait until prerequisite work is integrated, its fixed snapshot passes
-independent verification, and evidence is saved to its Issue. See the
+independent verification, and evidence is saved to its section and Ticket-ID-tagged comments on the Plan Issue. See the
 [AGENTS.md policy](../../AGENTS.md#multi-agent-delegation) and
 [develop-workflow procedure](../../skills/develop-workflow/SKILL.md#ticket-owners-and-workers).
 
@@ -170,7 +169,7 @@ Source: [`diagrams/ticket-loop.puml`](diagrams/ticket-loop.puml)
 Dependency waits resume only after fresh evidence; a failed Ticket returns to
 diagnosis and affected validation, while a design conflict returns to planning.
 A failed validation or publication step returns to the recorded failed stage, never a later gate.
-Only the single verified Plan merge permits `done` and Plan/Ticket Issue closure.
+Only the single verified Plan merge permits `done` and Plan Issue closure.
 There is no outer per-Ticket merge loop. `planned`, `in_progress`, `blocked`,
 and `in_review` remain open states; `Status` is workflow metadata, not a claim
 that GitHub provides these workflow states automatically.
@@ -193,9 +192,9 @@ and validation. Real Ticket dependencies control work order within the Plan.
 ### Persistent ticket authority
 
 GitHub Issues are the sole durable authority for Plans and Tickets created by
-`plan-to-ticket`. Every requirement has one Plan Issue linking to one or more
-child Ticket Issues. The Plan retains `Status`, `Branch`, `Base`, `PR`, and
-completion metadata; each child Ticket retains its Plan link, goal, scope,
+`plan-to-ticket`. Every requirement has one Plan Issue containing one or more
+Ticket sections, indexed by stable `### Tdddd` anchors. The Plan retains `Status`, `Branch`, `Base`, `PR`, and
+completion metadata; each Ticket section retains its ID and status, goal, scope,
 dependencies, Function Checklist, acceptance criteria, and validation but does
 not own a branch or PR. The workflow blocks when required Issue reads or
 writes fail; it does not create a local Markdown mirror or treat chat output as
@@ -207,7 +206,7 @@ not a backlog or second ticket database.
 ### Plan branch
 
 A persisted Plan owns one branch created or resumed before editing, after its
-Plan and child Ticket Issues exist. The Plan branch is named
+Plan Issue and all Ticket sections exist. The Plan branch is named
 `<type>/<plan-id>-<short-description>`. Ticket dependencies are completed and
 validated on that branch; no prerequisite Ticket merge is required. Parallel
 workers use isolated worktrees or return patches/findings for integration, and

@@ -22,8 +22,8 @@ the user. Record explicit user decisions; otherwise return options and stop.
    execute checks. One ordinary requirement has one Ticket. A complex
    requirement may have multiple Tickets only for distinct behavioral,
    dependency, or acceptance boundaries.
-4. Persist every requirement as a Plan Issue and all required child Ticket
-   Issues before branch edits, regardless of size or session length. Follow the
+4. Persist every requirement as one Plan Issue containing all required Ticket
+   sections before branch edits, regardless of size or session length. Follow the
    capability's titles, markers, ID allocation and branch contract. Supplementary
    work for an unmerged requirement updates the existing Ticket, or adds a
    behavior Ticket when a distinct boundary justifies it; update affected Plan

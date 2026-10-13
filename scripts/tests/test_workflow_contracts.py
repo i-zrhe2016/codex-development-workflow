@@ -174,7 +174,7 @@ class WorkflowContractTests(unittest.TestCase):
 
         self.assertRegex(
             persistence,
-            r"persist one plan issue and its child ticket issue or issues for every user requirement before creating a branch or editing repository files",
+            r"persist one \[plan\] issue containing the plan and one or more ticket sections for every user requirement before creating a branch or editing repository files",
         )
         self.assertIn("github issues are authoritative", persistence)
         self.assertIn("do not create local markdown", persistence)
@@ -191,7 +191,7 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertRegex(
             contract,
-            r"an independent requirement always receives a new plan, including before the previous plan merges",
+            r"an independent requirement always receives a new plan and its own branch, including before the previous plan merges",
         )
 
     def test_publication_requires_valid_plan_and_ticket_metadata(self) -> None:
@@ -204,21 +204,63 @@ class WorkflowContractTests(unittest.TestCase):
 
         self.assertRegex(
             publish,
-            r"require the persisted plan and its required ticket issue metadata, and validate that they match the publication scope; missing or invalid metadata blocks commit, push, and pr creation/update",
+            r"require the persisted plan and its required ticket section metadata, and validate that they match the publication scope; missing or invalid metadata blocks commit, push, and pr creation/update",
         )
         self.assertRegex(
             push,
-            r"before any commit, push, or pr creation/update, require the persisted plan and its required ticket issue metadata and validate that they match the publication scope\. missing or invalid plan/ticket metadata blocks publication",
+            r"before any commit, push, or pr creation/update, require the persisted plan and its required ticket section metadata and validate that they match the publication scope\. missing or invalid plan/ticket metadata blocks publication",
         )
         self.assertRegex(
             guide,
-            r"require valid plan and ticket issue metadata that matches the publication scope; missing or invalid metadata blocks publication",
+            r"require valid plan and ticket section metadata that matches the publication scope; missing or invalid metadata blocks publication",
         )
         self.assertNotRegex(
             publish + " " + push,
             r"(?:commit|push|pr creation/update) (?:may|can) proceed without (?:the )?plan",
         )
         self.assertNotIn("when it does not, publication proceeds normally", guide)
+
+    def test_single_issue_contract_and_stable_ticket_example(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        normalized = re.sub(r"\s+", " ", skill).lower()
+        for invariant in (
+            "same issue", "### t0001", "#t0001", "behavior titles",
+            "ticket-id-tagged", "evidence summary:", "read back",
+            "serializes all writes", "preserve other tickets",
+        ):
+            with self.subTest(invariant=invariant):
+                self.assertIn(invariant, normalized)
+        template = re.search(r"Each Ticket uses these fields.*?```text\n(.*?)\n```", skill, re.S).group(1)
+        self.assertIn("### T0001\n<!-- codex-ticket-id: T0001 -->", template)
+        self.assertNotIn("Issue title:", template)
+        example = re.search(r"### Single-Issue example.*?```markdown\n(.*?)\n```", WORKFLOW_USAGE.read_text(encoding="utf-8"), re.S).group(1)
+        self.assertEqual(example.splitlines()[:5], ["Status: planned", "Branch: docs/example-plan-contract", "Base: main", "PR: null", "Tickets: [T0001]"])
+        self.assertEqual(re.findall(r"<!-- codex-ticket-id: (T\d{4}) -->", example), ["T0001"])
+        self.assertIn("Ticket index: [T0001](#t0001)", example)
+        self.assertIn("### T0001\n", example)
+
+    def test_legacy_continuation_preserves_unchanged_child_authority(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        legacy = re.sub(r"\s+", " ", skill.split("### Legacy continuation without scope extension", 1)[1].split("### Historical child-Issue migration on extension", 1)[0]).lower()
+        for invariant in ("without scope extension", "original child-issue authority", "do not require migration merely to resume", "every required child's complete metadata/contracts", "after verified merge", "close their issues", "extension", "new plans always"):
+            with self.subTest(invariant=invariant):
+                self.assertIn(invariant, legacy)
+        for name in ("SKILL.md", "skills/publish-workflow/SKILL.md", "skills/github-push-when-ready/SKILL.md", "skills/integrate-workflow/SKILL.md"):
+            with self.subTest(entrypoint=name):
+                self.assertIn("#legacy-continuation-without-scope-extension", (REPO_ROOT / name).read_text(encoding="utf-8"))
+
+    def test_global_ids_and_historical_migration_failure_order(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        ids = re.sub(r"\s+", " ", skill.split("### Naming and idempotency", 1)[1].split("### Authoritative Issue bodies", 1)[0]).lower()
+        for invariant in ("every page", "open and closed", "all", "multiple markers", "never reuse", "incomplete scan blocks", "t9999", "ambiguous matches"):
+            with self.subTest(invariant=invariant):
+                self.assertIn(invariant, ids)
+        migration = re.sub(r"\s+", " ", skill.split("### Historical child-Issue migration on extension", 1)[1].split("### Branch, status and handoff", 1)[0]).lower()
+        for invariant in ("leave historical", "until", "complete execution/acceptance contract", "passing/failing evidence", "retain links", "preserve plan id, ticket ids, branch/base and pr history", "read back and verify", "only after successful verification", "state_reason: not_planned", "partial", "block readiness", "not copied again", "do not reopen completed merged plans"):
+            with self.subTest(invariant=invariant):
+                self.assertIn(invariant, migration)
+        self.assertLess(migration.index("read back and verify"), migration.index("only after successful verification"))
+        self.assertLess(migration.index("only after successful verification"), migration.index("state_reason: not_planned"))
 
     def test_installer_managed_skills_match_repository_sources(self) -> None:
         installer = INSTALLER.read_text(encoding="utf-8")

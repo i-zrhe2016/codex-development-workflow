@@ -1,13 +1,14 @@
 # Repository Current State
 
-Last verified: 2026-10-12 @ working tree
+Last verified: 2026-10-13 @ working tree (single-Issue contract update; local
+contract checks only, not a whole-state audit)
 
 ## Current Focus
 
-- [Plan #241](https://github.com/i-zrhe2016/codex-development-workflow/issues/241)
-  and [Ticket #242](https://github.com/i-zrhe2016/codex-development-workflow/issues/242):
-  efficient Ticket parallelism; publication and acceptance status are tracked
-  in the linked Issues.
+- [Plan #249](https://github.com/i-zrhe2016/codex-development-workflow/issues/249)
+  and [Ticket T0077](https://github.com/i-zrhe2016/codex-development-workflow/issues/249#t0077):
+  accepted single-Issue Plan/Ticket behavior; publication and acceptance status
+  are tracked in that Issue.
 
 ## Implemented
 
@@ -38,7 +39,7 @@ Last verified: 2026-10-12 @ working tree
   dimensions. Authentication and authorization are proven separately when
   relevant, denied operations require protected side-effect absence, and tests
   must fail for the defect they claim to protect.
-- Every independent requirement has its own Plan and child Ticket Issues before
+- Every independent requirement has its own Plan Issue with Ticket sections before
   branch work. Ordinary work uses one Ticket; supplementary same-requirement
   work updates its Ticket or adds one for a distinct boundary. Independent
   requirements use separate Plans even while an earlier Plan remains unmerged.

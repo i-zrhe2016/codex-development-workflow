@@ -77,7 +77,7 @@ boundaries; they share that Plan's commit/PR delivery scope. Never combine
 independent requirements into one Plan or combine different Plans merely because
 they share a session. Keep implementation, tests and documentation within the
 Plan scope together. Before any commit, push, or PR creation/update, require the
-persisted Plan and its required Ticket Issue metadata and validate that they
+persisted Plan and its required Ticket section metadata and validate that they
 match the publication scope. Missing or invalid Plan/Ticket metadata blocks
 publication.
 
@@ -184,3 +184,12 @@ or push-only from final delivery; unrequested PR work is pending a user decision
 not a blocker. Report each stage separately.
 For executed push include branch, remote and whether a commit was created first;
 for existing/created PR include URL; for skipped push give the precise blocker.
+
+## Legacy format compatibility
+
+For preexisting unmerged Plans resumed without scope extension, follow
+[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
+original child-Issue contracts and metadata remain authoritative for publication
+checks, and verified integration marks Plan/children done and closes their Issues.
+The single-Issue section rules apply to new Plans and extended legacy Plans;
+only scope extension triggers the canonical migration. All existing gates apply.

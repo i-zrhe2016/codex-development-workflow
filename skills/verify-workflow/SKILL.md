@@ -73,7 +73,7 @@ workflow:
   Ticket.
 - Confirm a dependent Ticket stays write-locked until prerequisite work is
   integrated, the fixed snapshot independently passes, and PASS evidence is
-  saved to its Issue. Force an Issue-write failure and confirm it stays locked.
+  saved to its section and Ticket-ID-tagged comments on the Plan Issue. Force an Issue-write failure and confirm it stays locked.
 - Confirm overlapping paths, interfaces, schemas, fixtures and runtime
   resources serialize. Use a no-commit Git fixture with staged and unstaged
   edits plus binary, added, deleted and renamed files; confirm the patch captures
@@ -143,3 +143,11 @@ acceptance gate and an authorized update succeed.
 
 No code/test/config/docs edits to pass checks, commit/push/PR/merge, Issue closure
 or state updates. Subagents cannot advance stages or replace main-agent judgment.
+
+## Legacy checkpoint compatibility
+
+For preexisting unmerged Plans resumed without scope extension, follow
+[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
+checkpoints, statuses and evidence remain on original child Issues. Ticket
+section destinations apply to new Plans and extended legacy Plans. Scope
+extension triggers canonical migration; unchanged continuation does not.

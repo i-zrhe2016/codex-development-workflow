@@ -18,7 +18,7 @@ Core invariants:
   `develop-workflow`, `verify-workflow`, `publish-workflow`, or
   `integrate-workflow` — instead of one fixed chain for every request;
 - a **Plan** records one independent requirement; its **Plan Issue** owns one
-  implementation branch, one PR, and one merge for its child **Ticket Issues**;
+  implementation branch, one PR, and one merge for its **Ticket sections in that Issue**;
 - each **Ticket** is a complete execution and acceptance unit with its own scope,
   acceptance, and validation contract;
 - PASS requires the risk-aware **Test Quality Gate**, not merely a green focused
@@ -37,7 +37,7 @@ owner performs and verifies the rollout or rollback. Completion evidence is
 the external release result or incident link recorded with the delivery.
 
 The macro workflow controls architecture and scope. Every independent
-requirement is recorded as one GitHub Plan Issue with one or more child Ticket Issues
+requirement is recorded as one GitHub Plan Issue with one or more Ticket sections in that same Issue
 before branch work starts. An ordinary requirement uses one Ticket; a complex
 requirement may use multiple behavior Tickets only when distinct behavioral,
 dependency, or acceptance boundaries justify them. Every Plan owns one branch,
@@ -137,7 +137,7 @@ Direct specialist invocation is useful when requesting that capability itself.
 | `develop-workflow` | Implement an existing Ticket and validate locally | `$develop-workflow Implement the existing Ticket.` | Development Complete; before independent acceptance, publication, Issue closure, or state refresh | [`skills/develop-workflow/`](skills/develop-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 | `verify-workflow` | Prove acceptance, regressions, or branch/PR readiness | `$verify-workflow Verify this change against its acceptance criteria.` | PASS / FAIL / BLOCKED evidence; no code changes or publication | [`skills/verify-workflow/`](skills/verify-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 | `publish-workflow` | Publish a verified change within authorized scope | `$publish-workflow Commit this verified change only.` | Requested commit, push, or PR creation/update boundary; never merge | [`skills/publish-workflow/`](skills/publish-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `integrate-workflow` | Merge a ready PR and reconcile delivery state | `$integrate-workflow Merge this ready PR and complete cleanup.` | Authorized merge, cleanup, synchronization, and Plan/Ticket closure; no product code changes | [`skills/integrate-workflow/`](skills/integrate-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `integrate-workflow` | Merge a ready PR and reconcile delivery state | `$integrate-workflow Merge this ready PR and complete cleanup.` | Authorized merge, cleanup, synchronization, marking Ticket sections done and Plan Issue closure; no product code changes | [`skills/integrate-workflow/`](skills/integrate-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 
 ## Workflow composition examples
 
@@ -267,7 +267,7 @@ Ready PR
   -> delete source branch
   -> update default branch
   -> validate PR-included State / Docs
-  -> close Plan / Tickets
+  -> mark Ticket sections done + close Plan Issue
   -> stop
 ```
 
@@ -391,7 +391,7 @@ These eight capabilities support the workflows or can be requested directly
 with their actual `$name`. `test-workflow` is the testing capability used by
 `verify-workflow`; its name does not make it another lifecycle stage.
 
-`plan-to-ticket` persists one Plan and its child Tickets to GitHub Issues for
+`plan-to-ticket` persists one Plan and its Ticket sections in one GitHub Issue for
 every requirement before branch work. GitHub Issues are the sole durable
 Plan/Ticket authority; chat output and `Repo_Current_State.md` provide links and
 recovery context, not a parallel backlog. A Plan has one or more behavior
@@ -406,7 +406,7 @@ relevant bundle.
 
 | Specialist Skill | Purpose | Invocation example | Runtime source | Documentation |
 |---|---|---|---|---|
-| `plan-to-ticket` | Decompose and persist a requirement as Plan/Ticket Issues | `$plan-to-ticket Persist this requirement as a Plan and Tickets.` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
+| `plan-to-ticket` | Decompose and persist a requirement as Plan/Ticket sections | `$plan-to-ticket Persist this requirement as a Plan and Tickets.` | [`skills/plan-to-ticket/`](skills/plan-to-ticket/) | [Skill README](docs/skills/plan-to-ticket/README.md) · [Architecture](docs/skills/plan-to-ticket/architecture.md) |
 | `test-workflow` | Map acceptance to risk-based evidence and enforce the Test Quality Gate | `$test-workflow Validate this bug fix against its acceptance criteria.` | [`skills/test-workflow/`](skills/test-workflow/) | [Skill README](docs/skills/test-workflow/README.md) · [Architecture](docs/skills/test-workflow/architecture.md) · [Usage](docs/skills/test-workflow/usage.md) |
 | `skill-eval` | Evaluate skill effectiveness with blind A/B real-task comparisons | `$skill-eval Evaluate whether this skill improves task outcomes.` | [`skills/skill-eval/`](skills/skill-eval/) | — |
 | `plantuml` | Create, render, and review architecture and workflow diagrams | `$plantuml Render and review this architecture diagram.` | [`skills/plantuml/`](skills/plantuml/) | [Skill documentation](docs/skills/plantuml/README.md) |
