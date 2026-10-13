@@ -41,8 +41,8 @@ stage that owns it rather than running one fixed chain for every request.
 Feature, bug fix, refactor, and documentation work are profiles of these stages,
 not separate workflows.
 
-Persist every requirement as one Plan Issue before branch work, with one child
-Ticket Issue for an ordinary requirement. A complex requirement may have
+Persist every requirement as one Plan Issue before branch work, with one Ticket
+section in that Issue for an ordinary requirement. A complex requirement may have
 multiple Tickets only for distinct behavioral, dependency, or acceptance
 boundaries. A Plan owns one branch and, when delivery is elected, one PR and one
 merge for that requirement. Independent requirements always get separate Plans,
@@ -181,9 +181,12 @@ search output and conversation history. The main agent checks that evidence
 before scheduling dependent work or crossing a stage gate.
 
 For persisted work, the main agent records the accepted summary, current status,
-acceptance and dependency changes in the Ticket Issue body, with append-only
-evidence comments that preserve failures. The Plan indexes its requirement and
-Tickets; do not copy Ticket evidence into it. Every requirement is persisted
+acceptance and dependency changes in the Ticket section of the Plan Issue body,
+with append-only Ticket-ID-tagged evidence comments that preserve failures. The Plan indexes
+stable Ticket section anchors within the same Issue; each section retains its
+contract and evidence summary. Detailed persistence and historical migration
+rules, including unchanged legacy child-Issue continuation and checkpoint
+destinations, belong to `plan-to-ticket`. Every requirement is persisted
 before branch edits.
 
 Before retiring context for persisted or resumable work, persist its checkpoint.
@@ -204,7 +207,7 @@ repair rounds, the main agent diagnoses and replans. Ticket
 acceptance repairs use a fresh replacement, followed by a new independent
 verifier. Never reuse workers across roles, stages or Tickets; independent
 verification remains mandatory. Worker task completion does not
-make the Ticket done or closed before verified merge.
+mark the Ticket done or close the Plan Issue before verified merge.
 
 A compacted or fresh main agent reconstructs from repository rules, the Plan,
 current Ticket and relevant predecessor summaries, checked against the actual

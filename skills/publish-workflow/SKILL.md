@@ -53,7 +53,7 @@ Invoke applicable capabilities in order for the requested actions:
    Commits and its Plan commit/PR description rules. For commit-only, suppress
    optional auto-push hooks and use equivalent guarded commit commands; do not
    use a combined commit/push script. Push-only must not create a commit or PR.
-   Require the persisted Plan and its required Ticket Issue metadata, and
+   Require the persisted Plan and its required Ticket section metadata, and
    validate that they match the publication scope; missing or invalid metadata
    blocks commit, push, and PR creation/update. Return `PR ready` only after an
    authorized PR creation/update succeeds and current-scope checks, including
@@ -63,3 +63,12 @@ Report branch, action results and any existing PR URL, then stop at the requeste
 boundary. No merge, branch deletion or Issue closure (`integrate-workflow`);
 no product edits. Failed checks return to `develop-workflow`/`verify-workflow`.
 Never weaken branch, redaction, security, permission or release gates.
+
+## Legacy format compatibility
+
+For preexisting unmerged Plans resumed without scope extension, follow
+[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
+original child-Issue contracts and metadata remain authoritative for publication
+checks, and verified integration marks Plan/children done and closes their Issues.
+The single-Issue section rules apply to new Plans and extended legacy Plans;
+only scope extension triggers the canonical migration. All existing gates apply.

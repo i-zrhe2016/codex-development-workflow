@@ -13,7 +13,7 @@ The runtime instructions live in [`SKILL.md`](../../../skills/github-push-when-r
 - Inspect the branch, remote, diff, and repository checks before publishing.
 - Create or resume a non-default branch before publishing; every published
   commit/push uses a non-default branch; final delivery uses a PR merge.
-  Require valid Plan and Ticket Issue metadata that matches the publication
+  Require valid Plan and Ticket section metadata that matches the publication
   scope; missing or invalid metadata blocks publication.
 - A multi-Ticket requirement may share one commit and PR. Single-Ticket
   commits remain valid; follow the runtime [Plan publication rules](../../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)

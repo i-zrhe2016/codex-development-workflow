@@ -1,6 +1,6 @@
 ---
 name: integrate-workflow
-description: "Merge a ready PR, clean up its branch, synchronize default branch, close Plan/Tickets and validate state/docs included with the PR. Never writes product code."
+description: "Merge a ready PR, clean up its branch, synchronize default branch, mark Ticket sections done and close Plan Issue and validate state/docs included with the PR. Never writes product code."
 ---
 
 # Integrate Workflow
@@ -25,10 +25,19 @@ timing, cleanup timing, follow-up scope or post-merge work for the user.
    already included in the PR when verified state/docs changed; missing required
    updates return to `publish-workflow` on the Plan branch before merge.
 3. Merge once under repository policy; delete source branch, update default.
-4. After verified merge, set Plan/child Tickets `done` and close them.
+4. After verified merge, set Plan and its Ticket sections `done` and close the Plan Issue.
 
 No product/test/config edits: discovered defects return to `develop-workflow` as
 new changes. If more work is needed before merge, resume the branch; do not
 produce a second merge. Do not create post-merge state-only PRs for facts that
 belong to the delivered work, and never commit state/docs directly to the
 default branch. Post-delivery evaluation belongs to the entry-point skill.
+
+## Legacy format compatibility
+
+For preexisting unmerged Plans resumed without scope extension, follow
+[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
+original child-Issue contracts and metadata remain authoritative for publication
+checks, and verified integration marks Plan/children done and closes their Issues.
+The single-Issue section rules apply to new Plans and extended legacy Plans;
+only scope extension triggers the canonical migration. All existing gates apply.

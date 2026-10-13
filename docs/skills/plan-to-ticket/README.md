@@ -38,7 +38,7 @@ When the skill is selected for a planning request, it:
 3. Defines each Ticket's complete scope, acceptance criteria, Function
    Checklist, relevant context, test strategy, bounded level, cases, and
    validation.
-4. Persists one Plan Issue and its child Ticket Issue or Issues before branch
+4. Persists one Plan Issue containing its complete Ticket sections before branch
    work for every requirement, reusing stable markers to avoid duplicates.
 5. Assigns or resumes one implementation branch and base branch for the Plan;
    every Ticket on that Plan shares the branch.
@@ -61,23 +61,27 @@ The skill uses stable, distinct names for every planning record:
 | Record | Identifier | GitHub Issue or output title |
 | --- | --- | --- |
 | Plan | lowercase kebab-case `codex-plan-id` slug | `[PLAN] <short plan title>` |
-| Ticket | repository-scoped `T` plus four digits, such as `T0016` | `[T0016] <short behavior/capability title>` |
+| Ticket | repository-scoped `T` plus four digits, such as `T0016` | `### T0016` heading in the Plan Issue; behavior title in its body |
 | Branch | lowercase Plan ID plus a short description | `<type>/<plan-id>-<short-description>` |
 
 New Ticket IDs are selected by scanning both open and closed Issue bodies and
 must be greater than every existing valid ID; IDs are never reused. Duplicate
 IDs in closed historical Issues are legacy records and are not renumbered.
-When a matching Issue is reused, its title is normalized without changing its
-stable marker or identifier. A persisted one-Ticket requirement still has a Plan
-Issue and a child Ticket Issue, both using their canonical titles.
+Extract all exact Ticket markers from every body, including multiple markers
+in the same Issue and historical child records. Reuse unique matching sections
+on retries; resolve ambiguity instead of creating duplicates. A one-Ticket
+requirement has one `[PLAN]` Issue with one complete Ticket section. Stable
+`### Tdddd` headings provide same-Issue index links regardless of behavior-title
+changes. The canonical [persistence contract](../../../skills/plan-to-ticket/SKILL.md#persistence-and-delivery-contract)
+defines complete metadata, read-back verification and failure behavior.
 
 ## Requirement-to-Ticket hierarchy
 
 Every independent requirement has its own Plan Issue before branch work. An
-ordinary requirement uses one child Ticket Issue. A complex requirement may use
+ordinary requirement uses one Ticket section in that Issue. A complex requirement may use
 multiple Tickets only for distinct behavioral, dependency, or acceptance
 boundaries. A Ticket is the complete execution and acceptance unit represented
-by one child Issue; it has no independent delivery branch. Keep only real
+by one section in the Plan Issue; it has no independent delivery branch. Keep only real
 dependencies between Tickets within the Plan.
 
 The Plan's Tickets may share its commit and PR while retaining their behavior
@@ -90,7 +94,7 @@ own requirement scope, staging, commit descriptions and verification gates.
 Make the skill available in a Codex skills environment, then provide a change
 request or implementation idea in a repository with a resolvable GitHub
 remote. The frontmatter description in `SKILL.md` is used for skill selection.
-The skill creates or updates one Plan Issue and its Ticket Issues before
+The skill creates or updates one Plan Issue and its Ticket sections before
 returning a successful Plan with execution-ready Ticket contracts. If the connector or required
 permission is unavailable, the persisted result is blocked rather than replaced
 by an unpersisted plan.
@@ -145,3 +149,12 @@ Keep changes scoped to the skill's planning behavior or its supporting
 documentation. When the persistence or output contract changes, update
 `skills/plan-to-ticket/SKILL.md` and this documentation together. Keep
 `agents/openai.yaml` limited to interface metadata rather than behavior.
+
+## Historical format compatibility
+
+New Plans persist all Ticket sections in one Issue. Historical Plan/child
+records stay intact until extension; the original Plan then receives complete
+contracts and evidence summaries, with source links retained and read-back
+verified before child supersession or closure. Completed merged Plans are never
+reopened. Follow the canonical
+[migration and retry procedure](../../../skills/plan-to-ticket/SKILL.md#historical-child-issue-migration-on-extension).

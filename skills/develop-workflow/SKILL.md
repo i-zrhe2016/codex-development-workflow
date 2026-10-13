@@ -48,7 +48,7 @@ owns the full scheduling policy.
   commits, while protecting its dirty baseline. A dependent Ticket may prepare
   read-only. Delivery writes become eligible only after each prerequisite's
   work is integrated on the Plan branch, a fresh independent verifier passes
-  that fixed integrated snapshot, and PASS evidence is saved to its Issue. A
+  that fixed integrated snapshot, and PASS evidence is saved to its section and Ticket-ID-tagged comments on the Plan Issue. A
   failed Issue write never unlocks work.
 - Keep a live Ready Queue over the validated Ticket dependency DAG, including
   runnable integration, verification and durable evidence-write work as well as
@@ -183,7 +183,7 @@ owns the full scheduling policy.
   one NEW verifier may satisfy Ticket and final gates for a one-Ticket Plan only
   when full scope, artifact/version, configuration and deployment surface match
   exactly. The main agent owns the Test Quality Gate and stage decision.
-- Record durable Ticket Issue checkpoints at each integration, Development
+- Record durable Ticket section checkpoints and Ticket-ID-tagged comments on the Plan Issue at each integration, Development
   Complete, acceptance failures, and pause/retirement. A required Issue write
   failure is BLOCKED. Do not create per-step acknowledgements or gates.
 
@@ -197,3 +197,11 @@ requires `plan-to-ticket`'s Plan/Ticket updates before implementation edits.
 `verify-workflow` owns delivery verification breadth; publish/integrate own
 commit/push/PR/merge, Issue closure and state refresh. No post-delivery evaluation,
 unrelated requirements, refactors, formatting sweeps or dependency upgrades.
+
+## Legacy checkpoint compatibility
+
+For preexisting unmerged Plans resumed without scope extension, follow
+[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
+checkpoints, statuses and evidence remain on original child Issues. Ticket
+section destinations apply to new Plans and extended legacy Plans. Scope
+extension triggers canonical migration; unchanged continuation does not.

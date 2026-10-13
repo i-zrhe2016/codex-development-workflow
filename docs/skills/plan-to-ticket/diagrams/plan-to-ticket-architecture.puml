@@ -11,8 +11,8 @@ actor "Requestor" as requestor
 component "Skill trigger" as trigger
 component "Plan boundary" as plan
 component "Ticket decomposition\none Ticket or behavior Tickets" as tickets
-component "Issue persistence\nfor every requirement" as persistence
-database "GitHub Issues\nauthoritative Plan / Ticket records" as issues
+component "Single-Issue persistence\nfor every requirement" as persistence
+database "One GitHub Plan Issue\nPlan + indexed Ticket sections" as issues
 component "Result summary\nlinks + execution metadata" as output
 
 folder "Skill bundle" as bundle {
@@ -25,7 +25,7 @@ requestor --> trigger : requirement
 trigger --> plan
 plan --> tickets : ordinary or complex scope
 tickets --> persistence : complete Plan + Ticket records
-persistence --> issues : create / update Plan + Tickets
+persistence --> issues : create / update one Issue + sections
 issues --> persistence : IDs / URLs
 persistence --> output : canonical links
 output --> requestor

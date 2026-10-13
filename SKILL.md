@@ -22,7 +22,7 @@ changing planning depth and verification breadth without adding stages.
 | Implement, fix, refactor, change repository content | `develop-workflow` |
 | Verify acceptance, regression, incident, review finding or branch readiness | `verify-workflow` |
 | Commit, push, open/update PR, prepare review | `publish-workflow` |
-| Merge, clean up, close Plan/Tickets, reconcile state | `integrate-workflow` |
+| Merge, clean up, mark Ticket sections done and close Plan Issue, reconcile state | `integrate-workflow` |
 | Explicitly authorized complete delivery | Full orchestration below |
 
 Run only the requested stages and publication actions, respecting their stopping
@@ -98,17 +98,18 @@ Plan/branch/PR acceptance, before an authorized update.
 A Plan owns one Issue, one branch from the updated default branch
 (`<type>/<plan-id>-<short-description>`) and, if the user elects delivery, one PR
 and one merge. Each Ticket owns
-one child Issue and its execution contract, tests and docs; every Ticket shares the Plan branch
+one section in that Issue and its execution contract, tests and docs; every Ticket shares the Plan branch
 and base. Prerequisites are validated on that branch, without Ticket merges.
-Every Plan and required Ticket Issue must exist before branch creation; same-
+The Plan Issue and every required Ticket section must exist before branch creation; same-
 requirement scope updates must persist before their edits. Issue failure blocks
 work with no local Markdown/chat-only fallback.
 
 Follow `plan-to-ticket` for identifiers, metadata, persistence and updates.
 Before the first edit, record exact `Branch`/`Base` and `Status: in_progress`;
 verify them when resuming. PR head/base must match, and opening it records `PR`
-and `in_review`. Keep Plan/Tickets open until verified merge, then set `done`
-and close. Child Tickets carry no independent branch/PR metadata.
+and `in_review`. Keep the Plan Issue open until verified merge, then set the
+Plan and every Ticket section `done`
+and close the Plan Issue. Ticket sections carry no independent branch/PR metadata.
 
 Each Ticket contains its goal, scope, exclusions, dependencies, acceptance
 criteria, relevant context/files, test strategy, test level, test cases and
@@ -158,7 +159,7 @@ The `develop-workflow` skill owns the dynamic dependency Ready Queue,
 critical-path priority, event-based requeue, conflict isolation and transactional
 integration/recovery procedure. Across stages, integrate prerequisite work onto
 the Plan's single branch first; then a fresh independent verifier checks the
-fixed integrated snapshot; then save PASS evidence to that Ticket Issue. A
+fixed integrated snapshot; then save PASS evidence to that Ticket section and its tagged evidence comments on the Plan Issue. A
 dependent Ticket's delivery becomes eligible only after all three steps succeed
 for every prerequisite. Failed Issue writes never unlock work. A later change to
 a verified surface invalidates affected evidence and blocks dependent work until
@@ -238,8 +239,8 @@ Only for explicitly authorized end-to-end delivery of the stated batch, includin
 publication and merge. Readiness alone grants neither action. Stop at any narrower
 authorized boundary, including local verification, commit-only or push-only;
 added scope returns to planning and does not inherit publication authority from
-the earlier batch. Every requirement persists its Plan and required Ticket
-Issues before any branch work, including single-Ticket and single-session work.
+the earlier batch. Every requirement persists one Plan Issue with all required
+Ticket sections before any branch work, including single-Ticket and single-session work.
 Full end-to-end deliveries then follow these stages:
 
 1. `plan-workflow`: work definition, persistence and single Plan branch.
@@ -343,3 +344,12 @@ Copies root and bundled `skills/`, without cloning specialist repositories.
 that target on update (`--update` alone updates Codex). Restart the host.
 Repository-only `docs/deployment/installation.md` documents destinations/full
 procedure; it is not installed with this bundle.
+
+## Legacy format compatibility
+
+For preexisting unmerged Plans resumed without scope extension, follow
+[legacy continuation](skills/plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
+original child-Issue contracts and metadata remain authoritative for publication
+checks, and verified integration marks Plan/children done and closes their Issues.
+The single-Issue section rules apply to new Plans and extended legacy Plans;
+only scope extension triggers the canonical migration. All existing gates apply.

@@ -46,7 +46,7 @@ Create Plan branch
   -> Delete branch
   -> Update main
   -> Validate PR-included State / Docs
-  -> Close Plan + Tickets
+  -> Mark Ticket sections done + close Plan Issue
   -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Report reusable improvement for a user decision or finish
@@ -54,7 +54,7 @@ Create Plan branch
 
 Feature, Bug, Refactor, and Docs are profiles of these stages, not additional
 workflows. They vary verification breadth. Every independent requirement has
-Plan/Ticket Issues before branch work.
+Plan/Ticket sections before branch work.
 Planning depth and verification level may vary. Commits/pushes use non-default
 branches; user-elected final delivery uses a PR merge. Docs, Code, Tests, Config,
 Refactor, Bugfix, Feature, Dependency and CI/CD changes never commit/push
@@ -72,8 +72,7 @@ completion evidence with the delivery.
 
 ## Requirement-to-Ticket hierarchy
 
-Every independent requirement gets one Plan Issue and one or more child Ticket
-Issues before branch work. Ordinary requirements use one Ticket; complex
+Every independent requirement gets one Plan Issue and one or more Ticket sections in that Issue before branch work. Ordinary requirements use one Ticket; complex
 requirements may use multiple behavior Tickets only for distinct behavioral,
 dependency, or acceptance boundaries. Use this order:
 
@@ -110,24 +109,23 @@ planning rather than expanding the patch; the main agent owns that decision.
 
 ## Persistent plan and ticket handoff
 
-Persist every requirement as a Plan and Ticket Issue before branch work,
+Persist every requirement as a Plan Issue with Ticket sections before branch work,
 including small, single-session work.
 
 For every requirement, GitHub Issues are the durable source of truth. Create or
-update one Plan Issue and every required child Ticket Issue before the Plan
+update one Plan Issue containing every required Ticket section before the Plan
 branch starts. The Plan Issue retains:
 
 - `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
-- `Branch`, `Base`, `PR`, and child Ticket index metadata;
+- `Branch`, `Base`, `PR`, and anchored Ticket index metadata;
 - the requirement goal, explicit scope, milestones, completion rule,
   and delivery contract.
 
-Each child Ticket Issue retains its Plan link, `Status`, `Dependencies`, goal,
+Each Ticket section retains its stable ID, `Status`, `Dependencies`, goal,
 scope, Function Checklist, acceptance criteria, and validation contract. It does
 not own `Branch`, `Base`, `PR`, or a separate merge.
 
-The Plan Issue contains the overall requirement plan and links to every Ticket
-Issue. Chat output contains convenience links only.
+The Plan Issue contains the overall requirement plan and links to stable `### Tdddd` Ticket headings in that same Issue. Chat output contains convenience links only.
 `docs/Repo_Current_State.md` may link to the active Issue but must not become a
 duplicate plan or backlog.
 
@@ -142,8 +140,61 @@ the current-scope PR is ready for review, and `done`/closed only after that PR
 is verified merged. Local verified work may stop with Issues open; waiting for
 a human publication decision is not `blocked`. Scope expansion returns to
 `in_progress`, including when a PR already exists.
-Update child Ticket status and acceptance evidence during execution; set all
-child Tickets to `done` and close them with the Plan after the one merge.
+Update Ticket section status and evidence summaries during execution; append
+evidence comments tagged with the exact Ticket ID. Set every section and the
+Plan to `done`, then close the one Plan Issue after verified merge.
+
+New Plans use this single-Issue format. Historical child Issues remain unchanged
+until extension of their unmerged requirement. Copy complete contracts and
+evidence summaries to the original Plan, retain source links and verify the
+saved body before marking children superseded and closing them. Partial
+failures block readiness and retain evidence. The canonical
+[migration procedure](../../skills/plan-to-ticket/SKILL.md#historical-child-issue-migration-on-extension)
+owns ordering, identity preservation and retry rules.
+
+### Single-Issue example
+
+This example is one Issue body; the index links to its stable section anchors.
+Behavior titles can change without changing the IDs or anchors.
+
+```markdown
+Status: planned
+Branch: docs/example-plan-contract
+Base: main
+PR: null
+Tickets: [T0001]
+
+<!-- codex-plan-id: example-plan -->
+# Plan
+Goal: Make the requirement's persisted contract unambiguous.
+Scope: One requirement; no publication is authorized.
+Completion: All acceptance passes and the authorized Plan PR is verified merged.
+Ticket index: [T0001](#t0001)
+Plan Validation: Contract consistency plus required integration/regression checks.
+
+# Tickets
+### T0001
+<!-- codex-ticket-id: T0001 -->
+Title: Persist a complete contract
+Status: planned
+Dependencies: []
+Write Ownership: Contract documentation
+Shared Resources / Conflicts: Shared Plan Issue body; main serializes writes
+Relative Effort: Small
+Ticket Goal: Readers recover the complete execution contract from this section.
+Ticket Scope: Persistence fields and references
+Ticket Out of scope: Publication and unrelated requirements
+Function Checklist: [ ] Contract, acceptance and evidence remain traceable
+Requirements: Preserve stable IDs and other Ticket sections on updates.
+Non-goals: Separate Ticket Issues or branches
+Ticket Acceptance Criteria: Saved fields, section anchors and index agree.
+Relevant Context / Files: Canonical plan-to-ticket contract
+Test Strategy: Static contract and saved-body read-back checks
+Test Level: focused
+Test Cases: Success, retry without duplication, incomplete-write failure
+Validation Command: Repository's existing contract checks and Issue read-back
+Evidence Summary: No executed evidence yet; comments use [T0001] tags.
+```
 
 ## Branch and PR discipline
 
@@ -347,8 +398,7 @@ local verification and selected publication actions stop at their own boundary.
 
 `publish-workflow` stops at the requested commit, push or PR boundary and never
 merges. `integrate-workflow` requires merge authorization for the current scope and
-merges once, deletes the branch, updates the default branch, closes the Plan and
-its Tickets, refreshes `docs/Repo_Current_State.md`, and reconciles the
+merges once, deletes the branch, updates the default branch, marks Ticket sections done and closes the Plan Issue, refreshes `docs/Repo_Current_State.md`, and reconciles the
 documentation index. State and documentation updates that change tracked
 content after the merge go through their own change with the same gates.
 
