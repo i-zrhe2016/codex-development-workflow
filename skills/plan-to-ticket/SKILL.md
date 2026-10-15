@@ -1,13 +1,13 @@
 ---
 name: plan-to-ticket
-description: "Define one requirement-level Plan and its Ticket execution contracts, then persist one GitHub Issue with Ticket sections before branch edits. Use multiple Tickets only for genuine behavior, dependency, or acceptance boundaries."
+description: "Define one requirement-level Plan and its Ticket execution contracts, then persist one versioned Markdown Plan with Ticket sections before implementation edits. Use multiple Tickets only for genuine behavior, dependency, or acceptance boundaries."
 ---
 
 # Plan to Ticket
 
-Own requirement decomposition and Issue persistence, not product/repository
-implementation. Every independent user requirement receives one [PLAN] Issue containing its
-Plan and Ticket sections before branch edits. An ordinary requirement has one Ticket; a complex requirement may
+Own requirement decomposition and Plan persistence, not product/repository
+implementation. Every new independent user requirement receives one versioned Plan Markdown
+file containing its Plan and Ticket sections before other implementation edits. An ordinary requirement has one Ticket; a complex requirement may
 have multiple Tickets only when distinct behavioral, dependency, or acceptance
 boundaries make the work independently understandable and verifiable. A Ticket
 is the execution and acceptance unit. Do not create per-step IDs, statuses,
@@ -35,7 +35,7 @@ concrete cases, and Ticket/final validation.
   prepare read-only; delivery edits become ready only after each prerequisite's
   work is integrated on the shared Plan branch, a fresh independent verifier
   passes that fixed integrated snapshot, and PASS evidence is saved to its
-  section and Ticket-ID-tagged comments on the Plan Issue. Failed Issue writes never unlock dependents. The coordinator requeues
+  section and Ticket-ID-tagged append-only evidence in the Plan record. Failed Plan writes never unlock dependents. The coordinator requeues
   eligible work on each completion or material progress event; there is no
   batch barrier. All Tickets share the Plan branch; no Ticket branches or merges.
 - Before persisting a multi-Ticket Plan, validate that every dependency points
@@ -76,13 +76,13 @@ not establish that work belongs to the same requirement.
 
 For supplementary work within an unmerged requirement:
 
-1. Confirm the Plan remains unmerged; preserve its stable ID, Issue, branch/base,
+1. Confirm the Plan remains unmerged; preserve its stable ID, authoritative record, branch/base,
    existing PR and accepted evidence.
 2. Update the existing Ticket scope. Add a behavior Ticket only if the new work
    has a distinct behavioral, dependency, or acceptance boundary.
 3. Update the Plan goal/scope, Ticket index, dependencies and validation; update
-   every affected Ticket section in the same Issue and preserve prior passing and failing evidence.
-4. Verify all Issue changes before editing. Set the Plan `in_progress`; if a PR
+   every affected Ticket section in the same authoritative record and preserve prior passing and failing evidence.
+4. Read back all saved contract changes before editing. Set the Plan `in_progress`; if a PR
    exists, retain its URL and require impacted acceptance and final Plan
    verification before an authorized update.
 5. Keep publication authority separate. Scope authorization permits the
@@ -94,8 +94,7 @@ Plan is never reopened. After merge, the next requirement also starts a new Plan
 
 Local verified functionality may stop with Plan/Tickets open and checkpointed.
 Keep `in_progress` before review or `in_review` for unchanged review scope.
-Awaiting a publication decision is not `blocked`. Mark `done` and close only
-after verified merge.
+Awaiting a publication decision is not `blocked`. Effective `done` requires verified merge; see the completion rule below.
 
 ## Repository context and validation
 
@@ -116,59 +115,66 @@ planning does not force RED/GREEN for trivial or mechanically verifiable work.
 
 ## Persistence and delivery contract
 
-Persist one [PLAN] Issue containing the Plan and one or more Ticket sections for every user
-requirement before creating a branch or editing repository files. GitHub Issues
-are authoritative. Chat may link to them but is not a substitute. Do not create
-local Markdown or `docs/plans/` / `docs/tickets/` mirrors.
+For every new requirement, persist one versioned `docs/plans/<plan-id>.md`
+containing the Plan and one or more complete Ticket sections before any other
+implementation edits. This Markdown file is authoritative, not a mirror. Chat
+is not persistence. No new Plan/Ticket Issues, separate Ticket files, parallel
+ledger, or dual writes are created. Existing Issue requirements retain their
+original authority under legacy continuation below.
 
-A Plan owns one requirement, one Issue, one branch, and when delivery is
-authorized, one PR and one merge. Each Ticket owns a section within that same
-Issue with its complete execution/acceptance contract, tests and docs. Every
-Ticket shares the Plan branch/base; Plan and branch are one-to-one. The Plan
-records its overall goal, scope, dependency order, integration/regression
-validation and one-merge completion rule. Its Ticket index links to stable
-headings `### T0001` (anchor `#t0001`) in the same Issue; put behavior titles in
-the section body so renaming a title never changes the anchor. Each section
-owns its goal, scope, exclusions, dependencies, status, acceptance, context,
-write ownership, shared resources/conflicts, optional relative effort,
-Function Checklist, test strategy/level/cases, validation command and evidence
-summary. Do not duplicate mutable contracts elsewhere in the Issue.
+A Plan owns one requirement, one file, one branch and, when delivery is
+authorized, one PR and one merge. A branch may be created first to write the
+Plan file on that branch. Record exact Branch/Base, save the complete Plan and
+read back every contract before other implementation edits. Scope updates must
+likewise be saved and read back before their implementation.
 
-Use the available GitHub Issues connector and current repository remote's
-`owner/name`. Missing target, connector, authentication or write permission
-blocks persistence; do not use an unapproved ad-hoc API client. The complete Plan Issue and all required Ticket
-sections must exist before branch creation. Any same-requirement scope update and
-required Issue edits must persist before further implementation edits.
+The Plan owns goal, scope, dependency order, integration/regression validation
+and completion rule. Its index links to stable headings `### T0001` (anchor
+`#t0001`) in the same file; put behavior titles in the section body so renaming
+a title never changes the anchor. Each Ticket owns its complete execution and
+acceptance contract, status, dependencies, ownership/conflicts, Function
+Checklist, test strategy/level/cases, validation command and evidence summary.
+Do not duplicate mutable contracts in other records.
 
 ### Naming and idempotency
 
 - Plan ID: repository-unique stable lowercase kebab-case slug in its
-  `codex-plan-id` marker. Scan all open/closed historical Plan markers before
-  allocating; preserve and never reuse existing IDs. Title: `[PLAN] <short plan title>`.
+  `codex-plan-id` marker and filename. Scan historical Plan markers and visible
+  Markdown records before allocation; preserve and never reuse existing IDs.
 - Ticket ID: `T` plus exactly four zero-padded decimal digits. Enumerate every
-  page of open and closed historical Issue bodies, extracting **all** exact
-  `codex-ticket-id` markers from each body, including multiple markers in one
-  Issue. Allocate above every valid ID; never reuse IDs. At `T9999`, stop and
-  report ID exhaustion rather than inventing another format. An incomplete
-  scan blocks allocation. Historical duplicates stay unchanged; resolve their
-  exact marker and Plan association before updating.
-- Before creation, search exact Plan and Ticket markers across both new-format
-  sections and historical records. Reuse the unique matching Plan and Ticket
-  section; never create a duplicate on retry. Preserve stable IDs and existing
-  branch/base/PR history. Resolve ambiguous matches rather than guessing.
-- New Issues use only `[PLAN] <short plan title>`; Tickets have no separate
-  Issue titles. Keep the Plan marker once and each Ticket marker once beside
-  its stable heading. Historical child markers may remain in linked superseded
-  records; use their verified migration link to resolve the authoritative section.
+  page of open and closed historical Issue bodies using the available GitHub
+  connector for the verified repository remote. Extract **all** exact
+  `codex-ticket-id` markers, including multiple markers in one Issue, historical
+  child Issues and single-Issue sections. Also scan `docs/plans/*.md` in the
+  working tree and all visible local and remote branches, including unmerged
+  branches; refresh remote refs and enumerate their trees, not just default.
+  Deduplicate copies of the same Plan/Ticket across refs, not distinct owners.
+  Allocate exactly the combined maximum + 1 across all valid IDs in the scan;
+  treat an empty scan or maximum zero as zero, yielding `T0001`. For multiple
+  new Tickets, allocate consecutively, updating the maximum after each ID;
+  never reuse IDs.
+  Missing connector/authentication, failed fetch/read, inaccessible records,
+  pagination failure or an incomplete scan blocks allocation. A transport or
+  parse error is never an empty final page; verify successful pagination end. At `T9999`, stop
+  and report ID exhaustion; never invent another format.
+- The main agent serializes allocation and Plan writes for this repository.
+  Read latest records before allocation/write and read back afterwards. Local
+  serialization cannot reserve an ID against an unseen concurrent branch;
+  recheck conflicts before publication as specified below.
+- Search exact Plan and Ticket markers before creation and retry. Reuse the
+  unique matching Plan file and section; never append duplicate markers,
+  sections or indexes. Preserve IDs and branch/base/PR history. Resolve
+  ambiguous matches rather than guessing. Historical duplicates stay unchanged;
+  resolve their exact marker and Plan association before updating.
 
 ```text
 <!-- codex-plan-id: <stable-plan-slug> -->
 <!-- codex-ticket-id: T0016 -->
 ```
 
-### Authoritative Issue bodies
+### Authoritative Markdown record
 
-The Plan begins with actual delivery metadata at the top, before its marker and Plan sections:
+The Plan begins with actual delivery metadata before its marker and sections:
 
 ```yaml
 Status: planned
@@ -178,7 +184,7 @@ PR: null
 Tickets: [T0001]
 ```
 
-Each Ticket section begins with its stable heading and marker, followed by:
+Each Ticket begins with its stable heading and marker, followed by:
 
 ```yaml
 Status: planned
@@ -186,82 +192,81 @@ Dependencies: []
 ```
 
 Allowed statuses are `planned`, `in_progress`, `blocked`, `in_review`, and
-`done`. Keep the Plan Issue open until verified merge; Ticket sections retain separate
-statuses. Append-only evidence comments must be tagged with the exact Ticket ID
-(e.g. `[T0001] PASS ...`) and record snapshot, commands/results and failures.
-Plan-wide comments are explicitly tagged `[PLAN]`; they do not replace each
-Ticket's acceptance evidence or structured body fields. Sections link to the
-relevant comments and preserve passing and failing evidence summaries. Tickets
-do not carry independent branch/base/PR metadata.
+`done`. Ticket sections have no independent branch/base/PR. Keep mutable status
+and concise summaries in their sections. Append-only evidence in `## Evidence`
+is Ticket-ID-tagged (for example `[T0001] PASS ...`) or explicitly `[PLAN]` for
+Plan-wide evidence. Record snapshot identity, commands/results, failures and
+accepted conclusions. Preserve prior passing and failing entries when summaries
+or scope change; a retry never erases failure. Plan evidence cannot replace
+Ticket acceptance. No GitHub comment write is required for Markdown work.
 
 ### Persistence sequence and failures
 
-1. Resolve repository, default base, requirement scope and Ticket boundaries.
-2. Complete the historical marker scan, check IDs and resolve matching records.
-3. The main agent serializes all writes to the shared Plan Issue. Read its
-   latest body before each scoped section update; preserve other Tickets,
-   metadata and evidence, then read back the saved content. Workers return
-   checkpoint evidence to the main agent rather than racing whole-body writes.
-   Create/update the single Plan Issue with top-level metadata, Plan, anchored
-   Ticket index and every complete Ticket section. Preserve unrelated sections
-   and evidence when changing its body.
-4. Read back the saved body and verify markers, metadata, stable anchors,
-   complete contracts, dependencies, evidence references and index consistency.
-   Start the Plan branch only after the complete write and read-back succeed.
-5. Retry by reading the authoritative Issue first and updating missing content;
-   never append duplicate sections, markers or indexes.
+1. Resolve repository, default base, requirement identity and Ticket boundaries.
+   Detect an existing authoritative record before choosing the storage format.
+2. Complete the combined historical Issue and visible-branch Markdown marker
+   scan, serialize allocation, check IDs and resolve matching records.
+3. Create or resume the Plan branch if needed; the Plan file is the only allowed
+   initial edit. The main agent serializes all writes, reads the latest file
+   before scoped updates and preserves other Tickets, metadata and evidence.
+   Workers return checkpoint evidence rather than racing whole-file writes.
+4. Save the complete Plan, anchored index and every required Ticket contract.
+   Read back markers, metadata, stable anchors, dependencies, complete contracts,
+   evidence and index consistency before any other implementation edits.
+5. On retry read the authoritative file first and update only missing content.
+   Failed required read/write or read-back blocks readiness and dependent unlock;
+   preserve completed work and evidence and report the exact operation/path.
+   Do not compensate with chat, another file or a new Issue. Persist checkpoints
+   at integration, Development Complete, acceptance failure and context retirement.
 
-If a required read/write fails, report the failed operation and created Issue
-URLs; mark affected Issues `blocked` when possible. Do not claim persistence or
-implementation readiness and never compensate with a local mirror.
+### Publication conflict recheck
 
-### Legacy continuation without scope extension
+Before any commit, push or PR creation/update, refresh visible remote refs and
+repeat the combined marker scan. Compare distinct Plan owners, not repeated
+copies of the same record. A conflicting ID blocks publication. Renumber only
+new Tickets in the current unmerged Plan, allocating exactly the new combined
+maximum + 1 and then consecutively updating the maximum after each ID; apply
+the same empty/zero and `T9999` exhaustion rules above. Never renumber historical
+Issues, merged records or another Plan.
+Update all references atomically: heading, marker, Tickets index, dependencies,
+checklists, evidence tags/summaries, docs, commit/PR descriptions and pending
+handoffs. Keep evidence content and failure history. Read back and rerun
+impacted contract/link checks and required acceptance before publication.
+If ownership is ambiguous, a scan fails, or IDs are exhausted, stop rather than
+publish a collision. This repair grants no publication authority.
 
-A preexisting unmerged Plan resumed **without scope extension** may continue
-using its original child-Issue authority. Development/verification checkpoints,
-status updates and append-only evidence remain on the original child Issues,
-not missing new-format sections. Do not require migration merely to
-resume, verify, publish or integrate unchanged legacy scope. Validate the
-original Plan and every required child's complete metadata/contracts and
-acceptance evidence against the current publication scope; retain IDs,
-branch/base, PR history and child evidence. After verified merge, mark the
-legacy Plan and child Tickets `done` and close their Issues. All verification,
-publication authorization and merge gates remain unchanged.
+### Legacy continuation
 
-This exception applies only to existing legacy records without added scope;
-new Plans always use single-Issue sections. User-requested extension of an
-unmerged legacy requirement triggers the migration below before further
-implementation. A completed merged Plan is never reopened.
+Existing Issue requirements remain on their original Issue authority, including
+scope extensions: single-Issue sections stay there, and legacy Plan/child-Issue
+contracts, checkpoints, statuses and append-only comments stay on the original
+Issues. Read the original Plan and every required Ticket contract and evidence;
+preserve IDs, branch/base, PR and history. Extend the existing contract or add
+a behavior Ticket under its original format after the global ID scan. Do not
+migrate, copy into Markdown, supersede/close children for migration, or dual
+write. Required Issue read/write failures block readiness. After verified merge,
+mark the legacy Plan/Tickets done and close their Issues using original rules.
+All independent new requirements use Markdown. A completed merged Plan is never
+reopened; subsequent requirements receive new Plans.
 
-### Historical child-Issue migration on extension
+### Effective completion from verified merge
 
-New Plans always use the single-Issue format. Leave historical Plan/child
-Issues unchanged until their unmerged requirement needs extension. Do not
-reopen completed merged Plans; later requirements get a new Plan and branch.
-
-1. Read the original Plan and every indexed child body and evidence comments;
-   resolve IDs and association without renumbering or replacing the Plan Issue.
-2. Copy each complete execution/acceptance contract, status, dependencies and
-   a summary of all passing/failing evidence into its Ticket section on the
-   original Plan. Retain links to the child and original evidence comments;
-   preserve Plan ID, Ticket IDs, branch/base and PR history. Include the new
-   scope, updated acceptance and affected-evidence revalidation requirements.
-3. Read back and verify the complete Plan, anchored index, copied contracts,
-   evidence summaries/links and unchanged delivery metadata before touching
-   any child status or closure. The canonical sections must be complete first.
-4. Only after successful verification, mark each child superseded with a link
-   to its canonical `#tdddd` section and close it with GitHub `state_reason: not_planned` and the superseded note/link,
-   not as completed (`superseded` is not a GitHub state reason).
-   Do not delete its body or evidence. Plan/Ticket completion still requires
-   verified merge. Record migrated child links on the Plan.
-5. On partial read/write/verification/closure failure, preserve every record
-   and all evidence, report the failed operation, and block readiness. Resume
-   from read-back state; verified migrated sections and superseded children
-   are reused, not copied again. Finish required reconciliation before readiness.
+For Markdown Plans, a verified merged PR is the authoritative completion fact:
+effective Plan and Ticket status is `done` even if the merged file still says
+`in_review` or `PR: null`. Do not create a post-merge status-only commit or PR,
+edit the default branch, or reopen the Plan merely to synchronize fields.
+Resolve the recorded PR; if PR is null or stale, discover the repository PR by
+exact recorded head branch and base, then verify its merged state and that its
+merged scope includes this Plan file and every current Ticket's accepted work.
+Check repository, branch/base, merged commit and full scope against the contract;
+branch deletion, closed/unmerged PRs, names alone or unrelated merged PRs never
+prove completion. Ambiguous/missing PR or incomplete scope proof blocks a done
+claim. Report the verified PR URL/merge fact as external evidence without
+requiring a Markdown write. Before merge, readiness is not done.
 
 ### Branch, status and handoff
 
-Record exact `Branch` and `Base` before branch work, using
+Record exact `Branch` and `Base` before implementation edits, using
 `<type>/<plan-id>-<short-description>`, and verify them on resume. Do not share
 a branch across Plans or create Ticket branches. Keep every Ticket, test and
 document on the Plan branch. Prerequisites are validated on that branch; no
@@ -271,10 +276,10 @@ Ticket-level merge is required.
 |---|---|
 | Branch work starts | Plan `in_progress`; exact Branch/Base recorded. |
 | Blocking dependency/environment | Affected Plan/Ticket `blocked`. |
-| Local verification passes; publication awaits user | Keep Issues open with accepted evidence, not `blocked`. |
+| Local verification passes; publication awaits user | Keep the Plan checkpointed with accepted evidence, not `blocked`. |
 | Same-requirement scope added before merge | Update Plan/Ticket scope, index, dependencies and validation; Plan `in_progress`; retain PR; revalidate affected work. |
 | One Plan PR opens or is updated with authorization | Head/base match Branch/Base and current requirement checks pass; Plan `in_review`, record PR URL; Tickets may enter `in_review`. |
-| PR verified merged | All Ticket sections and Plan `done`; close the one Plan Issue; retain merged PR on Plan. |
+| PR verified merged | Effective Plan/Tickets `done` from verified merged PR; no post-merge Markdown write. |
 
 Keep `PR: null` until a PR exists. Branch/PR existence alone never means done.
 The Plan is ready for its one PR only after every Ticket acceptance and relevant
@@ -282,15 +287,15 @@ Plan-level integration/regression checks pass. Any failure blocks publication.
 Commit-only and push-only stop at their authorized boundaries. Human-authorized
 delivery follows verification, redaction, commit/push/PR, then separately
 authorized merge unless full delivery explicitly includes merge. When repository
-state changes, `docs/Repo_Current_State.md` holds a compact active-Issue pointer,
+state changes, `docs/Repo_Current_State.md` holds a compact active-Plan path/anchor (or legacy Issue) pointer,
 not a copied Plan/backlog.
 
 ## Output structure
 
 Use `# Plan` and `# Tickets`. For persisted work, include canonical Plan and
-Ticket section URLs, metadata, actual branch/base, milestones and Ticket index.
+Ticket section paths/anchors, metadata, actual branch/base, milestones and Ticket index.
 Before persistence, return only scope/options discussion, not an
-implementation-ready contract; persistence remains required before branch edits.
+implementation-ready contract; persistence remains required before implementation edits.
 
 Each Ticket uses these fields:
 
@@ -298,7 +303,7 @@ Each Ticket uses these fields:
 ### T0001
 <!-- codex-ticket-id: T0001 -->
 Title: <behavior/capability title>
-Section: <canonical Plan Issue URL>#t0001
+Section: docs/plans/<plan-id>.md#t0001
 Status: planned
 Dependencies: <explicit Ticket IDs or None>
 Write Ownership: <paths/modules the owner may change>
@@ -316,10 +321,10 @@ Test Strategy: <justified focused-after, RED/GREEN, static, integration, browser
 Test Level: <minimal / focused / regression / full>
 Test Cases: <concrete success/failure/boundary cases>
 Validation Command: <smallest known commands, otherwise expected evidence>
-Evidence Summary: <accepted snapshot/results, preserved failures and comment links>
+Evidence Summary: <accepted snapshot/results, preserved failures and evidence references>
 ```
 
-On successful persistence, return `# Plan` and `# Tickets` with URLs and current
-metadata. On required Issue read/write failure, return a concise blocked report
-naming the operation and any created URLs; do not return a chat-only plan or
+On successful persistence, return `# Plan` and `# Tickets` with file paths/anchors and current
+metadata. On required Plan read/write failure, return a concise blocked report
+naming the operation and the affected paths or legacy URLs; do not return a chat-only plan or
 readiness claim.

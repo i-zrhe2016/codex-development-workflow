@@ -1,6 +1,6 @@
 ---
 name: plan-workflow
-description: "Plan, design, investigate or decompose a requirement into one persisted Plan and its executable Tickets before changes. Owns architecture, scope and persistence decisions; never edits repository files, verifies delivery or publishes."
+description: "Plan, design, investigate or decompose a requirement into one persisted Plan and its executable Tickets before changes. Owns architecture, scope and persistence decisions; edits only the Plan record and never verifies delivery or publishes."
 ---
 
 # Plan Workflow
@@ -22,18 +22,22 @@ the user. Record explicit user decisions; otherwise return options and stop.
    execute checks. One ordinary requirement has one Ticket. A complex
    requirement may have multiple Tickets only for distinct behavioral,
    dependency, or acceptance boundaries.
-4. Persist every requirement as one Plan Issue containing all required Ticket
-   sections before branch edits, regardless of size or session length. Follow the
+4. Persist every new requirement as one Plan Markdown record containing all required Ticket
+   sections before implementation edits, regardless of size or session length. Follow the
    capability's titles, markers, ID allocation and branch contract. Supplementary
    work for an unmerged requirement updates the existing Ticket, or adds a
    behavior Ticket when a distinct boundary justifies it; update affected Plan
    and Ticket contracts before edits. An independent new requirement always
    starts a new Plan, even while another is unmerged. New scope grants no
-   publication authority.
+   publication authority. Existing Issue requirements, including extensions,
+   retain original authority under `plan-to-ticket`; no migration or dual writes.
+   A branch may precede the Plan file, but read back the complete contract before
+   any other implementation edits.
 
 Complete only when the Plan and Tickets are persisted, and every Ticket has
 scope/exclusions, dependencies, acceptance, test strategy/level and validation
 command. Return the plan and stop; later implementation uses `develop-workflow`.
 
-No product/test/config/docs edits, acceptance verification (`verify-workflow`),
-publication/integration, Issue closure, PR-bound state refresh or evaluation.
+Only Plan Markdown persistence and its branch setup are allowed; no other
+product/test/config/docs edits, acceptance verification (`verify-workflow`),
+publication/integration, legacy Issue closure, PR-bound state refresh or evaluation.

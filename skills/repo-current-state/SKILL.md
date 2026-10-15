@@ -69,7 +69,7 @@ Last verified: <YYYY-MM-DD> @ <commit-or-working-tree>
 - See `<path>` for detailed architecture when applicable.
 
 ## Next
-- <link to the immediate next GitHub Issue/work item, if known>
+- <link to the immediate next Plan path/anchor or legacy Issue/work item, if known>
 ```
 
 Omit empty bullets; use `None` only when absence is useful information.
@@ -87,7 +87,7 @@ Omit empty bullets; use `None` only when absence is useful information.
   secrets, spending, etc.).
 - **Architecture Snapshot:** a few orientation facts; link architecture, ADR,
   or module docs for detail.
-- **Next:** immediate Plan Issue/Ticket section link, not a backlog or full Plan.
+- **Next:** immediate Plan Markdown record/Ticket section link, not a backlog or full Plan.
 
 ## Freshness and reconciliation
 
@@ -112,11 +112,13 @@ create additional state files without an explicit request.
 ## Boundaries and size
 
 Keep history in Git/`CHANGELOG.md`, detailed architecture in
-`docs/ARCHITECTURE.md`, rationale in ADRs/decision docs, future work in GitHub
-Issues, test evidence in CI/test reports, and approvals in their external
+`docs/ARCHITECTURE.md`, rationale in ADRs/decision docs, future work in Plan records, test evidence in CI/test reports, and approvals in their external
 authority/protected workflow. No session transcripts, research logs, or archives.
-With `plan-to-ticket`, Issues are the sole durable Plan/Ticket authority: links
-are allowed; duplicated backlog, metadata, or progress are not.
+With `plan-to-ticket`, new work uses versioned Plan Markdown and existing Issue
+requirements retain their original authority, including extensions. Link to
+the canonical path/anchor or legacy Issue; never duplicate metadata or progress.
+Verified merged PR facts provide effective completion without a post-merge
+Markdown status commit.
 
 Prefer a few hundred tokens, short bullets and links; collapse duplicates and
 remove resolved issues/obsolete constraints. Avoid per-bullet timestamps,

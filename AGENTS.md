@@ -41,15 +41,21 @@ stage that owns it rather than running one fixed chain for every request.
 Feature, bug fix, refactor, and documentation work are profiles of these stages,
 not separate workflows.
 
-Persist every requirement as one Plan Issue before branch work, with one Ticket
-section in that Issue for an ordinary requirement. A complex requirement may have
+Persist every new requirement as one versioned `docs/plans/<plan-id>.md` before
+other implementation edits, with one Ticket
+section in that file for an ordinary requirement. A complex requirement may have
 multiple Tickets only for distinct behavioral, dependency, or acceptance
 boundaries. A Plan owns one branch and, when delivery is elected, one PR and one
 merge for that requirement. Independent requirements always get separate Plans,
 even while another Plan is unmerged. Supplementary work for the same requirement
 updates its Ticket or adds a behavior Ticket when a distinct boundary justifies
 it. Preserve IDs, branch/base, existing PR and evidence; after merge, new
-requirements use new Plans. `plan-to-ticket` owns scope updates.
+requirements use new Plans. `plan-to-ticket` owns scope updates, combined historical-Issue/visible-branch
+ID allocation, conflict rechecks and legacy continuation. A branch may precede
+the Plan file; read back the complete contract before other edits. Existing
+Issue requirements, including extensions, retain original authority without
+migration or dual writes. Verified merged PR facts determine effective Markdown
+Plan/Ticket completion without a post-merge status-only commit.
 
 Local verified functionality is a normal stopping point, not BLOCKED while
 publication awaits the user. The user controls commit, push, PR creation/update
@@ -181,17 +187,17 @@ search output and conversation history. The main agent checks that evidence
 before scheduling dependent work or crossing a stage gate.
 
 For persisted work, the main agent records the accepted summary, current status,
-acceptance and dependency changes in the Ticket section of the Plan Issue body,
-with append-only Ticket-ID-tagged evidence comments that preserve failures. The Plan indexes
-stable Ticket section anchors within the same Issue; each section retains its
-contract and evidence summary. Detailed persistence and historical migration
+acceptance and dependency changes in the Ticket section of the Plan Markdown record body,
+with append-only Ticket-ID-tagged evidence entries that preserve failures. The Plan indexes
+stable Ticket section anchors within the same file; each section retains its
+contract and evidence summary. Detailed persistence and legacy compatibility
 rules, including unchanged legacy child-Issue continuation and checkpoint
 destinations, belong to `plan-to-ticket`. Every requirement is persisted
-before branch edits.
+before implementation edits.
 
 Before retiring context for persisted or resumable work, persist its checkpoint.
-If an Issue write fails, report **BLOCKED** and preserve completed changes and
-evidence until persistence succeeds; do not discard them or replace Issue state
+If a Plan write fails, report **BLOCKED** and preserve completed changes and
+evidence until persistence succeeds; do not discard them or replace Plan state
 with memory files. `docs/Repo_Current_State.md` holds repository recovery truth,
 not Ticket history. Do not create `handoff.md`, `memory.md` or `context.md`.
 
@@ -207,7 +213,7 @@ repair rounds, the main agent diagnoses and replans. Ticket
 acceptance repairs use a fresh replacement, followed by a new independent
 verifier. Never reuse workers across roles, stages or Tickets; independent
 verification remains mandatory. Worker task completion does not
-mark the Ticket done or close the Plan Issue before verified merge.
+mark the Ticket done or verify effective Plan completion before verified merge.
 
 A compacted or fresh main agent reconstructs from repository rules, the Plan,
 current Ticket and relevant predecessor summaries, checked against the actual

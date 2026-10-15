@@ -71,7 +71,7 @@ requires no documentation work when the change touches nothing documented.
 `repo-documentation` owns documentation governance; it does not own what is true
 right now. `docs/Repo_Current_State.md` stays with
 [`repo-current-state`](../repo-current-state/README.md), and this skill only
-links to it. Plans and Tickets stay in GitHub Issues, and change history stays
+links to it. New Plans and Tickets stay in versioned Plan Markdown; legacy requirements stay on their Issues, and change history stays
 in Git.
 
 This repository routes its documentation from the root

@@ -1,6 +1,6 @@
 interface:
   display_name: "Plan to Ticket"
   short_description: "Persist one requirement-level Plan with Ticket contracts"
-  default_prompt: "Use $plan-to-ticket to define one persisted Plan for this requirement and write its complete Ticket execution and acceptance contracts before branch edits. Use multiple Tickets only for distinct behavior, dependency, or acceptance boundaries; start a new Plan for an independent requirement."
+  default_prompt: "Use $plan-to-ticket to define one persisted Plan for this requirement and write its complete Ticket execution and acceptance contracts in versioned docs/plans/<plan-id>.md for new work before other implementation edits; existing Issue requirements, including extensions, retain original authority without migration or dual writes. Use multiple Tickets only for distinct behavior, dependency, or acceptance boundaries; start a new Plan for an independent requirement."
 policy:
   allow_implicit_invocation: false

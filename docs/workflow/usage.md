@@ -16,7 +16,7 @@ Requirement
   -> develop-workflow     implement to Development Complete
   -> verify-workflow      verification scope, level, and conclusion
   -> publish-workflow     docs/state/redaction, requested commit/push/PR boundary
-  -> integrate-workflow   merge once, cleanup, close Issues, validate state/docs
+  -> integrate-workflow   merge once, cleanup, verify effective completion, validate state/docs
 ```
 
 Run one stage when that is all the request needs:
@@ -46,7 +46,7 @@ Create Plan branch
   -> Delete branch
   -> Update main
   -> Validate PR-included State / Docs
-  -> Mark Ticket sections done + close Plan Issue
+  -> Verify effective Plan/Ticket completion
   -> If separately authorized: external release handoff (outside this workflow)
   -> Evaluate workflow
   -> Report reusable improvement for a user decision or finish
@@ -54,7 +54,7 @@ Create Plan branch
 
 Feature, Bug, Refactor, and Docs are profiles of these stages, not additional
 workflows. They vary verification breadth. Every independent requirement has
-Plan/Ticket sections before branch work.
+Plan/Ticket sections before implementation edits.
 Planning depth and verification level may vary. Commits/pushes use non-default
 branches; user-elected final delivery uses a PR merge. Docs, Code, Tests, Config,
 Refactor, Bugfix, Feature, Dependency and CI/CD changes never commit/push
@@ -72,15 +72,15 @@ completion evidence with the delivery.
 
 ## Requirement-to-Ticket hierarchy
 
-Every independent requirement gets one Plan Issue and one or more Ticket sections in that Issue before branch work. Ordinary requirements use one Ticket; complex
+Every independent requirement gets one Plan Markdown record and one or more Ticket sections in that file before implementation edits. Ordinary requirements use one Ticket; complex
 requirements may use multiple behavior Tickets only for distinct behavioral,
 dependency, or acceptance boundaries. Use this order:
 
-1. Define the independent requirement and create its Plan Issue.
+1. Define the independent requirement and create its Plan Markdown record.
 2. Use one Ticket for ordinary work; divide complex work only at independently
    understandable behavior, dependency, or acceptance boundaries.
 3. Define each Ticket's complete scope, dependencies, Function Checklist,
-   acceptance, cases, validation, and Issue.
+   acceptance, cases, validation, and canonical record.
 
 All Tickets for one Plan share its implementation branch, and real Ticket
 dependencies determine execution order. Supplementary work for the same
@@ -109,52 +109,38 @@ planning rather than expanding the patch; the main agent owns that decision.
 
 ## Persistent plan and ticket handoff
 
-Persist every requirement as a Plan Issue with Ticket sections before branch work,
-including small, single-session work.
+Every new requirement uses one versioned `docs/plans/<plan-id>.md` containing
+the Plan, complete Ticket sections, stable `### Tdddd` anchors and append-only
+`## Evidence` entries tagged `[Tdddd]` or `[PLAN]`. The Plan owns Status,
+Branch, Base, PR and Tickets metadata; Tickets own status, dependencies,
+acceptance, ownership and validation. A branch may be created to write this
+file; save and read back the complete contract before any other implementation
+edits. The [persistence contract](../../skills/plan-to-ticket/SKILL.md#persistence-and-delivery-contract)
+owns fields, serialized updates, read-back, failure blocking and retry rules.
 
-For every requirement, GitHub Issues are the durable source of truth. Create or
-update one Plan Issue containing every required Ticket section before the Plan
-branch starts. The Plan Issue retains:
+Allocate IDs at exactly maximum + 1 across every page of historical open/closed
+Issue markers and visible local/remote branch Plan Markdown, including unmerged
+work (empty/zero starts at T0001; multiple new Tickets allocate consecutively).
+Incomplete scans and T9999 exhaustion block allocation. Before authorized
+publication, refresh and recheck conflicts; repair only new unmerged Ticket IDs
+and every reference, preserving history and revalidating affected contracts.
+See [publication conflict recheck](../../skills/plan-to-ticket/SKILL.md#publication-conflict-recheck).
 
-- `Status`: `planned`, `in_progress`, `blocked`, `in_review`, or `done`;
-- `Branch`, `Base`, `PR`, and anchored Ticket index metadata;
-- the requirement goal, explicit scope, milestones, completion rule,
-  and delivery contract.
+Existing Issue requirements stay on their original authority, including scope
+extensions; no migration, child supersession or dual writes. Follow
+[legacy continuation](../../skills/plan-to-ticket/SKILL.md#legacy-continuation).
+Local verified work may stop checkpointed; waiting for publication is normal.
+For Markdown, verified merged PR facts establish effective `done` even when
+stored status is `in_review` or PR is null. Resolve or discover the PR and prove
+branch/base and full accepted scope; no post-merge status-only commit is needed.
+See [effective completion](../../skills/plan-to-ticket/SKILL.md#effective-completion-from-verified-merge).
+`docs/Repo_Current_State.md` links to canonical records rather than copying them.
 
-Each Ticket section retains its stable ID, `Status`, `Dependencies`, goal,
-scope, Function Checklist, acceptance criteria, and validation contract. It does
-not own `Branch`, `Base`, `PR`, or a separate merge.
 
-The Plan Issue contains the overall requirement plan and links to stable `### Tdddd` Ticket headings in that same Issue. Chat output contains convenience links only.
-`docs/Repo_Current_State.md` may link to the active Issue but must not become a
-duplicate plan or backlog.
 
-Search for stable plan/ticket markers before creating Issues so retries reuse
-existing records. If the GitHub connector, repository
-target, authentication, or required write fails, mark the operation blocked and
-stop; do not fall back to local Markdown or an unpersisted chat response.
+### Markdown Plan example
 
-Update the Plan as work progresses: `in_progress` when its branch starts,
-`blocked` for a blocking dependency or environment problem, `in_review` when
-the current-scope PR is ready for review, and `done`/closed only after that PR
-is verified merged. Local verified work may stop with Issues open; waiting for
-a human publication decision is not `blocked`. Scope expansion returns to
-`in_progress`, including when a PR already exists.
-Update Ticket section status and evidence summaries during execution; append
-evidence comments tagged with the exact Ticket ID. Set every section and the
-Plan to `done`, then close the one Plan Issue after verified merge.
-
-New Plans use this single-Issue format. Historical child Issues remain unchanged
-until extension of their unmerged requirement. Copy complete contracts and
-evidence summaries to the original Plan, retain source links and verify the
-saved body before marking children superseded and closing them. Partial
-failures block readiness and retain evidence. The canonical
-[migration procedure](../../skills/plan-to-ticket/SKILL.md#historical-child-issue-migration-on-extension)
-owns ordering, identity preservation and retry rules.
-
-### Single-Issue example
-
-This example is one Issue body; the index links to its stable section anchors.
+This example is one file body; the index links to its stable section anchors.
 Behavior titles can change without changing the IDs or anchors.
 
 ```markdown
@@ -179,7 +165,7 @@ Title: Persist a complete contract
 Status: planned
 Dependencies: []
 Write Ownership: Contract documentation
-Shared Resources / Conflicts: Shared Plan Issue body; main serializes writes
+Shared Resources / Conflicts: Shared Plan Markdown record body; main serializes writes
 Relative Effort: Small
 Ticket Goal: Readers recover the complete execution contract from this section.
 Ticket Scope: Persistence fields and references
@@ -192,8 +178,11 @@ Relevant Context / Files: Canonical plan-to-ticket contract
 Test Strategy: Static contract and saved-body read-back checks
 Test Level: focused
 Test Cases: Success, retry without duplication, incomplete-write failure
-Validation Command: Repository's existing contract checks and Issue read-back
-Evidence Summary: No executed evidence yet; comments use [T0001] tags.
+Validation Command: Repository's existing contract checks and Plan read-back
+Evidence Summary: No executed evidence yet; entries use [T0001] tags.
+
+## Evidence
+- [PLAN] Complete contract saved and read back; acceptance pending.
 ```
 
 ## Branch and PR discipline
@@ -218,7 +207,7 @@ share one commit and PR; follow the
 for staging, batch commit bodies and complete PR evidence. Create/update the
 same Plan PR only when authorized and current-scope checks pass; merge once
 only with merge authorization and the existing gates satisfied. The Plan
-Issue and implementation branch are a one-to-one pair; record and verify the
+Plan file and implementation branch are a one-to-one pair; record and verify the
 Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 
 ## Adaptive agent orchestration
@@ -398,9 +387,12 @@ local verification and selected publication actions stop at their own boundary.
 
 `publish-workflow` stops at the requested commit, push or PR boundary and never
 merges. `integrate-workflow` requires merge authorization for the current scope and
-merges once, deletes the branch, updates the default branch, marks Ticket sections done and closes the Plan Issue, refreshes `docs/Repo_Current_State.md`, and reconciles the
-documentation index. State and documentation updates that change tracked
-content after the merge go through their own change with the same gates.
+merges once, deletes the branch, updates the default branch, and validates the
+state and documentation index included in the PR. Effective Markdown Plan/Tickets
+done derives from the exact verified merged PR and full accepted scope, without
+post-merge Markdown/state edits; only legacy Issues are updated and closed.
+Missing required tracked state or documentation changes return to the Plan
+branch before merge, as described above.
 
 For managed specialist sources and installation locations, see
 [`../../references/skill-map.md`](../../references/skill-map.md).

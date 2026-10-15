@@ -41,10 +41,10 @@ or copied project configuration is needed. Claude model selection remains host-s
 
 The five stage skills own **when** and stopping boundaries: planning/persistence
 decision, Development Complete, verification scope/conclusion, docs/redaction/
-commit/push/PR ready (never merge), and merge/cleanup/Issue closure/state/docs reconciliation.
+commit/push/PR ready (never merge), and merge/cleanup/legacy Issue closure/state/docs reconciliation.
 Read their `SKILL.md` for contracts. Capability skills own **how**:
 
-- `plan-to-ticket`: one-requirement Plan decomposition, Issue persistence and
+- `plan-to-ticket`: one-requirement Plan decomposition, Plan persistence and
   Ticket execution contracts (boundaries, acceptance, context, strategy, level,
   cases and validation command); one branch/PR/merge per Plan.
 - `test-workflow`: minimal/focused/regression/full validation and evidence;

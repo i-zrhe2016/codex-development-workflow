@@ -22,7 +22,7 @@ changing planning depth and verification breadth without adding stages.
 | Implement, fix, refactor, change repository content | `develop-workflow` |
 | Verify acceptance, regression, incident, review finding or branch readiness | `verify-workflow` |
 | Commit, push, open/update PR, prepare review | `publish-workflow` |
-| Merge, clean up, mark Ticket sections done and close Plan Issue, reconcile state | `integrate-workflow` |
+| Merge, clean up, verify effective Plan/Ticket completion from merged PR, reconcile state | `integrate-workflow` |
 | Explicitly authorized complete delivery | Full orchestration below |
 
 Run only the requested stages and publication actions, respecting their stopping
@@ -75,7 +75,7 @@ next decision.
 ## Plan and Ticket contracts
 
 Use `plan-workflow` and `plan-to-ticket` to settle architecture/scope and
-persist every requirement as one Plan Issue before branch edits. An ordinary
+persist every new requirement as one Plan Markdown record before implementation edits. An ordinary
 requirement has one Ticket; a complex requirement may have multiple Tickets
 only for distinct behavioral, dependency, or acceptance boundaries. Each Ticket
 is independently executed and accepted as a whole. Planning controls scope;
@@ -95,21 +95,21 @@ retains its URL but expanded scope returns the Plan to `in_progress`, invalidate
 impacted acceptance/readiness and requires revalidation, including final
 Plan/branch/PR acceptance, before an authorized update.
 
-A Plan owns one Issue, one branch from the updated default branch
-(`<type>/<plan-id>-<short-description>`) and, if the user elects delivery, one PR
-and one merge. Each Ticket owns
-one section in that Issue and its execution contract, tests and docs; every Ticket shares the Plan branch
-and base. Prerequisites are validated on that branch, without Ticket merges.
-The Plan Issue and every required Ticket section must exist before branch creation; same-
-requirement scope updates must persist before their edits. Issue failure blocks
-work with no local Markdown/chat-only fallback.
+A new Plan owns one versioned `docs/plans/<plan-id>.md`, one branch from the
+updated default branch (`<type>/<plan-id>-<short-description>`) and, if elected,
+one PR and one merge. Every Ticket shares that file and branch/base. A branch
+may precede the Plan file; save and read back all complete contracts before any
+other implementation edits. Required persistence failures block work and
+prerequisite unlock. Existing Issue requirements retain original authority,
+including extensions; never migrate or dual write.
 
-Follow `plan-to-ticket` for identifiers, metadata, persistence and updates.
-Before the first edit, record exact `Branch`/`Base` and `Status: in_progress`;
-verify them when resuming. PR head/base must match, and opening it records `PR`
-and `in_review`. Keep the Plan Issue open until verified merge, then set the
-Plan and every Ticket section `done`
-and close the Plan Issue. Ticket sections carry no independent branch/PR metadata.
+Follow `plan-to-ticket` for global historical-Issue plus visible-branch Markdown
+ID scans, serialized allocation, publication conflict recheck and reference
+repair. Failed/incomplete scans and T9999 exhaustion block allocation.
+Record and verify Branch/Base and mutable status. Markdown Plan/Tickets are
+effectively `done` only from a verified merged PR matching branch/base and full
+scope; discover the PR if its field is null. No post-merge status-only write is
+required or authorized. Ticket sections have no independent branch/PR metadata.
 
 Each Ticket contains its goal, scope, exclusions, dependencies, acceptance
 criteria, relevant context/files, test strategy, test level, test cases and
@@ -159,9 +159,9 @@ The `develop-workflow` skill owns the dynamic dependency Ready Queue,
 critical-path priority, event-based requeue, conflict isolation and transactional
 integration/recovery procedure. Across stages, integrate prerequisite work onto
 the Plan's single branch first; then a fresh independent verifier checks the
-fixed integrated snapshot; then save PASS evidence to that Ticket section and its tagged evidence comments on the Plan Issue. A
+fixed integrated snapshot; then save PASS evidence to that Ticket section and its tagged append-only evidence in the Plan record. A
 dependent Ticket's delivery becomes eligible only after all three steps succeed
-for every prerequisite. Failed Issue writes never unlock work. A later change to
+for every prerequisite. Failed Plan writes never unlock work. A later change to
 a verified surface invalidates affected evidence and blocks dependent work until
 revalidation. Count the active main agent in host capacity; each dispatch needs
 one free slot for its worker. See `develop-workflow` for the portable execution
@@ -239,8 +239,8 @@ Only for explicitly authorized end-to-end delivery of the stated batch, includin
 publication and merge. Readiness alone grants neither action. Stop at any narrower
 authorized boundary, including local verification, commit-only or push-only;
 added scope returns to planning and does not inherit publication authority from
-the earlier batch. Every requirement persists one Plan Issue with all required
-Ticket sections before any branch work, including single-Ticket and single-session work.
+the earlier batch. Every new requirement persists one Plan Markdown record with all required
+Ticket sections before any implementation edits, including single-Ticket and single-session work.
 Full end-to-end deliveries then follow these stages:
 
 1. `plan-workflow`: work definition, persistence and single Plan branch.
@@ -255,15 +255,17 @@ Full end-to-end deliveries then follow these stages:
    canonical docs/index or record no documentation impact; fix blocking
    findings and revalidate.
 5. `integrate-workflow`: merge once -> source-branch deletion -> default-branch
-   update -> validate merged state/docs included in the PR -> Plan/Ticket
-   closure. Missing required state/docs changes return to publication on the
+   update -> validate merged state/docs included in the PR -> effective Markdown
+   Plan/Tickets done from the exact verified merged PR and full accepted scope,
+   without post-merge Markdown/state edits; only legacy Issues are updated and
+   closed. Missing required state/docs changes return to publication on the
    Plan branch instead of creating a post-merge state-only PR.
 6. Evaluate delivery once; report any bounded follow-up below for a user decision.
 
 This order and its contracts/gates remain fixed under delegation. Read
 `docs/Repo_Current_State.md` at planning start; keep it a compact verified
 recovery point (focus, capabilities, current Ticket, failures, constraints,
-architecture), linking active Issues instead of copying backlog/test reports.
+architecture), linking active Plan paths/anchors or legacy Issues instead of copying backlog/test reports.
 
 External deployment is outside this bundle. When separately authorized, hand
 the target release owner the immutable artifact and source commit, environment and
@@ -287,7 +289,7 @@ Invoke only on the applicable trigger, following the owner's procedure:
 
 | Capability | Trigger |
 |---|---|
-| `plan-to-ticket` | Requirement-level Plan/Ticket decomposition and persisted Issue contracts |
+| `plan-to-ticket` | Requirement-level Plan/Ticket decomposition and persisted Markdown contracts |
 | `test-workflow` | Selected validation, risk dimensions and bounded evidence |
 | `skill-eval` | Blind A/B skill-effectiveness evaluation using real task outcomes |
 | `repo-documentation` | Every change's impact check; docs normalization/audit/organization |
@@ -347,9 +349,6 @@ procedure; it is not installed with this bundle.
 
 ## Legacy format compatibility
 
-For preexisting unmerged Plans resumed without scope extension, follow
-[legacy continuation](skills/plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
-original child-Issue contracts and metadata remain authoritative for publication
-checks, and verified integration marks Plan/children done and closes their Issues.
-The single-Issue section rules apply to new Plans and extended legacy Plans;
-only scope extension triggers the canonical migration. All existing gates apply.
+Existing Issue requirements, including extensions, retain their original authority.
+Follow [legacy continuation](skills/plan-to-ticket/SKILL.md#legacy-continuation). Do not migrate or dual write.
+New requirements use versioned Plan Markdown; all existing gates apply.

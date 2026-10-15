@@ -73,7 +73,7 @@ workflow:
   Ticket.
 - Confirm a dependent Ticket stays write-locked until prerequisite work is
   integrated, the fixed snapshot independently passes, and PASS evidence is
-  saved to its section and Ticket-ID-tagged comments on the Plan Issue. Force an Issue-write failure and confirm it stays locked.
+  saved to its section and Ticket-ID-tagged append-only evidence in the Plan record. Force a Plan-write failure and confirm it stays locked.
 - Confirm overlapping paths, interfaces, schemas, fixtures and runtime
   resources serialize. Use a no-commit Git fixture with staged and unstaged
   edits plus binary, added, deleted and renamed files; confirm the patch captures
@@ -104,7 +104,7 @@ scheduling policy.
 - Verify one fixed, integrated Plan-branch snapshot. Independently identify its
   content and runtime/environment against acceptance before exercising it; hold
   that identity fixed for the run. Integration must precede this verification,
-  and durable PASS evidence must precede dependent delivery. A failed Issue
+  and durable PASS evidence must precede dependent delivery. A failed Plan
   write blocks the unlock. Follow `develop-workflow` for snapshot capture,
   runtime isolation, event requeue, and stale-descendant reconciliation.
 - The main agent identifies this active entrypoint and its same-installation
@@ -141,13 +141,11 @@ recheck impacted acceptance plus batch readiness; an existing PR is not ready
 for that scope until those checks, the single-verifier final Plan/branch/PR
 acceptance gate and an authorized update succeed.
 
-No code/test/config/docs edits to pass checks, commit/push/PR/merge, Issue closure
+No code/test/config/docs edits to pass checks, commit/push/PR/merge, legacy Issue closure
 or state updates. Subagents cannot advance stages or replace main-agent judgment.
 
 ## Legacy checkpoint compatibility
 
-For preexisting unmerged Plans resumed without scope extension, follow
-[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
-checkpoints, statuses and evidence remain on original child Issues. Ticket
-section destinations apply to new Plans and extended legacy Plans. Scope
-extension triggers canonical migration; unchanged continuation does not.
+Existing Issue requirements, including extensions, retain original contracts,
+checkpoints, statuses and evidence. Follow [legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation);
+never migrate or dual write. New requirements use Plan Markdown sections.
