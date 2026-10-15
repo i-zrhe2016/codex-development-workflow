@@ -28,7 +28,7 @@ check whether it:
 7. Affects a diagram's components, order, decisions, or boundaries so its claimed
    flow no longer matches.
 
-Unclear means yes: inspect. Report in the existing PR description or Plan Issue
+Unclear means yes: inspect. Report in the existing PR description or Plan Markdown record
 delivery evidence, with no separate artifact. A yes names the changed canonical
 document and its fact; a no is one line that nothing documented changed. Do not
 create documents merely to appear thorough.
@@ -39,7 +39,7 @@ Resolve ownership before writing via
 [`references/document-types.md`](references/document-types.md); choose the more
 specific type when two could own a fact and link from the other. Current truth
 belongs in `docs/Repo_Current_State.md` (`repo-current-state`), planned/in-progress
-work in GitHub Issues (`plan-to-ticket`), and history in Git. Never copy those
+work in versioned Plan Markdown (or original legacy Issues) (`plan-to-ticket`), and history in Git. Never copy those
 snapshots/backlogs/history into content documents.
 
 Apply [`references/doc-file-standard.md`](references/doc-file-standard.md) to
@@ -92,3 +92,7 @@ was deliberately left alone.
 Update canonical documents and the index, never parallel files. A negative
 impact check reports no documentation change needed. Completion names documents
 created/updated/deprecated/deleted, changed index entries, and unverified claims.
+
+Versioned `docs/plans/<plan-id>.md` is the Plan document type. Its metadata,
+status values and evidence format belong to `plan-to-ticket`, not the ordinary
+Type/Status/Scope header. Link the active Plan from the documentation router.

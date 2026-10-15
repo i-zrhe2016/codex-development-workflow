@@ -2,123 +2,37 @@
 
 > Type: Architecture
 > Status: Active
-> Scope: Structure and boundaries of the plan-to-ticket specialist: components, request flow, requirement/Plan/Ticket hierarchy, and Ticket output contract
+> Scope: Planning components and persistence authority boundaries
 
-## Scope
+![Plan-to-Ticket architecture](diagrams/plan-to-ticket-architecture.svg)
 
-This repository packages the `plan-to-ticket` specialist inside a larger
-main-agent workflow. Its job is to define one Plan per independent requirement,
-one Ticket for ordinary work, and additional behavior Tickets only when
-distinct boundaries justify them, then persist the Plan and Tickets to GitHub
-Issues before branch work. There is no
-application runtime, custom API client, or local ticket database in this
-package; GitHub Issues are the workflow's external durable store.
+[Diagram source](diagrams/plan-to-ticket-architecture.puml)
 
-## Logical architecture
-
-![Plan-to-Ticket logical architecture](diagrams/plan-to-ticket-architecture.svg)
-
-The source for this diagram is
-[plan-to-ticket-architecture.puml](diagrams/plan-to-ticket-architecture.puml).
-It describes the behavior exposed by the skill package rather than an
-application infrastructure topology.
-
-## Responsibilities
-
-| Asset | Responsibility | Boundary |
+| Component | Responsibility | Boundary |
 | --- | --- | --- |
-| [`skills/plan-to-ticket/SKILL.md`](../../../skills/plan-to-ticket/SKILL.md) | Defines requirement/Plan/Ticket planning rules, Issue persistence contract, Ticket structure, scope constraints, and verification expectations. | It plans and persists Issue records; it does not implement the planned change. |
-| [`skills/plan-to-ticket/agents/openai.yaml`](../../../skills/plan-to-ticket/agents/openai.yaml) | Supplies the display name and short interface description. | It describes the skill in the interface; it does not define planning behavior. |
-| GitHub Issues connector | Creates, finds, and updates one Plan Issue containing every Ticket section for every requirement. | It is the external durable authority; no local Markdown mirror is maintained. |
-| This documentation package | Explains the bundle structure, behavior, output contract, and maintenance expectations. | Documentation does not add executable behavior. |
+| Skill instructions | Requirement boundaries, complete Ticket contracts and persistence rules | No product implementation or publication authority |
+| Interface metadata | Explicit invocation and display text | No duplicate procedural authority |
+| Versioned Plan Markdown | One new requirement, indexed Ticket sections and append-only evidence | All Tickets share one branch and optional PR/merge |
+| Historical Issues | Original authority for existing requirements, including extensions; input to global ID scans | No migration, supersession or dual writes |
+| Main coordinator | Serialized allocation/writes, scoped worker contracts and accepted checkpoints | Workers return evidence; they do not race record writes |
+| Independent verification | Ticket and whole-Plan acceptance on fixed integrated snapshots | Read-only; main agent retains gate decisions |
+| Repository state summary | Compact links to canonical Plan paths/anchors or legacy Issues | No copied backlog or Ticket history |
 
-## Request flow
+There is no application runtime, custom API client, global ledger or scheduler
+service. Git provides versioned Plan records; the available GitHub connector
+provides historical Issue scans, legacy operations and PR merge facts.
 
-1. A requestor provides one independent requirement, which may ask for a feature, bug fix, refactor, documentation, configuration, dependency, test, or CI/CD change.
-2. Codex uses the frontmatter description in `SKILL.md` to determine whether this skill applies.
-3. The planning instructions use the available repository context to identify
-   milestones, Ticket boundaries, Ticket dependencies, scope boundaries, and
-   verification.
-4. The skill defines each Ticket's complete execution and acceptance contract.
-5. The skill resolves the repository's GitHub target, searches exact stable
-   markers and Ticket ID collisions, normalizes matching Issue titles, and
-   creates or updates one Plan Issue and its Ticket sections before branch work
-   for every requirement.
-6. The skill assigns or resumes one branch and base branch for the Plan, records
-   those values on the Plan Issue, and keeps all Tickets on that branch.
-7. The successful output follows the contract in `SKILL.md`: a `Plan` section
-   followed by complete Ticket sections with canonical same-Issue anchor links and Plan
-   branch handoff fields.
-8. The main agent dispatches each Ticket to a fresh owner, who retains context
-   across the Ticket and local repairs. After Development
-   Complete, a separate fresh verifier checks all Ticket scenarios under the
-   [scheduling policy](../../../AGENTS.md#multi-agent-delegation). A new
-   Sol/high verifier can also satisfy final Plan acceptance only when the Plan
-   has one Ticket and the full scope, artifact/version, configuration and
-   deployment surface match exactly; otherwise final acceptance is a separate
-   fresh whole-Plan check.
+The [persistence contract](../../../skills/plan-to-ticket/SKILL.md#persistence-and-delivery-contract)
+owns metadata, stable anchors, save/read-back ordering, retries and failure
+blocking. Branch setup may precede the file; complete contracts precede all
+other implementation edits. The [identifier contract](../../../skills/plan-to-ticket/SKILL.md#naming-and-idempotency)
+combines historical Issue markers and visible branch Markdown; the
+[publication recheck](../../../skills/plan-to-ticket/SKILL.md#publication-conflict-recheck)
+handles concurrent allocation collisions without changing historical identities.
 
-## Design boundaries
-
-- The skill is a single cohesive module because its trigger, planning rules, and output format are tightly coupled.
-- The interface metadata is kept separate from behavior so presentation changes do not alter planning semantics.
-- The skill does not prescribe a project framework, dependency, command, or deployment platform unless repository context establishes it. It requires the available GitHub Issues connector for persistence but does not implement a custom API client.
-- Ticket verification describes observable checks. It does not claim that implementation has already been completed.
-- A required GitHub Issue failure blocks completion; chat
-  output and local Markdown are not persistence fallbacks.
-- Planning defines worker-ready Ticket contracts; the main agent
-  dispatches Ticket owners and chooses safe concurrency under the canonical
-  scheduling policy. Workers are leaves and never dispatch workers.
-- Each Plan Issue maps to one independent requirement and one implementation
-  branch and, when delivered, one PR; all Ticket sections share that branch, and the PR head/base must match
-  the Plan Issue metadata.
-- Plan Issue titles use `[PLAN] <short plan title>`; Ticket sections
-  use stable `### Tdddd` headings with behavior titles in their bodies. New `T####` identifiers are
-  repository-scoped, four-digit, monotonically allocated, and never reused;
-  historical duplicate IDs remain legacy records.
-- Every requirement has one Plan Issue and at least one Ticket section; an
-  ordinary requirement uses one Ticket, while complex work may use multiple
-  Tickets only for distinct behavioral, dependency, or acceptance boundaries.
-  If the user elects delivery, PR/merge/cleanup gates apply
-  once for the Plan; local verification does not force publication.
-
-## Requirement-to-Ticket hierarchy
-
-Each independent requirement has one Plan Issue. Ordinary work uses one Ticket
-section; complex work may use multiple behavior Tickets only where distinct
-behavioral, dependency, or acceptance boundaries justify them. Supplementary
-work for the same requirement updates its Ticket, adding another only for a
-distinct boundary. An independent requirement always gets a new Plan, even
-before another Plan merges. The runtime
-[scope contract](../../../skills/plan-to-ticket/SKILL.md#scope-and-sizing) and
-[publication rules](../../../skills/github-push-when-ready/SKILL.md#readiness-and-boundaries)
-own scope updates and shared commit/PR gates. Real Ticket dependencies decide
-execution order on the Plan branch.
-
-## Ticket output contract
-
-Each Ticket section holds its complete execution and acceptance contract:
-
-- requirement goal, scope, exclusions, dependencies, and status;
-- Function Checklist, concrete requirements, and observable acceptance;
-- relevant context, test strategy and level, concrete test cases; and
-- the smallest reliable validation command.
-
-## Change guidance
-
-When changing planning behavior:
-
-1. Update the relevant rule or output-contract section in
-   `skills/plan-to-ticket/SKILL.md`.
-2. Check that the architecture boundaries and request flow in this document remain accurate.
-3. Update this documentation index or repository layout if files or responsibilities change.
-4. Verify the Markdown structure, frontmatter, and any rendered diagram before committing.
-
-## Historical format compatibility
-
-New Plans persist all Ticket sections in one Issue. Historical Plan/child
-records stay intact until extension; the original Plan then receives complete
-contracts and evidence summaries, with source links retained and read-back
-verified before child supersession or closure. Completed merged Plans are never
-reopened. Follow the canonical
-[migration and retry procedure](../../../skills/plan-to-ticket/SKILL.md#historical-child-issue-migration-on-extension).
+[Legacy continuation](../../../skills/plan-to-ticket/SKILL.md#legacy-continuation)
+retains existing record destinations. For Markdown,
+[verified merge facts](../../../skills/plan-to-ticket/SKILL.md#effective-completion-from-verified-merge)
+determine effective completion even with stale stored status or PR null. This
+avoids a post-merge status-only write. Worker scheduling remains owned by the
+[role/context policy](../../../AGENTS.md#multi-agent-delegation).

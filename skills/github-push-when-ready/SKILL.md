@@ -187,9 +187,15 @@ for existing/created PR include URL; for skipped push give the precise blocker.
 
 ## Legacy format compatibility
 
-For preexisting unmerged Plans resumed without scope extension, follow
-[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
-original child-Issue contracts and metadata remain authoritative for publication
-checks, and verified integration marks Plan/children done and closes their Issues.
-The single-Issue section rules apply to new Plans and extended legacy Plans;
-only scope extension triggers the canonical migration. All existing gates apply.
+Existing Issue requirements, including extensions, retain their original authority.
+Follow [legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation). Do not migrate or dual write.
+New requirements use versioned Plan Markdown; all existing gates apply.
+
+## Plan identifier conflict gate
+
+Before any commit, push or PR creation/update, follow `plan-to-ticket`'s
+[publication conflict recheck](../plan-to-ticket/SKILL.md#publication-conflict-recheck):
+refresh refs, scan all historical Issue markers and visible local/remote branch
+Markdown, block incomplete scans and collisions, and repair only new unmerged
+Ticket IDs plus all references. Read back and revalidate impacted evidence.
+This gate grants no publication authority.

@@ -1,20 +1,20 @@
 # Repository Current State
 
-Last verified: 2026-10-13 @ working tree (single-Issue contract update; local
-contract checks only, not a whole-state audit)
+Last verified: 2026-10-15 @ working tree (Markdown persistence contract;
+fresh independent acceptance and 51 regression/installer tests passed;
+not a whole-state audit)
 
 ## Current Focus
 
-- [Plan #249](https://github.com/i-zrhe2016/codex-development-workflow/issues/249)
-  and [Ticket T0077](https://github.com/i-zrhe2016/codex-development-workflow/issues/249#t0077):
-  accepted single-Issue Plan/Ticket behavior; publication and acceptance status
-  are tracked in that Issue.
+- [Markdown persistence Plan / T0078](plans/markdown-plan-records.md#t0078):
+  Markdown persistence implementation and local verification.
 
 ## Implemented
 
 - Five stage workflows route planning, development, verification, publication
   and integration; full orchestration requires explicit end-to-end scope.
-- Every independent requirement has a Plan Issue before branch work; ordinary
+- Every new independent requirement has a versioned Plan Markdown file before
+  implementation edits; existing requirements retain Issue authority. Ordinary
   requirements use one Ticket, while additional Tickets require distinct
   behavioral, dependency, or acceptance boundaries. The main agent directly
   dispatches a fresh owner per Ticket, who retains context across that Ticket
@@ -28,9 +28,9 @@ contract checks only, not a whole-state audit)
 - Root and direct develop/verify/test entrypoints use the portable worker model
   policy from the root Skill associated with the active installation. See
   [installation boundaries](deployment/installation.md#codex-model-routing).
-  Project-local configuration remains separate. The global instruction and
-  managed-bundle sync check is tracked by [Ticket #236](https://github.com/i-zrhe2016/codex-development-workflow/issues/236);
-  its selected installed bundles match the installer-managed source files.
+  Project-local configuration remains separate. Installed user bundles are not
+  updated by this change; regression tests compare scratch installations with
+  repository sources.
 - Verification now requires Same-Surface proof: runtime identity/doctor,
   Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and
   fresh verification-profile knowledge. If the intended artifact, instance or
@@ -39,8 +39,8 @@ contract checks only, not a whole-state audit)
   dimensions. Authentication and authorization are proven separately when
   relevant, denied operations require protected side-effect absence, and tests
   must fail for the defect they claim to protect.
-- Every independent requirement has its own Plan Issue with Ticket sections before
-  branch work. Ordinary work uses one Ticket; supplementary same-requirement
+- Every new requirement has one `docs/plans/<plan-id>.md` with stable Ticket
+  sections on its own Plan branch before implementation edits. Ordinary work uses one Ticket; supplementary same-requirement
   work updates its Ticket or adds one for a distinct boundary. Independent
   requirements use separate Plans even while an earlier Plan remains unmerged.
   See the [Plan scope contract](../skills/plan-to-ticket/SKILL.md#updating-scope).
@@ -69,11 +69,13 @@ contract checks only, not a whole-state audit)
 - Inherited publication guidance has unresolved non-default-base and
   changed-content revalidation ambiguity; evidence remains in closed
   [Plan #196](https://github.com/i-zrhe2016/codex-development-workflow/issues/196).
-- The last full global diagram check reported 13 renderer-drift pairs. Eight
-  source/render pairs have changed since that baseline, so the current global
-  drift count has not been remeasured. The eight changed pairs pass the
-  isolated source/render check and visual review; no global diagram-check PASS
-  is claimed.
+- The prior full global diagram check reported 13 renderer-drift pairs; the
+  current global drift count has not been remeasured. Six pairs changed for
+  Markdown persistence pass repeat-render byte comparisons; no global PASS is
+  claimed.
+- The unchanged [Ticket loop source](architecture/diagrams/ticket-loop.puml)
+  still labels older Luna/repair routing. The authoritative current worker
+  policy is [AGENTS.md](../AGENTS.md#who-chooses-the-subagent).
 - Comparative performance for native one-, two- and three-owner scheduling is
   unmeasured. Live GitHub checkpoint-failure recovery has not been exercised; see
   [Plan #241](https://github.com/i-zrhe2016/codex-development-workflow/issues/241)
@@ -83,9 +85,9 @@ contract checks only, not a whole-state audit)
 
 - Scheduling follows actual host capacity, without a project-set concurrency
   ceiling or total/lifetime agent quota.
-- Ordinary development, docs and synchronization use Luna/medium; API/schema,
-  security and complex logic use Luna/high. After two failed repair rounds on
-  the same problem, a fresh Sol/high repair owner takes over that problem.
+- Project routing requests Sol/low for development and repairs, and Sol/high
+  for verification. Two failed repair rounds trigger coordinator diagnosis; see
+  [worker routing](../AGENTS.md#who-chooses-the-subagent).
 - Ticket and final acceptance use Sol/high. One new verifier may cover both
   only for a one-Ticket Plan with exactly matching scope, artifact/version,
   configuration and deployment surface. Requested settings do not establish
@@ -95,7 +97,9 @@ contract checks only, not a whole-state audit)
 - Installer evidence covers Claude packaging, not Claude runtime execution.
 - The installer does not copy project instructions or runtime configuration;
   Codex requires `agents/openai.yaml`, while Claude packages omit it.
-- GitHub Issues are the sole durable authority for persisted Plans and Tickets.
+- New Plan/Ticket authority is versioned Markdown; existing Issue-backed
+  requirements retain their original authority without migration or dual writes.
+  Effective completion requires verified PR merge, not a post-merge MD commit.
 
 ## Architecture Snapshot
 

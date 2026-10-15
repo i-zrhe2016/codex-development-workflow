@@ -316,7 +316,7 @@ Tickets are test-complete only when:
 For multi-Ticket work keep inner checks focused per Ticket, then run appropriate
 integration/regression after dependency-related Tickets are GREEN. Later
 behavior fixes require affected reruns and an updated result. Across many
-Tickets keep state in repository tests and authoritative GitHub Issues, not
+Tickets keep state in repository tests and authoritative Plan records (Markdown for new requirements; original Issues for legacy work), not
 fragile conversation memory.
 
 Return a concise `Test Report` containing scope, mode

@@ -6,8 +6,8 @@ skinparam defaultFontName Arial
 
 title Requirement → Plan → Behavior Tickets
 
-rectangle "Requirement\nPersist every requirement" as requirement
-rectangle "One Plan Issue\nPlan + indexed Ticket sections\nOwns branch + PR + merge" as plan
+rectangle "Requirement\nNew MD / original legacy Issue authority" as requirement
+rectangle "One authoritative Plan record\nPlan + indexed Ticket sections\nOwns branch + PR + merge" as plan
 rectangle "Ordinary requirement\nOne Ticket section" as ordinary
 rectangle "Complex requirement\nMultiple behavior Ticket sections" as complex
 rectangle "Original Ticket\nSupplement same requirement" as original_ticket

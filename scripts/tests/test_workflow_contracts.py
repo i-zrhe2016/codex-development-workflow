@@ -167,17 +167,19 @@ class WorkflowContractTests(unittest.TestCase):
             with self.subTest(scenario=label):
                 self.assertRegex(contract, pattern)
 
-    def test_every_requirement_is_persisted_before_branch_work(self) -> None:
-        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
-        persistence = skill.split("## Persistence and delivery contract", 1)[1].split("### Naming and idempotency", 1)[0]
-        persistence = re.sub(r"\s+", " ", persistence).lower()
-
-        self.assertRegex(
-            persistence,
-            r"persist one \[plan\] issue containing the plan and one or more ticket sections for every user requirement before creating a branch or editing repository files",
-        )
-        self.assertIn("github issues are authoritative", persistence)
-        self.assertIn("do not create local markdown", persistence)
+    def test_new_requirement_contract_precedes_implementation_not_branch(self) -> None:
+        skill = re.sub(r"\s+", " ", PLAN_TO_TICKET.read_text(encoding="utf-8")).lower()
+        for invariant in ("docs/plans/<plan-id>.md", "before any other implementation edits",
+                          "a branch may be created first", "read back every contract",
+                          "no new plan/ticket issues", "no github comment write is required"):
+            with self.subTest(invariant=invariant):
+                self.assertIn(invariant, skill)
+        sequence = skill.split("### persistence sequence and failures", 1)[1].split("### publication conflict recheck", 1)[0]
+        self.assertLess(sequence.index("save the complete plan"), sequence.index("read back markers"))
+        self.assertIn("before any other implementation edits", sequence)
+        self.assertIn("failed required read/write or read-back blocks", sequence)
+        self.assertIn("on retry read the authoritative file first", sequence)
+        self.assertIn("preserves other tickets, metadata and evidence", sequence)
 
     def test_independent_requirement_uses_new_plan_before_prior_merge(self) -> None:
         skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
@@ -220,47 +222,121 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertNotIn("when it does not, publication proceeds normally", guide)
 
-    def test_single_issue_contract_and_stable_ticket_example(self) -> None:
+    def test_markdown_contract_and_stable_ticket_example(self) -> None:
         skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
         normalized = re.sub(r"\s+", " ", skill).lower()
-        for invariant in (
-            "same issue", "### t0001", "#t0001", "behavior titles",
-            "ticket-id-tagged", "evidence summary:", "read back",
-            "serializes all writes", "preserve other tickets",
-        ):
+        for invariant in ("same file", "### t0001", "#t0001", "behavior titles",
+                          "ticket-id-tagged", "evidence summary:", "read back",
+                          "serializes all writes", "preserves other tickets",
+                          "append-only evidence in `## evidence`", "preserve prior passing and failing"):
             with self.subTest(invariant=invariant):
                 self.assertIn(invariant, normalized)
         template = re.search(r"Each Ticket uses these fields.*?```text\n(.*?)\n```", skill, re.S).group(1)
         self.assertIn("### T0001\n<!-- codex-ticket-id: T0001 -->", template)
-        self.assertNotIn("Issue title:", template)
-        example = re.search(r"### Single-Issue example.*?```markdown\n(.*?)\n```", WORKFLOW_USAGE.read_text(encoding="utf-8"), re.S).group(1)
+        self.assertIn("docs/plans/<plan-id>.md#t0001", template)
+        usage = WORKFLOW_USAGE.read_text(encoding="utf-8")
+        example = re.search(r"### Markdown Plan example.*?```markdown\n(.*?)\n```", usage, re.S).group(1)
         self.assertEqual(example.splitlines()[:5], ["Status: planned", "Branch: docs/example-plan-contract", "Base: main", "PR: null", "Tickets: [T0001]"])
         self.assertEqual(re.findall(r"<!-- codex-ticket-id: (T\d{4}) -->", example), ["T0001"])
         self.assertIn("Ticket index: [T0001](#t0001)", example)
         self.assertIn("### T0001\n", example)
 
-    def test_legacy_continuation_preserves_unchanged_child_authority(self) -> None:
+    def test_legacy_extensions_keep_original_issue_authority(self) -> None:
         skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
-        legacy = re.sub(r"\s+", " ", skill.split("### Legacy continuation without scope extension", 1)[1].split("### Historical child-Issue migration on extension", 1)[0]).lower()
-        for invariant in ("without scope extension", "original child-issue authority", "do not require migration merely to resume", "every required child's complete metadata/contracts", "after verified merge", "close their issues", "extension", "new plans always"):
+        legacy = re.sub(r"\s+", " ", skill.split("### Legacy continuation", 1)[1].split("### Effective completion", 1)[0]).lower()
+        for invariant in ("including scope extensions", "single-issue sections stay there",
+                          "original issues", "preserve ids, branch/base, pr and history",
+                          "do not migrate", "or dual write", "required issue read/write failures block",
+                          "close their issues", "completed merged plan is never reopened"):
             with self.subTest(invariant=invariant):
                 self.assertIn(invariant, legacy)
-        for name in ("SKILL.md", "skills/publish-workflow/SKILL.md", "skills/github-push-when-ready/SKILL.md", "skills/integrate-workflow/SKILL.md"):
+        for name in ("SKILL.md", "skills/develop-workflow/SKILL.md", "skills/verify-workflow/SKILL.md", "skills/publish-workflow/SKILL.md", "skills/github-push-when-ready/SKILL.md", "skills/integrate-workflow/SKILL.md"):
             with self.subTest(entrypoint=name):
-                self.assertIn("#legacy-continuation-without-scope-extension", (REPO_ROOT / name).read_text(encoding="utf-8"))
+                entrypoint = (REPO_ROOT / name).read_text(encoding="utf-8")
+                self.assertIn("#legacy-continuation", entrypoint)
+                self.assertNotIn("extension triggers canonical migration", entrypoint)
 
-    def test_global_ids_and_historical_migration_failure_order(self) -> None:
+    def test_global_allocation_covers_history_branches_and_failures(self) -> None:
         skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
-        ids = re.sub(r"\s+", " ", skill.split("### Naming and idempotency", 1)[1].split("### Authoritative Issue bodies", 1)[0]).lower()
-        for invariant in ("every page", "open and closed", "all", "multiple markers", "never reuse", "incomplete scan blocks", "t9999", "ambiguous matches"):
+        ids = re.sub(r"\s+", " ", skill.split("### Naming and idempotency", 1)[1].split("### Authoritative Markdown record", 1)[0]).lower()
+        for invariant in ("every page", "open and closed", "all", "multiple markers",
+                          "working tree", "all visible local and remote branches", "including unmerged",
+                          "refresh remote refs", "deduplicate copies", "never reuse", "incomplete scan blocks",
+                          "pagination failure", "t9999", "serializes allocation", "ambiguous matches"):
             with self.subTest(invariant=invariant):
                 self.assertIn(invariant, ids)
-        migration = re.sub(r"\s+", " ", skill.split("### Historical child-Issue migration on extension", 1)[1].split("### Branch, status and handoff", 1)[0]).lower()
-        for invariant in ("leave historical", "until", "complete execution/acceptance contract", "passing/failing evidence", "retain links", "preserve plan id, ticket ids, branch/base and pr history", "read back and verify", "only after successful verification", "state_reason: not_planned", "partial", "block readiness", "not copied again", "do not reopen completed merged plans"):
+        publication = re.sub(r"\s+", " ", skill.split("### Publication conflict recheck", 1)[1].split("### Legacy continuation", 1)[0]).lower()
+        for invariant in ("before any commit, push or pr creation/update", "refresh visible remote refs",
+                          "conflicting id blocks publication", "only new tickets in the current unmerged plan",
+                          "never renumber historical issues, merged records or another plan",
+                          "heading, marker, tickets index, dependencies", "evidence tags/summaries",
+                          "commit/pr descriptions", "read back and rerun", "failure history"):
             with self.subTest(invariant=invariant):
-                self.assertIn(invariant, migration)
-        self.assertLess(migration.index("read back and verify"), migration.index("only after successful verification"))
-        self.assertLess(migration.index("only after successful verification"), migration.index("state_reason: not_planned"))
+                self.assertIn(invariant, publication)
+        for name in ("publish-workflow", "github-push-when-ready"):
+            self.assertIn("#publication-conflict-recheck", (REPO_ROOT / "skills" / name / "SKILL.md").read_text())
+
+    def test_ticket_allocation_requires_exact_successor_and_boundary_rules(self) -> None:
+        skill = re.sub(r"\s+", " ", PLAN_TO_TICKET.read_text(encoding="utf-8")).lower()
+        initial = skill.split("### naming and idempotency", 1)[1].split("### authoritative markdown record", 1)[0]
+        repair = skill.split("### publication conflict recheck", 1)[1].split("### legacy continuation", 1)[0]
+        self.assertIn("allocate exactly the combined maximum + 1", initial)
+        self.assertIn("empty scan or maximum zero as zero, yielding `t0001`", initial)
+        self.assertIn("allocate consecutively, updating the maximum after each id", initial)
+        self.assertIn("at `t9999`, stop and report id exhaustion; never invent another format", initial)
+        self.assertIn("allocating exactly the new combined maximum + 1", repair)
+        self.assertIn("consecutively updating the maximum after each id", repair)
+        self.assertIn("same empty/zero and `t9999` exhaustion rules above", repair)
+
+    def test_merged_pr_completion_requires_identity_scope_and_no_postmerge_write(self) -> None:
+        skill = PLAN_TO_TICKET.read_text(encoding="utf-8")
+        completion = re.sub(r"\s+", " ", skill.split("### Effective completion from verified merge", 1)[1].split("### Branch, status", 1)[0]).lower()
+        for invariant in ("effective plan and ticket status is `done`", "`in_review` or `pr: null`",
+                          "do not create a post-merge status-only commit or pr", "discover the repository pr",
+                          "exact recorded head branch and base", "merged state", "every current ticket",
+                          "merged commit and full scope", "closed/unmerged prs", "ambiguous/missing pr",
+                          "without requiring a markdown write"):
+            with self.subTest(invariant=invariant):
+                self.assertIn(invariant, completion)
+        integrate = (REPO_ROOT / "skills/integrate-workflow/SKILL.md").read_text()
+        self.assertIn("#effective-completion-from-verified-merge", integrate)
+
+    def test_public_integration_summaries_preserve_derived_completion(self) -> None:
+        overview = REPO_ROOT / "docs/architecture/overview.md"
+        for path in (README, ROOT_SKILL, WORKFLOW_USAGE, overview):
+            with self.subTest(document=path.relative_to(REPO_ROOT)):
+                text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8")).lower()
+                for invariant in ("effective markdown plan/tickets", "exact verified merged pr",
+                                  "full accepted scope", "without post-merge markdown/state edits",
+                                  "only legacy issues are updated and closed"):
+                    self.assertIn(invariant, text)
+                self.assertNotRegex(text, r"mark(?:s|ing)? ticket sections done|plan markdown record closure")
+        usage = re.sub(r"\s+", " ", WORKFLOW_USAGE.read_text(encoding="utf-8")).lower()
+        integration = usage.split("`integrate-workflow` requires merge authorization", 1)[1]
+        self.assertNotIn("refreshes `docs/repo_current_state.md`", integration)
+        self.assertIn("validates the state and documentation index included in the pr", integration)
+
+    def test_integrate_agent_prompt_preserves_premerge_state_and_derived_completion(self) -> None:
+        prompt = (REPO_ROOT / "skills" / "integrate-workflow" / "agents" / "openai.yaml").read_text(encoding="utf-8").lower()
+        self.assertIn("validate required repository state and documentation updates are included in the pr", prompt)
+        self.assertIn("exact merged pr", prompt)
+        self.assertIn("only legacy issues", prompt)
+        self.assertNotIn("refresh repository state", prompt)
+        self.assertNotRegex(prompt, r"mark(?:s|ing)? (?:plan|ticket) sections done")
+
+    def test_public_planning_summaries_allow_only_initial_plan_edit(self) -> None:
+        readme = README.read_text(encoding="utf-8")
+        planning_row = next(line for line in readme.splitlines() if line.startswith("| `plan-workflow` |"))
+        overview = (REPO_ROOT / "docs/architecture/overview.md").read_text(encoding="utf-8")
+        planning = overview.split("`plan-to-ticket` may", 1)[1].split("### Fixed topology", 1)[0]
+        for summary in (planning_row, planning):
+            with self.subTest(summary=summary):
+                text = re.sub(r"\s+", " ", summary).lower()
+                for invariant in ("create or resume the plan branch", "save and read back only the complete canonical plan markdown",
+                                  "before other implementation edits", "legacy issues retain original authority"):
+                    self.assertIn(invariant, text)
+                self.assertNotIn("no repository edits", text)
+                self.assertNotIn("before the plan branch is created", text)
 
     def test_installer_managed_skills_match_repository_sources(self) -> None:
         installer = INSTALLER.read_text(encoding="utf-8")

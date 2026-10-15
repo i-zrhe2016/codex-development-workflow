@@ -17,8 +17,8 @@ Core invariants:
 - work is routed to the stage workflow that owns it — `plan-workflow`,
   `develop-workflow`, `verify-workflow`, `publish-workflow`, or
   `integrate-workflow` — instead of one fixed chain for every request;
-- a **Plan** records one independent requirement; its **Plan Issue** owns one
-  implementation branch, one PR, and one merge for its **Ticket sections in that Issue**;
+- a **Plan** records one independent requirement; its **Plan Markdown record** owns one
+  implementation branch, one PR, and one merge for its **Ticket sections in that file**;
 - each **Ticket** is a complete execution and acceptance unit with its own scope,
   acceptance, and validation contract;
 - PASS requires the risk-aware **Test Quality Gate**, not merely a green focused
@@ -37,8 +37,8 @@ owner performs and verifies the rollout or rollback. Completion evidence is
 the external release result or incident link recorded with the delivery.
 
 The macro workflow controls architecture and scope. Every independent
-requirement is recorded as one GitHub Plan Issue with one or more Ticket sections in that same Issue
-before branch work starts. An ordinary requirement uses one Ticket; a complex
+requirement is recorded as one versioned `docs/plans/<plan-id>.md` with one or more Ticket sections in that same file
+before implementation edits starts. An ordinary requirement uses one Ticket; a complex
 requirement may use multiple behavior Tickets only when distinct behavioral,
 dependency, or acceptance boundaries justify them. Every Plan owns one branch,
 one PR, and one merge when delivery is elected. All Tickets share that branch,
@@ -133,11 +133,11 @@ Direct specialist invocation is useful when requesting that capability itself.
 | Workflow | Purpose | Invocation example | Stop boundary | Runtime source | Documentation |
 |---|---|---|---|---|---|
 | `codex-development-workflow` | Route requests; orchestrate explicitly authorized complete delivery | `$codex-development-workflow Implement this requirement and verify it locally.` | Requested stages/actions; full delivery only when explicitly authorized | [`SKILL.md`](SKILL.md) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `plan-workflow` | Define architecture, scope, and persisted Plan/Tickets | `$plan-workflow Plan multi-tenant routing without changing code.` | Executable Plan/Tickets; no repository edits, delivery verification, or publication | [`skills/plan-workflow/`](skills/plan-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `develop-workflow` | Implement an existing Ticket and validate locally | `$develop-workflow Implement the existing Ticket.` | Development Complete; before independent acceptance, publication, Issue closure, or state refresh | [`skills/develop-workflow/`](skills/develop-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `plan-workflow` | Define architecture, scope, and persisted Plan/Tickets | `$plan-workflow Plan multi-tenant routing without changing code.` | Create or resume the Plan branch; save and read back only the complete canonical Plan Markdown before other implementation edits; legacy Issues retain original authority; no delivery verification or publication | [`skills/plan-workflow/`](skills/plan-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `develop-workflow` | Implement an existing Ticket and validate locally | `$develop-workflow Implement the existing Ticket.` | Development Complete; before independent acceptance, publication, legacy Issue closure, or state refresh | [`skills/develop-workflow/`](skills/develop-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 | `verify-workflow` | Prove acceptance, regressions, or branch/PR readiness | `$verify-workflow Verify this change against its acceptance criteria.` | PASS / FAIL / BLOCKED evidence; no code changes or publication | [`skills/verify-workflow/`](skills/verify-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 | `publish-workflow` | Publish a verified change within authorized scope | `$publish-workflow Commit this verified change only.` | Requested commit, push, or PR creation/update boundary; never merge | [`skills/publish-workflow/`](skills/publish-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
-| `integrate-workflow` | Merge a ready PR and reconcile delivery state | `$integrate-workflow Merge this ready PR and complete cleanup.` | Authorized merge, cleanup, synchronization, marking Ticket sections done and Plan Issue closure; no product code changes | [`skills/integrate-workflow/`](skills/integrate-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
+| `integrate-workflow` | Merge a ready PR and reconcile delivery state | `$integrate-workflow Merge this ready PR and complete cleanup.` | Authorized merge, cleanup and synchronization; effective Markdown Plan/Tickets done from the exact verified merged PR and full accepted scope, without post-merge Markdown/state edits; only legacy Issues are updated and closed | [`skills/integrate-workflow/`](skills/integrate-workflow/) | [Workflow usage](docs/workflow/usage.md) · [Architecture](docs/architecture/overview.md) |
 
 ## Workflow composition examples
 
@@ -267,7 +267,7 @@ Ready PR
   -> delete source branch
   -> update default branch
   -> validate PR-included State / Docs
-  -> mark Ticket sections done + close Plan Issue
+  -> verify effective Plan/Ticket completion
   -> stop
 ```
 
@@ -314,7 +314,7 @@ and shared test state do not conflict; parallel writers need isolated workspaces
 or returned patches. Every active role counts against actual host capacity.
 Read-only preparation may proceed across dependencies, but dependent writes wait
 until prerequisite work is integrated on the Plan branch, independently passes
-on that fixed snapshot, and has durable Issue evidence. See the
+on that fixed snapshot, and has durable Plan evidence. See the
 [develop-workflow scheduling procedure](skills/develop-workflow/SKILL.md#ticket-owners-and-workers).
 
 ### Composition rule
@@ -391,9 +391,10 @@ These eight capabilities support the workflows or can be requested directly
 with their actual `$name`. `test-workflow` is the testing capability used by
 `verify-workflow`; its name does not make it another lifecycle stage.
 
-`plan-to-ticket` persists one Plan and its Ticket sections in one GitHub Issue for
-every requirement before branch work. GitHub Issues are the sole durable
-Plan/Ticket authority; chat output and `Repo_Current_State.md` provide links and
+`plan-to-ticket` persists each new requirement and its Ticket sections in one
+versioned `docs/plans/<plan-id>.md` before other implementation edits. Existing
+Issue requirements, including extensions, keep their original authority without
+migration or dual writes; chat output and `Repo_Current_State.md` provide links and
 recovery context, not a parallel backlog. A Plan has one or more behavior
 Tickets, and its branch/PR/merge gate applies once per Plan, never once per
 Ticket.
@@ -427,3 +428,5 @@ relevant bundle.
 - [Managed skill source map](references/skill-map.md)
 - [Repository current state](docs/Repo_Current_State.md)
 - [PlantUML overview diagrams](docs/diagrams/README.md)
+
+Current versioned Plan: [Markdown Plan records](docs/plans/markdown-plan-records.md).

@@ -1,6 +1,6 @@
 ---
 name: integrate-workflow
-description: "Merge a ready PR, clean up its branch, synchronize default branch, mark Ticket sections done and close Plan Issue and validate state/docs included with the PR. Never writes product code."
+description: "Merge a ready PR, clean up its branch, synchronize default branch, verify effective Plan/Ticket completion from merged PR and validate state/docs included with the PR. Never writes product code."
 ---
 
 # Integrate Workflow
@@ -25,7 +25,12 @@ timing, cleanup timing, follow-up scope or post-merge work for the user.
    already included in the PR when verified state/docs changed; missing required
    updates return to `publish-workflow` on the Plan branch before merge.
 3. Merge once under repository policy; delete source branch, update default.
-4. After verified merge, set Plan and its Ticket sections `done` and close the Plan Issue.
+4. Follow the [effective completion rule](../plan-to-ticket/SKILL.md#effective-completion-from-verified-merge).
+   Resolve or discover the PR when PR is null; verify repository, recorded
+   branch/base, merged state/commit and every Ticket's full accepted scope.
+   Missing or ambiguous proof blocks a done claim. Derive effective Markdown
+   Plan/Ticket `done` from this verified merge without a status-only write.
+   For legacy requirements only, update/close original Issues after verified merge.
 
 No product/test/config edits: discovered defects return to `develop-workflow` as
 new changes. If more work is needed before merge, resume the branch; do not
@@ -35,9 +40,6 @@ default branch. Post-delivery evaluation belongs to the entry-point skill.
 
 ## Legacy format compatibility
 
-For preexisting unmerged Plans resumed without scope extension, follow
-[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
-original child-Issue contracts and metadata remain authoritative for publication
-checks, and verified integration marks Plan/children done and closes their Issues.
-The single-Issue section rules apply to new Plans and extended legacy Plans;
-only scope extension triggers the canonical migration. All existing gates apply.
+Existing Issue requirements, including extensions, retain their original authority.
+Follow [legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation). Do not migrate or dual write.
+New requirements use versioned Plan Markdown; all existing gates apply.

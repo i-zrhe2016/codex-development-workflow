@@ -21,7 +21,7 @@ component "repo-current-state\nVerified recovery snapshot" as state
 component "data-document-redaction\nStaged sensitive-data scan" as redact
 component "github-push-when-ready\nCommit / Push / PR readiness" as publish
 
-database "GitHub Issues\nPlan / Ticket authority" as issues
+database "Plan Markdown + legacy Issues\nPlan / Ticket authority" as records
 cloud "GitHub\nBranch / PR / Merge" as github
 folder "Repository docs\nREADME + docs/" as docstore
 
@@ -32,7 +32,7 @@ devw --> verifyw
 verifyw --> pubw
 pubw --> intw
 planw --> plan : decompose
-plan --> issues : persist every requirement
+plan --> records : persist every requirement
 verifyw --> test : invoke
 pubw --> docs : impact / ownership
 docs --> docstore : update canonical docs

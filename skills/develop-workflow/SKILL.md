@@ -1,6 +1,6 @@
 ---
 name: develop-workflow
-description: "Implement, fix, refactor or modify repository content for a persisted Ticket through Development Complete with focused local validation. Stops before delivery verification, publication, Issue closure and state refresh."
+description: "Implement, fix, refactor or modify repository content for a persisted Ticket through Development Complete with focused local validation. Stops before delivery verification, publication, legacy Issue closure and state refresh."
 ---
 
 # Develop Workflow
@@ -48,8 +48,8 @@ owns the full scheduling policy.
   commits, while protecting its dirty baseline. A dependent Ticket may prepare
   read-only. Delivery writes become eligible only after each prerequisite's
   work is integrated on the Plan branch, a fresh independent verifier passes
-  that fixed integrated snapshot, and PASS evidence is saved to its section and Ticket-ID-tagged comments on the Plan Issue. A
-  failed Issue write never unlocks work.
+  that fixed integrated snapshot, and PASS evidence is saved to its section and Ticket-ID-tagged append-only evidence in the Plan record. A
+  failed Plan write never unlocks work.
 - Keep a live Ready Queue over the validated Ticket dependency DAG, including
   runnable integration, verification and durable evidence-write work as well as
   owner work. Recompute on
@@ -140,8 +140,8 @@ owns the full scheduling policy.
   surface invalidates that Ticket and every dependent descendant. Stop active
   descendants before they consume a stale base, or let their isolated work
   finish and reconcile it against the new integrated base before any
-  integration. Recovery reconciles actual workspace contents, durable Issue
-  evidence and repair counts; failed required Issue persistence blocks the
+  integration. Recovery reconciles actual workspace contents, durable Plan
+  evidence and repair counts; failed required Plan persistence blocks the
   affected Ready Queue entries.
 - Compare one-, two- and three-owner scheduling only with matched Plan scope,
   acceptance criteria, tools, permissions, host and verification procedure.
@@ -183,8 +183,8 @@ owns the full scheduling policy.
   one NEW verifier may satisfy Ticket and final gates for a one-Ticket Plan only
   when full scope, artifact/version, configuration and deployment surface match
   exactly. The main agent owns the Test Quality Gate and stage decision.
-- Record durable Ticket section checkpoints and Ticket-ID-tagged comments on the Plan Issue at each integration, Development
-  Complete, acceptance failures, and pause/retirement. A required Issue write
+- Record durable Ticket section checkpoints and Ticket-ID-tagged append-only evidence in the Plan record at each integration, Development
+  Complete, acceptance failures, and pause/retirement. A required Plan write
   failure is BLOCKED. Do not create per-step acknowledgements or gates.
 
 **Development Complete:** acceptance is implemented and local validation passes.
@@ -195,13 +195,11 @@ publication decision; that wait is not BLOCKED. New scope in an unmerged Plan
 requires `plan-to-ticket`'s Plan/Ticket updates before implementation edits.
 
 `verify-workflow` owns delivery verification breadth; publish/integrate own
-commit/push/PR/merge, Issue closure and state refresh. No post-delivery evaluation,
+commit/push/PR/merge, legacy Issue closure and state refresh. No post-delivery evaluation,
 unrelated requirements, refactors, formatting sweeps or dependency upgrades.
 
 ## Legacy checkpoint compatibility
 
-For preexisting unmerged Plans resumed without scope extension, follow
-[legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation-without-scope-extension):
-checkpoints, statuses and evidence remain on original child Issues. Ticket
-section destinations apply to new Plans and extended legacy Plans. Scope
-extension triggers canonical migration; unchanged continuation does not.
+Existing Issue requirements, including extensions, retain original contracts,
+checkpoints, statuses and evidence. Follow [legacy continuation](../plan-to-ticket/SKILL.md#legacy-continuation);
+never migrate or dual write. New requirements use Plan Markdown sections.

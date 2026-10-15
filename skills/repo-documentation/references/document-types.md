@@ -10,10 +10,12 @@ Ordinary statuses: Draft, Active, Deprecated, Superseded.
 | Guide | `docs/guides/` | end-to-end developer tasks: setup/run/debug | exact value tables (link Reference) | Ordinary |
 | Runbook | `docs/runbooks/` | operation, verification, failure handling, rollback | design rationale | Ordinary |
 | Reference | `docs/reference/` | exact keys/defaults/constraints/endpoints/commands | tutorials/rationale | Ordinary |
+| Plan | `docs/plans/<plan-id>.md` | one new requirement, Ticket contracts and append-only evidence | repository state / duplicate legacy Issue records | `plan-to-ticket` owns it |
 | State | `docs/Repo_Current_State.md` | implemented/current truth | history/plans/architecture detail | `repo-current-state` owns it |
 
-State uses `Last verified`, not this skill's header. Planned work belongs to
-GitHub Issues; change history belongs to Git. The router holds links/grouping,
+Plan uses `plan-to-ticket` delivery metadata and stable anchors, not this skill's
+ordinary Type/Status/Scope header. State uses `Last verified`, not this skill's header. Planned work belongs to
+versioned Plan Markdown (or original legacy Issues); change history belongs to Git. The router holds links/grouping,
 not detailed facts. Choices affecting no architecture/interface/deployment/
 operation are implementation details, not ADRs.
 
