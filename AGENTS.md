@@ -166,14 +166,23 @@ hosts must use an equivalent fresh-agent, independent-context capability. If
 fresh workers and clean context cannot be guaranteed, report **BLOCKED**;
 there is no main-agent implementation/verification fallback.
 
-Manually provide only this minimum task contract:
+Manually provide this minimum Agent Handoff Contract in the following order,
+putting business intent and user-visible outcomes before technical task details.
+Keep each entry concise and relevant to the task:
 
-* role (Ticket owner, module assistant, repair implementation or verification), current
-  Ticket goal, scope and non-goals;
-* Ticket dependencies and acceptance criteria;
-* relevant files and read/write ownership;
-* Plan branch/base and verified prerequisite results/checkpoints;
-* validation commands and expected result summary.
+* **Intent**: why the user needs the work and what they want to improve.
+* **Outcome**: the change the user can observe when the work succeeds.
+* **Scope**: role (Ticket owner, module assistant, repair implementation or
+  verification), current Ticket goal, allowed modules/files, read/write
+  ownership and non-goals.
+* **Constraints**: interfaces, data structures and behaviors that must remain
+  unchanged; state "No additional constraints" when none apply.
+* **Acceptance**: concrete, verifiable conditions that demonstrate the Outcome
+  has been achieved.
+* **Context**: the minimum relevant file paths and entrypoints for further
+  reading, with brief summaries of Ticket dependencies, Plan branch/base and
+  verified prerequisite results/checkpoints.
+* **Validation**: required commands and their expected results.
 
 Workers read only rules and material needed for the current task, expanding
 scope when evidence requires it. Do not preload the repository or attach the
