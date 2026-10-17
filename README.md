@@ -429,4 +429,7 @@ relevant bundle.
 - [Repository current state](docs/Repo_Current_State.md)
 - [PlantUML overview diagrams](docs/diagrams/README.md)
 
-Current versioned Plan: [Markdown Plan records](docs/plans/markdown-plan-records.md).
+Versioned Plans:
+
+- [Markdown Plan records](docs/plans/markdown-plan-records.md)
+- [Intent-first Agent Handoff Contract](docs/plans/intent-first-handoff.md)
