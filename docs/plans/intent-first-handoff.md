@@ -1,7 +1,7 @@
 Status: in_progress
 Branch: docs/intent-first-handoff
 Base: main
-PR: null
+PR: https://github.com/i-zrhe2016/codex-development-workflow/pull/252
 Tickets: [intent-first-handoff-01]
 
 <!-- codex-plan-id: intent-first-handoff -->
@@ -77,3 +77,8 @@ small-change/no-additional-Agent instruction.
   using Python 3.14.4. README reachability failure is resolved. Focused review
   confirms the seven-field contract and preserved metadata; whitespace checks
   passed. Reviewed the exact publication files; no credentials or secrets found.
+- [intent-first-handoff-01] Published implementation commit 74622e7 and opened
+  PR #252 against main. This pre-merge checkpoint adds the PR reference only;
+  contract and validation scope are unchanged. GitHub checks must pass for the
+  final PR head before merge. Effective completion follows the verified merged
+  PR, without a post-merge status-only commit.
