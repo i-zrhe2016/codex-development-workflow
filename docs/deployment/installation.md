@@ -193,13 +193,30 @@ unverified destination is also preserved. Check the installer output and
 installed `SKILL.md` before assuming the new policy is active. A session that
 has already loaded a Skill is not evidence that an update changed its guidance.
 
+Agent-capable configuration does not authorize dispatch. Default execution uses
+only the main agent, including acceptance. Worker isolation and independent
+verification are required only after explicit delegation authorization; missing
+subagent support does not block default work. At the two-failed-repair checkpoint,
+ask for the escalation model and whether to authorize delegation before dispatch.
+
+The project main-agent default reasoning effort is `low`, including single-agent
+self-verification. Planning requests `high` in either mode; delegated development
+and repair use `low`, while independent verification uses `high`. Apply required
+effort through supported host controls and report unavailable settings. Updating
+configuration or instructions does not change the effort of a running turn; do
+not claim a live switch from these files alone.
+
 This guide owns the separate, repository-local configuration. In this checkout,
 [`.codex/config.toml`](../../.codex/config.toml) enables agents and sets no
 concurrency ceiling. Execution follows actual host capacity, with no project-set
 upper cap or total/lifetime agent quota. The optional Sol repair and verifier
-roles support the canonical policy's restricted repair trigger and independent
-acceptance checks; configuration does not count failed repair rounds or switch
-models automatically. The installed policy leaves the main agent's model,
+roles support default Sol/low repairs from the first round and Sol/high
+independent acceptance checks. After two consecutive failed same-problem repair
+rounds, the coordinator checkpoints and pauses that problem until the user
+chooses an escalation model. Use a compatible role or no named role for that
+selection; Sol-only roles cannot override it. Unavailable selected settings block
+dispatch without fallback. Configuration does not count rounds or switch models
+automatically. The installed policy leaves the main agent's model,
 provider and permissions unchanged and explicitly selects each dispatched
 worker's model and effort. Explicit target-project routing applies as defined
 by that canonical policy.

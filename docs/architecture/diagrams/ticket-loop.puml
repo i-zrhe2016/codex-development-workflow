@@ -6,7 +6,7 @@ skinparam defaultFontName Arial
 
 title Ticket Implementation and Independent Acceptance
 
-state "Main dispatches fresh Ticket owner\nLuna / medium or high; scoped contract" as dispatch
+state "Main dispatches fresh Ticket owner\nDefault Sol / low; scoped contract" as dispatch
 state "Owner scopes Ticket work\nDependencies / acceptance / validation" as select
 state "Owner implements Ticket\nRetain context through local repairs" as implement
 state "Local focused checks\nCheapest relevant checks first" as focused
@@ -16,14 +16,14 @@ state "BLOCKED\nRecord cause + verified checkpoint" as blocked
 state "Owner returns to main for re-planning" as replan
 state "Ticket locally complete\nRecord evidence" as ticket_local
 state "Development Complete\nTicket implemented + locally checked" as developed
-state "Main dispatches fresh Sol/high verifier\nRead-only; all Ticket scenarios" as verify
+state "Main dispatches fresh verifier\nRead-only; all Ticket scenarios" as verify
 state "Verifier reports acceptance + mandatory dimensions\nExecuted evidence or concrete N/A reasons" as evidence
 state "Main coordinator decides Test Quality Gate" as gate
-state "Fresh Luna implementation repair\nRun checks; retain evidence and round count" as repair
-state "Fresh Sol/high repair owner\nOnly after two consecutive failed repair rounds" as sol_repair
+state "Fresh implementation repair (default Sol/low)\nRun checks; retain evidence and round count" as repair
+state "Checkpoint + pause affected problem\nAsk user to choose escalation model" as sol_repair
 state "Verification BLOCKED\nRecord verification resume point" as verify_blocked
 state "Ticket acceptance verified" as ticket_done
-state "After all Tickets pass: final Plan acceptance\nSeparate fresh Sol/high verifier for multi-Ticket Plans" as final_verify
+state "After all Tickets pass: final Plan acceptance\nSeparate fresh verifier for multi-Ticket Plans" as final_verify
 state "Plan acceptance verified" as plan_done
 
 [*] --> dispatch
@@ -46,8 +46,8 @@ evidence --> repair : FAIL: return to implementation
 repair --> verify : repaired + locally checked; dispatch new verifier
 repair --> repair : same problem fails; repair rounds below 2
 repair --> sol_repair : same problem fails after repair round 2
-sol_repair --> verify : repaired + locally checked; dispatch new verifier
-sol_repair --> replan : Sol cannot fix; main diagnoses and replans
+sol_repair --> repair : user selects available model; compatible role; low effort
+sol_repair --> sol_repair : no selection or unsupported settings; no dispatch
 evidence --> verify_blocked : checks cannot run
 verify_blocked --> verify : cause resolved
 evidence --> gate : complete evidence
@@ -73,7 +73,9 @@ Every acceptance criterion needs executed evidence.
 Mandatory dimensions pass or have concrete N/A reasons.
 Retry or agent replacement cannot erase unexplained flakiness.
 The initial implementation failure is not a repair round.
-After two failed repair checks for the same problem, stop Luna edits there;
-use a fresh Sol/high repair worker. Unrelated development remains Luna-routed.
+After two consecutive failed same-problem repair rounds, diagnose and checkpoint.
+Pause that problem until explicit user model selection; preserve history.
+No automatic model choice or fallback. Unrelated work retains defaults.
+Canonical routing: SKILL.md#codex-worker-model-routing
 end note
 @enduml

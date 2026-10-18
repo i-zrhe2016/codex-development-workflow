@@ -1,5 +1,9 @@
 # Test Workflow
 
+默认由主 agent 独立执行测试与验收，不创建子 agent，也不将自验收称为独立验收。
+本文的 worker 和独立验证者规则仅适用于用户明确授权后的多 agent 模式；
+连续两轮同问题修复失败后，先保存检查点并等待用户选择模型及授权委派。
+
 本目录迁移并维护 `test-workflow` specialist 的文档。运行时 skill 源码位于
 [`skills/test-workflow/`](../../../skills/test-workflow/)；它服务于本仓库的
 Ticket workflow：每个 Ticket（含文档、配置、测试）均由全新实现 worker 执行

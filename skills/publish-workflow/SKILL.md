@@ -5,6 +5,25 @@ description: "Perform only user-authorized commit, push or PR creation/update fo
 
 # Publish Workflow
 
+## Execution mode
+
+Default reasoning effort is `low`, including self-verification; planning
+uses `high` in either mode. Delegated development/repair uses `low` and
+independent verification `high`. Report unsupported effort settings; do not
+claim that editing instructions changed the running turn's effort.
+
+Default single-agent execution: the main agent performs this stage directly,
+including required checks and acceptance; do not spawn subagents. Record
+self-verification accurately, without claiming independent verification.
+Worker-only dispatch, independent-verifier and no-main-agent-fallback rules
+below apply only in explicitly authorized delegated mode. Stage transitions
+and an initial failure do not activate delegation. After two consecutive failed
+same-problem repair rounds, checkpoint and pause; ask the user to choose an
+escalation model and whether to authorize delegation. Model selection alone
+does not authorize subagents. Missing subagent support does not block default
+single-agent execution. Keep the existing Test Quality Gate, durable evidence
+and publication boundaries in both modes.
+
 Owns **verified change -> requested publication boundary**. The user decides
 commit, push and PR creation/update timing and scope. Commit-only stops after
 the commit; push-only stops after the push; creating/updating a PR requires that
@@ -22,8 +41,9 @@ A Plan represents one requirement, with one Ticket for ordinary work and
 multiple Tickets only for distinct behavioral, dependency, or acceptance
 boundaries. Before publication, every Ticket's acceptance and the Plan's relevant
 integration/regression checks must pass; any failure blocks the Plan. Final
-Plan/branch/PR acceptance uses a fresh independent verifier for the whole
-current requirement scope before publication or PR readiness can pass. That verifier may
+Plan/branch/PR acceptance covers the whole current requirement scope before
+publication or PR readiness can pass. The main agent verifies in default
+single-agent mode. In delegated mode, use a fresh independent verifier. That verifier may
 also satisfy Ticket acceptance only for a one-Ticket Plan with exactly matching
 full scope, artifact/version, configuration and deployment surface; otherwise
 the gates require separate fresh verifiers. Expanded

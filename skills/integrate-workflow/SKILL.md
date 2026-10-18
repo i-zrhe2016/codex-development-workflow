@@ -5,6 +5,25 @@ description: "Merge a ready PR, clean up its branch, synchronize default branch,
 
 # Integrate Workflow
 
+## Execution mode
+
+Default reasoning effort is `low`, including self-verification; planning
+uses `high` in either mode. Delegated development/repair uses `low` and
+independent verification `high`. Report unsupported effort settings; do not
+claim that editing instructions changed the running turn's effort.
+
+Default single-agent execution: the main agent performs this stage directly,
+including required checks and acceptance; do not spawn subagents. Record
+self-verification accurately, without claiming independent verification.
+Worker-only dispatch, independent-verifier and no-main-agent-fallback rules
+below apply only in explicitly authorized delegated mode. Stage transitions
+and an initial failure do not activate delegation. After two consecutive failed
+same-problem repair rounds, checkpoint and pause; ask the user to choose an
+escalation model and whether to authorize delegation. Model selection alone
+does not authorize subagents. Missing subagent support does not block default
+single-agent execution. Keep the existing Test Quality Gate, durable evidence
+and publication boundaries in both modes.
+
 Owns **authorized ready PR -> delivered and reconciled**. Subsequent functionality
 after verified merge uses a new Plan; never append to the delivered Plan.
 

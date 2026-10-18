@@ -7,11 +7,20 @@
 ## Scope
 
 This repository packages a main-agent-led development-workflow orchestrator for
-Codex and Claude Code with a fixed workflow topology and adaptive multi-agent
-execution. The orchestrator owns stage routing and quality gates; specialist
+Codex and Claude Code with a fixed workflow topology and single-agent execution
+by default. The main agent implements, repairs and verifies directly without
+subagents. Multi-agent execution requires explicit user authorization after the
+documented escalation checkpoint; model selection alone does not enable it. The orchestrator owns stage routing and quality gates; specialist
 procedures remain inside their own `SKILL.md` files.
+Reasoning effort is low for single-agent work with a high planning exception;
+delegated development/repair uses low and independent verification high.
 
 ## Components
+
+Worker topology, dispatch and independent-verifier descriptions and diagrams
+below apply only in explicitly authorized delegated mode. Default execution
+keeps the same stage and evidence gates with self-verification by the main agent.
+
 
 | Component | Responsibility |
 |---|---|
@@ -222,7 +231,7 @@ owns Ready Queue scheduling, capacity, integration and recovery.
 Root, develop, verify and test Skills retain minimum executable rules for
 installed use without AGENTS.md. Verifiers read without repair edits; a failed
 acceptance returns to implementation, then a fresh verifier checks affected
-functionality. A fresh Sol/high verifier covers Ticket acceptance; for a
+functionality. A fresh verifier covers Ticket acceptance; for a
 one-Ticket Plan with exactly matching scope, artifact/version, configuration,
 and deployment surface, that new check may also satisfy final Plan acceptance.
 Otherwise final Plan acceptance uses a separate fresh whole-Plan verifier.

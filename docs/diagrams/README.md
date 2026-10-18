@@ -1,5 +1,10 @@
 # PlantUML Overview Diagrams
 
+Diagrams showing multiple agents describe explicitly authorized delegated mode.
+Default execution uses the main agent alone, including acceptance and repairs;
+see [execution modes](../../SKILL.md#default-single-agent-execution). Stage
+transitions do not activate delegation.
+
 This index links the repository's shared overview diagrams. Each overview uses
 an editable `.puml` canonical source and a generated same-basename SVG. Detailed
 views retain their existing locations beside the documents they illustrate.
