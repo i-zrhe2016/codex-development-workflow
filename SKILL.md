@@ -118,7 +118,46 @@ selects minimal/focused/regression/full and invokes `test-workflow` for evidence
 and the quality gate. Tests may use internal phases, but these do not create
 execution identities, statuses, Issues or acceptance gates.
 
+## Default single-agent execution
+
+Reasoning effort follows stage and execution mode:
+
+| Scope | Reasoning effort |
+|---|---|
+| Planning in either execution mode | `high` |
+| Other single-agent work, including self-verification | `low` |
+| Delegated development and repair | `low` |
+| Delegated independent verification | `high` |
+
+Planning takes precedence over the single-agent default. Request the required
+effort through the host's supported controls. If it cannot be applied, report
+the actual limitation without silently substituting another level or claiming
+a runtime switch. Repository configuration changes do not alter a running turn.
+The model default remains `gpt-6.1-sol`; effort is not a model selection.
+
+Start with the main agent alone. Do not spawn subagents during initial work,
+local repairs, Ticket acceptance or final Plan acceptance. The main agent owns
+implementation and verification directly, executes the required checks and
+records self-verification evidence. Never label that evidence independent.
+Stage transitions and an initial failure do not activate delegation. Missing
+subagent support does not block default single-agent execution.
+
+Keep the Test Quality Gate, prerequisite acceptance, fixed-snapshot evidence,
+Plan persistence and publication boundaries in both modes. After two consecutive
+failed same-problem repair rounds, checkpoint and pause the affected problem;
+ask the user to choose an escalation model and whether to authorize delegation.
+Model selection alone does not authorize subagents. Wait for the required user
+decisions; do not automatically spawn workers or switch models.
+
+The worker-only rules below apply only in explicitly authorized delegated mode,
+including fresh independent verifiers, worker replacement, thin coordination,
+parallel Ready Queue execution and no-main-agent-fallback restrictions. They
+never prevent the main agent from implementing or verifying in default mode.
+Use the same acceptance criteria and quality gate in either mode.
+
 ## Ticket workers and adaptive execution
+
+This section describes explicitly authorized delegated mode only.
 
 The main agent owns requirements, architecture, Plan/Ticket decomposition,
 cross-Ticket dependencies and scheduling, integration, stage gates and final
@@ -159,7 +198,8 @@ The `develop-workflow` skill owns the dynamic dependency Ready Queue,
 critical-path priority, event-based requeue, conflict isolation and transactional
 integration/recovery procedure. Across stages, integrate prerequisite work onto
 the Plan's single branch first; then a fresh independent verifier checks the
-fixed integrated snapshot; then save PASS evidence to that Ticket section and its tagged append-only evidence in the Plan record. A
+fixed integrated snapshot in delegated mode (the main agent verifies in default
+single-agent mode); then save PASS evidence to that Ticket section and its tagged append-only evidence in the Plan record. A
 dependent Ticket's delivery becomes eligible only after all three steps succeed
 for every prerequisite. Failed Plan writes never unlock work. A later change to
 a verified surface invalidates affected evidence and blocks dependent work until
@@ -168,6 +208,10 @@ one free slot for its worker. See `develop-workflow` for the portable execution
 rules.
 
 ## Codex worker model routing
+
+This dispatch policy applies only in explicitly authorized delegated mode.
+Default single-agent execution does not dispatch workers or reconfigure the
+main runtime to imitate per-worker model/effort settings.
 
 This is the canonical portable policy for Codex worker dispatch. The
 **main agent** applies the copy associated with its active entrypoint: an
@@ -199,20 +243,40 @@ across fresh workers:
 | Repair implementation from the first repair round | `gpt-6.1-sol` | `low` |
 | Ticket acceptance verification or final Plan/branch/PR acceptance | `gpt-6.1-sol` | `high` |
 
-The initial implementation failure does not count as a repair round. A failed
-repair round is a fresh repair implementation followed by a same-problem check
-that still fails. All repair implementation uses Sol/low. Preserve the
-failure evidence and count across replacement or context reset. If Sol cannot
-fix the problem after two consecutive failed repair rounds, the main agent
-diagnoses and replans; do not silently fall back. Ticket and final acceptance use
-Sol/high. One new verifier can cover both gates only for a one-Ticket Plan with
-exactly matching full scope, artifact/version, configuration and deployment
-surface; all other final Plan checks use a separate fresh verifier.
+These defaults use one model across all stages; effort varies by role, not task
+complexity. The initial implementation failure does not count as a repair round.
+A failed repair round is an in-scope repair implementation followed by a same-problem
+check that still fails. Preserve failure evidence and count across replacement
+or context reset. After two consecutive failed same-problem repair rounds, the
+main agent diagnoses the problem, saves a durable Plan/Ticket checkpoint, pauses
+the affected problem and asks the user to choose an escalation model and whether
+to authorize delegation. Model selection alone does not authorize subagents. While the
+user has not selected a model, do not dispatch another same-problem repair or a
+new model for that problem. Do not automatically choose an escalation model or
+silently retry the default beyond this threshold.
+
+After the user explicitly selects a model and authorizes delegation,
+dispatch that model only for the
+stated problem and role; unrelated work retains its defaults. Explicitly request
+`low` for implementation/repair and `high` for independent verification. Preserve
+the failure evidence and repair count; model selection does not reset history.
+Do not hardcode an escalation model, switch providers automatically or change
+the main runtime. If the user-selected model or required effort is unavailable,
+report the actual unsupported setting and stop that dispatch without fallback.
+Select a compatible named role or no named role; never apply a Sol-only role's
+conflicting override to a different selected model.
+
+Ticket and final acceptance default to Sol/high unless the user explicitly
+selects a model for that verification role. One new verifier can cover both gates
+only for a one-Ticket Plan with exactly matching full scope, artifact/version,
+configuration and deployment surface; all other final Plan checks use a separate
+fresh verifier.
 
 Request both selected values explicitly in every dispatch's model and
 reasoning-effort arguments, with `fork_turns="none"` and the scoped role
 contract. Named/custom roles are optional. When one is selected, inspect its
-effective settings and ensure they match the table; do not allow role overrides
+effective settings and ensure they match the selected model/effort (defaults above or explicit
+user selection); do not allow role overrides
 to silently change the requested pair. Without a selected named role, explicit
 worker settings require no generic/global-default configuration exploration.
 Read explicit project routing references when applicable; do not inventory

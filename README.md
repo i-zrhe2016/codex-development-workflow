@@ -1,7 +1,7 @@
 # Codex Development Workflow
 
 A main-agent-led development workflow for Codex and Claude Code with a fixed
-delivery lifecycle and adaptive multi-agent execution, plus post-delivery
+delivery lifecycle, single-agent execution by default and optional delegated execution, plus post-delivery
 process evaluation, bounded self-improvement, and all required specialist
 skills managed in this repository.
 
@@ -87,11 +87,25 @@ reproducible evidence, and treat unprovable artifact/instance/surface identity
 as `BLOCKED`. Target projects may keep verification profiles or feature maps in
 `docs/verification/`; that is repository-specific knowledge, not a new workflow
 Skill.
+Default execution uses the main agent alone for implementation, local repairs,
+Ticket acceptance and final Plan acceptance. Do not spawn subagents or call
+self-verification independent. After two consecutive failed same-problem repair
+rounds, checkpoint and pause, then ask the user to choose an escalation model
+and whether to authorize delegation. Stage transitions and an initial failure
+do not enable delegation; model selection alone does not authorize subagents.
+Both modes retain evidence-based quality gates and publication boundaries.
+Reasoning effort is low for single-agent work, high for planning in either mode,
+and low for delegated development/repair versus high for independent verification.
+See the [effort matrix](SKILL.md#default-single-agent-execution).
+
+The following worker topology applies only in explicitly authorized delegated
+mode; diagrams depicting multiple agents describe that mode.
+
 The main agent owns requirements, architecture, decomposition, scheduling,
 integration, evaluation, and final judgment. It directly dispatches a fresh
 owner for each Ticket; that owner retains context across the Ticket, then a
 fresh verifier checks all Ticket scenarios. Final Plan
-acceptance normally uses a separate fresh verifier. One new Sol/high verifier
+acceptance normally uses a separate fresh verifier. One new verifier
 may cover both gates only for a one-Ticket Plan with identical full scope,
 artifact/version, configuration, and deployment surface. Optional
 independent-module helpers may work in parallel only with fixed interfaces,
@@ -431,5 +445,6 @@ relevant bundle.
 
 Versioned Plans:
 
+- [Single-model defaults and user-selected escalation](docs/plans/single-model-escalation.md)
 - [Markdown Plan records](docs/plans/markdown-plan-records.md)
 - [Intent-first Agent Handoff Contract](docs/plans/intent-first-handoff.md)

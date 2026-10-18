@@ -5,6 +5,25 @@ description: "Define one requirement-level Plan and its Ticket execution contrac
 
 # Plan to Ticket
 
+## Execution mode
+
+Default reasoning effort is `low`, including self-verification; planning
+uses `high` in either mode. Delegated development/repair uses `low` and
+independent verification `high`. Report unsupported effort settings; do not
+claim that editing instructions changed the running turn's effort.
+
+Default single-agent execution: the main agent performs this stage directly,
+including required checks and acceptance; do not spawn subagents. Record
+self-verification accurately, without claiming independent verification.
+Worker-only dispatch, independent-verifier and no-main-agent-fallback rules
+below apply only in explicitly authorized delegated mode. Stage transitions
+and an initial failure do not activate delegation. After two consecutive failed
+same-problem repair rounds, checkpoint and pause; ask the user to choose an
+escalation model and whether to authorize delegation. Model selection alone
+does not authorize subagents. Missing subagent support does not block default
+single-agent execution. Keep the existing Test Quality Gate, durable evidence
+and publication boundaries in both modes.
+
 Own requirement decomposition and Plan persistence, not product/repository
 implementation. Every new independent user requirement receives one versioned Plan Markdown
 file containing its Plan and Ticket sections before other implementation edits. An ordinary requirement has one Ticket; a complex requirement may
@@ -33,8 +52,9 @@ concrete cases, and Ticket/final validation.
   upgrades, formatting, speculative abstractions and future work.
 - Record dependencies between Tickets only when real. A dependent Ticket may
   prepare read-only; delivery edits become ready only after each prerequisite's
-  work is integrated on the shared Plan branch, a fresh independent verifier
-  passes that fixed integrated snapshot, and PASS evidence is saved to its
+  work is integrated on the shared Plan branch, the main agent in default
+  single-agent mode or a fresh independent verifier in delegated mode passes
+  that fixed integrated snapshot, and PASS evidence is saved to its
   section and Ticket-ID-tagged append-only evidence in the Plan record. Failed Plan writes never unlock dependents. The coordinator requeues
   eligible work on each completion or material progress event; there is no
   batch barrier. All Tickets share the Plan branch; no Ticket branches or merges.
@@ -52,7 +72,8 @@ concrete cases, and Ticket/final validation.
   requirement, stop expansion and persist the necessary scope/Plan changes before
   further edits. Preserve valid work and prior evidence.
 
-The main agent directly dispatches one fresh implementation owner per Ticket,
+In explicitly authorized delegated mode, the main agent directly dispatches
+one fresh implementation owner per Ticket,
 including docs/config/test work. The owner retains context across the Ticket and
 local repairs and never spawns agents. The main agent separately dispatches
 fresh independent verifiers and repair replacements. Verifiers are read-only

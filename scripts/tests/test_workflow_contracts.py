@@ -72,8 +72,36 @@ class WorkflowContractTests(unittest.TestCase):
             },
         )
 
+    def test_single_model_defaults_and_user_selected_escalation_contract(self) -> None:
+        section = ROOT_SKILL.read_text(encoding="utf-8").split(
+            "## Codex worker model routing", 1
+        )[1].split("\n## ", 1)[0]
+        normalized = re.sub(r"\s+", " ", section).lower()
+        scenarios = {
+            "uniform_defaults": ("one model across all stages", "effort varies by role"),
+            "repair_count": ("initial implementation failure does not count", "two consecutive failed same-problem repair rounds", "count across replacement"),
+            "missing_selection": ("durable plan/ticket checkpoint", "pauses the affected problem", "asks the user to choose an escalation model", "user has not selected a model, do not dispatch another same-problem repair or a new model"),
+            "selected_model": ("dispatch that model only for the stated problem and role", "`low` for implementation/repair", "`high` for independent verification", "model selection does not reset history"),
+            "unsupported_selection": ("user-selected model or required effort is unavailable", "unsupported setting", "stop that dispatch without fallback"),
+            "conflicting_role": ("compatible named role or no named role", "never apply a sol-only role's conflicting override"),
+            "unchanged_defaults": ("unrelated work retains its defaults", "do not hardcode an escalation model", "change the main runtime"),
+        }
+        for scenario, markers in scenarios.items():
+            with self.subTest(scenario=scenario):
+                for marker in markers:
+                    self.assertIn(marker, normalized)
+        self.assertNotIn("ensure they match the table", normalized)
+        for path in (AGENTS, REPO_ROOT / "skills/develop-workflow/SKILL.md", VERIFY_SKILL, TEST_SKILL):
+            with self.subTest(entrypoint=path):
+                text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8")).lower()
+                self.assertIn("choose an escalation model", text)
+                self.assertIn("until selection", text)
+                self.assertIn("no named role", text)
+                self.assertIn("without fallback", text)
+
     def test_codex_defaults_and_named_roles_do_not_override_routing(self) -> None:
         config = tomllib.loads(CODEX_CONFIG.read_text(encoding="utf-8"))
+        self.assertEqual((config["model"], config["model_reasoning_effort"]), ("gpt-6.1-sol", "low"))
         self.assertEqual(config["agents"]["default_subagent_model"], "gpt-6.1-sol")
         self.assertEqual(config["agents"]["default_subagent_reasoning_effort"], "low")
         self.assertNotIn("max_concurrent_threads_per_session", config["agents"])
@@ -87,7 +115,94 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual(repair["name"], "sol_repair")
         self.assertFalse((CODEX_AGENTS / "luna-escalation.toml").exists())
 
-    def test_direct_dispatch_and_exact_single_ticket_verifier_coalescing(self) -> None:
+    def test_effort_matrix_and_planning_exception(self) -> None:
+        root = ROOT_SKILL.read_text(encoding="utf-8")
+        mode = root.split("## Default single-agent execution\n", 1)[1].split("\n## ", 1)[0]
+        rows = [
+            [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+            for line in mode.splitlines() if line.lstrip().startswith("|")
+        ]
+        self.assertEqual(dict(rows[2:]), {
+            "Planning in either execution mode": "high",
+            "Other single-agent work, including self-verification": "low",
+            "Delegated development and repair": "low",
+            "Delegated independent verification": "high",
+        })
+        normalized = re.sub(r"\s+", " ", mode).lower()
+        self.assertIn("planning takes precedence over the single-agent default", normalized)
+        self.assertIn("if it cannot be applied, report the actual limitation", normalized)
+        self.assertIn("configuration changes do not alter a running turn", normalized)
+
+        for name in (
+            "plan-workflow", "develop-workflow", "verify-workflow",
+            "publish-workflow", "integrate-workflow", "plan-to-ticket", "test-workflow",
+        ):
+            with self.subTest(entrypoint=name):
+                source = (REPO_ROOT / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+                execution = re.sub(r"\s+", " ", source.split("## Execution mode\n", 1)[1].split("\n## ", 1)[0]).lower()
+                self.assertIn("default reasoning effort is `low`, including self-verification", execution)
+                self.assertIn("planning uses `high` in either mode", execution)
+                self.assertIn("delegated development/repair uses `low`", execution)
+                self.assertIn("independent verification `high`", execution)
+                self.assertIn("report unsupported effort settings", execution)
+                self.assertNotIn("`medium`", execution)
+
+        plan_prompt = (REPO_ROOT / "skills/plan-workflow/agents/openai.yaml").read_text(encoding="utf-8")
+        self.assertIn("high reasoning effort", plan_prompt)
+        develop_prompt = (REPO_ROOT / "skills/develop-workflow/agents/openai.yaml").read_text(encoding="utf-8")
+        self.assertIn("development and repair workers use low reasoning effort", develop_prompt)
+        verify_prompt = (REPO_ROOT / "skills/verify-workflow/agents/openai.yaml").read_text(encoding="utf-8")
+        self.assertIn("default single-agent execution with low reasoning effort", verify_prompt)
+        self.assertIn("independent verifiers with high reasoning effort", verify_prompt)
+
+    def test_single_agent_default_and_authorized_delegation_contract(self) -> None:
+        root = ROOT_SKILL.read_text(encoding="utf-8")
+        default_mode = root.split("## Default single-agent execution\n", 1)[1].split("\n## ", 1)[0]
+        normalized = re.sub(r"\s+", " ", default_mode).lower()
+        for condition in (
+            "main agent alone",
+            "do not spawn subagents",
+            "local repairs, ticket acceptance or final plan acceptance",
+            "self-verification evidence",
+            "never label that evidence independent",
+            "stage transitions and an initial failure do not activate delegation",
+            "two consecutive failed same-problem repair rounds",
+            "model selection alone does not authorize subagents",
+            "missing subagent support does not block",
+            "worker-only rules below apply only in explicitly authorized delegated mode",
+            "same acceptance criteria and quality gate in either mode",
+        ):
+            with self.subTest(condition=condition):
+                self.assertIn(condition, normalized)
+
+        # Each directly installed entrypoint must work without the repository's
+        # AGENTS.md and must not silently activate its worker-only instructions.
+        for name in (
+            "plan-workflow", "develop-workflow", "verify-workflow",
+            "publish-workflow", "integrate-workflow", "plan-to-ticket", "test-workflow",
+        ):
+            with self.subTest(entrypoint=name):
+                source = (REPO_ROOT / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+                mode = re.sub(r"\s+", " ", source.split("## Execution mode\n", 1)[1].split("\n## ", 1)[0]).lower()
+                self.assertIn("default single-agent execution", mode)
+                self.assertIn("do not spawn subagents", mode)
+                self.assertIn("only in explicitly authorized delegated mode", mode)
+                self.assertIn("model selection alone does not authorize subagents", mode)
+                self.assertIn("missing subagent support does not block", mode)
+
+        for name in ("develop-workflow", "verify-workflow"):
+            with self.subTest(prompt=name):
+                prompt = (REPO_ROOT / "skills" / name / "agents/openai.yaml").read_text(encoding="utf-8")
+                self.assertIn("default single-agent execution", prompt)
+                self.assertIn("without spawning subagents", prompt)
+                self.assertRegex(prompt, r"explicit delegation authorization|explicitly authorized delegated mode")
+
+        agents = re.sub(r"\s+", " ", AGENTS.read_text(encoding="utf-8")).lower()
+        self.assertIn("start with the main agent alone", agents)
+        self.assertIn("never require a subagent during default execution", agents)
+        self.assertIn("model selection alone does not authorize subagents", agents)
+
+    def test_delegated_dispatch_and_exact_single_ticket_verifier_coalescing(self) -> None:
         root = ROOT_SKILL.read_text(encoding="utf-8").lower()
         develop = (REPO_ROOT / "skills" / "develop-workflow" / "SKILL.md").read_text(encoding="utf-8").lower()
         verify = VERIFY_SKILL.read_text(encoding="utf-8").lower()

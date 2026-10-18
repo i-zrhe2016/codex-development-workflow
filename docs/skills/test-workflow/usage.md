@@ -1,5 +1,9 @@
 # 通用测试工作流运行手册
 
+默认由主 agent 独立执行测试与验收，不创建子 agent，也不将自验收称为独立验收。
+本文的 worker 和独立验证者规则仅适用于用户明确授权后的多 agent 模式；
+连续两轮同问题修复失败后，先保存检查点并等待用户选择模型及授权委派。
+
 > Type: Guide
 > Status: Active
 > Scope: Running the test-workflow specialist: acceptance checklist, verification levels and mode selection, standard execution order, RED -> GREEN, failure classification, browser/E2E branch, and report template

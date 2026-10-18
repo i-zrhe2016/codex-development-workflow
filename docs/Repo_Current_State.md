@@ -1,11 +1,13 @@
 # Repository Current State
 
-Last verified: 2026-10-15 @ working tree (Markdown persistence contract;
-fresh independent acceptance and 51 regression/installer tests passed;
+Last verified: 2026-10-18 @ working tree (single-agent defaults, effort and escalation;
+main-agent self-verification and 54 regression/installer tests passed;
 not a whole-state audit)
 
 ## Current Focus
 
+- [Single-model and single-agent defaults](plans/single-model-escalation.md):
+  default main-agent implementation and acceptance; explicit escalation decisions.
 - [Markdown persistence Plan / T0078](plans/markdown-plan-records.md#t0078):
   Markdown persistence implementation and local verification.
 
@@ -16,21 +18,23 @@ not a whole-state audit)
 - Every new independent requirement has a versioned Plan Markdown file before
   implementation edits; existing requirements retain Issue authority. Ordinary
   requirements use one Ticket, while additional Tickets require distinct
-  behavioral, dependency, or acceptance boundaries. The main agent directly
-  dispatches a fresh owner per Ticket, who retains context across that Ticket
-  and local repairs without dispatching workers.
-  Optional module assistants require fixed interfaces and isolated ownership;
-  fresh independent verifiers and repair replacements remain main-dispatched.
-  Final Plan acceptance uses a separate fresh verifier, with a one-Ticket
-  exact-scope coalescing exception. See
+  behavioral, dependency, or acceptance boundaries. Default single-agent
+  execution keeps implementation, local repair, Ticket acceptance and final Plan
+  acceptance in the main agent; no subagents or independent-verification claims.
+  After two failed same-problem repair rounds, checkpoint and pause for user
+  model selection and explicit delegation authorization. Only delegated mode
+  uses fresh Ticket owners and independent verifiers, including the exact-scope
+  one-Ticket coalescing exception. See
   [worker policy](../AGENTS.md#multi-agent-delegation) and
   [Context Management](../AGENTS.md#context-management).
 - Root and direct develop/verify/test entrypoints use the portable worker model
   policy from the root Skill associated with the active installation. See
   [installation boundaries](deployment/installation.md#codex-model-routing).
-  Project-local configuration remains separate. Installed user bundles are not
-  updated by this change; regression tests compare scratch installations with
-  repository sources.
+  Project-local configuration remains separate. The local Codex installation
+  was updated with all fourteen managed bundles and verified against source;
+  global AGENTS.md was synchronized after a recoverable backup. Existing
+  sessions still require restart to discover refreshed Skills. Regression tests
+  also compare scratch installations with repository sources.
 - Verification now requires Same-Surface proof: runtime identity/doctor,
   Launch -> Doctor -> Drive -> Evidence -> Cleanup, reproducible evidence and
   fresh verification-profile knowledge. If the intended artifact, instance or
@@ -48,7 +52,7 @@ not a whole-state audit)
   and merge timing and scope; added scope requires impacted readiness checks
   and grants no new publication authority. See
   [publication decisions](workflow/usage.md#publication-decisions).
-- Development uses a native dynamic Ready Queue: dispatch newly ready Tickets,
+- In explicitly authorized delegated mode, development uses a native dynamic Ready Queue: dispatch newly ready Tickets,
   integrate accepted outputs, then verify dependent work on the integrated
   snapshot. Accepted, uncommitted Plan contents are preserved as baseline `S`
   for isolated dependent workers. See
@@ -73,9 +77,12 @@ not a whole-state audit)
   current global drift count has not been remeasured. Six pairs changed for
   Markdown persistence pass repeat-render byte comparisons; no global PASS is
   claimed.
-- The unchanged [Ticket loop source](architecture/diagrams/ticket-loop.puml)
-  still labels older Luna/repair routing. The authoritative current worker
-  policy is [AGENTS.md](../AGENTS.md#who-chooses-the-subagent).
+- The delegated-mode [Ticket loop source](architecture/diagrams/ticket-loop.puml) and
+  paired SVG show Sol defaults and user-selected model escalation. The SVG is
+  valid XML and its embedded PlantUML matches the source. Initial independent
+  POST rerendering returned HTTP 403; a subsequent independent GET rerender
+  succeeded and matched the tracked SVG byte-for-byte. The
+  authoritative worker policy is [AGENTS.md](../AGENTS.md#who-chooses-the-subagent).
 - Comparative performance for native one-, two- and three-owner scheduling is
   unmeasured. Live GitHub checkpoint-failure recovery has not been exercised; see
   [Plan #241](https://github.com/i-zrhe2016/codex-development-workflow/issues/241)
@@ -83,12 +90,19 @@ not a whole-state audit)
 
 ## Constraints
 
-- Scheduling follows actual host capacity, without a project-set concurrency
+- Delegated scheduling follows actual host capacity, without a project-set concurrency
   ceiling or total/lifetime agent quota.
-- Project routing requests Sol/low for development and repairs, and Sol/high
-  for verification. Two failed repair rounds trigger coordinator diagnosis; see
+- Default single-agent work, including self-verification, uses Sol/low; planning
+  uses high in either mode. Delegated development/repair uses Sol/low and
+  independent verification Sol/high. Required effort is applied through supported
+  host controls; repository configuration is not proof of live switching.
+  Two consecutive failed same-problem repair rounds trigger
+  diagnosis, a durable checkpoint and a pause until the user selects an escalation
+  model and decides whether to authorize delegation; model selection alone does
+  not authorize subagents. Unavailable selected settings block dispatch without fallback. See
   [worker routing](../AGENTS.md#who-chooses-the-subagent).
-- Ticket and final acceptance use Sol/high. One new verifier may cover both
+- In delegated mode, Ticket and final acceptance default to Sol/high unless
+  explicitly selected otherwise. One new verifier may cover both
   only for a one-Ticket Plan with exactly matching scope, artifact/version,
   configuration and deployment surface. Requested settings do not establish
   underlying inference-engine identity or general host availability.

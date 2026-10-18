@@ -212,6 +212,19 @@ Plan's `Branch`/`Base` values, and require the PR head/base to match them.
 
 ## Adaptive agent orchestration
 
+Default single-agent execution keeps planning, implementation, local repair and
+acceptance in the main agent, without subagents. Record self-verification rather
+than independent acceptance. After two consecutive failed same-problem repair
+rounds, save a checkpoint, pause and ask for the escalation model and explicit
+delegation authorization. An initial failure or model selection alone does not
+authorize worker dispatch. Keep existing evidence and publication gates.
+Use low reasoning for single-agent work, including self-verification; planning
+uses high in either mode. Delegated development/repair uses low and independent
+verification high. Report unsupported required settings without claiming a switch.
+
+The following topology and independent-verifier rules apply only in explicitly
+authorized delegated mode:
+
 ```text
 main -> fresh Ticket owner across the Ticket + local checks
      -> separate fresh verifier for all Ticket scenarios
@@ -220,7 +233,7 @@ main -> fresh Ticket owner across the Ticket + local checks
 
 Ordinary per-Ticket verification uses one fresh verifier. Final Plan/branch/PR
 acceptance uses a fresh independent verifier for the whole current scope. One
-new Sol/high verifier may satisfy both gates only when the Plan has one Ticket
+new verifier may satisfy both gates only when the Plan has one Ticket
 and the full scope, artifact/version, configuration, and deployment surface
 match exactly. Otherwise dispatch a separate fresh final verifier.
 
@@ -262,15 +275,16 @@ publication on the Plan branch before merge; they do not create a separate
 post-merge state-only PR.
 
 Before final publication, PR update or merge readiness passes for a Plan,
-`verify-workflow` dispatches one fresh independent verifier for the whole
-current Plan branch/PR scope. It must PASS.
+`verify-workflow` checks the whole current Plan branch/PR scope. The main agent
+performs self-verification by default; only delegated mode dispatches a fresh
+independent verifier. Acceptance must PASS.
 
 For example, if export is supplementary work for the same requirement and adds
 a distinct behavior boundary, record it as a Ticket in that requirement's
 unmerged Plan. Update its goal/scope/index/dependencies/validation before edits
 and keep the existing branch. If a PR already exists, retain its URL, return
 Plan to `in_progress` and revalidate impacted acceptance and Plan readiness,
-including the fresh whole-Plan acceptance gate. An independent export request
+including whole-Plan acceptance under the current execution mode. An independent export request
 gets a new Plan even while the search Plan remains unmerged. Neither a scope
 update nor finishing its checks triggers a PR update; publication awaits the
 user's chosen action.

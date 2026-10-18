@@ -5,6 +5,25 @@ description: "Verify acceptance, regressions, incidents, review findings or bran
 
 # Verify Workflow
 
+## Execution mode
+
+Default reasoning effort is `low`, including self-verification; planning
+uses `high` in either mode. Delegated development/repair uses `low` and
+independent verification `high`. Report unsupported effort settings; do not
+claim that editing instructions changed the running turn's effort.
+
+Default single-agent execution: the main agent performs this stage directly,
+including required checks and acceptance; do not spawn subagents. Record
+self-verification accurately, without claiming independent verification.
+Worker-only dispatch, independent-verifier and no-main-agent-fallback rules
+below apply only in explicitly authorized delegated mode. Stage transitions
+and an initial failure do not activate delegation. After two consecutive failed
+same-problem repair rounds, checkpoint and pause; ask the user to choose an
+escalation model and whether to authorize delegation. Model selection alone
+does not authorize subagents. Missing subagent support does not block default
+single-agent execution. Keep the existing Test Quality Gate, durable evidence
+and publication boundaries in both modes.
+
 Owns **trigger -> verification scope -> conclusion**; `test-workflow` owns
 procedure and Test Quality Gate.
 
@@ -62,6 +81,10 @@ runtime instance or surface cannot be proven.
   workflow Skill.
 
 ## Verification workers
+
+The worker and parallel scheduling scenarios below apply only in explicitly
+authorized delegated mode. Default single-agent verification is performed by
+the main agent against the same acceptance criteria and Test Quality Gate.
 
 ### Scheduling policy scenario checks
 
@@ -121,9 +144,13 @@ scheduling policy.
 - FAIL returns the affected functionality to a fresh implementation worker,
   followed by a new independent verifier for all affected Ticket scenarios.
   The initial implementation failure does not count as a repair round. After
-  two consecutive failed same-problem repair rounds, the main agent diagnoses
-  and replans. Repair implementation uses Sol/low from the first round.
-  Preserve counts and evidence across replacement; verification uses Sol/high.
+  two consecutive failed same-problem repair rounds, the main agent diagnoses,
+  saves a durable Plan/Ticket checkpoint, pauses the affected problem and asks
+  the user to choose an escalation model under the canonical routing policy.
+  Until selection, dispatch no further same-problem repair or new model.
+  Repair implementation defaults to Sol/low; verification defaults to Sol/high.
+  Apply explicit user-selected settings with a compatible role or no named role;
+  unavailable settings block dispatch without fallback. Preserve counts and evidence.
 - The main agent retains the Test Quality Gate, stage transitions and final
   judgment. Preserve unexplained flaky failures; a passing retry does not erase
   them.

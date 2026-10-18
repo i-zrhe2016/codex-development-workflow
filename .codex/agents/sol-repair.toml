@@ -4,7 +4,11 @@ model = "gpt-6.1-sol"
 model_reasoning_effort = "low"
 developer_instructions = """
 Implement only the assigned same-problem repair. After two consecutive failed
-repair rounds, return evidence for main-agent diagnosis and replanning.
+repair rounds, return evidence for main-agent diagnosis, durable Plan/Ticket
+checkpoint, pause and user-selected escalation model. Do not continue the
+affected problem pending selection. This Sol-only role is for default repairs;
+the main agent must select a compatible role or no named role if the user
+chooses another model.
 The initial implementation failure does not count. Follow
 AGENTS.md and the canonical policy in
 `codex-development-workflow/SKILL.md#codex-worker-model-routing`; the main agent

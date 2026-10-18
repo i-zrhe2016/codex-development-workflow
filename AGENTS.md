@@ -72,6 +72,34 @@ several stages as one authorized delivery.
 
 ## Multi-Agent Delegation
 
+### Default single-agent execution
+
+Default reasoning effort is `low`, including single-agent self-verification.
+Planning uses `high` in either execution mode. In authorized delegated mode,
+development and repair use `low`; independent verification uses `high`.
+Request the required effort through the host's supported controls; if it cannot
+be applied, report the actual limitation rather than claim a runtime switch.
+Changing repository configuration does not change an already-running turn.
+
+Start with the main agent alone. Do not spawn subagents for planning,
+implementation, local repair, Ticket acceptance or final Plan acceptance.
+The main agent executes the checks and records self-verification evidence;
+do not describe it as independent verification. Stage transitions and an initial
+failure do not activate delegation. Keep the Test Quality Gate, prerequisite
+acceptance, durable evidence and publication boundaries.
+
+After two consecutive failed same-problem repair rounds, save a checkpoint,
+pause that problem and ask the user to choose an escalation model and whether
+to authorize delegation. Model selection alone does not authorize subagents.
+Do not continue that problem until the required user decisions arrive. Missing
+subagent support does not block default single-agent execution.
+
+The worker dispatch, independent-verifier, thin-coordinator and fresh-worker
+rules below apply only in explicitly authorized delegated mode. They never
+require a subagent during default execution. In single-agent mode, the main
+agent also owns the implementation and verification roles directly; preserve
+repair counts across local repairs and context recovery.
+
 Use a **fixed workflow / adaptive execution** model. Stage ownership, Plan ->
 Ticket dependencies, verification, publication, integration and
 completion gates remain fixed. This section owns the scheduling policy;
@@ -81,7 +109,7 @@ explanatory documents link here rather than copying it.
 
 The main agent owns requirements, architecture, planning and decomposition,
 cross-Ticket dependencies and scheduling, integration, stage gates and final
-judgment. It directly dispatches one fresh implementation owner per Ticket.
+judgment. In delegated mode, it directly dispatches one fresh implementation owner per Ticket.
 Each owner retains context across that Ticket and local repair work, and never
 spawns agents. The main agent may dispatch optional
 independent-module assistants only for fixed interfaces and non-overlapping
@@ -90,7 +118,7 @@ integration. It directly dispatches fresh independent verifiers and fresh
 repair replacements. Workers are never reused across Tickets or roles.
 Interrupted workers are replaced from verified checkpoints.
 
-Ticket acceptance uses a fresh independent verifier. Final Plan/branch/PR
+In delegated mode, Ticket acceptance uses a fresh independent verifier. Final Plan/branch/PR
 acceptance uses a separate fresh verifier for the whole current Plan scope,
 except that one NEW verifier may satisfy both gates for a one-Ticket Plan only
 when Ticket and final scopes have exactly the same full scope, artifact/version,
@@ -121,20 +149,29 @@ agent must not duplicate worker implementation or verification.
 
 The main agent selects each Ticket owner, optional module assistant, verifier or
 repair implementer. This project's explicit model-routing policy overrides the
-bundle defaults: every Codex worker uses `gpt-6.1-sol`; development workers use
+bundle defaults: every Codex worker defaults to `gpt-6.1-sol`; development workers use
 `low` reasoning effort and verification workers use `high`. It uses the canonical model-routing procedure in
 [`SKILL.md`](SKILL.md#codex-worker-model-routing), including its active-copy
 resolution, explicit dispatch arguments and observed-versus-requested evidence
 rules. Codex may read `.codex/agents/`; Claude Code may read `.claude/agents/`.
 Named agent descriptions state their trigger and operating boundary.
 
-For every Codex dispatch explicitly request `gpt-6.1-sol` and the role's reasoning
+For every Codex dispatch explicitly request the selected model (default
+`gpt-6.1-sol`) and the role's reasoning
 effort with `fork_turns="none"`. Development, docs, synchronization, API/schema,
-security, complex logic and repair implementation all use Sol/low. The initial implementation
+security, complex logic and repair implementation default to Sol/low. The initial implementation
 failure does not count as a repair round. Preserve failure evidence and the
 count across replacements. After two consecutive failed repair rounds on the
-same problem, the main agent diagnoses and replans using the preserved evidence.
-Ticket and final acceptance also use Sol/high, with the exact one-Ticket coalescing
+same problem, the main agent diagnoses, saves a durable Plan/Ticket checkpoint,
+pauses the affected problem and asks the user to choose an escalation model
+and whether to authorize delegation. Until selection and authorization, do not
+dispatch further same-problem repairs or a new model.
+After selection and explicit delegation authorization, request that model only for the stated problem/role,
+with implementation/repair low or independent verification high. Preserve history;
+use a compatible named role or no named role, never a conflicting Sol-only role.
+Report unavailable selected settings without fallback; keep unrelated defaults
+and the main runtime unchanged.
+Ticket and final acceptance default to Sol/high unless explicitly selected otherwise, with the exact one-Ticket coalescing
 exception above. If a required setting is actually unsupported or a selected
 role has an unavoidable conflicting override, stop
 that dispatch as **BLOCKED**. Do not silently fall back, switch providers or
@@ -153,6 +190,9 @@ This section owns context lifecycle policy; delegation and stage gates remain
 governed above and by their Skills.
 
 ### Thin coordinator and lazy workers
+
+This worker lifecycle applies only in explicitly authorized delegated mode.
+Default single-agent work is performed directly by the main agent.
 
 Keep the main agent long-lived and thin: retain requirements, decisions, the
 Plan and current Ticket, dependencies, acceptance criteria, completion summaries
@@ -217,8 +257,9 @@ boundaries; retire the finished worker context without deleting host logs.
 Keep the Ticket owner's continuity across implementation and local repairs;
 do not create per-step acknowledgements or acceptance gates. A same-
 problem repair uses a fresh implementation worker and preserves the failure
-count. All repair implementation workers use Sol/low from the first round; after two failed
-repair rounds, the main agent diagnoses and replans. Ticket
+count. Repair implementation defaults to Sol/low from the first round. After two
+consecutive failed same-problem repair rounds, follow the checkpoint, pause and
+user-selected escalation rules in [model routing](#who-chooses-the-subagent). Ticket
 acceptance repairs use a fresh replacement, followed by a new independent
 verifier. Never reuse workers across roles, stages or Tickets; independent
 verification remains mandatory. Worker task completion does not

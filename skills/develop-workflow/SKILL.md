@@ -5,6 +5,25 @@ description: "Implement, fix, refactor or modify repository content for a persis
 
 # Develop Workflow
 
+## Execution mode
+
+Default reasoning effort is `low`, including self-verification; planning
+uses `high` in either mode. Delegated development/repair uses `low` and
+independent verification `high`. Report unsupported effort settings; do not
+claim that editing instructions changed the running turn's effort.
+
+Default single-agent execution: the main agent performs this stage directly,
+including required checks and acceptance; do not spawn subagents. Record
+self-verification accurately, without claiming independent verification.
+Worker-only dispatch, independent-verifier and no-main-agent-fallback rules
+below apply only in explicitly authorized delegated mode. Stage transitions
+and an initial failure do not activate delegation. After two consecutive failed
+same-problem repair rounds, checkpoint and pause; ask the user to choose an
+escalation model and whether to authorize delegation. Model selection alone
+does not authorize subagents. Missing subagent support does not block default
+single-agent execution. Keep the existing Test Quality Gate, durable evidence
+and publication boundaries in both modes.
+
 Owns **context -> implementation -> Development Complete**.
 
 When the user controls the overall flow, development executes only the approved
@@ -30,7 +49,8 @@ publication or merge actions for the user.
 ## Ticket owners and workers
 
 These minimum execution rules apply even without `AGENTS.md`; when present, it
-owns the full scheduling policy.
+owns the full scheduling policy. Worker dispatch rules in this section apply
+only in explicitly authorized delegated mode.
 
 - Main agent: own requirements, dependencies, scheduling, integration, stage
   gates and final judgment. Directly dispatch one fresh implementation owner
@@ -177,8 +197,12 @@ owns the full scheduling policy.
   followed by a new verifier for affected functionality. Preserve flaky-test
   evidence and the Test Quality Gate.
 - The initial implementation failure does not count as a repair round. After
-  two consecutive failed same-problem repair rounds, the main agent diagnoses
-  and replans. Development and repair implementation use Sol/low from the start.
+  two consecutive failed same-problem repair rounds, the main agent diagnoses,
+  saves a durable Plan/Ticket checkpoint, pauses the affected problem and asks
+  the user to choose an escalation model under the canonical routing policy.
+  Until selection, dispatch no further same-problem repair or new model.
+  Development and repairs default to Sol/low; user-selected settings use a
+  compatible role or no named role, without fallback for unavailable settings.
   Final Plan acceptance is a separate fresh verifier, except
   one NEW verifier may satisfy Ticket and final gates for a one-Ticket Plan only
   when full scope, artifact/version, configuration and deployment surface match
@@ -189,8 +213,9 @@ owns the full scheduling policy.
 
 **Development Complete:** acceptance is implemented and local validation passes.
 Report Ticket, changed files, commands/results, unresolved risks and follow-up work.
-It does not trigger commit, push, PR creation/update or merge. After independent
-verification, local verified functionality may stop normally pending the user's
+It does not trigger commit, push, PR creation/update or merge. After verification
+(self-verification by default; independent verification in delegated mode),
+local verified functionality may stop normally pending the user's
 publication decision; that wait is not BLOCKED. New scope in an unmerged Plan
 requires `plan-to-ticket`'s Plan/Ticket updates before implementation edits.
 
